@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Issue Uniform</title>
+</head>
+<body>
+    <h1>Issue Uniform</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Issue Uniform</button>
+    </form>
+    <a href="{% url 'inventory_list' %}">Back to Inventory List</a>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firehouse Movers Forms</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>Fire House Movers</h1>
+        </div>
+        <nav class="navbar">
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Truck Availability & Job Logistics</a></li>
+                <li><a href="#">FireHouse Stations</a></li>
+                <li><a href="#">Truck & Trailer Inspection</a></li>
+                <li><a href="#">On-site Inspection</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="welcome-section">
+        <h2>Welcome to Firehouse Movers Forms</h2>
+        <div class="grid-container">
+            <div class="grid-item">
+                <img src="{% static 'images/firehouse_movers.jpg' %}" alt="Truck">
+                <h3>Truck Availability & Job Logistics</h3>
+            </div>
+            <div class="grid-item">
+                <img src="{% static 'images/truck_inspection.jpg' %}" alt="Trailer">
+                <h3>Truck & Trailer Inspection</h3>
+            </div>
+            <div class="grid-item">
+                <img src="{% static 'images/firehouse_station.jpg' %}" alt="Warehouse">
+                <h3>Firehouse Stations</h3>
+            </div>
+            <!-- Add more items as needed -->
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2024 Firehouse Movers</p>
+    </footer>
+</body>
+</html>
