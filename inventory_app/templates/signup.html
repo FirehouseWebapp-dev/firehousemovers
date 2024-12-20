@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <div class="form-container col-md-6">
+                <br>
+
+                <form id="signup-form" method="post" action="{% url 'inventory_app:signup' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+        
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6">
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            {{ form.password1 }}
+                            <small class="form-text text-muted">
+                                At least: 5-25 characters long,<br> 1 uppercase,<br> 1 number
+                            </small>
+                            {% if form.password1.errors %}
+                                <div class="invalid-feedback">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="invalid-feedback">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row mt-5">
+                        <div class="form-group col-md-6">
+                            <p class="text-center mt-3">
+                                Already have an account? <strong><a href="/accounts/login/">Log in</a></strong>
+                            </p>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <button type="submit" class="btn btn-primary btn-block next-button">Next</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function(event) {
+            let termsChecked = document.getElementById('terms').checked;
+            let password1 = document.getElementById('id_password1').value;
+            let password2 = document.getElementById('id_password2').value;
+            let passwordsMatch = password1 === password2;
+
+            const countryCode = document.querySelector('[name="country_code"]').value;
+            const phoneNumber = document.getElementById('id_phone_number').value;
+
+            if (!countryCode || !phoneNumber) {
+                event.preventDefault();
+                alert('Please select a country code and enter your phone number.');
+                return;
+            }
+
+            document.getElementById('id_phone_number').value = '+' + countryCode + phoneNumber;
+
+            if (!termsChecked) {
+                event.preventDefault();
+                document.getElementById('terms-error').style.display = 'block';
+            } else {
+                document.getElementById('terms-error').style.display = 'none';
+            }
+
+            if (!passwordsMatch) {
+                event.preventDefault();
+                document.getElementById('id_password2').classList.add('is-invalid');
+                let errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.innerHTML = 'Passwords do not match';
+                let parentDiv = document.getElementById('id_password2').parentElement;
+                if (!parentDiv.querySelector('.invalid-feedback')) {
+                    parentDiv.appendChild(errorDiv);
+                }
+            } else {
+                document.getElementById('id_password2').classList.remove('is-invalid');
+                let parentDiv = document.getElementById('id_password2').parentElement;
+                let errorDiv = parentDiv.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        });
+
+        $(document).ready(function() {
+            $('#id_email').on('input', function() {
+                var email = $(this).val();
+                $.ajax({
+                    url: "{% url 'inventory_app:check_email_availability' %}",
+                    data: {
+                        'email': email
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.is_taken) {
+                            event.preventDefault();
+                            document.getElementById('id_email').classList.add('is-invalid');
+                            let errorDiv = document.createElement('div');
+                            errorDiv.className = 'invalid-feedback';
+                            errorDiv.innerHTML = 'Email already exists';
+                            let parentDiv = document.getElementById('id_email').parentElement;
+                            if (!parentDiv.querySelector('.invalid-feedback')) {
+                                parentDiv.appendChild(errorDiv);
+                            }
+                        } else {
+                            document.getElementById('id_email').classList.remove('is-invalid');
+                            let parentDiv = document.getElementById('id_email').parentElement;
+                            let errorDiv = parentDiv.querySelector('.invalid-feedback');
+                            if (errorDiv) {
+                                errorDiv.remove();
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

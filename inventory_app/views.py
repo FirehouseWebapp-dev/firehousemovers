@@ -1,9 +1,35 @@
 from django.shortcuts import render
-from .forms import InventoryForm, EmployeeForm, UniformAssignmentForm
+from .forms import InventoryForm, EmployeeForm, UniformAssignmentForm,SignUpForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django import forms
+from django.contrib.auth.models import User
+from django.views import View
 from .models import Inventory, Employee, UniformAssignment
+from django.contrib import messages
+
+
+def check_email_availability(request):
+    email = request.GET.get("email", None)
+    data = {"is_taken": User.objects.filter(email__iexact=email).exists()}
+    return JsonResponse(data)
+
+class SignUpView(View):
+    def get(self, request):
+        form = SignUpForm()
+        return render(request, "signup.html", {"form": form})
+
+    def post(self, request):
+        form = SignUpForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.cleaned_data.get("first_name")
+            email = form.cleaned_data.get("email")
+            if User.objects.filter(email=email).exists():
+                request.session.flush()
+                messages.error(
+                    request, "Email already exists. Please choose another one."
+                )
+                return render(request, "signup.html", {"form": form})
+        return render(request, "signup.html", {"form": form})
 
 
 def home(request):

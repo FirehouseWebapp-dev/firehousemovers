@@ -30,6 +30,12 @@ class Inventory(models.Model):
         """Calculate total bought as disposed + not returned + in use - returned to supplier."""
         return self.disposed + self.not_returned + self.in_use - self.return_to_supplier
 
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = "Inventory"
+        verbose_name_plural = "Inventories"
+
 
 class Employee(models.Model):
     name = models.CharField(max_length=255)
