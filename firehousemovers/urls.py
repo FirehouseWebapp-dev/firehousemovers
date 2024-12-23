@@ -21,4 +21,5 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),  # Admin panel
     path('', include('inventory_app.urls')),  # Include inventory_app routes
+    path('', include('authentication.urls')),  # Include authentication routes
 ]
