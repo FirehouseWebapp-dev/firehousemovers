@@ -1,10 +1,10 @@
 from django.db import models
 
 class Inventory(models.Model):
-    name = models.CharField(max_length=255)
-    category = models.CharField(max_length=255)
-    gender = models.CharField(max_length=50)
-    minimum_stock = models.IntegerField()
+    name = models.CharField(max_length=255,null=True, blank=True)
+    category = models.CharField(max_length=255,null=True, blank=True)
+    gender = models.CharField(max_length=50,null=True, blank=True)
+    minimum_stock = models.IntegerField(null=True, blank=True)
     new_stock = models.IntegerField(default=0)
     used_stock = models.IntegerField(default=0)
     in_use = models.IntegerField(default=0)
@@ -28,22 +28,22 @@ class Inventory(models.Model):
 
 
 class Employee(models.Model):
-    name = models.CharField(max_length=255)
-    gender = models.CharField(max_length=50)
-    designation = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,null=True, blank=True)
+    gender = models.CharField(max_length=50,null=True, blank=True)
+    designation = models.CharField(max_length=255,null=True, blank=True)
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('inactive', 'Inactive')], default='active')
 
     def __str__(self):
         return self.name
 
 
-class UniformAssignment(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    uniform = models.ForeignKey(Inventory, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    condition = models.CharField(max_length=50, choices=[('new', 'New'), ('used', 'Used')])
-    date_assigned = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=50, choices=[('active', 'Active'), ('returned', 'Returned')], default='active')
+class InventoryAssignment(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True)
+    uniform = models.ForeignKey(Inventory, on_delete=models.CASCADE,null=True, blank=True)
+    quantity = models.IntegerField(null=True, blank=True)
+    condition = models.CharField(max_length=50, choices=[('new', 'New'), ('used', 'Used')],null=True, blank=True)
+    date_assigned = models.DateField(auto_now_add=True,null=True, blank=True)
+    status = models.CharField(max_length=50, choices=[('active', 'Active'), ('returned', 'Returned')], default='active',null=True, blank=True)
 
     def __str__(self):
         return f"{self.employee.name} - {self.uniform.name} ({self.quantity})"

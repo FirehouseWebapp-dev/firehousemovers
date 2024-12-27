@@ -1,0 +1,31 @@
+{% extends "availability_logistic_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto mt-8 p-6 bg-white rounded-lg shadow-md ">
+    <!-- Title -->
+    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Availability Report</h2>
+
+    <!-- Date Filters -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div>
+            <label for="start_date" class="block font-medium text-gray-700">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" 
+                class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+        </div>
+        <div>
+            <label for="end_date" class="block font-medium text-gray-700">End Date:</label>
+            <input type="date" id="end_date" name="end_date" 
+                class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+        </div>
+    </div>
+
+        <!-- Daily Job Summary -->
+        <div class=" text-center">
+            <button class="bg-red-500 text-white rounded-full p-2 shadow-lg hover:bg-red-600 cursor-pointer w-full">
+                <h3 class="text-lg font-bold">Generate Report</h3>
+            </button>
+        </div>
+</div>
+
+{% endblock %}

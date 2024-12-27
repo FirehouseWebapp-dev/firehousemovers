@@ -1,0 +1,39 @@
+{% load static %}
+{% include "navbar.html" %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire House</title>
+    <link rel="icon" href="{% static 'images/fire_house_logo.svg' %}" type="image/icon type">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=YourCustomFont:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body style="font-family: var(--titleFont);">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-full sm:w-36 md:w-64 bg-red-700 text-white flex flex-col rounded-md transition-all duration-300 ease-in-out">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold py-4 px-2 sm:px-4 md:px-6">FireHouse Movers</h1>
+            <nav class="flex-grow">
+                <ul class="space-y-2 px-2 sm:px-4">
+                    <li><a href="{% url 'vehicle_availability' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Truck & Trailer Availability</a></li>
+                    <li><a href="{% url 'job_logistics' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Job Logistics Form</a></li>
+                    <li><a href="{% url 'availability_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Availability Report</a></li>
+                    <li><a href="{% url 'logistic_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Job Logistics Report</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-grow bg-white shadow-lg">
+            {% block content %}
+            <!-- Dynamic content will load here -->
+            {% endblock %}
+        </main>
+    </div>
+</body>
+</html>

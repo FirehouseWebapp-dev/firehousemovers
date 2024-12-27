@@ -1,0 +1,555 @@
+{% extends "availability_logistic_base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-2 h-screen flex flex-col">
+    <div class="grid grid-cols-12 gap-4 flex-grow overflow-hidden ">
+        
+        <!-- Form Section -->
+        <div class="col-span-9 bg-white pr-4 pb-4 pl-4 rounded-lg shadow-md h-full overflow-auto border border-white">
+
+            <h2 class="text-red-600 text-2xl font-bold my-4">Order Details</h2>
+            <form method="post" class="grid grid-cols-3 gap-3 border border-gray-300 p-4 rounded-lg">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div>
+                    {{ form.date.label_tag }}
+                    {{ form.date }}
+                    {% if form.date.errors %}
+                        <div class="text-red-500 text-xs mt-1"> {{ form.date.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.job_no.label_tag }}
+                    {{ form.job_no }}
+                    {% if form.job_no.errors %}
+                        <div class="text-red-500 text-xs mt-1"> {{ form.job_no.errors }}</div>
+                    {% endif %}
+                   
+                </div>
+                <div>
+                    {{ form.last_name_customer.label_tag }}
+                    {{ form.last_name_customer }}
+                    {% if form.last_name_customer.errors %}
+                        <div class="text-red-500 text-xs mt-1"> {{ form.last_name_customer.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.phone_number.label_tag }}
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.phone_number.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.type_of_move.label_tag }}
+                    {{ form.type_of_move }}
+                    {% if form.type_of_move.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.type_of_move.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.moved_before.label_tag }}
+                    {{ form.moved_before }}
+                    {% if form.moved_before.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.moved_before.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.crew_name.label_tag }}
+                    {{ form.crew_name }}
+                    {% if form.crew_name.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.crew_name.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.referral_source.label_tag }}
+                    {{ form.referral_source }}
+                    {% if form.referral_source.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.referral_source.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.crew_available.label_tag }}
+                    {{ form.crew_available }}
+                    {% if form.crew_available.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.crew_available.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.number_of_trucks.label_tag }}
+                    {{ form.number_of_trucks }}
+                    {% if form.number_of_trucks.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.number_of_trucks.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.number_of_trailers.label_tag }}
+                    {{ form.number_of_trailers }}
+                    {% if form.number_of_trailers.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.number_of_trailers.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div>
+                    {{ form.notes_order_detail.label_tag }}
+                    {{ form.notes_order_detail }}
+                    {% if form.notes_order_detail.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ form.notes_order_detail.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+                <div class="col-span-3 text-center">
+                    <button type="submit" name="submit_order" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 w-full">
+                        Save Order Details
+                    </button>
+                </div>
+            </form>
+
+            <h2 class="text-red-600 text-2xl font-bold my-4">Dispatch Details</h2>
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="text-red-500 text-xs mt-1">{{ form2.non_field_errors }}</div>
+
+                <div class="grid grid-cols-3 gap-4 border border-gray-300 p-4 rounded-lg">
+                    <div>
+                        {{ form2.ipad.label_tag }}
+                        {{ form2.ipad }}
+                        {% if form2.ipad.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.ipad.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.crew_leads.label_tag }}
+                        {{ form2.crew_leads }}
+                        {% if form2.crew_leads.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.crew_leads.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.drivers.label_tag }}
+                        {{ form2.drivers }}
+                        {% if form2.drivers.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.drivers.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold mt-4">Trucks</h3>
+                <div class="grid grid-cols-4 gap-4 border border-gray-300 p-4 rounded-lg">
+                    <div>
+                        {{ form2.truck_1.label_tag }}
+                        {{ form2.truck_1 }}
+                        {% if form2.truck_1.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.truck_1.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.truck_2.label_tag }}
+                        {{ form2.truck_2 }}
+                        {% if form2.truck_2.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.truck_2.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.truck_3.label_tag }}
+                        {{ form2.truck_3 }}
+                        {% if form2.truck_3.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.truck_3.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.truck_4.label_tag }}
+                        {{ form2.truck_4 }}
+                        {% if form2.truck_4.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.truck_4.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold mt-4">Trailers</h3>
+                <div class="grid grid-cols-4 gap-4 border border-gray-300 p-4 rounded-lg">
+                    <div>
+                        {{ form2.trailer_1.label_tag }}
+                        {{ form2.trailer_1 }}
+                        {% if form2.trailer_1.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.trailer_1.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.trailer_2.label_tag }}
+                        {{ form2.trailer_2 }}
+                        {% if form2.trailer_2.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.trailer_2.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.trailer_3.label_tag }}
+                        {{ form2.trailer_3 }}
+                        {% if form2.trailer_3.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.trailer_3.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.trailer_4.label_tag }}
+                        {{ form2.trailer_4 }}
+                        {% if form2.trailer_4.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.trailer_4.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mt-4 border border-gray-300 p-4 rounded-lg">
+                    <div>
+                        {{ form2.material.label_tag }}
+                        {{ form2.material }}
+                        {% if form2.material.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.material.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.special_equipment_needed.label_tag }}
+                        {{ form2.special_equipment_needed }}
+                        {% if form2.special_equipment_needed.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.special_equipment_needed.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.special_equipment_status.label_tag }}
+                        {{ form2.special_equipment_status }}
+                        {% if form2.special_equipment_status.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.special_equipment_status.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mt-4 border border-gray-300 p-4 rounded-lg">
+                    <div>
+                        {{ form2.speedy_inventory_account.label_tag }}
+                        {{ form2.speedy_inventory_account }}
+                        {% if form2.speedy_inventory_account.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.speedy_inventory_account.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.speedy_inventory.label_tag }}
+                        {{ form2.speedy_inventory }}
+                        {% if form2.speedy_inventory.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.speedy_inventory.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                    <div>
+                        {{ form2.labels_for_speedy_inventory.label_tag }}
+                        {{ form2.labels_for_speedy_inventory }}
+                        {% if form2.labels_for_speedy_inventory.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.labels_for_speedy_inventory.errors }}</div>
+                        {% endif %}
+                        
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    {{ form2.notes_dispatcher.label_tag }}
+                    {{ form2.notes_dispatcher }}
+                    {% if form2.notes_dispatcher.errors %}
+                            <div class="text-red-500 text-xs mt-1">{{ form2.notes_dispatcher.errors }}</div>
+                    {% endif %}
+                    
+                </div>
+
+                <div class="text-center mt-6">
+                    <button type="submit" name="submit_dispatch" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 w-full">
+                        Save Dispatch Details
+                    </button>
+                </div>
+            <form>
+        </div>
+
+        <!-- Orders Section -->
+        <div class="col-span-3 h-full overflow-auto">
+            <div class="mb-4">
+                <h2 class="font-semibold text-lg">Pending Orders</h2>
+                <div class="border border-gray-300 rounded-md p-4 h-64 overflow-y-auto">
+                    <p>Job #</p>
+                    <!-- Pending orders list with checkboxes -->
+                    {% for job_order in job_orders %}
+                    <div class="flex items-center mb-2">
+                        <input type="radio" 
+                               id="job_order_{{ forloop.counter }}" 
+                               name="selected_pending_order" 
+                               value="{{ job_order.id }}" 
+                               class="mr-2 order-checkbox" 
+                               data-date="{{ job_order.date }}" 
+                               data-job_no="{{ job_order.job_no }}"
+                               data-last_name_customer="{{ job_order.last_name_customer }}"
+                               data-phone_number="{{ job_order.phone_number }}"
+                               data-type_of_move="{{ job_order.type_of_move }}"
+                               data-moved_before="{{ job_order.moved_before }}"
+                               data-crew_name="{{ job_order.crew_name }}"
+                               data-referral_source="{{ job_order.referral_source }}"
+                               data-crew_available="{{ job_order.crew_available }}"
+                               data-number_of_trucks="{{ job_order.number_of_trucks }}"
+                               data-number_of_trailers="{{ job_order.number_of_trailers }}"
+                               data-notes_order_detail="{{ job_order.notes_order_detail }}">
+                        <label for="job_order_{{ forloop.counter }}" class="text-gray-700">{{ job_order.job_no }}</label>
+                    </div>
+                    {% endfor %}
+                    
+                </div>
+                <button type="button" 
+                        class="mt-4 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 w-full pending-order-btn" 
+                        data-selected="">
+                    Select Order
+                </button>
+            </div>
+        
+            <div>
+                <h2 class="font-semibold text-lg">Completed Orders</h2>
+                <div class="border border-gray-300 rounded-md p-4 h-64 overflow-y-auto">
+                    <p>Job #</p>
+                    <!-- Completed orders list with checkboxes -->
+                    {% for dispatch in dispatches %}
+                        <div class="flex items-center mb-2">
+                            <input type="radio" 
+                            id="dispatch_{{ forloop.counter }}" 
+                            name="completed_orders" 
+                            value="{{ dispatch.id }}" 
+                            class="mr-2 order-checkbox" 
+                            data-date="{{ dispatch.order.date }}" 
+                            data-job_no="{{ dispatch.order.job_no }}"
+                            data-last_name_customer="{{ dispatch.order.last_name_customer }}"
+                            data-phone_number="{{ dispatch.order.phone_number }}"
+                            data-type_of_move="{{ dispatch.order.type_of_move }}"
+                            data-moved_before="{{ dispatch.order.moved_before }}"
+                            data-crew_name="{{ dispatch.order.crew_name }}"
+                            data-referral_source="{{ dispatch.order.referral_source }}"
+                            data-crew_available="{{ dispatch.order.crew_available }}"
+                            data-number_of_trucks="{{ dispatch.order.number_of_trucks }}"
+                            data-number_of_trailers="{{ dispatch.order.number_of_trailers }}"
+                            data-notes_order_detail="{{ dispatch.order.notes_order_detail }}"
+                            data-ipad="{{ dispatch.ipad }}"
+                            data-crew_leads="{{ dispatch.crew_leads }}"
+                            data-drivers="{{ dispatch.drivers }}"
+                            data-truck_1="{{ dispatch.truck_1 }}"
+                            data-truck_2="{{ dispatch.truck_2 }}"
+                            data-truck_3="{{ dispatch.truck_3 }}"
+                            data-truck_4="{{ dispatch.truck_4 }}"
+                            data-trailer_1="{{ dispatch.trailer_1 }}"
+                            data-trailer_2="{{ dispatch.trailer_2 }}"
+                            data-trailer_3="{{ dispatch.trailer_3 }}"
+                            data-trailer_4="{{ dispatch.trailer_4 }}"
+                            data-material="{{ dispatch.material }}"
+                            data-special_equipment_needed="{{ dispatch.special_equipment_needed }}"
+                            data-special_equipment_status="{{ dispatch.special_equipment_status }}"
+                            data-speedy_inventory_account="{{ dispatch.speedy_inventory_account }}"
+                            data-speedy_inventory="{{ dispatch.speedy_inventory }}"
+                            data-labels_for_speedy_inventory="{{ dispatch.labels_for_speedy_inventory }}"
+                            data-notes_dispatcher="{{ dispatch.notes_dispatcher }}">
+
+                            <label for="dispatch_{{ forloop.counter }}" class="text-gray-700">{{ dispatch.order.job_no }}</label>
+                        </div>
+                    {% endfor %}
+
+                </div>
+                <button type="button" 
+                        class="mt-4 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 w-full completed-order-btn" 
+                        data-selected="">
+                    Select Order
+                </button>
+
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const truckFields = ["truck_1", "truck_2", "truck_3", "truck_4"];
+        const trailerFields = ["trailer_1", "trailer_2", "trailer_3", "trailer_4"];
+
+        function updateDropdowns(fields) {
+            // Collect all selected values
+            const selectedValues = new Set();
+            fields.forEach(fieldName => {
+                const field = document.getElementById(`id_${fieldName}`);
+                if (field.value) {
+                    selectedValues.add(field.value);
+                }
+            });
+
+            // Update options for each field
+            fields.forEach(fieldName => {
+                const field = document.getElementById(`id_${fieldName}`);
+                const options = Array.from(field.options);
+
+                options.forEach(option => {
+                    if (selectedValues.has(option.value) && option.value !== field.value) {
+                        option.style.display = "none"; // Hide selected options
+                    } else {
+                        option.style.display = "block"; // Show unselected options
+                    }
+                });
+            });
+        }
+
+        // Attach event listeners to truck fields
+        truckFields.forEach(fieldName => {
+            const field = document.getElementById(`id_${fieldName}`);
+            field.addEventListener("change", () => updateDropdowns(truckFields));
+        });
+
+        // Attach event listeners to trailer fields
+        trailerFields.forEach(fieldName => {
+            const field = document.getElementById(`id_${fieldName}`);
+            field.addEventListener("change", () => updateDropdowns(trailerFields));
+        });
+
+        // Initial update to filter dropdowns based on pre-selected values
+        updateDropdowns(truckFields);
+        updateDropdowns(trailerFields);
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get all the checkboxes for pending and completed orders
+        const pendingOrderRadios = document.querySelectorAll("input[name='selected_pending_order']");
+        const completedOrderRadios = document.querySelectorAll("input[name='completed_orders']");
+
+        // Get the "Select/Unselect Order" buttons
+        const pendingOrderButton = document.querySelector(".pending-order-btn");
+        const completedOrderButton = document.querySelector(".completed-order-btn");
+
+        // Function to update the form fields with the selected radio button's data attributes
+        function populateFormFields(radio) {
+            if (!radio) return;
+
+            // Populate Order Details
+            document.querySelector("#id_date").value = radio.dataset.date || "";
+            document.querySelector("#id_job_no").value = radio.dataset.job_no || "";
+            document.querySelector("#id_last_name_customer").value = radio.dataset.last_name_customer || "";
+            document.querySelector("#id_phone_number").value = radio.dataset.phone_number || "";
+            document.querySelector("#id_type_of_move").value = radio.dataset.type_of_move || "";
+            document.querySelector("#id_moved_before").value = radio.dataset.moved_before || "";
+            document.querySelector("#id_crew_name").value = radio.dataset.crew_name || "";
+            document.querySelector("#id_referral_source").value = radio.dataset.referral_source || "";
+            document.querySelector("#id_crew_available").value = radio.dataset.crew_available || "";
+            document.querySelector("#id_number_of_trucks").value = radio.dataset.number_of_trucks || "";
+            document.querySelector("#id_number_of_trailers").value = radio.dataset.number_of_trailers || "";
+            document.querySelector("#id_notes_order_detail").value = radio.dataset.notes_order_detail || "";
+
+            // Populate Dispatch Details (if available)
+            document.querySelector("#id_ipad").value = radio.dataset.ipad || "";
+            document.querySelector("#id_crew_leads").value = radio.dataset.crew_leads || "";
+            document.querySelector("#id_drivers").value = radio.dataset.drivers || "";
+            document.querySelector("#id_truck_1").value = radio.dataset.truck_1 || "";
+            document.querySelector("#id_truck_2").value = radio.dataset.truck_2 || "";
+            document.querySelector("#id_truck_3").value = radio.dataset.truck_3 || "";
+            document.querySelector("#id_truck_4").value = radio.dataset.truck_4 || "";
+            document.querySelector("#id_trailer_1").value = radio.dataset.trailer_1 || "";
+            document.querySelector("#id_trailer_2").value = radio.dataset.trailer_2 || "";
+            document.querySelector("#id_trailer_3").value = radio.dataset.trailer_3 || "";
+            document.querySelector("#id_trailer_4").value = radio.dataset.trailer_4 || "";
+            document.querySelector("#id_material").value = radio.dataset.material || "";
+            document.querySelector("#id_special_equipment_needed").value = radio.dataset.special_equipment_needed || "";
+            document.querySelector("#id_special_equipment_status").value = radio.dataset.special_equipment_status || "";
+            document.querySelector("#id_speedy_inventory_account").value = radio.dataset.speedy_inventory_account || "";
+            document.querySelector("#id_speedy_inventory").value = radio.dataset.speedy_inventory || "";
+            document.querySelector("#id_labels_for_speedy_inventory").value = radio.dataset.labels_for_speedy_inventory || "";
+            document.querySelector("#id_notes_dispatcher").value = radio.dataset.notes_dispatcher || "";
+        }
+
+
+        // Function to clear form fields
+        function clearFormFields() {
+            document.querySelector("#id_date").value = "";
+            document.querySelector("#id_job_no").value = "";
+            document.querySelector("#id_last_name_customer").value = "";
+            document.querySelector("#id_phone_number").value = "";
+            document.querySelector("#id_type_of_move").value = "";
+            document.querySelector("#id_moved_before").value = "";
+            document.querySelector("#id_crew_name").value = "";
+            document.querySelector("#id_referral_source").value = "";
+            document.querySelector("#id_crew_available").value = "";
+            document.querySelector("#id_number_of_trucks").value = "";
+            document.querySelector("#id_number_of_trailers").value = "";
+            document.querySelector("#id_notes_order_detail").value = "";
+        }
+
+        // Function to update the button state based on selected order
+        function updateButtonState(button, radios) {
+            const selectedRadio = Array.from(radios).find((radio) => radio.checked);
+            if (selectedRadio) {
+                button.textContent = "Unselect Order";
+                button.dataset.selected = selectedRadio.id;
+                populateFormFields(selectedRadio); // Populate form fields when an order is selected
+            } else {
+                button.textContent = "Select Order";
+                button.dataset.selected = "";
+                clearFormFields(); // Clear form fields when no order is selected
+            }
+        }
+
+        // Event listeners for pending order radios
+        pendingOrderRadios.forEach((radio) => {
+            radio.addEventListener("change", function () {
+                updateButtonState(pendingOrderButton, pendingOrderRadios);
+            });
+        });
+
+        // Event listener for pending order button
+        pendingOrderButton.addEventListener("click", function () {
+            if (pendingOrderButton.dataset.selected) {
+                // Unselect the selected radio button
+                const selectedRadio = document.getElementById(pendingOrderButton.dataset.selected);
+                if (selectedRadio) selectedRadio.checked = false;
+                updateButtonState(pendingOrderButton, pendingOrderRadios);
+            }
+        });
+
+        // Event listeners for completed order radios
+        completedOrderRadios.forEach((radio) => {
+            radio.addEventListener("change", function () {
+                updateButtonState(completedOrderButton, completedOrderRadios);
+            });
+        });
+
+        // Event listener for completed order button
+        completedOrderButton.addEventListener("click", function () {
+            if (completedOrderButton.dataset.selected) {
+                // Unselect the selected radio button
+                const selectedRadio = document.getElementById(completedOrderButton.dataset.selected);
+                if (selectedRadio) selectedRadio.checked = false;
+                updateButtonState(completedOrderButton, completedOrderRadios);
+            }
+        });
+    });
+</script>
+
+
+{% endblock %}

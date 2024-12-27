@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .forms import InventoryForm, EmployeeForm, UniformAssignmentForm
+from .forms import InventoryAssignmentForm, InventoryForm, EmployeeForm, InventoryAssignmentForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.http import JsonResponse
@@ -43,7 +43,7 @@ def add_employee(request):
 def issue_uniform(request):
     """Issue uniforms to employees and update inventory."""
     if request.method == "POST":
-        form = UniformAssignmentForm(request.POST)
+        form = InventoryAssignmentForm(request.POST)
         if form.is_valid():
             uniform = get_object_or_404(Inventory, pk=form.cleaned_data["uniform"].id)
             quantity = form.cleaned_data["quantity"]
@@ -60,6 +60,6 @@ def issue_uniform(request):
             form.save()
             return redirect("inventory_list")
     else:
-        form = UniformAssignmentForm()
+        form = InventoryAssignmentForm()
     return render(request, "issue_uniform.html", {"form": form})
 

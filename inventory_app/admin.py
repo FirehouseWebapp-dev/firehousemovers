@@ -1,8 +1,8 @@
 from django.contrib import admin
-from inventory_app.models import UniformAssignment, Inventory, Employee
+from inventory_app.models import InventoryAssignment, Inventory, Employee
 
 # Register your models here.
 
-admin.site.register(UniformAssignment)
+admin.site.register(InventoryAssignment)
 admin.site.register(Inventory)
 admin.site.register(Employee)
