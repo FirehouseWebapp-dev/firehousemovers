@@ -1,16 +1,35 @@
+from django.utils import timezone
+from django.db.models import Prefetch
+from django.db.models.functions import TruncDate
 from django import forms
+
+from authentication.models import UserProfile
 from .models import AvailabilityData, Dispatch,Order, Vehicle
+from django.db.models import Prefetch
+from django.db.models import Max, Subquery
+
+
 
 class TruckAvailabilityForm(forms.ModelForm):
     class Meta:
         model = AvailabilityData
         fields = ['vehicle', 'status', 'estimated_back_in_service_date', 'back_in_service_date']
         widgets = {
-            'estimated_back_in_service_date': forms.DateInput(attrs={'type': 'date'}),
-            'back_in_service_date': forms.DateInput(attrs={'type': 'date'}),
+            'vehicle': forms.TextInput(attrs={
+                'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full',
+            }),
+            'status': forms.Select(attrs={
+                'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full',
+            }),
+            'estimated_back_in_service_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full',
+            }),
+            'back_in_service_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full',
+            }),
         }
-
-
 
 class OrderForm(forms.ModelForm):
     date = forms.DateField(
@@ -147,254 +166,212 @@ class OrderForm(forms.ModelForm):
         ]
 
 
+
 class DispatchForm(forms.ModelForm):
     ipad = forms.ChoiceField(
         choices=[("iPad 1", "iPad 1"), ("iPad 2", "iPad 2"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="iPad#",
     )
     crew_leads = forms.ChoiceField(
         choices=[("Lead 1", "Lead 1"), ("Lead 2", "Lead 2"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Crew Leads",
     )
     drivers = forms.ChoiceField(
-        choices=[("Driver 1", "Driver 1"), ("Driver 2", "Driver 2"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        choices=[(driver.id, driver.user.username) for driver in UserProfile.objects.filter(role='driver')],
+
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Drivers",
     )
     truck_1 = forms.ChoiceField(
+        required=False,
         choices=[(truck.id, truck.name) for truck in Vehicle.objects.filter(vehicle_type='truck')],
-
-        # choices=[],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Truck 1",
     )
     truck_2 = forms.ChoiceField(
         required=False,
         choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Truck 2",
     )
     truck_3 = forms.ChoiceField(
         required=False,
         choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Truck 3",
     )
     truck_4 = forms.ChoiceField(
         required=False,
         choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Truck 4",
     )
     trailer_1 = forms.ChoiceField(
+        required=False,
         choices=[("Trailer A", "Trailer A"), ("Trailer B", "Trailer B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Trailer 1",
     )
     trailer_2 = forms.ChoiceField(
         required=False,
         choices=[("Trailer A", "Trailer A"), ("Trailer B", "Trailer B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Trailer 2",
     )
     trailer_3 = forms.ChoiceField(
         required=False,
         choices=[("Trailer A", "Trailer A"), ("Trailer B", "Trailer B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Trailer 3",
     )
     trailer_4 = forms.ChoiceField(
         required=False,
         choices=[("Trailer A", "Trailer A"), ("Trailer B", "Trailer B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Trailer 4",
     )
-
     material = forms.ChoiceField(
-        choices=[("Material A", "Material A"), ("Material B", "Material B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[("Loaded in Trailer", "Loaded in Trailer"), ("Pulled", "Pulled"), ("Needed to Pull", "Needed to Pull"),("Not Required", "Not Required")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Material",
     )
     special_equipment_needed = forms.ChoiceField(
-        choices=[
-            ("Equipment A", "Equipment A"),
-            ("Equipment B", "Equipment B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[("No", "No"), ("Dolly", "Dolly"), ("Hydraulic Stair Climber Dolly", "Hydraulic Stair Climber Dolly"),
+                 ("Piano Board And Moon Dog", "Piano Board And Moon Dog"),("Monter 4 Wheel Dolly", "Monter 4 Wheel Dolly"),
+                 ("Red Panel Cart", "Red Panel Cart"),("Yellow Off Road Panel Card","Yellow Off Road Panel Card"),
+                 ("Snap Lock Dollies", "Snap Lock Dollies")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Special Equipment Needed",
     )
     special_equipment_status = forms.ChoiceField(
-        choices=[
-            ("Operational", "Operational"),
-            ("Out of Service", "Out of Service"),
-            ("Pending", "Pending"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[(None, "N/A"),("Needs Staged","Needs Staged"), ("In Staging Area","In Staging Area"), ("Loaded", "Loaded")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Special Equipment Status",
     )
     speedy_inventory_account = forms.ChoiceField(
-        choices=[
-            ("Account A", "Account A"),
-            ("Account B", "Account B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[("No", "No"), ("Needed", "Needed"), ("Comleted", "Comleted")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Speedy Inventory Account",
     )
     speedy_inventory = forms.ChoiceField(
-        choices=[
-            ("Inventory A", "Inventory A"),
-            ("Inventory B", "Inventory B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[(None, "N/A"), ("Needed", "Needed"), ("Comleted", "Comleted")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Speedy Inventory",
     )
     labels_for_speedy_inventory = forms.ChoiceField(
-        choices=[
-            ("Label A", "Label A"),
-            ("Label B", "Label B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+        required=False,
+        choices=[(None, "N/A"),("Needed", "Needed"), ("Comleted", "Comleted")],
+        widget=forms.Select(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+        }),
         label="Labels for Speedy Inventory",
     )
     notes_dispatcher = forms.CharField(
         required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-                "rows": 3,
-                "placeholder": "Enter dispatch notes...",
-            }
-        ),
+        widget=forms.Textarea(attrs={
+            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+            "rows": 3,
+            "placeholder": "Enter dispatch notes...",
+        }),
         label="Dispatch Notes",
     )
 
     class Meta:
         model = Dispatch
         fields = [
-            "ipad",
-            "crew_leads",
-            "drivers",
-            "truck_1",
-            "trailer_1",
-            "truck_2",
-            "trailer_2",
-            "truck_3",
-            "trailer_3",
-            "truck_4",
-            "trailer_4",
-            "material",
-            "special_equipment_needed",
-            "special_equipment_status",
-            "speedy_inventory_account",
-            "speedy_inventory",
-            "labels_for_speedy_inventory",
-            "notes_dispatcher",
+            "ipad", "crew_leads", "drivers", "truck_1", "trailer_1", "truck_2", "trailer_2",
+            "truck_3", "trailer_3", "truck_4", "trailer_4", "material", "special_equipment_needed",
+            "special_equipment_status", "speedy_inventory_account", "speedy_inventory", 
+            "labels_for_speedy_inventory", "notes_dispatcher",
         ]
 
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     # Fetch all trucks and trailers from the Vehicle model
-    #     trucks = Vehicle.objects.filter(vehicle_type='truck')
-    #     trailers = Vehicle.objects.filter(vehicle_type='trailer')
-
-    #     truck_choices = [(truck.name, truck.name) for truck in trucks]
-    #     truck_choices.append((None, "None"))
-
-    #     trailer_choices = [(trailer.name, trailer.name) for trailer in trailers]
-    #     trailer_choices.append((None, "None"))
-
-    #     # Assign the same dynamic choices for all truck and trailer fields
-    #     for i in range(1, 5):  # Adjust the range if you have more fields
-    #         self.fields[f'truck_{i}'].choices = truck_choices
-    #         self.fields[f'trailer_{i}'].choices = trailer_choices
     def __init__(self, *args, **kwargs):
+        
+        check= kwargs.pop('completed_order_id', None)
+
+        # Get vehicles of type truck or trailer
+        vehicles = Vehicle.objects.filter(vehicle_type__in=['truck', 'trailer'])
+
+        # Get the latest availability data for each vehicle
+        latest_dates = AvailabilityData.objects.filter(
+            vehicle__in=vehicles
+        ).values('vehicle').annotate(latest_date=Max('date_saved'))
+
+        # Subquery to filter the latest record per vehicle with 'In Service' status
+        latest_availability_data = AvailabilityData.objects.filter(
+            vehicle__in=vehicles,
+            date_saved__in=Subquery(latest_dates.values('latest_date')),
+            status='In Service'
+        )
+
+        # Prefetch the latest availability data only for vehicles with 'In Service' availability
+        vehicles_with_availability = vehicles.prefetch_related(
+            Prefetch('availabilities', queryset=latest_availability_data, to_attr='availability')
+        )
+
+        # Separate trucks and trailers, filtering only those with 'In Service' availability data
+        trucks = vehicles_with_availability.filter(vehicle_type='truck')
+        trailers = vehicles_with_availability.filter(vehicle_type='trailer')
+
+        # Create choices, only including vehicles with 'In Service' availability
+        # truck_choices = [(None, "None")] + [(truck.id, truck.name) for truck in trucks if truck.availability]
+        # trailer_choices = [(None, "None")] + [(trailer.id, trailer.name) for trailer in trailers if trailer.availability]
+
+        if  check:
+            truck_choices = [(truck.id, truck.name) for truck in trucks]
+            trailer_choices = [(trailer.id, trailer.name) for trailer in trailers]
+
+        else:
+            truck_choices = [(None, "None")] + [(truck.id, truck.name) for truck in trucks if truck.availability]
+            trailer_choices = [(None, "None")] + [(trailer.id, trailer.name) for trailer in trailers if trailer.availability]
+
+
+        # Initialize the form
         super().__init__(*args, **kwargs)
-        # Fetch all trucks and trailers from the Vehicle model
-        trucks = Vehicle.objects.filter(vehicle_type='truck')
-        trailers = Vehicle.objects.filter(vehicle_type='trailer')
 
-        # Set choices to use the ID as the value and name for display
-        truck_choices = [(truck.id, truck.name) for truck in trucks]
-        trailer_choices = [(trailer.id, trailer.name) for trailer in trailers]
-
-        # Assign the dynamic choices for all truck and trailer fields
-        for i in range(1, 5):  # Adjust the range if you have more fields
+        # Dynamically set choices for truck and trailer fields
+        for i in range(1, 5):
             self.fields[f'truck_{i}'].choices = truck_choices
             self.fields[f'trailer_{i}'].choices = trailer_choices
 
-
+    
+        

@@ -11,7 +11,7 @@ class Vehicle(models.Model):
     ]
     name = models.CharField(max_length=100, null=True, blank=True)
     vehicle_type = models.CharField(max_length=10, choices=TYPE_CHOICES, null=True, blank=True)
-    number = models.CharField(max_length=50, null=True, blank=True)  
+    number = models.CharField(max_length=50,unique=True, null=True, blank=True)  
     last_inspection_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
@@ -20,11 +20,16 @@ class Vehicle(models.Model):
 
 # Availability Data Model
 class AvailabilityData(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE,null=True, blank=True)
+    vehicle = models.ForeignKey(Vehicle,related_name="availabilities", on_delete=models.CASCADE,null=True, blank=True)
     status = models.CharField(max_length=50, choices=[('In Service', 'In Service'), ('Out of Service', 'Out of Service')],null=True, blank=True)
     estimated_back_in_service_date = models.DateField(null=True, blank=True)
     back_in_service_date = models.DateField(null=True, blank=True)
     date_saved = models.DateTimeField(auto_now_add=True,null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)  
+    end_date = models.DateField(null=True, blank=True)  
+    
+    class Meta:
+        unique_together = ['vehicle', 'start_date']  # Ensures only one availability per vehicle per day
 
     def __str__(self):
         return f"{self.vehicle.vehicle_type.capitalize()} {self.vehicle.number} - {self.status}"
@@ -124,7 +129,7 @@ class Dispatch(models.Model):
     submitted_on = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"ipad {self.ipad} - {self.order.last_name_customer}"
+        return f"Job: {self.order.job_no} - {self.order.last_name_customer}"
 
 
 class Inspection(models.Model):

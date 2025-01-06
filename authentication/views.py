@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect
+from rest_framework.permissions import IsAuthenticated
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 from django.contrib import messages
@@ -25,13 +26,9 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 
 
-def check_email_availability(request):
-    email = request.GET.get("email", None)
-    data = {"is_taken": UserProfile.objects.filter(email__iexact=email).exists()}
-    return JsonResponse(data)
-
 
 class SignUpView(View):
+
     def get(self, request):
         form = SignUpForm()
         return render(request, "signup.html", {"form": form})

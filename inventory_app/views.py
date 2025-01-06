@@ -2,21 +2,26 @@ from django.shortcuts import render
 from .forms import InventoryAssignmentForm, InventoryForm, EmployeeForm, InventoryAssignmentForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.http import JsonResponse
+from rest_framework.permissions import IsAuthenticated
 from .models import Inventory
 
 def home(request):
+    permission_classes = [IsAuthenticated]
+
     """Render the home page."""
     return render(request, "home.html")
 
 
 def inventory_list(request):
+    permission_classes = [IsAuthenticated]
     """List all inventory items."""
     inventory = Inventory.objects.all()
     return render(request, "inventory_list.html", {"inventory": inventory})
 
 
 def add_inventory(request):
+    permission_classes = [IsAuthenticated]
+
     """Add a new inventory item."""
     if request.method == "POST":
         form = InventoryForm(request.POST)
@@ -29,6 +34,8 @@ def add_inventory(request):
 
 
 def add_employee(request):
+    permission_classes = [IsAuthenticated]
+
     """Add a new employee."""
     if request.method == "POST":
         form = EmployeeForm(request.POST)
@@ -41,6 +48,8 @@ def add_employee(request):
 
 
 def issue_uniform(request):
+    permission_classes = [IsAuthenticated]
+    
     """Issue uniforms to employees and update inventory."""
     if request.method == "POST":
         form = InventoryAssignmentForm(request.POST)
