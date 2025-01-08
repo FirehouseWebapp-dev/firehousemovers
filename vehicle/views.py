@@ -1,8 +1,6 @@
-from datetime import datetime
 import json
-import time
 from .models import AvailabilityData, Dispatch, Order, Vehicle
-from .forms import  DispatchForm, OrderForm, TruckAvailabilityForm
+from .forms import  DispatchForm, OrderForm
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from rest_framework.permissions import IsAuthenticated
@@ -409,12 +407,9 @@ class logistic_report(View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
-        print("Request GET: ", request.GET) 
         # Retrieve start and end dates from the GET request
         start_date_str = request.GET.get('start_date')
-        print("start_date_str: ",start_date_str)
         end_date_str = request.GET.get('end_date')
-        print("end_date_str: ",end_date_str)
 
         # Default to today if no date is provided
         if start_date_str and end_date_str:

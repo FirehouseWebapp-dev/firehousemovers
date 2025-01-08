@@ -1,0 +1,37 @@
+{% extends "station_base.html" %}
+{% load static %}
+{% block content %}
+
+    <!-- Navbar -->
+    <nav class="bg-white text-red-500 text-3xl py-4 px-6 shadow-lg">
+        <div class="flex justify-center items-center">
+            <h1 class="text-xl font-bold">Station {{ station_number }} - Reports</h1>
+        </div>
+    </nav>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white shadow-lg flex justify-center space-x-4 py-4">
+        <div>
+            <a href="{% url 'report' station_number=station_number %}?tab=order_report" class="py-2 px-4 rounded bg-red-600 text-white">Order Status</a>
+        </div>
+        <div>
+            <a href="{% url 'report' station_number=station_number %}?tab=vehicle_report"class="py-2 px-4 rounded bg-gray-200 text-red-600 hover:bg-red-600 hover:text-white">Vehicle Service</a>
+        </div>
+        <div>
+            <a href="{% url 'report' station_number=station_number %}?tab=station_overview"class="py-2 px-4 rounded bg-gray-200 text-red-600 hover:bg-red-600 hover:text-white">Station Overview</a>
+        </div>
+        <div>
+            <a href="{% url 'report' station_number=station_number %}?tab=station_summary" class="py-2 px-4 rounded bg-gray-200 text-red-600 hover:bg-red-600 hover:text-white">Station Summary</a>
+        </div>
+    </div>
+    
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-6 px-4">
+        {% block text %}
+        <!-- Content will be injected here -->
+        {% endblock %}
+    </main>
+
+
+{% endblock %}

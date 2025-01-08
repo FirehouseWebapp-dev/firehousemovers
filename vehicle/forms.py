@@ -1,8 +1,5 @@
-from django.utils import timezone
 from django.db.models import Prefetch
-from django.db.models.functions import TruncDate
 from django import forms
-
 from authentication.models import UserProfile
 from .models import AvailabilityData, Dispatch,Order, Vehicle
 from django.db.models import Prefetch

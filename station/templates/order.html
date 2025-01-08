@@ -1,0 +1,92 @@
+{% extends "station_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto max-w-3xl">
+    <h2 class="text-3xl font-bold mb-4 text-center text-red-600">Station {{ station_number }} - {{ type }} Order Request</h2>
+
+    <!-- Scrollable Form Container -->
+    <div class="max-h-[calc(100vh-150px)] overflow-y-auto bg-white rounded-lg shadow-md">
+        <form method="post" id="order_form" action="{% url 'order' station_number type %}">
+            {% csrf_token %}
+
+            <!-- Order Details -->
+            <div class="bg-white border border-gray-300 rounded-lg shadow p-6 space-y-4">
+
+                <!-- Order Date -->
+                <div>
+                    <label for="id_date" class="block text-gray-700 font-medium mb-2">Order Date:</label>
+                    {{ form.date }}
+                </div>
+
+                <!-- Requested By -->
+                <div>
+                    <label for="id_requested_by" class="block text-gray-700 font-medium mb-2">Requested By:</label>
+                    {{ form.requested_by }}
+                </div>
+
+                <!-- Item Description -->
+                <div>
+                    <label for="id_item_description" class="block text-gray-700 font-medium mb-2">Item Description:</label>
+                    {{ form.item_description }}
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                    <label for="id_quantity" class="block text-gray-700 font-medium mb-2">Quantity:</label>
+                    {{ form.quantity }}
+                </div>
+
+                <!-- Urgency Level -->
+                <div>
+                    <label for="id_urgency_level" class="block text-gray-700 font-medium mb-2">Urgency Level:</label>
+                    {{ form.urgency_level }}
+                </div>
+
+            </div>
+        </form>
+
+        <!-- Submit Button -->
+        <div class="sticky bottom-0 bg-white py-1 flex justify-center shadow-md">
+            <button type="submit" form="order_form" class="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-full shadow-lg transform transition duration-200 ease-in-out hover:scale-105">
+                Submit Order
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="w-full mr-4">
+        <h3 class="text-xl font-semibold text-red-500 m-4 text-center">Recent {{ type }} Orders</h3>
+        <div class="overflow-x-auto max-h-[calc(100vh-670px)] overflow-y-auto">
+            <table class="table-auto w-full border-collapse border border-gray-200">
+                <thead class="bg-red-600">
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">Date</th>
+                        <th class="border border-gray-300 p-2 text-left">Requested By</th>
+                        <th class="border border-gray-300 p-2 text-left">Description</th>
+                        <th class="border border-gray-300 p-2 text-left">Quantity</th>
+                        <th class="border border-gray-300 p-2 text-left">Submitted By</th>
+                        <th class="border border-gray-300 p-2 text-left">Status</th>
+                        <th class="border border-gray-300 p-2 text-left">Approved On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in fleet_orders %}
+                    <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                        <td class="border border-gray-300 p-2">{{ order.date }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.requested_by }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.item_description }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.quantity }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.submitted_by }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.status }}</td>
+                        <td class="border border-gray-300 p-2">{{ order.approved_on }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

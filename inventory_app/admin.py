@@ -3,6 +3,3 @@ from inventory_app.models import InventoryAssignment, Inventory, Employee
 
 # Register your models here.
 
-admin.site.register(InventoryAssignment)
-admin.site.register(Inventory)
-admin.site.register(Employee)

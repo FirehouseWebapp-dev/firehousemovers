@@ -1,11 +1,8 @@
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import login
 from django.shortcuts import redirect
-from rest_framework.permissions import IsAuthenticated
-from django.urls import reverse_lazy
 from django.views.generic import FormView
 from django.contrib import messages
-from django.http import JsonResponse
 from django.views import View
 from authentication.forms import EmailAuthenticationForm, SignUpForm
 from .models import UserProfile
@@ -19,7 +16,6 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
-from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth import REDIRECT_FIELD_NAME

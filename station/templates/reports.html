@@ -1,0 +1,279 @@
+{% extends "base_template.html" %}
+{% block text %}
+
+<!-- Date Filters -->
+<div class="bg-white shadow-lg rounded-lg p-2 mb-4">
+    <h2 class="text-xl font-bold text-red-600 text-center">{{ title }}</h2>
+
+    <!-- Form -->
+    <form method="get" action="" class="flex flex-wrap items-center justify-center gap-4">
+        <input type="hidden" name="tab" value="{{ active_tab }}">
+
+        <!-- Start Date -->
+        <div class="flex flex-col items-start">
+            <label for="start_date" class="text-sm font-medium text-gray-700">Start Date</label>
+            <input type="date" class="border rounded-md px-3 py-2" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+
+        <!-- End Date -->
+        <div class="flex flex-col items-start">
+            <label for="end_date" class="text-sm font-medium text-gray-700">End Date</label>
+            <input type="date" class="border rounded-md px-3 py-2" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+
+        <!-- Update Report Button -->
+        <div>
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md shadow">
+                Update Report
+            </button>
+        </div>
+
+        <!-- Reset Dates Button -->
+        <div>
+            <a href="?tab={{ active_tab }}" class="bg-gray-400 text-white px-4 py-2 rounded-md shadow flex items-center justify-center">
+                Reset Dates
+            </a>
+        </div>
+    </form>
+</div>
+
+
+<!-- Report Content -->
+{% if active_tab == "order_report" %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Fleet Orders Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Fleet Orders Summary</h3>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Total Orders</h4>
+                    <p class="text-xl font-bold text-red-600">{{ fleet_total_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Pending</h4>
+                    <p class="text-xl font-bold text-yellow-600">{{ fleet_pending_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Approved</h4>
+                    <p class="text-xl font-bold text-green-600">{{ fleet_approved_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Rejected</h4>
+                    <p class="text-xl font-bold text-red-600">{{ fleet_rejected_orders }}</p>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+                <table class="w-full border text-sm">
+                    <thead>
+                        <tr class="bg-red-600 text-white">
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Requested By</th>
+                            <th class="py-2 px-4">Description</th>
+                            <th class="py-2 px-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in fleet_orders %}
+                        <tr class="even:bg-white">
+                            <td class="py-2 px-4">{{ order.date }}</td>
+                            <td class="py-2 px-4">{{ order.requested_by }}</td>
+                            <td class="py-2 px-4">{{ order.item_description }}</td>
+                            <td class="py-2 px-4">{{ order.status }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">No fleet orders available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Office Supply Orders Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Office Supply Orders Summary</h3>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Total Orders</h4>
+                    <p class="text-xl font-bold text-red-600">{{ office_total_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Pending</h4>
+                    <p class="text-xl font-bold text-yellow-600">{{ office_pending_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Approved</h4>
+                    <p class="text-xl font-bold text-green-600">{{ office_approved_orders }}</p>
+                </div>
+                <div class="text-center bg-white p-1 rounded-md">
+                    <h4 class="text-lg font-bold">Rejected</h4>
+                    <p class="text-xl font-bold text-red-600">{{ office_rejected_orders }}</p>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+                <table class="w-full border text-sm">
+                    <thead>
+                        <tr class="bg-red-600 text-white">
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Requested By</th>
+                            <th class="py-2 px-4">Description</th>
+                            <th class="py-2 px-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in office_orders %}
+                        <tr class="even:bg-white">
+                            <td class="py-2 px-4">{{ order.date }}</td>
+                            <td class="py-2 px-4">{{ order.requested_by }}</td>
+                            <td class="py-2 px-4">{{ order.item_description }}</td>
+                            <td class="py-2 px-4">{{ order.status }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">No office supply orders available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% elif active_tab == "vehicle_report" %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Truck Service Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Truck Service Summary</h3>
+
+            <!-- Table -->
+            <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+                <table class="w-full border text-sm">
+                    <thead>
+                        <tr class="bg-red-600 text-white">
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Truck</th>
+                            <th class="py-2 px-4">Service Type</th>
+                            <th class="py-2 px-4">Description</th>
+                            <th class="py-2 px-4">Technician</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for truck in truck_inspection %}
+                        <tr class="even:bg-white">
+                            <td class="py-2 px-4">{{ truck.date }}</td>
+                            <td class="py-2 px-4">{{ truck.vehicle }}</td>
+                            <td class="py-2 px-4">{{ truck.type }}</td>
+                            <td class="py-2 px-4">{{ truck.description }}</td>
+                            <td class="py-2 px-4">{{ truck.technician }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">No Truck inspection available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trailer Service Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Trailer Service Summary</h3>
+
+            <!-- Table -->
+            <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+                <table class="w-full border text-sm">
+                    <thead>
+                        <tr class="bg-red-600 text-white">
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Trailer</th>
+                            <th class="py-2 px-4">Service Type</th>
+                            <th class="py-2 px-4">Description</th>
+                            <th class="py-2 px-4">Technician</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trailer in trailer_inspection %}
+                        <tr class="even:bg-white">
+                            <td class="py-2 px-4">{{ trailer.date }}</td>
+                            <td class="py-2 px-4">{{ trailer.vehicle }}</td>
+                            <td class="py-2 px-4">{{ trailer.type }}</td>
+                            <td class="py-2 px-4">{{ trailer.description }}</td>
+                            <td class="py-2 px-4">{{ trailer.technician }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">No Trailer inspection available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif active_tab == "station_overview" %}
+    <!-- Similar structure for station overview -->
+    <div class="grid grid-cols-2 gap-6">
+        <!-- Fleet Orders Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Station 1 Overview</h3>
+
+            <div>
+                <p class="text-lg font-bold text-red-600 mb-4 text-center">Last Inspection: {{station1_overview.date}}</p>
+                <p class="text-lg">Issue Requiring Attention</p>
+                <p class="text-lg text-red-500">Tools Area Inventory: {{station1_overview.inventory_status}}</p>
+                <p class="text-lg">Missing Tools</p>
+            </div>
+        </div>
+
+        <!-- Office Supply Orders Summary -->
+        <div class="bg-gray-100 rounded-lg p-4">
+            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Station 2 Overview</h3>
+
+            <div>
+                <p class="text-lg font-bold text-red-600 mb-4 text-center">Last Inspection: {{station2_overview.date}}</p>
+                <p class="text-lg">Issue Requiring Attention</p>
+                <p class="text-lg ">Tools Area Inventory: </p>
+                <p class="text-lg text-red-500">{{station2_overview.inventory_status}}</p>
+                <p class="text-lg">Missing Tools:</p>
+                <p class="text-lg text-red-500">{{station2_overview.missing_tools}}</p>
+            </div>
+        </div>
+    </div>
+{% elif active_tab == "station_summary" %}
+    <!-- Similar structure for station summary -->
+        <!-- Fleet Orders Summary -->
+        <div class="bg-gray-100 rounded-lg p-4 overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
+            <!-- Table -->
+            <table class="w-full border">
+                <thead>
+                    <tr class="bg-red-600 text-white">
+                        <th class="py-2 px-4">Date</th>
+                        <th class="py-2 px-4">Back Lot Cleanliness</th>
+                        <th class="py-2 px-4">Back Lot Maintenance</th>
+                        <th class="py-2 px-4">Front Yard Cleanliness</th>
+                        <th class="py-2 px-4">Front Yard Landscaping</th>
+                        <th class="py-2 px-4">Tool Inventory</th>
+                        <th class="py-2 px-4">Missing Tools</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for station in station_details %}
+                    <tr class="even:bg-white">
+                        <td class="py-2 px-4">{{ station.date }}</td>
+                        <td class="py-2 px-4">{{ station.back_lot_cleanliness }}</td>
+                        <td class="py-2 px-4">{{ station.back_lot_maintenance }}</td>
+                        <td class="py-2 px-4">{{ station.front_yard_cleanliness }}</td>
+                        <td class="py-2 px-4">{{ station.front_yard_landscaping }}</td>
+                        <td class="py-2 px-4">{{ station.inventory_status }}</td>
+                        <td class="py-2 px-4">{{ station.missing_tools }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4 text-gray-500">No Station summary available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+{% endif %}
+
+{% endblock %}

@@ -1,5 +1,4 @@
 from django.db import models
-
 from authentication.models import UserProfile
 
 
@@ -131,21 +130,6 @@ class Dispatch(models.Model):
     def __str__(self):
         return f"Job: {self.order.job_no} - {self.order.last_name_customer}"
 
-
-class Inspection(models.Model):
-    INSPECTION_TYPE_CHOICES = [
-        ('truck', 'Truck'),
-        ('trailer', 'Trailer'),
-    ]
-    inspection_type = models.CharField(max_length=10, choices=INSPECTION_TYPE_CHOICES,null=True, blank=True)
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE,null=True, blank=True)
-    inspected_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE,null=True, blank=True)
-    date = models.DateField(null=True, blank=True)
-    condition_report = models.TextField(null=True, blank=True)
-    notes = models.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.inspection_type.capitalize()} Inspection - {self.vehicle.number} on {self.date}"
 
 
 class Evaluation(models.Model):
