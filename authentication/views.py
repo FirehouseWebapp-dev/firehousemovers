@@ -16,7 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
@@ -191,3 +191,9 @@ class LogoutView(RedirectURLMixin, TemplateView):
             }
         )
         return context
+
+
+def check_email_availability(request):
+    email = request.GET.get("email", None)
+    data = {"is_taken": UserProfile.objects.filter(user__email=email).exists()}
+    return JsonResponse(data)

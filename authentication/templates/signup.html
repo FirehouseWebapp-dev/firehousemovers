@@ -37,23 +37,7 @@
                         </div>
                     </div>
 
-                    <!-- Email & Role -->
-                    <div class="flex gap-4">
-                        <div class="w-1/2">
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="w-1/2">
-                            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
-                            {{ form.role }}
-                            {% if form.role.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.role.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+                    
 
                     <!-- Password Fields -->
                     <div class="flex gap-4">
@@ -69,6 +53,24 @@
                             {{ form.password2 }}
                             {% if form.password2.errors %}
                                 <div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Email & Role -->
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="w-1/2">
+                            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                            {{ form.role }}
+                            {% if form.role.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.role.errors }}</div>
                             {% endif %}
                         </div>
                     </div>
