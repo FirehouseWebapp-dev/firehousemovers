@@ -117,88 +117,88 @@
                 <!-- Station 1 -->
                 <div id="station1" class="sidebar-section">
                     <button onclick="toggleSubMenu('station1-options')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">
-                        Station 1
+                        <i class="fa-solid fa-warehouse mr-2 text-xl"></i> Station 1
                     </button>
                 </div>
         
                 <!-- Station 2 -->
                 <div id="station2" class="sidebar-section">
                     <button onclick="toggleSubMenu('station2-options')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">
-                        Station 2
+                        <i class="fa-solid fa-warehouse mr-2 text-xl"></i> Station 2
                     </button>
                 </div>
         
                 <!-- Submenus -->
                 <!-- Station 1 Options -->
                 <div id="station1-options" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Vaults</a>
-                    <a href="{% url 'station_inspection' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Station Inspection</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Material</a>
-                    <button onclick="toggleSubMenu('station1-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet</button>
-                    <a href="{% url 'report' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Reports</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
+                    <a href="{% url 'station_inspection' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-check mr-2 text-xl"></i> Station Inspection</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i> Material</a>
+                    <button onclick="toggleSubMenu('station1-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Fleet</button>
+                    <a href="{% url 'report' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
                 </div>
         
                 <!-- Fleet Options for Station 1 -->
                 <div id="station1-fleet" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <button onclick="toggleSubMenu('station1-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Request Order List</button>
-                    <button onclick="toggleSubMenu('station1-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Inventory</button>
-                    <button onclick="toggleSubMenu('station1-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Management & Service</button>
+                    <button onclick="toggleSubMenu('station1-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-list mr-2 text-xl"></i> Request Order List</button>
+                    <button onclick="toggleSubMenu('station1-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-warehouse mr-2 text-xl"></i> Fleet Inventory</button>
+                    <button onclick="toggleSubMenu('station1-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-wrench mr-2 text-xl"></i>Fleet Management & Service</button>
                 </div>
 
                 <!-- Request Order List for Station 1 -->
                 <div id="station1-request-order" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="{% url 'order' station_number=1 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Orders</a>
-                    <a href="{% url 'order' station_number=1 type='office_supplies' %}"  class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Office Supplies</a>
+                    <a href="{% url 'order' station_number=1 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 flex-shrink-0 text-xl"></i> Fleet Orders</a>
+                    <a href="{% url 'order' station_number=1 type='office_supplies' %}"  class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-boxes-stacked mr-2 text-xl"></i> Office Supplies</a>
                 </div>
         
                 <!-- Fleet Inventory for Station 1 -->
                 <div id="station1-inventory" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Tool Management</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Cleanliness & Supplies</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fuel Management</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Bearing, Hub & Axle Service</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i>Tool Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-spray-can-sparkles mr-2 text-xl"></i>Fleet Cleanliness & Supplies</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gas-pump mr-2 text-xl"></i>Fuel Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gears mr-2 text-xl"></i>Bearing, Hub & Axle Service</a>
                 </div>
         
                 <!-- Fleet Management & Service for Station 1 -->
                 <div id="station1-management" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Truck Service</a>
-                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Trailer Service</a>
+                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Service</a>
+                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Service</a>
                 </div>
 
                 <!-- Station 2 Options (Same Structure as Station 1) -->
                 <div id="station2-options" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Vaults</a>
-                    <a href="{% url 'station_inspection' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Station Inspection</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Material</a>
-                    <button onclick="toggleSubMenu('station2-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet</button>
-                    <a href="{% url 'report' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Reports</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
+                    <a href="{% url 'station_inspection' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-check mr-2 text-xl"></i> Station Inspection</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i> Material</a>
+                    <button onclick="toggleSubMenu('station2-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Fleet</button>
+                    <a href="{% url 'report' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
                 </div>
 
                 <!-- Fleet Options for Station 2 -->
                 <div id="station2-fleet" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <button onclick="toggleSubMenu('station2-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Request Order List</button>
-                    <button onclick="toggleSubMenu('station2-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Inventory</button>
-                    <button onclick="toggleSubMenu('station2-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Management & Service</button>
+                    <button onclick="toggleSubMenu('station2-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-list mr-2 text-xl"></i> Request Order List</button>
+                    <button onclick="toggleSubMenu('station2-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-warehouse mr-2 text-xl"></i> Fleet Inventory</button>
+                    <button onclick="toggleSubMenu('station2-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-wrench mr-2 text-xl"></i> Fleet Management & Service</button>
                 </div>
 
                 <!-- Request Order List for Station 2 -->
                 <div id="station2-request-order" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="{% url 'order' station_number=2 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Orders</a>
-                    <a href="{% url 'order' station_number=2 type='office_supplies' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Office Supplies</a>
+                    <a href="{% url 'order' station_number=2 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2  text-xl"></i> Fleet Orders</a>
+                    <a href="{% url 'order' station_number=2 type='office_supplies' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-boxes-stacked mr-2 text-xl"></i>Office Supplies</a>
                 </div>
 
                 <!-- Fleet Inventory for Station 2 -->
                 <div id="station2-inventory" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Tool Management</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fleet Cleanliness & Supplies</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Fuel Management</a>
-                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Bearing, Hub & Axle Service</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i>Tool Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-spray-can-sparkles mr-2 text-xl"></i>Fleet Cleanliness & Supplies</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gas-pump mr-2 text-xl"></i>Fuel Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gears mr-2 text-xl"></i>Bearing, Hub & Axle Service</a>
                 </div>
         
                 <!-- Fleet Management & Service for Station 2 -->
                 <div id="station2-management" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Truck Service</a>
-                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">Trailer Service</a>
+                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Service</a>
+                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Service</a>
                 </div>
             </nav>
         </aside>

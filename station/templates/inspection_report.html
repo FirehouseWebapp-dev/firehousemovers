@@ -1,0 +1,275 @@
+{% extends "vehicle_inspection_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Report</h1>
+
+    <form method="get" action="{% url 'inspection_report' %}" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Date and Trailer Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="id_date" class="block text-gray-700 font-medium">Start Date</label>
+                <input type="date" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div>
+                <label for="id_trailer" class="block text-gray-700 font-medium">End Date</label>
+                <input type="date" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+
+            <div>
+                <label for="truck" class="block text-gray-700 font-medium">Select Truck:</label>
+                <select name="truck" id="truck" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                    <option value="">All</option>
+                    {% for truck in trucks %}
+                    <option value="{{ truck.id }}" {% if truck.id == truck %}selected{% endif %}>{{ truck.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="trailer" class="block text-gray-700 font-medium">Select Trailer:</label>
+                <select name="trailer" id="trailer" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                    <option value="">All</option>
+                    {% for trailer in trailers %}
+                    <option value="{{ trailer.id }}" {% if trailer.id == trailer %}selected{% endif %}>{{ trailer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div>
+            <label for="report" class="block text-gray-700 font-medium">Select Report:</label>
+            <select name="report" id="report" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                <option value="">Select a Report</option>
+                <option value="frequency" {% if report == "frequency" %}selected{% endif %}>Inspection Frequency Report</option>
+                <option value="equipment" {% if report == "equipment" %}selected{% endif %}>Missing Equipment Report</option>
+                <option value="comparison" {% if report == "comparison" %}selected{% endif %}>Driver V/S Operation Manager Inspection Comparison</option>
+                <option value="readiness" {% if report == "readiness" %}selected{% endif %}>Vehicle Readiness Report</option>
+                <option value="activity" {% if report == "activity" %}selected{% endif %}>User Activity Report</option>
+            </select>
+        </div>
+
+        <div id="report-description" class="mt-4 text-gray-600">
+            <!-- Default description text that will change based on selection -->
+            <p>Select a report to see its description here.</p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-full hover:bg-red-700">
+                Generate Report
+            </button>
+        </div>
+
+    </form>
+
+    <!-- Report Table -->
+    {% if inspections %}
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold text-center mb-4">Generated Report</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Type</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Inspection Count</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection Date</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Days Since Last Inspection</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inspection in inspections %}
+                <tr>
+                    <td class="px-6 py-4">{{ inspection.vehicle.name }}</td>
+                    <td class="px-6 py-4">{{ inspection.vehicle.vehicle_type }}</td>
+                    <td class="px-6 py-4">{{ inspection.inspection_count }}</td>
+                    <td class="px-6 py-4">{{ inspection.last_inspection }}</td>
+                    <td class="px-6 py-4">{{ inspection.inspection_difference }} Days</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-gray-600">No data available for the selected report.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+
+    {% if equipment_report %}
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold text-center mb-4">Generated Report</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Missing-Not Restocked Items</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Inspection Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in equipment_report %}
+                    <tr>
+                        <td class="px-6 py-4" rowspan="{{ report.missing_items|length }}">{{ report.vehicle.name }}</td>
+                        <td class="px-6 py-4">
+                            {% for item in report.missing_items %}
+                                <div class="text-gray-600">{{ item.item }}</div>
+                            {% endfor %}
+                        </td>
+                        <td class="px-6 py-4" rowspan="{{ report.missing_items|length }}">
+                            {{ report.missing_items.0.inspection_date }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 text-center text-gray-600">No missing items found for the selected report.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {%if readiness_report%}
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold text-center mb-4">Vehicle Readiness Report</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Vehicle Type</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Readiness Score (%)</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Ready Items</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Total Items</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in readiness_report %}
+                    <tr>
+                        <td class="px-6 py-4">{{ report.vehicle.name }}</td>
+                        <td class="px-6 py-4">{{ report.vehicle_type }}</td>
+                        <td class="px-6 py-4">{{ report.last_inspection }}</td>
+                        <td class="px-6 py-4">{{ report.readiness_score }}%</td>
+                        <td class="px-6 py-4">{{ report.ready_items }}</td>
+                        <td class="px-6 py-4">{{ report.total_items }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-600">No readiness data found for the selected report.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {%if activity_report%}
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold text-center mb-4">User Activity Report</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-600">User</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Role</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Inspection Count</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in activity_report %}
+                    <tr class="border-t">
+                        <td class="px-6 py-4">{{ user.user__username }}</td>
+                        <td class="px-6 py-4">{{ user.role }}</td>
+                        <td class="px-6 py-4">{{ user.inspections_count }}</td>
+                        <td class="px-6 py-4">{{ user.last_inspection_date|date:"Y-m-d" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-600">No activity data found for the selected report.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {%if comparison_report%}
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold text-center mb-4">Inspection Comparison Report</h2>
+        <table class="min-w-full bg-white shadow-md rounded-lg">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Driver</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Manager</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Inspection Date</th>
+                    <th class="px-6 py-3 text-left text-gray-600">Discrepancies</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in comparison_report %}
+                    <tr class="border-t">
+                        <td class="px-6 py-4">{{ report.vehicle }}</td>
+                        <td class="px-6 py-4">{{ report.driver }}</td>
+                        <td class="px-6 py-4">{{ report.manager }}</td>
+                        <td class="px-6 py-4">{{ report.inspection_date|date:"Y-m-d" }}</td>
+                        <td class="px-6 py-4">
+                            <ul class="list-disc pl-6">
+                                {% for discrepancy in report.discrepancies %}
+                                    <li>{{ discrepancy }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-600">No discrepancies found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+</div>
+
+<script>
+    // Function to update the description based on selected report
+    document.getElementById('report').addEventListener('change', function() {
+        var selectedReport = this.value;
+        var descriptionElement = document.getElementById('report-description');
+        
+        // Clear previous text
+        descriptionElement.innerHTML = '';
+
+        // Set description based on selected report
+        switch(selectedReport) {
+            case 'frequency':
+                descriptionElement.innerHTML = '<i>This report shows how often each vehicle is being inspected and highlights vehicles that have not been inspected recently.</i>';
+                break;
+            case 'equipment':
+                descriptionElement.innerHTML = "<i>This report lists all items marked as 'Missing-Not Restocked' for each vehicle, helping prioritize restocking efforts.</i>";
+                break;
+            case 'comparison':
+                descriptionElement.innerHTML = '<i>This report compares inspection results between drivers and operations managers for the same vehicle, highlighting discrepancies.</i>';
+                break;
+            case 'readiness':
+                descriptionElement.innerHTML = '<i>This report provides a quick overview of which vehicles are fully equipped and ready for use based on their latest inspection.</i>';
+                break;
+            case 'activity':
+                descriptionElement.innerHTML = '<i>This report shows how many inspections each user (driver or operations manager) has completed within the selected date range.</i>';
+                break;
+            default:
+                descriptionElement.innerHTML = '<i>Select a report to see its description here.</i>';
+                break;
+        }
+    });
+</script>
+
+{% endblock %}

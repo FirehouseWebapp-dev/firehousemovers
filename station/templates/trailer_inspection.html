@@ -1,0 +1,65 @@
+{% extends "vehicle_inspection_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Trailer Inspection Form</h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Date and Trailer Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="id_date" class="block text-gray-700 font-medium">Inspection Date</label>
+                {{ form.date }}
+            </div>
+            <div>
+                <label for="id_trailer" class="block text-gray-700 font-medium">Trailer</label>
+                {{ form.trailer }}
+            </div>
+        </div>
+
+        <!-- Trailer Trash Status -->
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-red-600">Trailer Trash Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="id_clean_status" class="block text-gray-700 font-medium">Clean/Wash/Detailed</label>
+                    {{ form.clean_status }}
+                </div>
+                <div>
+                    <label for="id_trash" class="block text-gray-700 font-medium">Trash</label>
+                    {{ form.trash }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipment Checklist -->
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-red-600">Equipment Checklist</h2>
+            <!-- Add a scrollable container -->
+            <div class="overflow-y-auto max-h-[calc(100vh-250px)]">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {% for field in form %}
+                        {% if field.name not in excluded_fields %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="block text-gray-700 font-medium">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+                Submit Inspection
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
