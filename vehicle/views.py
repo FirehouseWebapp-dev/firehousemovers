@@ -199,7 +199,6 @@ class JobLogisticsPage(View):
             form2 = DispatchForm(request.POST)
 
             if form2.is_valid():
-                print("form2----",form2)
                 selected_order_id = request.POST.get("selected_pending_order")
                 if selected_order_id:
                     try:

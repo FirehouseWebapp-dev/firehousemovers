@@ -20,10 +20,36 @@
             <h1 class="text-lg sm:text-xl md:text-2xl font-bold py-4 px-2 sm:px-4 md:px-6">FireHouse Movers</h1>
             <nav class="flex-grow">
                 <ul class="space-y-2 px-2 sm:px-4">
-                    <li><a href="{% url 'vehicle_availability' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Truck & Trailer Availability</a></li>
-                    <li><a href="{% url 'job_logistics' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Job Logistics Form</a></li>
-                    <li><a href="{% url 'availability_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Availability Report</a></li>
-                    <li><a href="{% url 'logistic_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500">Job Logistics Report</a></li>
+                    <li>
+                        <a href="{% url 'vehicle_availability' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500 flex items-center">
+                          <i class="fa-solid fa-truck mr-2 flex-shrink-0 text-xl"></i>
+                          <span class="ml-2">Truck & Trailer Availability</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'job_logistics' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500 flex items-center">
+                            <i class="fa-solid fa-clipboard mr-2 flex-shrink-0 text-xl"></i>
+                            <span class="ml-2">Job Logistics Form</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{% url 'availability_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500 flex items-center">
+                          <i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i>
+                          <span class="ml-2">Availability Report</span>
+                        </a>
+                      </li>
+                      
+                      
+                      
+                      <li>
+                        <a href="{% url 'logistic_report' %}" class="block py-2 px-4 rounded hover:bg-opacity-90 bg-white text-red-500 flex items-center">
+                          <i class="fa-solid fa-file-lines mr-2 flex-shrink-0 text-xl"></i>
+                          <span class="ml-2">Job Logistics Report</span>
+                        </a>
+                      </li>
+                      
                 </ul>
             </nav>
         </aside>
