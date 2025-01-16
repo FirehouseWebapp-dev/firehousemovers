@@ -1,0 +1,198 @@
+{% extends "availability_logistic_base.html" %}
+{% block content %}
+
+<div class="container mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+    <!-- Title -->
+    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Order Report</h2>
+
+    <!-- Date Filters -->
+    <form method="get" action="" class="mb-8">
+        <!-- Date Filters -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div>
+                <label for="start_date" class="block font-medium text-gray-700">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" 
+                    class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full max-w-full">
+            </div>
+            <div>
+                <label for="end_date" class="block font-medium text-gray-700">End Date:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" 
+                    class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full max-w-full">
+            </div>
+        </div>
+    
+        <!-- Report Options (Buttons) -->
+        <div class="flex space-x-4 justify-start flex-nowrap mb-8 overflow-x-auto">
+            <!-- Daily Job Summary -->
+            <button type="submit" name="report_type" value="daily_job_summary" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+                <h3 class="font-bold">Daily Job Summary</h3>
+            </button>
+            <!-- Crew Performance -->
+            <button type="submit" name="report_type" value="crew_performance" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+                <h3 class="font-bold">Crew Performance</h3>
+            </button>
+            <!-- Vehicle Utilization -->
+            <button type="submit" name="report_type" value="vehicle_utilization" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+                <h3 class="font-bold">Vehicle Utilization</h3>
+            </button>
+            <!-- Referral Effectiveness -->
+            <button type="submit" name="report_type" value="referral_effectiveness" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+                <h3 class="font-bold">Referral Effectiveness</h3>
+            </button>
+        </div>
+    </form>
+    
+    
+
+
+    <!-- Report Section -->
+    <div class="flex justify-between">
+        {% if report_type == "daily_job_summary" %}
+        <div class="w-full mr-4 overflow-x-auto overflow-y-auto max-h-[500px]">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Daily Job Summary</h3>
+            <table class="table-auto w-full border-collapse border border-gray-200">
+                <thead class="bg-red-600">
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">Date</th>
+                        <th class="border border-gray-300 p-2 text-left">Job #</th>
+                        <th class="border border-gray-300 p-2 text-left">Last Name Customer</th>
+                        <th class="border border-gray-300 p-2 text-left">Phone No</th>
+                        <th class="border border-gray-300 p-2 text-left">Type of Move</th>
+                        <th class="border border-gray-300 p-2 text-left">Moved Before Y/N</th>
+                        <th class="border border-gray-300 p-2 text-left">Moved Before Crew Name</th>
+                        <th class="border border-gray-300 p-2 text-left">Referral Source</th>
+                        <th class="border border-gray-300 p-2 text-left">Crew Available?</th>
+                        <th class="border border-gray-300 p-2 text-left"># of Trucks</th>
+                        <th class="border border-gray-300 p-2 text-left"># of Trailers</th>
+                        <th class="border border-gray-300 p-2 text-left">Notes Order Detail</th>
+                        <th class="border border-gray-300 p-2 text-left">Saved By</th>
+                        <th class="border border-gray-300 p-2 text-left">Saved On</th>
+                        <th class="border border-gray-300 p-2 text-left">IPAD</th>
+                        <th class="border border-gray-300 p-2 text-left">Crew Leads</th>
+                        <th class="border border-gray-300 p-2 text-left">Drivers</th>
+                        <th class="border border-gray-300 p-2 text-left">Truck #1</th>
+                        <th class="border border-gray-300 p-2 text-left">Trailer #1</th>
+                        <th class="border border-gray-300 p-2 text-left">Truck #2</th>
+                        <th class="border border-gray-300 p-2 text-left">Trailer #2</th>
+                        <th class="border border-gray-300 p-2 text-left">Truck #3</th>
+                        <th class="border border-gray-300 p-2 text-left">Trailer #3</th>
+                        <th class="border border-gray-300 p-2 text-left">Truck #4</th>
+                        <th class="border border-gray-300 p-2 text-left">Trailer #4</th>
+                        <th class="border border-gray-300 p-2 text-left">Material</th>
+                        <th class="border border-gray-300 p-2 text-left">Special Equipment Needed</th>
+                        <th class="border border-gray-300 p-2 text-left">Special Equipment Status</th>
+                        <th class="border border-gray-300 p-2 text-left">Speedy Inventory Account</th>
+                        <th class="border border-gray-300 p-2 text-left">Speedy Inventory Crew Assignment</th>
+                        <th class="border border-gray-300 p-2 text-left">Labels Printed For Speedy Inventory</th>
+                        <th class="border border-gray-300 p-2 text-left">Note Dispatcher</th>
+                        <th class="border border-gray-300 p-2 text-left">Submitted By</th>
+                        <th class="border border-gray-300 p-2 text-left">Submitted On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in job_summary %}
+                    <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                        <td class="border border-gray-300 p-2">{{ job.date }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.job_no }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.last_name_customer }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.phone_number }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.type_of_move }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.moved_before }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.moved_before_crew_name }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.referral_source }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.crew_available }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.number_of_trucks }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.number_of_trailers }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.notes_order_detail }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.saved_by }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.saved_on }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__ipad }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__crew_leads }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__drivers }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__truck_1 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__trailer_1 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__truck_2 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__trailer_2 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__truck_3 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__trailer_3 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__truck_4 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__trailer_4 }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__material }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__special_equipment_needed }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__special_equipment_status }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__speedy_inventory_account }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__speedy_inventory }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__labels_for_speedy_inventory }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__notes_dispatcher }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__submitted_by }}</td>
+                        <td class="border border-gray-300 p-2">{{ job.dispatches__submitted_on }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif report_type == "crew_performance" %}
+        <div class="w-full mr-4 overflow-y-auto max-h-[500px]">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Crew Performance</h3>
+            <table class="table-auto w-full border-collapse border border-gray-200">
+                <thead class="bg-red-600">
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">Crew</th>
+                        <th class="border border-gray-300 p-2 text-left">Jobs Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crew in crew_performance %}
+                    <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                        <td class="border border-gray-300 p-2">{{ crew.order__crew_name }}</td>
+                        <td class="border border-gray-300 p-2">{{ crew.total_dispatch_orders }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif report_type == "vehicle_utilization" %}
+        <div class="w-full mr-4 overflow-y-auto max-h-[500px]">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Vehicle Utilization</h3>
+            <table class="table-auto w-full border-collapse border border-gray-200">
+                <thead class="bg-red-600">
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">Truck/Trailer</th>
+                        <th class="border border-gray-300 p-2 text-left">Utilization</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle in vehicle_utilization %}
+                <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                    <td class="border border-gray-300 p-2">{{ vehicle.vehicle }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.utilization }}</td>
+                </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif report_type == "referral_effectiveness" %}
+        <div class="w-full mr-4">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Referral Effectiveness</h3>
+            <table class="table-auto w-full border-collapse border border-gray-200">
+                <thead class="bg-red-600">
+                    <tr>
+                        <th class="border border-gray-300 p-2 text-left">Referral Source</th>
+                        <th class="border border-gray-300 p-2 text-left">Jobs Referred</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for referral in referral_effectiveness %}
+                    <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                        <td class="border border-gray-300 p-2">{{ referral.referral_source }}</td>
+                        <td class="border border-gray-300 p-2">{{ referral.job_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

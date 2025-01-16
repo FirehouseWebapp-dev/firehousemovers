@@ -1,0 +1,86 @@
+{% extends "station_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto max-w-3xl">
+    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">{{vehicle}} Service record</h2>
+
+    <!-- Scrollable Form Container -->
+    <div class="max-h-[calc(100vh-150px)] overflow-y-auto bg-white rounded-lg shadow-md">
+        <form method="post" id="truck_inspection_form" class="" action="{% url 'vehicle_inspection' station_number vehicle %}">
+            {% csrf_token %}
+
+            <!-- Truck and Technician Details -->
+            <div class="bg-white border border-gray-300 rounded-lg shadow p-6 space-y-2">
+
+                <!-- Vehicle Section -->
+                <div>
+                    <label for="id_vehicle" class="block text-gray-700 font-medium mb-2">{{vehicle}}:</label>
+                    {{ form.vehicle }}
+                </div>
+
+                <!-- Service Date Section -->
+                <div>
+                    <label for="id_date" class="block text-gray-700 font-medium mb-2">Service Date:</label>
+                    {{ form.date }}
+                </div>
+
+                <!-- Service Type Section -->
+                <div>
+                    <label for="id_type" class="block text-gray-700 font-medium mb-2">Service Type:</label>
+                    {{ form.type }}
+                </div>
+
+                <!-- Technician Section -->
+                <div>
+                    <label for="id_technician" class="block text-gray-700 font-medium mb-2">Technician:</label>
+                    {{ form.technician }}
+                </div>
+
+                <!-- Service Description Section -->
+                <div>
+                    <label for="id_description" class="block text-gray-700 font-medium mb-2">Service Description:</label>
+                    {{ form.description }}
+                </div>
+
+            </div>
+        </form>
+        <div class="sticky bottom-0 bg-white py-2 flex justify-center shadow-md mt-2">
+            <button type="submit" form="truck_inspection_form" class="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-full shadow-lg transform transition duration-200 ease-in-out hover:scale-105">
+                Submit Service Record
+            </button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="w-full mr-4 overflow-x-auto max-h-[calc(100vh-600px)] overflow-y-auto">
+        <h3 class="text-xl font-semibold text-red-500 m-4 text-center">Recent {{vehicle}} Service Records</h3>
+        <table class="table-auto w-full border-collapse border border-gray-200">
+            <thead class="bg-red-600">
+                <tr>
+                    <th class="border border-gray-300 p-2 text-left"> {{vehicle}}</th>
+                    <th class="border border-gray-300 p-2 text-left">Date</th>
+                    <th class="border border-gray-300 p-2 text-left">Service Type</th>
+                    <th class="border border-gray-300 p-2 text-left">Description</th>
+                    <th class="border border-gray-300 p-2 text-left">Technician</th>
+                    <th class="border border-gray-300 p-2 text-left">Submitted By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in Vehicle_inspections %}
+                <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                    <td class="border border-gray-300 p-2">{{ vehicle.vehicle }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.date }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.type }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.description }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.technician }}</td>
+                    <td class="border border-gray-300 p-2">{{ vehicle.submitted_by }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

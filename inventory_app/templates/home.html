@@ -1,50 +1,89 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firehouse Movers Forms</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <header class="header">
-        <div class="logo">
-            <h1>Fire House Movers</h1>
-        </div>
-        <nav class="navbar">
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">Truck Availability & Job Logistics</a></li>
-                <li><a href="#">FireHouse Stations</a></li>
-                <li><a href="#">Truck & Trailer Inspection</a></li>
-                <li><a href="#">On-site Inspection</a></li>
-            </ul>
-        </nav>
-    </header>
+{% block body %}
+{% include "navbar.html" %}
 
-    <section class="welcome-section">
-        <h2>Welcome to Firehouse Movers Forms</h2>
-        <div class="grid-container">
-            <div class="grid-item">
-                <img src="{% static 'images/firehouse_movers.jpg' %}" alt="Truck">
-                <h3>Truck Availability & Job Logistics</h3>
-            </div>
-            <div class="grid-item">
-                <img src="{% static 'images/truck_inspection.jpg' %}" alt="Trailer">
-                <h3>Truck & Trailer Inspection</h3>
-            </div>
-            <div class="grid-item">
-                <img src="{% static 'images/firehouse_station.jpg' %}" alt="Warehouse">
-                <h3>Firehouse Stations</h3>
-            </div>
-            <!-- Add more items as needed -->
+<!-- Welcome Section -->
+<section class="text-center mb-5">
+    <div class="text-5xl mb-5 mt-10 font-bold">
+        <h2 class="text-center uppercase font-serif">Welcome to Firehouse Movers Forms</h2>
+        <div class="mt-3 mx-auto w-4/5 h-3 bg-red-500 rounded-xl"></div>
+    </div>
+    
+    <!-- Grid Container for 3 Images -->
+    <div class="flex flex-wrap justify-center gap-12 mt-12">
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
+            <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
+            <h3 class="text-3xl mt-4">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
         </div>
-    </section>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
+            <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-4/5 rounded-md">
+            <h3 class="text-3xl mt-4">TRUCK & TRAILER INSPECTION</h3>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
+            <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md">
+            <h3 class="text-3xl mt-4">FIREHOUSE STATION</h3>
+        </div>
+    </div>
+</section>
 
-    <footer class="footer">
-        <p>© 2024 Firehouse Movers</p>
-    </footer>
-</body>
-</html>
+<!-- Additional Sections -->
+<section class="text-center mt-10">
+    <div class="flex flex-wrap justify-center gap-4">
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
+            <p class="mt-4">Uniform Inventory System</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">Gift Cards</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">On Site Inspection</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">Packaging & Supplies</p>
+        </div>
+    </div>
+</section>
+
+<section class="text-center mt-10">
+    <div class="flex flex-wrap justify-center gap-4">
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
+            <p class="mt-4">Marketing Inventory</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">Prizes & Acknowledgments Form</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">Employees Evaluation</p>
+        </div>
+        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
+            <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
+            <p class="mt-4">Fleet Fueling Status</p>
+        </div>
+    </div>
+</section>
+
+<!-- About Us Section -->
+<div class="text-left mt-10 px-4 sm:mx-10 md:mx-10 lg:ml-24 mb-5 text-center">
+    <div class="flex flex-col lg:flex-row md:flex-row sm:flex-row">
+        <!-- Footer Image -->
+        <div class="bg-white rounded-lg text-center w-full lg:w-4/5 sm:px-4"> <!-- Added sm:px-4 for 1padding on small screens -->
+            <img src="{% static 'images/footer.jpg' %}" alt="Truck" class="w-full h-full rounded-md">
+        </div>
+        <!-- About Us Text -->
+        <div class=" mt-12 lg:mr-24">
+            <h1 class="text-3xl font-bold">ABOUT US</h1>
+            <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

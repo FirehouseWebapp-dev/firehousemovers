@@ -1,0 +1,214 @@
+{% load static %}
+{% include "navbar.html" %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire House Sidebar</title>
+    <link rel="icon" href="{% static 'images/fire_house_logo.svg' %}" type="image/icon type">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        let submenuHistory = []; // Stack for submenu navigation history
+    
+        // Restore the last active menu state from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const lastActiveMenuId = localStorage.getItem('lastActiveMenuId');
+            if (lastActiveMenuId) {
+                showSubMenu(lastActiveMenuId, false); // Restore state without adding to history
+            } else {
+                showMainMenu(); // Default to the main menu
+            }
+        });
+    
+        function toggleSubMenu(id) {
+            const currentMenu = document.querySelector('.submenu:not(.hidden)');
+            if (currentMenu && currentMenu.id !== id) {
+                submenuHistory.push(currentMenu.id); // Save current menu in history if not the same
+            }
+    
+            document.querySelectorAll('.submenu').forEach((submenu) => {
+                submenu.classList.add('hidden'); // Hide all submenus
+            });
+    
+            const submenu = document.getElementById(id);
+            if (submenu) {
+                submenu.classList.remove('hidden'); // Show the selected submenu
+            }
+    
+            document.querySelectorAll('.sidebar-section').forEach((section) => {
+                section.classList.add('hidden'); // Hide main menu sections
+            });
+    
+            document.getElementById('back-button').classList.remove('hidden'); // Show back button
+    
+            // Save the current submenu ID in localStorage
+            localStorage.setItem('lastActiveMenuId', id);
+        }
+    
+        function goBack() {
+            if (submenuHistory.length > 0) {
+                const previousMenuId = submenuHistory.pop(); // Get the last menu from history
+                showSubMenu(previousMenuId, false); // Show the previous submenu without adding to history
+            } else {
+                showMainMenu(); // If no history, go back to the main menu
+            }
+        }
+    
+        function showMainMenu() {
+            document.querySelectorAll('.submenu').forEach((submenu) => {
+                submenu.classList.add('hidden'); // Hide all submenus
+            });
+    
+            document.querySelectorAll('.sidebar-section').forEach((section) => {
+                section.classList.remove('hidden'); // Show main menu sections
+            });
+    
+            document.getElementById('back-button').classList.add('hidden'); // Hide back button
+    
+            submenuHistory = []; // Reset history
+    
+            // Clear the last active menu ID from localStorage
+            localStorage.removeItem('lastActiveMenuId');
+        }
+    
+        function showSubMenu(id, addToHistory = true) {
+            document.querySelectorAll('.submenu').forEach((submenu) => {
+                submenu.classList.add('hidden'); // Hide all submenus
+            });
+    
+            const submenu = document.getElementById(id);
+            if (submenu) {
+                submenu.classList.remove('hidden'); // Show the specified submenu
+            }
+    
+            document.querySelectorAll('.sidebar-section').forEach((section) => {
+                section.classList.add('hidden'); // Hide main menu sections
+            });
+    
+            document.getElementById('back-button').classList.remove('hidden'); // Show back button
+    
+            if (addToHistory) {
+                submenuHistory.push(id); // Add to history only if explicitly required
+            }
+    
+            // Save the current submenu ID in localStorage
+            localStorage.setItem('lastActiveMenuId', id);
+        }
+    </script>
+    
+</head>
+<body style="font-family: sans-serif;">
+
+    <div class="flex h-screen ">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-red-700 text-white flex flex-col rounded-md transition-all duration-300 ease-in-out">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold py-4 px-2 sm:px-4 md:px-6">FireHouse Movers</h1>
+        
+            <!-- Back Button -->
+            <button id="back-button" onclick="goBack()" class="hidden py-2 px-4 bg-red-600 hover:bg-red-500 rounded mx-2">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        
+            <!-- Main Menu -->
+            <nav class="flex-grow space-y-2 px-2 sm:px-4">
+                <!-- Station 1 -->
+                <div id="station1" class="sidebar-section">
+                    <button onclick="toggleSubMenu('station1-options')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">
+                        <i class="fa-solid fa-warehouse mr-2 text-xl"></i> Station 1
+                    </button>
+                </div>
+        
+                <!-- Station 2 -->
+                <div id="station2" class="sidebar-section">
+                    <button onclick="toggleSubMenu('station2-options')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left">
+                        <i class="fa-solid fa-warehouse mr-2 text-xl"></i> Station 2
+                    </button>
+                </div>
+        
+                <!-- Submenus -->
+                <!-- Station 1 Options -->
+                <div id="station1-options" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
+                    <a href="{% url 'station_inspection' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-check mr-2 text-xl"></i> Station Inspection</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i> Material</a>
+                    <button onclick="toggleSubMenu('station1-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Fleet</button>
+                    <a href="{% url 'report' station_number=1 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
+                </div>
+        
+                <!-- Fleet Options for Station 1 -->
+                <div id="station1-fleet" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <button onclick="toggleSubMenu('station1-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-list mr-2 text-xl"></i> Request Order List</button>
+                    <button onclick="toggleSubMenu('station1-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-warehouse mr-2 text-xl"></i> Fleet Inventory</button>
+                    <button onclick="toggleSubMenu('station1-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-wrench mr-2 text-xl"></i>Fleet Management & Service</button>
+                </div>
+
+                <!-- Request Order List for Station 1 -->
+                <div id="station1-request-order" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="{% url 'order' station_number=1 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 flex-shrink-0 text-xl"></i> Fleet Orders</a>
+                    <a href="{% url 'order' station_number=1 type='office_supplies' %}"  class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-boxes-stacked mr-2 text-xl"></i> Office Supplies</a>
+                </div>
+        
+                <!-- Fleet Inventory for Station 1 -->
+                <div id="station1-inventory" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i>Tool Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-spray-can-sparkles mr-2 text-xl"></i>Fleet Cleanliness & Supplies</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gas-pump mr-2 text-xl"></i>Fuel Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gears mr-2 text-xl"></i>Bearing, Hub & Axle Service</a>
+                </div>
+        
+                <!-- Fleet Management & Service for Station 1 -->
+                <div id="station1-management" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Service</a>
+                    <a href="{% url 'vehicle_inspection' station_number=1 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Service</a>
+                </div>
+
+                <!-- Station 2 Options (Same Structure as Station 1) -->
+                <div id="station2-options" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
+                    <a href="{% url 'station_inspection' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-check mr-2 text-xl"></i> Station Inspection</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i> Material</a>
+                    <button onclick="toggleSubMenu('station2-fleet')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Fleet</button>
+                    <a href="{% url 'report' station_number=2 %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
+                </div>
+
+                <!-- Fleet Options for Station 2 -->
+                <div id="station2-fleet" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <button onclick="toggleSubMenu('station2-request-order')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-clipboard-list mr-2 text-xl"></i> Request Order List</button>
+                    <button onclick="toggleSubMenu('station2-inventory')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-warehouse mr-2 text-xl"></i> Fleet Inventory</button>
+                    <button onclick="toggleSubMenu('station2-management')" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-wrench mr-2 text-xl"></i> Fleet Management & Service</button>
+                </div>
+
+                <!-- Request Order List for Station 2 -->
+                <div id="station2-request-order" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="{% url 'order' station_number=2 type='fleet' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2  text-xl"></i> Fleet Orders</a>
+                    <a href="{% url 'order' station_number=2 type='office_supplies' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-boxes-stacked mr-2 text-xl"></i>Office Supplies</a>
+                </div>
+
+                <!-- Fleet Inventory for Station 2 -->
+                <div id="station2-inventory" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-screwdriver-wrench mr-2 text-xl"></i>Tool Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-spray-can-sparkles mr-2 text-xl"></i>Fleet Cleanliness & Supplies</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gas-pump mr-2 text-xl"></i>Fuel Management</a>
+                    <a href="#" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-gears mr-2 text-xl"></i>Bearing, Hub & Axle Service</a>
+                </div>
+        
+                <!-- Fleet Management & Service for Station 2 -->
+                <div id="station2-management" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
+                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='truck' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Service</a>
+                    <a  href="{% url 'vehicle_inspection' station_number=2 vehicle='trailer' %}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Service</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-grow bg-white shadow-lg">
+            {% block content %}
+            <!-- Dynamic content will load here -->
+            {% endblock %}
+        </main>
+    </div>
+</body>
+</html>

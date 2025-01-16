@@ -1,0 +1,88 @@
+{% extends "availability_logistic_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto p-4">
+    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Truck & Trailer Availability</h2>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Date Picker Section -->
+        <div class="flex flex-col lg:flex-row items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="w-full lg:w-1/3">
+                <label for="id_date" class="block text-gray-700 font-medium mb-1">Select Date:</label>
+                <input type="date" id="id_date" name="date" value="{{ selected_date|date:'Y-m-d' }}" 
+                    class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+            </div>
+            <div>
+                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-full shadow">
+                    Submit Availability
+                </button>
+            </div>
+        </div>
+
+        <!-- Availability Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Truck Availability Section -->
+                <div class="bg-white border border-gray-300 rounded-lg shadow p-4 space-y-6 max-h-[300px] sm:max-h-[300px] 2xl:max-h-[600px] overflow-y-auto">
+
+
+                <h3 class="text-xl font-semibold text-red-500">Truck Availability</h3>
+                <div class="space-y-6">
+                    {% for truck in trucks %}
+                    <div class="space-y-4 bg-gray-50 p-4 rounded-lg shadow">
+                        <div class="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 items-start">
+                            <p class="text-gray-700 font-semibold">{{ truck.name }} ({{ truck.number }})</p>
+                            <select name="truck_{{ truck.id }}" 
+                                class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full lg:w-1/2">
+                                <option value="In Service" {% if truck.availability and truck.availability.0.status == "In Service" %}selected{% endif %}>
+                                    In Service
+                                </option>
+                                <option value="Out of Service" {% if truck.availability and truck.availability.0.status == "Out of Service" %}selected{% endif %}>
+                                    Out of Service
+                                </option>
+                            </select>
+                            <div class="w-full lg:w-1/2">
+                                <input type="date" name="truck_{{ truck.id }}_date" 
+                                    value="{{ truck.availability.0.estimated_back_in_service_date|date:'Y-m-d' }}" 
+                                    class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Trailer Availability Section -->
+            <div class="bg-white border border-gray-300 rounded-lg shadow p-4 space-y-6 max-h-[300px] overflow-y-auto">
+                <h3 class="text-xl font-semibold text-red-500">Trailer Availability</h3>
+                <div class="space-y-6">
+                    {% for trailer in trailers %}
+                    <div class="space-y-4 bg-gray-50 p-4 rounded-lg shadow">
+                        <div class="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 items-start">
+                            <p class="text-gray-700 font-semibold">{{ trailer.name }} ({{ trailer.number }})</p>
+                            <select id="trailer_{{ trailer.id }}" name="trailer_{{ trailer.id }}" 
+                                class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full lg:w-1/2">
+                                <option value="In Service" {% if trailer.availability and trailer.availability.0.status == "In Service" %}selected{% endif %}>
+                                    In Service
+                                </option>
+                                <option value="Out of Service" {% if trailer.availability and trailer.availability.0.status == "Out of Service" %}selected{% endif %}>
+                                    Out of Service
+                                </option>
+                            </select>
+                            <div class="w-full lg:w-1/2">
+                                <input type="date" id="trailer_{{ trailer.id }}_date" name="trailer_{{ trailer.id }}_date" 
+                                    value="{{ trailer.availability.0.estimated_back_in_service_date|date:'Y-m-d' }}" 
+                                    class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

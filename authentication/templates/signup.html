@@ -1,0 +1,167 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-semibold text-center mb-6">Sign Up</h2>
+
+            <form id="signup-form" method="post" action="{% url 'authentication:signup' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- First Name & Last Name -->
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label for="first_name" class="block text-sm font-medium text-gray-700 ">First Name</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="w-1/2">
+                            <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    
+
+                    <!-- Password Fields -->
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label for="password1" class="block text-sm font-medium text-gray-700">Password</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="w-1/2">
+                            <label for="password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Email & Role -->
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="w-1/2">
+                            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                            {{ form.role }}
+                            {% if form.role.errors %}
+                                <div class="text-red-500 text-xs mt-1">{{ form.role.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Terms & Conditions -->
+                    <div class="flex justify-between items-center mt-4">
+                        <p class="text-sm text-gray-600">Already have an account? <strong><a href="{% url 'authentication:login' %}"class="text-red-500 hover:underline">Log in</a></strong></p>
+                        <button type="submit" class="w-32 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none">signup</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function(event) {
+            let termsChecked = document.getElementById('terms').checked;
+            let password1 = document.getElementById('id_password1').value;
+            let password2 = document.getElementById('id_password2').value;
+            let passwordsMatch = password1 === password2;
+
+            const countryCode = document.querySelector('[name="country_code"]').value;
+            const phoneNumber = document.getElementById('id_phone_number').value;
+
+            if (!countryCode || !phoneNumber) {
+                event.preventDefault();
+                alert('Please select a country code and enter your phone number.');
+                return;
+            }
+
+            document.getElementById('id_phone_number').value = '+' + countryCode + phoneNumber;
+
+            if (!termsChecked) {
+                event.preventDefault();
+                document.getElementById('terms-error').style.display = 'block';
+            } else {
+                document.getElementById('terms-error').style.display = 'none';
+            }
+
+            if (!passwordsMatch) {
+                event.preventDefault();
+                document.getElementById('id_password2').classList.add('is-invalid');
+                let errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.innerHTML = 'Passwords do not match';
+                let parentDiv = document.getElementById('id_password2').parentElement;
+                if (!parentDiv.querySelector('.invalid-feedback')) {
+                    parentDiv.appendChild(errorDiv);
+                }
+            } else {
+                document.getElementById('id_password2').classList.remove('is-invalid');
+                let parentDiv = document.getElementById('id_password2').parentElement;
+                let errorDiv = parentDiv.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        });
+
+        $(document).ready(function() {
+            $('#id_email').on('input', function() {
+                var email = $(this).val();
+                $.ajax({
+                    url: "{% url 'authentication:check_email_availability' %}",
+                    data: {
+                        'email': email
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.is_taken) {
+                            event.preventDefault();
+                            document.getElementById('id_email').classList.add('is-invalid');
+                            let errorDiv = document.createElement('div');
+                            errorDiv.className = 'invalid-feedback';
+                            errorDiv.innerHTML = 'Email already exists';
+                            let parentDiv = document.getElementById('id_email').parentElement;
+                            if (!parentDiv.querySelector('.invalid-feedback')) {
+                                parentDiv.appendChild(errorDiv);
+                            }
+                        } else {
+                            document.getElementById('id_email').classList.remove('is-invalid');
+                            let parentDiv = document.getElementById('id_email').parentElement;
+                            let errorDiv = parentDiv.querySelector('.invalid-feedback');
+                            if (errorDiv) {
+                                errorDiv.remove();
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

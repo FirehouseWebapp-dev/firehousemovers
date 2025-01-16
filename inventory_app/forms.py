@@ -1,5 +1,6 @@
 from django import forms
-from .models import Inventory, Employee, UniformAssignment
+from .models import Inventory, Employee, InventoryAssignment
+
 
 class InventoryForm(forms.ModelForm):
     """Form for managing inventory items."""
@@ -15,8 +16,8 @@ class EmployeeForm(forms.ModelForm):
         fields = "__all__"
 
 
-class UniformAssignmentForm(forms.ModelForm):
+class InventoryAssignmentForm(forms.ModelForm):
     """Form for assigning uniforms to employees."""
     class Meta:
-        model = UniformAssignment
+        model = InventoryAssignment
         fields = "__all__"

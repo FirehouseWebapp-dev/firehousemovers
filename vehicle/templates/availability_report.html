@@ -1,0 +1,83 @@
+{% extends "availability_logistic_base.html" %}
+{% block content %}
+
+<div class="container mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+    <!-- Title -->
+    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Availability Report</h2>
+
+    <!-- Date Filters -->
+    <form method="get" action="" class="grid grid-cols-2 gap-4 mb-8">
+        <div>
+            <label for="start_date" class="block font-medium text-gray-700">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" 
+                class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+        </div>
+        <div>
+            <label for="end_date" class="block font-medium text-gray-700">End Date:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" 
+                class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+        </div>
+        <div class="col-span-2 text-center">
+            <button type="submit" class="bg-red-500 text-white rounded-full p-2 shadow-lg hover:bg-red-600 cursor-pointer w-full">
+                <h3 class="text-lg font-bold">Generate Report</h3>
+            </button>
+        </div>
+    </form>
+
+    <h3 class="text-lg text-red-500 font-semibold mb-4 bg-gray-100 rounded-md text-center">Report Generated on: {{ now|date:"d/m/Y" }} | Start Date: {{ start_date|date:"d/m/Y" }} | End Date: {{ end_date|date:"d/m/Y" }} | Total Days: {{ total_days }}</h3>
+
+    <!-- Report Section -->
+    <div class="flex flex-col md:flex-row md:justify-between">
+        <!-- Trucks Report -->
+        <div class="w-full md:mr-4 mb-6 md:mb-0">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Trucks</h3>
+            <div class="max-h-96 overflow-y-scroll">
+                <table class="table-auto w-full border-collapse border border-gray-200">
+                    <thead class="bg-red-600">
+                        <tr>
+                            <th class="border border-gray-300 p-2 text-left">Truck</th>
+                            <th class="border border-gray-300 p-2 text-left">In-Service Days</th>
+                            <th class="border border-gray-300 p-2 text-left">Out-of-Service Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for truck in truck_data %}
+                        <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                            <td class="border border-gray-300 p-2">{{ truck.name }}</td>
+                            <td class="border border-gray-300 p-2">{{ truck.in_service_days }}</td>
+                            <td class="border border-gray-300 p-2">{{ truck.out_of_service_days }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trailers Report -->
+        <div class="w-full md:ml-4">
+            <h3 class="text-xl font-semibold text-red-500 mb-4">Trailers</h3>
+            <div class="max-h-96 overflow-y-scroll">
+                <table class="table-auto w-full border-collapse border border-gray-200">
+                    <thead class="bg-red-600">
+                        <tr>
+                            <th class="border border-gray-300 p-2 text-left">Trailer</th>
+                            <th class="border border-gray-300 p-2 text-left">In-Service Days</th>
+                            <th class="border border-gray-300 p-2 text-left">Out-of-Service Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trailer in trailer_data %}
+                        <tr class="{% cycle 'bg-gray-100' 'bg-white' %}">
+                            <td class="border border-gray-300 p-2">{{ trailer.name }}</td>
+                            <td class="border border-gray-300 p-2">{{ trailer.in_service_days }}</td>
+                            <td class="border border-gray-300 p-2">{{ trailer.out_of_service_days }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
