@@ -67,12 +67,12 @@
 
         
         <div class="group relative">
-            <a href="#" class="flex items-center gap-1 text-black hover:text-red-600">
+            <a href="{% url 'onsite_inspection' %}" class="flex items-center gap-1 text-black hover:text-red-600">
                 On-site Inspection
                 <i class="fa-solid fa-caret-down"></i>
             </a>
             <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg  w-40 text-center">
-                <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp On Site</a>
+                <a href="{% url 'onsite_inspection' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp On Site</a>
             </div>
         </div>
 
@@ -102,7 +102,7 @@
                     </button>
                     <!-- Suboptions for "Coming Soon" -->
                     <div id="gift_cards-menu" class=" hidden pl-4">
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
+                        <a href="{% url 'gift_card' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
                     </div>
                 </div>
 
@@ -231,7 +231,7 @@
                         <span class="mr-2">&#9656;</span>
                     </button>
                     <div id="mobile_cards-menu" class="hidden pl-4">
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
+                        <a href="{% url 'gift_card' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
                     </div>
                 </div>
 
