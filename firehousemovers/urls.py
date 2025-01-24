@@ -26,4 +26,6 @@ urlpatterns = [
     path('', include('authentication.urls')),  # Include authentication routes
     path('', include('vehicle.urls')),  # Include vehicle routes
     path('station/', include('station.urls')),  # Include station routes
+    path('', include('gift.urls')),  # Include gift routes
+    path('', include('inspection.urls')),  # Include gift routes
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

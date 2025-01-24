@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+{% include "navbar.html" %}
+
+<div class="container mt-5 mx-auto max-w-4xl">
+    <form method="post" class="p-6 shadow-lg rounded-lg bg-white">
+        {% csrf_token %}
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar-container mb-4">
+            <ul class="progress-bar list-none flex justify-between items-center">
+                {% for i in steps.keys %}
+                    <li class="step {% if i <= step %}{% if i == step %}bg-red-600 text-white{% else %}bg-red-300 text-white{% endif %}{% endif %} w-10 h-10 flex items-center justify-center rounded-full">
+                        <span class="circle text-lg font-bold">{{ i }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Current Step Header -->
+        <h4 class="mb-4 font-bold text-2xl">Prior to Move</h4>
+
+        <!-- Form Fields for Current Step -->
+        <div class="space-y-4">
+            {% if step == 5 %}
+                <!-- Display Scores for Step 5 -->
+                <div class="form-group bg-gray-100 p-5 rounded-md">
+                    <b class="text-gray-700">Prior Move Score: {{ prior_move_score }}</b>
+                </div>
+
+                <div class="form-group bg-gray-100 p-5 rounded-md">
+                    <b class="text-gray-700">Pickup Score: {{ pickup_score }}</b>
+                </div>
+
+                <div class="form-group bg-gray-100 p-5 rounded-md">
+                    <b class="text-gray-700">Dropoff Score: {{ dropoff_score }}</b>
+                </div>
+
+                <div class="form-group bg-gray-100 p-5 rounded-md">
+                    <b class="text-gray-700">Overall Score: {{ overall_score }}</b>
+                </div>
+            {% endif %}
+            {% for field in form.visible_fields %}
+                {% if field.name in current_fields %}
+                    <div class="form-group bg-gray-100 p-5 rounded-md">
+                        <label for="{{ field.id_for_label }}" class="font-semibold text-gray-700">{{ field.label }}</label>
+                        <p class="text-sm text-gray-500">{{ field.help_text }}</p>
+
+                        {% if step == 1 and field.name == "crew_leader" %}
+                            <!-- Select Field for 'crew_leader' in Step 1 -->
+                            <select class="form-select border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}">
+                                <option value="">Select Crew Leader</option>
+                                {% for leader in crew_leader_choices %}
+                                    <option value="{{ leader.id }}" {% if field.value == leader.id %}selected{% endif %}>{{ leader }}</option>
+                                {% endfor %}
+                            </select>
+
+                        {% elif step == 1 and field.name == "crew_members" %}
+                         <!-- Select Field for 'crew_members' in Step 1 (Multiple Select with Choices.js) -->
+                         <select class="form-select crew-members-select" id="{{ field.id_for_label }}" name="{{ field.name }}" multiple>
+                            {% for leader in crew_leader_choices %}
+                                <option value="{{ leader.id }}" {% if field.value and leader.id in field.value %}selected{% endif %}>{{ leader }}</option>
+                            {% endfor %}
+                        </select>
+                            
+                            
+                        {% elif step == 1 %}
+                            <!-- Text Field for other fields in Step 1 and Step 5 -->
+                            <input type="text" class="form-input border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}" required>
+                        {% elif step == 5 %}
+                            <!-- Text Field for other fields in Step 1 and Step 5 -->
+                            <textarea class="form-input border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full rows:2" id="{{ field.id_for_label }}" name="{{ field.name }}" required></textarea>
+                        {% else %}
+                            <!-- Star Rating Field for Step 2, 3, 4 -->
+                            <div class="star-rating flex gap-2 mt-2 " id="{{ field.id_for_label }}_rating">
+                                {% for i in "12345" %}
+                                    <div class="star cursor-pointer" data-index="{{ i }}" data-field="{{ field.id_for_label }}">
+                                        <svg class="w-8 h-8 ms-1 text-gray-100 dark:text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 20">
+                                            <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z"/>
+                                        </svg>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <!-- Hidden Input for Rating -->
+                            <input type="hidden" name="{{ field.name }}" id="{{ field.id_for_label }}" value="{{ field.value|default:'' }}"  />
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-6">
+            {% if step > 1 %}
+                <a href="?step={{ step|add:"-1" }}" class="btn bg-red-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-red-400">Back</a>
+            {% endif %}
+            <button type="submit" class="btn bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                {% if step == steps|length %}Submit{% else %}Next{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+<!-- Scripts -->
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var crewMembersSelect = document.querySelector('.crew-members-select');
+        if (crewMembersSelect) {
+            new Choices(crewMembersSelect, {
+                removeItemButton: true,
+                maxItemCount: 5,  // Max number of items to select
+                searchEnabled: true,
+                shouldSort: false,  // Disable sorting for options
+                placeholder: true,
+                placeholderValue: 'Select Crew Members'
+            });
+        }
+        
+     const starRatingContainers = document.querySelectorAll(".star-rating");
+
+     starRatingContainers.forEach((container) => {
+         const stars = container.querySelectorAll(".star");
+         const hiddenInput = container.nextElementSibling; // This is the hidden input element
+
+         // Make sure the hidden input is cleared if no rating is selected
+         if (!hiddenInput.value) {
+             hiddenInput.value = ''; // Set it to empty string initially
+         }
+
+         stars.forEach((star) => {
+             star.addEventListener("mouseover", function () {
+                 highlightStars(star, container); // Highlight stars on hover
+             });
+
+             star.addEventListener("mouseout", function () {
+                 resetStars(container); // Reset stars on mouse out
+             });
+
+             star.addEventListener("click", function () {
+                 setRating(star, container, hiddenInput); // Set the rating on click
+             });
+         });
+     });
+
+     function highlightStars(star, container) {
+         const value = star.getAttribute("data-index");
+         const stars = container.querySelectorAll(".star");
+
+         stars.forEach((s) => {
+             const label = s;
+             label.style.fill = s.getAttribute("data-index") <= value ? "#f5b342" : "#ccc"; // Hover color
+         });
+     }
+
+     function resetStars(container) {
+         const selectedStar = container.querySelector(".star[data-index='" + container.getAttribute("data-selected") + "']");
+         const stars = container.querySelectorAll(".star");
+
+         stars.forEach((s) => {
+             s.style.fill = s === selectedStar || s.getAttribute("data-index") <= selectedStar.getAttribute("data-index") ? "#f5b342" : "#ccc"; // Reset to selected color or default
+         });
+     }
+
+     function setRating(star, container, hiddenInput) {
+         const value = star.getAttribute("data-index");
+         hiddenInput.value = value; // Set the hidden input value to the selected star rating
+         container.setAttribute("data-selected", value); // Store the selected star index in the container
+
+         // Update the star colors: Color all stars up to the clicked one in gold
+         const stars = container.querySelectorAll(".star");
+         stars.forEach((s, index) => {
+             const svg = s.querySelector("svg");
+             if (index < value) {
+                 svg.style.fill = "#f5b342"; // Apply gold color (golden color for selected stars)
+             } else {
+                 svg.style.fill = "#ccc"; // Apply default gray color for unselected stars
+             }
+         });
+     }
+ });
+
+</script>
+
+<style>
+    /* Style for the star */
+    /* Hover effect: stars turn yellow */
+    .star-rating :hover {
+        fill: #f5b342;
+    }
+</style>
+
+{% endblock %}

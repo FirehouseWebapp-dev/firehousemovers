@@ -1,5 +1,6 @@
 from django.contrib import admin
-from station.models import Station_inspection, Station, Trailer_inspection, Truck_inspection,Vehicle_inspection,Fleet_order
+from station.models import Station_inspection, Station,Vehicle_inspection,Fleet_order
+
 
 class Station_Admin(admin.ModelAdmin):
     list_display = ['name', 'location']
@@ -22,9 +23,8 @@ class Fleet_order_Admin(admin.ModelAdmin):
     list_filter = ['status', 'urgency_level','status','type','station__id']
 
 
+
 admin.site.register(Station,Station_Admin)
 admin.site.register(Station_inspection,Station_inspection_Admin)
 admin.site.register(Vehicle_inspection,Vehicle_inspection_Admin)
 admin.site.register(Fleet_order,Fleet_order_Admin)
-admin.site.register(Truck_inspection)
-admin.site.register(Trailer_inspection)
