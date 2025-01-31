@@ -15,6 +15,10 @@ def uniform_inventory_view(request):
     """Render the home page."""
     return render(request, "inventory_base.html")
 
+def homeview(request):    
+    """Render the home page."""
+    return render(request, "home.html")
+
 class Add_uniform_view(View):
     permission_classes = [IsAuthenticated, IsManager] 
     
