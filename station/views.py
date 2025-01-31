@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from django.db.models import Q
 from django.http import HttpResponseForbidden
+from inventory_app.permissions import IsManager
 from station.forms import FleetOrderForm, StationInspectionForm,VehicleInspectionForm
 from station.models import Fleet_order, Station, Station_inspection,Vehicle_inspection
 
@@ -19,7 +20,7 @@ def station_view(request):
 
 class report_view(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -109,7 +110,7 @@ class report_view(View):
 
 class station_inspection_view(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -152,7 +153,7 @@ class station_inspection_view(View):
 
 class vehicle_inspection_view(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -188,7 +189,7 @@ class vehicle_inspection_view(View):
 
 class order_view(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:

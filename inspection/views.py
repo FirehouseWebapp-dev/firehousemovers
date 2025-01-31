@@ -10,6 +10,7 @@ from django.http import HttpResponseForbidden
 from authentication.models import UserProfile
 from inspection.forms import  OnsiteInspectionForm, TrailerInspectionForm, TruckInspectionForm
 from inspection.models import  Onsite_inspection, Trailer_inspection, Truck_inspection
+from inventory_app.permissions import IsManager
 from vehicle.models import Vehicle
 
 
@@ -22,7 +23,7 @@ def inspection_view(request):
 
 
 class onsite_inspection_view(View):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
@@ -171,7 +172,7 @@ class onsite_inspection_view(View):
 
 
 class inspection_report_view(View):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
@@ -788,7 +789,7 @@ class inspection_report_view(View):
 
 class trailer_inspection_view(View):   
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -821,7 +822,7 @@ class trailer_inspection_view(View):
 
 class truck_inspection_view(View):   
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:

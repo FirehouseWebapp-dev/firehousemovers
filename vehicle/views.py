@@ -1,4 +1,6 @@
 import json
+
+from inventory_app.permissions import IsManager
 from .models import AvailabilityData, Dispatch, Order, Vehicle
 from .forms import  DispatchForm, OrderForm
 from django.shortcuts import render, get_object_or_404
@@ -18,16 +20,13 @@ from django.http import HttpResponseForbidden
 
 def availability_logistic_view(request):
 
-    permission_classes = [IsAuthenticated]
-    
-
     """Render the home page."""
     return render(request, "availability_logistic_base.html")
 
 
 class vehicle_availability_view(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -150,7 +149,7 @@ class vehicle_availability_view(View):
        
 class JobLogisticsPage(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -263,7 +262,7 @@ class JobLogisticsPage(View):
 
 class availability_report(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
@@ -396,7 +395,7 @@ class availability_report(View):
 
 class logistic_report(View):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
         for permission in self.permission_classes:

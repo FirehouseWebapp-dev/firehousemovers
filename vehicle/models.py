@@ -2,6 +2,22 @@ from django.db import models
 from authentication.models import UserProfile
 
 
+class Crew(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+
+class CrewStaff(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    crew = models.ForeignKey(Crew,on_delete=models.CASCADE)
+    role = models.CharField(max_length=50, choices=[('leader', 'Leader'), ('member', 'Member')], default='member')
+
+    def __str__(self):
+        return self.name
+
+
 # Vehicle Information Model
 class Vehicle(models.Model):
     TYPE_CHOICES = [
@@ -32,35 +48,6 @@ class AvailabilityData(models.Model):
 
     def __str__(self):
         return f"{self.vehicle.vehicle_type.capitalize()} {self.vehicle.number} - {self.status}"
-
-
-# Support Model
-class Support(models.Model):
-    user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True)
-    type_of_move = models.CharField(max_length=100,null=True, blank=True)
-    crew_name = models.CharField(max_length=100,null=True, blank=True)
-    referral_source = models.CharField(max_length=100,null=True, blank=True)
-    truck_number = models.CharField(max_length=50,null=True, blank=True)
-    trailer_number = models.CharField(max_length=50,null=True, blank=True)
-    ipad_number = models.CharField(max_length=20, null=True, blank=True)
-    materials = models.CharField(max_length=200,null=True, blank=True)
-    specialty_equipment = models.CharField(max_length=200, null=True, blank=True)
-    equipment_status = models.CharField(max_length=100,null=True, blank=True)
-    speedy_inventory_account = models.CharField(max_length=100,null=True, blank=True)
-    speedy_inventory = models.CharField(max_length=100,null=True, blank=True)
-    labels_for_speedy_inventory = models.CharField(max_length=100, null=True, blank=True)
-    crew_leads = models.CharField(max_length=100,null=True, blank=True)
-    crew_leads_drivers = models.CharField(max_length=100,null=True, blank=True)
-    drivers = models.CharField(max_length=100,null=True, blank=True)
-    master_user = models.CharField(max_length=50, null=True, blank=True)
-    master_password = models.CharField(max_length=50, null=True, blank=True)
-    order_user = models.CharField(max_length=50, null=True, blank=True)
-    order_password = models.CharField(max_length=50, null=True, blank=True)
-    availability_user = models.CharField(max_length=50, null=True, blank=True)
-    availability_password = models.CharField(max_length=50, null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.crew_name} - {self.type_of_move}"
 
 
 # Job Orders Model

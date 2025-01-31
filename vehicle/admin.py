@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vehicle, AvailabilityData, Support, Dispatch, Order, Evaluation
+from .models import Vehicle, AvailabilityData, Dispatch, Order
 
 # Custom ModelAdmin for AvailabilityData
 class AvailabilityDataAdmin(admin.ModelAdmin):
