@@ -3,45 +3,45 @@
 {% block content %}
 
 <div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Uniform Inventory</h1>
+    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Add Uniform</h1>
 
     <form method="post" class="space-y-6">
         {% csrf_token %}
 
         <!-- Uniform Information -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-lg font-semibold text-red-600">Add Inventory</h2>
+            <h2 class="text-lg font-semibold text-red-600">Uniform Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="id_name" class="block text-gray-700 font-medium">Uniform</label>
-                    {{ form.uniform }}
+                    <label for="id_name" class="block text-gray-700 font-medium">Name</label>
+                    {{ form.name }}
+                </div>
+                <div>
+                    <label for="id_category" class="block text-gray-700 font-medium">Category</label>
+                    {{ form.category }}
                 </div>
             </div>
         </div>
 
         <!-- Gender and Stock Level -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-red-600">Additional Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="id_gender" class="block text-gray-700 font-medium">Qunatity</label>
-                    {{ form.quantity }}
+                    <label for="id_gender" class="block text-gray-700 font-medium">Gender</label>
+                    {{ form.gender }}
                 </div>
                 <div>
-                    <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Condition</label>
-                    {{ form.condition }}
+                    <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Minimum Stock Level</label>
+                    {{ form.minimum_stock_level }}
                 </div>
-                
-            </div>
-            <div class="w-full">
-                <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Notes</label>
-                {{ form.notes }}
             </div>
         </div>
 
         <!-- Submit Button -->
         <div class="text-center">
             <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
-                Add Inventory
+                Add Uniform
             </button>
         </div>
     </form>

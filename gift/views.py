@@ -6,9 +6,11 @@ from authentication.models import UserProfile
 from gift.forms import AwardCardForm, GiftCardForm
 from datetime import datetime
 
+from inventory_app.permissions import IsManager
+
 
 class GiftCardView(View):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic
@@ -40,7 +42,7 @@ class GiftCardView(View):
 
 
 class AwardCardView(View):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManager] 
 
     def dispatch(self, request, *args, **kwargs):
         # Manually check permissions before executing the view logic

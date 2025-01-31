@@ -1,16 +1,50 @@
+{% extends "inventory_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Issue Uniform</title>
-</head>
-<body>
-    <h1>Issue Uniform</h1>
-    <form method="post">
+{% block content %}
+
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Issue Uniform</h1>
+
+    <form method="post" class="space-y-6">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Issue Uniform</button>
+
+        <!-- Uniform Issue Information -->
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-red-600">Issue Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="id_employee" class="block text-gray-700 font-medium">Employee</label>
+                    {{ form.employee }}
+                </div>
+                <div>
+                    <label for="id_uniform" class="block text-gray-700 font-medium">Uniform</label>
+                    {{ form.uniform }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quantity and Condition -->
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-red-600">Additional Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="id_quantity" class="block text-gray-700 font-medium">Quantity</label>
+                    {{ form.quantity }}
+                </div>
+                <div>
+                    <label for="id_condition" class="block text-gray-700 font-medium">Condition</label>
+                    {{ form.condition }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+                Issue Uniform
+            </button>
+        </div>
     </form>
-    <a href="{% url 'inventory_list' %}">Back to Inventory List</a>
-</body>
-</html>
+</div>
+
+{% endblock %}

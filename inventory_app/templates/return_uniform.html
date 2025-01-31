@@ -1,0 +1,70 @@
+{% extends "inventory_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Return Uniform</h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Uniform Issue Information -->
+        <div class="bg-white p-4 rounded-lg shadow space-y-4">
+            <div>
+                <label for="id_employee" class="block text-gray-700 font-medium">Employee</label>
+                <select name="employee" id="id_employee" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                    <option value="" disabled selected>Select an Employee</option>
+                    {% for employee in employees %}
+                        <option value="{{ employee.id }}">{{ employee }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="id_uniform" class="block text-gray-700 font-medium">Uniform</label>
+                <select name="uniform" id="id_uniform" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+                    <option value="" disabled selected>Select a Uniform</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+                Return Uniform
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('id_employee').addEventListener('change', function() {
+        var employeeId = this.value;
+
+        if (employeeId) {
+            // Directly hit the get_uniforms endpoint with query parameter
+            fetch(`/get-uniforms/?employee_id=${employeeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    var uniformSelect = document.getElementById('id_uniform');
+                    uniformSelect.innerHTML = '<option value="" disabled selected>Select a Uniform</option>'; // Clear previous options
+                    
+                    if (data.uniforms && data.uniforms.length > 0) {
+                        data.uniforms.forEach(function(uniform) {
+                            var option = document.createElement('option');
+                            option.value = uniform.id;
+                            option.text = uniform.name; // Adjust this if your model field is different
+                            uniformSelect.appendChild(option);
+                        });
+                    } else {
+                        var option = document.createElement('option');
+                        option.text = "No uniforms assigned";
+                        uniformSelect.appendChild(option);
+                    }
+                })
+                .catch(error => console.error('Error fetching uniforms:', error));
+        }
+    });
+</script>
+
+{% endblock %}

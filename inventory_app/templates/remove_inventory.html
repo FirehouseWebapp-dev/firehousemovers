@@ -10,7 +10,7 @@
 
         <!-- Uniform Information -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-lg font-semibold text-red-600">Add Inventory</h2>
+            <h2 class="text-lg font-semibold text-red-600">Remove Inventory</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="id_name" class="block text-gray-700 font-medium">Uniform</label>
@@ -30,12 +30,16 @@
                     <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Condition</label>
                     {{ form.condition }}
                 </div>
-                
+                <div>
+                    <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Type</label>
+                    {{ form.transaction_type }}
+                </div>
+                <div>
+                    <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Notes</label>
+                    {{ form.notes }}
+                </div>
             </div>
-            <div class="w-full">
-                <label for="id_minimum_stock_level" class="block text-gray-700 font-medium">Notes</label>
-                {{ form.notes }}
-            </div>
+            
         </div>
 
         <!-- Submit Button -->

@@ -20,6 +20,7 @@ class Employee(models.Model):
         ('admin', 'Admin'),
         ('warehouse', 'Warehouse'),
         ('mover', 'Mover'),
+        ('technician', 'Technician'),
         ('mover- crew member', 'Mover- Crew member'),
         ('customers- per trevor', 'Customers- Per Trevor'),
     ]

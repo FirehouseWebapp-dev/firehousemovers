@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+{% include "navbar.html" %}
+
+    <div class="flex h-screen ">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-red-700 text-white flex flex-col rounded-md transition-all duration-300 ease-in-out">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold py-4 px-2 sm:px-4 md:px-6">FireHouse Movers</h1>
+        
+            <!-- Main Menu -->
+            <nav class="flex-grow space-y-2 px-2 sm:px-4">
+                <a href="{% url 'uniform_issue'%}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-shirt mr-2 text-xl"></i> Issue Uniform</a>
+                <a href="{% url 'uniform_return'%}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-rotate-left mr-2 text-xl"></i>Return Uniform</a>
+                <a href="{% url 'uniform_add'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-circle-plus mr-2 flex-shrink-0 text-xl"></i> Add New Uniform</a>
+                <a href="{% url 'inventory_add'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-box-open mr-2 flex-shrink-0 text-xl"></i> Add Inventory</a>
+                <a href="{% url 'inventory_remove'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-circle-minus mr-2 flex-shrink-0 text-xl"></i> Remove Inventory</a>
+                <a href="{% url 'employee'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-users mr-2 flex-shrink-0 text-xl"></i> Manage Employees</a>
+                <a href="{% url 'reports'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-grow bg-white shadow-lg">
+            {% block content %}
+            <!-- Dynamic content will load here -->
+            {% endblock %}
+        </main>
+    </div>
+{%endblock%}
