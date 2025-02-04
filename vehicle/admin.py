@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vehicle, AvailabilityData, Dispatch, Order
+from .models import Crew, Vehicle, AvailabilityData, Dispatch, Order,CrewStaff
 
 # Custom ModelAdmin for AvailabilityData
 class AvailabilityDataAdmin(admin.ModelAdmin):
@@ -34,8 +34,14 @@ class VehicleAdmin(admin.ModelAdmin):
     search_fields = ['number', 'name']
     list_filter = ['vehicle_type', 'name','number']
 
+class CrewStaffAdmin(admin.ModelAdmin):
+    list_display = ['name', 'crew', 'role']
+    search_fields = ['name', 'crew','role']
+    list_filter = ['crew', 'role']
 
 admin.site.register(Vehicle,VehicleAdmin)
 admin.site.register(AvailabilityData, AvailabilityDataAdmin)
 admin.site.register(Dispatch, DispatchAdmin)
 admin.site.register(Order,OrderAdmin)
+admin.site.register(Crew)
+admin.site.register(CrewStaff,CrewStaffAdmin)

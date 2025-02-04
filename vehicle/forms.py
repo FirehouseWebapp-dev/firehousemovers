@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from django import forms
 from authentication.models import UserProfile
-from .models import AvailabilityData, Dispatch,Order, Vehicle
+from .models import AvailabilityData, Crew, CrewStaff, Dispatch,Order, Vehicle
 from django.db.models import Prefetch
 from django.db.models import Max, Subquery
 
@@ -87,13 +87,11 @@ class OrderForm(forms.ModelForm):
         ),
         label="Moved Before",
     )
-    crew_name = forms.ChoiceField(
-        choices=[("n/a", "N/A"), ("chris", "Chris")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
+    crew_name = forms.ModelChoiceField(
+        queryset=Crew.objects.all(),
+        widget=forms.Select(attrs={
+            'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
+        }),
         label="Crew Name",
     )
     referral_source = forms.ChoiceField(
@@ -172,18 +170,17 @@ class DispatchForm(forms.ModelForm):
         }),
         label="iPad#",
     )
-    crew_leads = forms.ChoiceField(
-        choices=[("Lead 1", "Lead 1"), ("Lead 2", "Lead 2"), ("None", "None")],
+    crew_leads = forms.ModelChoiceField(
+        queryset=CrewStaff.objects.filter(role='leader'),
         widget=forms.Select(attrs={
-            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+            'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
         }),
         label="Crew Leads",
     )
-    drivers = forms.ChoiceField(
-        choices=[(driver.id, driver.user.username) for driver in UserProfile.objects.filter(role='driver')],
-
+    drivers = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(role='driver'),
         widget=forms.Select(attrs={
-            "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
+            'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
         }),
         label="Drivers",
     )
@@ -349,10 +346,6 @@ class DispatchForm(forms.ModelForm):
         trucks = vehicles_with_availability.filter(vehicle_type='truck')
         trailers = vehicles_with_availability.filter(vehicle_type='trailer')
 
-        # Create choices, only including vehicles with 'In Service' availability
-        # truck_choices = [(None, "None")] + [(truck.id, truck.name) for truck in trucks if truck.availability]
-        # trailer_choices = [(None, "None")] + [(trailer.id, trailer.name) for trailer in trailers if trailer.availability]
-
         if  check:
             truck_choices = [(truck.id, truck.name) for truck in trucks]
             trailer_choices = [(trailer.id, trailer.name) for trailer in trailers]
@@ -362,7 +355,6 @@ class DispatchForm(forms.ModelForm):
             trailer_choices = [(None, "None")] + [(trailer.id, trailer.name) for trailer in trailers if trailer.availability]
 
 
-        # Initialize the form
         super().__init__(*args, **kwargs)
 
         # Dynamically set choices for truck and trailer fields

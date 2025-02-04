@@ -1,5 +1,5 @@
 from django.contrib import admin
-from gift.models import Employee, Gift_company,Gift_card,Award
+from gift.models import Gift_company,Gift_card,Award
 
 class Award_Admin(admin.ModelAdmin):
     list_display = ['employee_name','card', 'date_award', 'amount']
@@ -11,13 +11,7 @@ class Gift_Card_Admin(admin.ModelAdmin):
     search_fields = ['company', 'added_by']
     list_filter = ['added_by', 'company']
 
-class Employee_Admin(admin.ModelAdmin):
-    list_display = ['name','designation', 'gender']
-    search_fields = ['name','designation', 'gender']
-    list_filter = ['designation','gender']
-
 
 admin.site.register(Gift_company)
-admin.site.register(Employee,Employee_Admin)
 admin.site.register(Gift_card,Gift_Card_Admin)
 admin.site.register(Award,Award_Admin)

@@ -2,9 +2,10 @@ from collections import defaultdict
 from django.shortcuts import render, redirect
 from rest_framework.permissions import IsAuthenticated
 from django.views import View
+from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden,JsonResponse
+from authentication.models import UserProfile
 from inventory_app.forms import AddEmployeeForm, InventoryForm, UniformCatalogForm,UniformIssueForm
-from gift.models import Employee
 from inventory_app.models import Inventory, InventoryTransaction, UniformAssignment,UniformCatalog
 from datetime import datetime
 
@@ -56,17 +57,17 @@ class Return_uniform_view(View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self,request):
-        employees=Employee.objects.all()
+        employees=UserProfile.objects.all()
         uniforms = []
         return render(request, "return_uniform.html",{"employees":employees,"uniforms":uniforms})
 
     def post(self, request):
-        employees = Employee.objects.all()
+        employees = UserProfile.objects.all()
         employee_id = request.POST.get('employee')
         uniform_id = request.POST.get('uniform')
 
         try:
-            employee = Employee.objects.get(id=employee_id)
+            employee = UserProfile.objects.get(id=employee_id)
             uniform_catalog = UniformCatalog.objects.get(id=uniform_id)
             # Retrieve the active uniform assignment
             uniform = UniformAssignment.objects.filter(employee=employee, status='Active', uniform=uniform_catalog).first()
@@ -88,7 +89,7 @@ class Return_uniform_view(View):
             else:
                 return HttpResponseForbidden("No active uniform found for this employee.")
 
-        except Employee.DoesNotExist:
+        except UserProfile.DoesNotExist:
             return HttpResponseForbidden("Employee not found.")
         except UniformCatalog.DoesNotExist:
             return HttpResponseForbidden("Uniform not found.")
@@ -100,7 +101,7 @@ def get_uniforms(request):
     if employee_id:
         try:
             # Get the employee record
-            employee = Employee.objects.get(id=employee_id)
+            employee = UserProfile.objects.get(id=employee_id)
 
             # Step 1: Get all uniform assignments for the employee
             all_uniforms = UniformAssignment.objects.filter(employee=employee)
@@ -117,7 +118,6 @@ def get_uniforms(request):
             # Step 3: Prepare the return list with only the active uniforms
             active_uniforms = []
             for uniform in latest_uniforms.values():
-                print("status=====",uniform.status)
                 # Only include uniforms that are "Active"
                 if uniform.status == 'Active':
                     active_uniforms.append({
@@ -131,7 +131,7 @@ def get_uniforms(request):
             # Return the list of active uniforms
             return JsonResponse({"uniforms": active_uniforms})
 
-        except Employee.DoesNotExist:
+        except UserProfile.DoesNotExist:
             return JsonResponse({"error": "Employee not found"}, status=404)
     else:
         return JsonResponse({"error": "Employee ID not provided"}, status=400)
@@ -177,7 +177,7 @@ class Employee_view(View):
 
     def get(self,request):
         form=AddEmployeeForm()
-        employees=Employee.objects.all()
+        employees=UserProfile.objects.all()
         
         return render(request, "employee.html",{"form":form,"employees":employees})
 
@@ -189,20 +189,38 @@ class Employee_view(View):
             employee_id = request.POST.get('employee')
             if employee_id:
                 try:
-                    emp = Employee.objects.get(id=employee_id)
-                    emp.delete()
-                    redirect('inventory') 
-                except Employee.DoesNotExist:
+                    emp = UserProfile.objects.get(id=employee_id)
+                    
+                    # Delete the associated User instance
+                    user = emp.user
+                    emp.delete()  
+                    user.delete()  
+                    
+                    return redirect('employee')
+                except UserProfile.DoesNotExist:
                     pass
-            return redirect('employee') 
+
+            return redirect('employee')
+
         
         # If action is not delete, then add employee
         form = AddEmployeeForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('inventory')
+            # Creating User instance (use a default email and password)
+            user = User.objects.create_user(
+                username=form.cleaned_data['name'], 
+                email='default@example.com',  
+                password='defaultpassword123'  
+            )
+
+            # Now create the UserProfile and associate it with the user
+            user_profile = form.save(commit=False) 
+            user_profile.user = user  
+            user_profile.save() 
+
+            return redirect('inventory') 
         else:
-            employees = Employee.objects.all()
+            employees = UserProfile.objects.all()
             return render(request, "employee.html", {"form": form, "employees": employees})
 
     
@@ -210,10 +228,10 @@ class Employee_view(View):
         employee_id = request.POST.get('employee')
         if employee_id:
             try:
-                emp = Employee.objects.get(id=employee_id)
+                emp = UserProfile.objects.get(id=employee_id)
                 emp.delete()
                 return redirect('inventory') 
-            except Employee.DoesNotExist:
+            except UserProfile.DoesNotExist:
                 return HttpResponseForbidden("Employee not found.")
         return redirect('employee')
 
@@ -325,7 +343,7 @@ class Reports_view(View):
 
             # Group and sum uniform quantities by employee and uniform
             for assignment in uniform_assignments:
-                employee_data[assignment.employee.name][assignment.uniform.name] += assignment.quantity
+                employee_data[assignment.employee][assignment.uniform.name] += assignment.quantity
             
             employee_data = {employee: dict(uniforms) for employee, uniforms in employee_data.items()}
 

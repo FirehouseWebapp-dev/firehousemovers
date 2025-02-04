@@ -168,8 +168,8 @@ class JobLogisticsPage(View):
     def post(self, request):
         job_orders = Order.objects.filter(status="Pending")  # Fetch pending orders
         dispatches = Dispatch.objects.filter(status='Completed')  # Fetch all dispatches
+        completed_order_id = request.POST.get('completed_order_id')
         
-        completed_order_id = json.loads(request.body.decode('utf-8'))
         if completed_order_id:
             # Pass the selected completed order ID to the form
             form2 = DispatchForm(request.POST or None, completed_order_id=completed_order_id)
@@ -186,6 +186,7 @@ class JobLogisticsPage(View):
 
         # Handle OrderForm submission
         if 'submit_order' in request.POST:
+
             form1 = OrderForm(request.POST)
             if form1.is_valid():
                 order = form1.save(commit=False)
@@ -193,6 +194,7 @@ class JobLogisticsPage(View):
                 order.saved_on=timezone.now().date()
                 order.save()
                 return redirect('/job-logistics/')
+            
         
         elif 'submit_dispatch' in request.POST:
             form2 = DispatchForm(request.POST)

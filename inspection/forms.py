@@ -217,7 +217,7 @@ class OnsiteInspectionForm(forms.ModelForm):
             'pickup_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'delivery_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'crew_leader': forms.Select(attrs={'class': 'form-select'}),
-            'crew_members': forms.Select(attrs={'class': 'form-select'}),
+            'crew_members': forms.SelectMultiple(attrs={'class': 'form-select'}),
             'materials_check_rating': forms.RadioSelect(choices=[(i, i) for i in range(6)]),
 
             # Rating Fields (Radio Buttons)
