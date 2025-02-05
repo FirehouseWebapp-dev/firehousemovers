@@ -1,14 +1,25 @@
-from django.core.management.base import BaseCommand
-from inventory_app.models import UniformCatalog, Inventory
 from django.db import transaction
- 
+from django.db.models import Max
+from django.core.management.base import BaseCommand
+from django.db import connection
+
+
+from inventory_app.models import Inventory, UniformCatalog
 
 class Command(BaseCommand):
     help = 'Seeds inventory data into the database'
 
+    def resync_id_sequence(self):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT setval(pg_get_serial_sequence('inventory_app_inventory', 'id'),
+                COALESCE((SELECT MAX(id) FROM inventory_app_inventory), 1), false);
+            """)
+
     def handle(self, *args, **kwargs):
         # Resync the ID sequence
         self.resync_id_sequence()
+
         inventory_data = [
             ("S Grey Marbled Short Sleeve", 23, 0, 15, 38, 0, 0),
             ("M Grey Marbled Short Sleeve", 48, 0, 140, 188, 0, 0),
@@ -156,27 +167,28 @@ class Command(BaseCommand):
             with transaction.atomic():
                 uniforms_to_create = []
                 for uniform in inventory_data:
-                    # Fetch the uniform by name (assuming name uniqueness)
                     uniform_instance = UniformCatalog.objects.filter(name=uniform[0]).first()
 
                     # Only proceed if the uniform exists
                     if uniform_instance:
-                        inventory_instance = Inventory(
-                            uniform=uniform_instance,
-                            new_stock=uniform[1],
-                            used_stock=uniform[2],
-                            in_use=uniform[3],
-                            disposed=uniform[4],
-                            return_to_supplier=uniform[5],
-                            total_bought=uniform[6]
-                        )
-                        uniforms_to_create.append(inventory_instance)
+                        # Check if this inventory already exists by uniform ID
+                        if not Inventory.objects.filter(uniform=uniform_instance).exists():
+                            inventory_instance = Inventory(
+                                uniform=uniform_instance,
+                                new_stock=uniform[1],
+                                used_stock=uniform[2],
+                                in_use=uniform[3],
+                                disposed=uniform[4],
+                                return_to_supplier=uniform[5],
+                                total_bought=uniform[6]
+                            )
+                            uniforms_to_create.append(inventory_instance)
 
                 # Bulk insert into the Inventory table
-                Inventory.objects.bulk_create(uniforms_to_create)
+                if uniforms_to_create:
+                    Inventory.objects.bulk_create(uniforms_to_create)
 
             self.stdout.write(self.style.SUCCESS("✅ Inventory data seeded successfully!"))
 
         except Exception as e:
             print(f"❌ An error occurred: {e}")
-
