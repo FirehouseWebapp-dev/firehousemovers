@@ -4,6 +4,7 @@ from inventory_app.models import UniformAssignment, UniformCatalog, UserProfile
 from datetime import datetime
 
 
+
 class Command(BaseCommand):
     help = 'Seeds uniform assignment data into the database'
 
