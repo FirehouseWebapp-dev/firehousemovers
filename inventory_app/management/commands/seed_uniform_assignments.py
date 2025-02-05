@@ -4,7 +4,6 @@ from inventory_app.models import UniformAssignment, UniformCatalog, UserProfile
 from datetime import datetime
 
 
-
 class Command(BaseCommand):
     help = 'Seeds uniform assignment data into the database'
 
@@ -50,6 +49,16 @@ class Command(BaseCommand):
             ("1/1/2024 0:00:00", "Bryce Nicolai", "M Grey Marbled Short Sleeve", 3, "Used", "Active"),
             ("1/1/2024 0:00:00", "Bryce Nicolai", "M Black Shorts", 3, "Used", "Active"),
             ("1/1/2024 0:00:00", "Bryce Nicolai", "Hat (WB)", 1, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "M Grey Marbled Short Sleeve", 2, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "L Grey Marbled Short Sleeve", 4, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "M Charcoal Long Sleeve", 1, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "L Charcoal Long Sleeve", 2, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "M Light Grey Breast Cancer", 1, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "M Black Shorts", 2, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "L Hoodie", 2, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "M Rain Pants", 1, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "Beanie", 2, "Used", "Active"),
+            ("1/1/2024 0:00:00", "Carlos Contreras", "Hat (WB)", 2, "Used", "Active"),
             ("1/1/2024 0:00:00", "Cavarsier Williams", "M Grey Marbled Short Sleeve", 1, "Used", "Active"),
             ("1/1/2024 0:00:00", "Chelsie Willette", "XL Grey Marbled Short Sleeve", 1, "Used", "Active"),
             ("1/1/2024 0:00:00", "Chelsie Willette", "L Polos-Female", 4, "Used", "Active"),

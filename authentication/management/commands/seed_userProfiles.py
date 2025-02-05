@@ -10,6 +10,7 @@ class Command(BaseCommand):
         # User data (Username)
         userProfiles = {
             "Adam Rozen": "llc/field",
+            "Carlos Contreras": "sales",
             "Alaciel Hernandez": "llc/owner",
             "Alex Fichera": "llc/field",
             "Alexandria Blackburn": "sales",
