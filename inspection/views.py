@@ -11,7 +11,7 @@ from authentication.models import UserProfile
 from inspection.forms import  OnsiteInspectionForm, TrailerInspectionForm, TruckInspectionForm
 from inspection.models import  Onsite_inspection, Trailer_inspection, Truck_inspection
 from inventory_app.permissions import IsManager
-from vehicle.models import CrewStaff, Vehicle
+from vehicle.models import Crew, Vehicle
 
 
 
@@ -21,161 +21,6 @@ def inspection_view(request):
     return render(request, "vehicle_inspection_base.html")
 
 
-
-# class onsite_inspection_view(View):
-#     permission_classes = [IsAuthenticated, IsManager] 
-
-#     def dispatch(self, request, *args, **kwargs):
-#         # Manually check permissions before executing the view logic
-#         for permission in self.permission_classes:
-#             permission_instance = permission()
-#             if not permission_instance.has_permission(request, self):
-#                 return HttpResponseForbidden("You do not have permission to view this page.")
-#         return super().dispatch(request, *args, **kwargs)
-
-
-#     def get(self, request):
-#         print("=================")
-        
-#         step = int(request.GET.get("step", 1))
-#         # Define steps and the fields associated with each step
-#         steps = {
-#             1: ["job_number", "customer_name", "customer_phone", "pickup_address", "delivery_address", "crew_leader","crew_members"],
-#             2: ["materials_check_rating", "vehicle_inventory_rating", "customer_communication_rating", "parking_arranged_rating"],
-#             3: ["customer_greeted_rating", "crew_introduction_rating", "initial_walkthrough_rating", "estimate_comparison_rating",
-#                 "initial_walkthrough_rating","damage_inspection_rating","paperwork_signed_rating","valuables_secured_rating",
-#                 "protection_setup_rating","photos_sent_rating","inventory_management_rating","furniture_disassembly_rating",
-#                 "parts_management_rating","loading_quality_rating","padding_used_rating","load_secured_rating","final_walkthrough_rating",
-#                 "customer_initials_rating","follow_instructions_rating","truck_prepared_rating","dispatch_complete_rating"],
-#             4: ["dispatch_unload_rating", "damage_inspection_rating", "protection_setup_rating", "placement_accuracy_rating",
-#                 "pad_management_rating","furniture_reassembly_rating","customer_walkthrough_rating","vehicle_inspection_rating",
-#                 "final_charges_rating","customer_review_rating","paperwork_rating","payment_collection_rating","video_testimonial_rating",
-#                 "completion_notice_rating"],
-#             5: ["comments", "customer_feedback"],
-#         }
-
-#         initial_data = {}
-#         for s in range(1, step):
-#             initial_data.update(request.session.get(f"step_{s}_data", {}))
-
-#         valid_keys = [field.name for field in Onsite_inspection._meta.fields] 
-#         initial_data = {key: value for key, value in initial_data.items() if key in valid_keys}
-
-#         if 'crew_leader' in initial_data:
-#             crew_leader_id = initial_data['crew_leader']
-#             try:
-#                 crew_leader_instance=CrewStaff.objects.get(id=crew_leader_id)
-#                 initial_data['crew_leader'] = crew_leader_instance
-#             except CrewStaff.DoesNotExist:
-#                 initial_data['crew_leader'] = None
-
-#         if 'crew_members' in initial_data:
-#             crew_leader_id = initial_data['crew_members']
-#             try:
-#                 crew_leader_instance=CrewStaff.objects.get(id=crew_leader_id)
-#                 initial_data['crew_members'] = crew_leader_instance
-#             except CrewStaff.DoesNotExist:
-#                 initial_data['crew_members'] = None
-
-#         inspection_instance = Onsite_inspection(**initial_data)
-#         prior_move_score = inspection_instance.calculate_prior_move_score()
-#         pickup_score = inspection_instance.calculate_pickup_score()
-#         dropoff_score = inspection_instance.calculate_dropoff_score()
-#         overall_score = inspection_instance.calculate_overall_score()
-
-#         crew_leader_choices = CrewStaff.objects.filter(role='leader') 
-#         crew_member_choices = CrewStaff.objects.filter(role='member')  
-
-#         form = OnsiteInspectionForm(initial=initial_data)
-        
-
-#         return render(request, "onsite_inspection.html", {
-#             "form": form, 
-#             "step": step, 
-#             "steps": steps, 
-#             "current_fields": steps[step],
-#             "crew_leader_choices": crew_leader_choices,
-#             "crew_member_choices": crew_member_choices,  
-#             "prior_move_score":prior_move_score,
-#             "pickup_score":pickup_score,
-#             "dropoff_score":dropoff_score,
-#             "overall_score":overall_score,
-#         })
-
-#     def post(self, request):
-#         print("=================---------------")
-#         step = int(request.GET.get("step", 1))
-
-#         # Define steps and the fields associated with each step
-#         steps = {
-#             1: ["job_number", "customer_name", "customer_phone", "pickup_address", "delivery_address", "crew_leader", "crew_members"],
-#             2: ["materials_check_rating", "vehicle_inventory_rating", "customer_communication_rating", "parking_arranged_rating"],
-#             3: ["customer_greeted_rating", "crew_introduction_rating", "initial_walkthrough_rating", "estimate_comparison_rating",
-#                 "initial_walkthrough_rating", "damage_inspection_rating", "paperwork_signed_rating", "valuables_secured_rating",
-#                 "protection_setup_rating", "photos_sent_rating", "inventory_management_rating", "furniture_disassembly_rating",
-#                 "parts_management_rating", "loading_quality_rating", "padding_used_rating", "load_secured_rating", "final_walkthrough_rating",
-#                 "customer_initials_rating", "follow_instructions_rating", "truck_prepared_rating", "dispatch_complete_rating"],
-#             4: ["dispatch_unload_rating", "damage_inspection_rating", "protection_setup_rating", "placement_accuracy_rating",
-#                 "pad_management_rating", "furniture_reassembly_rating", "customer_walkthrough_rating", "vehicle_inspection_rating",
-#                 "final_charges_rating", "customer_review_rating", "paperwork_rating", "payment_collection_rating", "video_testimonial_rating",
-#                 "completion_notice_rating"],
-#             5: ["comments", "customer_feedback"],
-#         }
-
-#         # Save the current step's data in the session
-#         crew_members = request.POST.getlist('crew_members')  
-#         if crew_members: 
-#             request.session[f"step_{step}_data"] = request.POST.copy() 
-#             request.session[f"step_{step}_data"]['crew_members'] = crew_members 
-#         else:
-#             request.session[f"step_{step}_data"] = request.POST
-
-#         # If it's the final step
-#         if step == len(steps):
-#             combined_data = {}
-
-#             # Collect data from all previous steps
-#             for s in range(1, len(steps) + 1):
-#                 step_data = request.session.get(f"step_{s}_data", {})
-
-#                 crew_members = step_data.get('crew_members', None)
-#                 if crew_members:
-#                     if isinstance(crew_members, str): 
-#                         crew_members = crew_members.split(',')
-#                     if isinstance(crew_members, list):
-#                         if 'crew_members' in combined_data:
-#                             combined_data['crew_members'].extend(crew_members)  
-#                         else:
-#                             combined_data['crew_members'] = crew_members  
-
-#                 combined_data.update(step_data)  
-
-#             user=UserProfile.objects.get(user=request.user)
-
-#             combined_data["inspector"] = user
-
-#             final_form = OnsiteInspectionForm(combined_data)
-
-#             if final_form.is_valid():
-#                 final_instance = final_form.save(commit=False)
-#                 final_instance.save()
-
-#                 # Clear the session data after saving
-#                 for s in range(1, len(steps) + 1):
-#                     request.session.pop(f"step_{s}_data", None)
-
-#                 return redirect('onsite_inspection')
-#             else:
-#                 print("errors=====",final_form.errors)
-
-#             return render(request, "onsite_inspection.html", {
-#                 "form": final_form,
-#                 "step": step,
-#                 "steps": steps,
-#                 "current_fields": steps[step],
-#             })
-#         else:
-#             return redirect(f"/onsite-inspection/?step={step + 1}")
 
 class onsite_inspection_view(View):
     permission_classes = [IsAuthenticated, IsManager]
@@ -189,7 +34,6 @@ class onsite_inspection_view(View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
-        print("=================")
         
         step = int(request.GET.get("step", 1))
         # Define steps and the fields associated with each step
@@ -221,9 +65,9 @@ class onsite_inspection_view(View):
         if 'crew_leader' in initial_data:
             crew_leader_id = initial_data['crew_leader']
             try:
-                crew_leader_instance = CrewStaff.objects.get(id=crew_leader_id)
+                crew_leader_instance = Crew.objects.get(id=crew_leader_id)
                 initial_data['crew_leader'] = crew_leader_instance
-            except CrewStaff.DoesNotExist:
+            except Crew.DoesNotExist:
                 initial_data['crew_leader'] = None
 
         if 'crew_members' in initial_data:
@@ -231,17 +75,17 @@ class onsite_inspection_view(View):
             if isinstance(crew_members_ids, str):
                 crew_members_ids = crew_members_ids.split(',')
             try:
-                crew_members_instances = CrewStaff.objects.filter(id__in=crew_members_ids)
+                crew_members_instances = Crew.objects.filter(id__in=crew_members_ids)
                 initial_data['crew_members'] = crew_members_instances
-            except CrewStaff.DoesNotExist:
+            except Crew.DoesNotExist:
                 initial_data['crew_members'] = None
 
         # Create an empty form instance with the initial data
         form = OnsiteInspectionForm(initial=initial_data)
 
         # Get crew leader and crew member choices
-        crew_leader_choices = CrewStaff.objects.filter(role='leader')
-        crew_member_choices = CrewStaff.objects.filter(role='member')
+        crew_leader_choices = Crew.objects.filter(role='leader')
+        crew_member_choices = Crew.objects.filter(role='member')
 
         # Scores (if required)
         inspection_instance = Onsite_inspection(**initial_data)
@@ -327,11 +171,11 @@ class onsite_inspection_view(View):
                 print(f"crew_leader ID from combined_data: {crew_leader}")
 
                 try:
-                    crew_leader_instance = CrewStaff.objects.get(id=crew_leader)
-                    print(f"Found CrewStaff for crew_leader_id={crew_leader}: {crew_leader_instance}")
+                    crew_leader_instance = Crew.objects.get(id=crew_leader)
+                    print(f"Found Crew for crew_leader_id={crew_leader}: {crew_leader_instance}")
                     final_instance.crew_leader = crew_leader_instance
-                except CrewStaff.DoesNotExist:
-                    print(f"CrewStaff with ID {crew_leader} does not exist.")
+                except Crew.DoesNotExist:
+                    print(f"Crew with ID {crew_leader} does not exist.")
                     final_instance.crew_leader = None
 
                 # Save the instance (this will give it an ID)
@@ -344,14 +188,14 @@ class onsite_inspection_view(View):
 
                 if crew_members_ids:
                     try:
-                        # Fetch CrewStaff instances for crew_members
-                        crew_members_instances = CrewStaff.objects.filter(id__in=crew_members_ids)
-                        print(f"Found CrewStaff instances for crew_members: {crew_members_instances}")
+                        # Fetch Crew instances for crew_members
+                        crew_members_instances = Crew.objects.filter(id__in=crew_members_ids)
+                        print(f"Found Crew instances for crew_members: {crew_members_instances}")
                         final_instance.crew_members.set(crew_members_instances)
                         final_instance.save()  # Save again after updating many-to-many field
                         print(f"Many-to-many field 'crew_members' set successfully.")
-                    except CrewStaff.DoesNotExist:
-                        print("No valid CrewStaff instances found for crew_members.")
+                    except Crew.DoesNotExist:
+                        print("No valid Crew instances found for crew_members.")
                         final_instance.crew_members.clear()
 
                 # Clear the session data after saving

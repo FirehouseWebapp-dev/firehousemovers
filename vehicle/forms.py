@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from django import forms
 from authentication.models import UserProfile
-from .models import AvailabilityData, Crew, CrewStaff, Dispatch,Order, Vehicle
+from .models import AvailabilityData, Crew, Dispatch,Order, Vehicle
 from django.db.models import Prefetch
 from django.db.models import Max, Subquery
 
@@ -70,7 +70,21 @@ class OrderForm(forms.ModelForm):
         label="Phone Number",
     )
     type_of_move = forms.ChoiceField(
-        choices=[("local", "Local"), ("long_distance", "Long Distance")],
+        choices = [
+            ("moving", "Moving"),
+            ("packing", "Packing"),
+            ("moving_packing", "Moving & Packing"),
+            ("load_only", "Load Only"),
+            ("unload_only", "Unload Only"),
+            ("commercial", "Commercial"),
+            ("storage_inbound", "Storage Inbound"),
+            ("storage_outbound", "Storage Outbound"),
+            ("inner_house", "Inner House"),
+            ("junk_removal", "Junk Removal"),
+            ("unpacking", "Unpacking"),
+            ("pack_load", "Pack & Load")
+        ],
+
         widget=forms.Select(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
@@ -95,7 +109,35 @@ class OrderForm(forms.ModelForm):
         label="Crew Name",
     )
     referral_source = forms.ChoiceField(
-        choices=[("google", "Google"), ("referral", "Referral"), ("other", "Other")],
+        choices = [
+            ("moved_before", "Moved Before"),
+            ("friend", "Friend"),
+            ("fire_station", "Fire Station"),
+            ("realtor_referral", "Realtor Referral"),
+            ("is_a_realtor", "Is a Realtor"),
+            ("way_fm", "Way FM"),
+            ("yelp", "Yelp"),
+            ("google", "Google"),
+            ("angis", "Angi's"),
+            ("saw_truck", "Saw Truck"),
+            ("facebook", "Facebook"),
+            ("mailers", "Mailers"),
+            ("elevate_life_church", "Elevate Life Church"),
+            ("nikki_brian", "Nikki & Brian"),
+            ("cb_jeni_homes", "CB Jeni Homes"),
+            ("drive_by", "Drive By"),
+            ("next_door", "Next Door"),
+            ("century_21_judge_fite_concierge", "Century 21 Judge Fite Concierge"),
+            ("bbb", "BBB"),
+            ("the_wolf_99_5", "The Wolf 99.5"),
+            ("the_ticket_radio", "The Ticket Radio"),
+            ("great_guy_movers", "Great Guy Movers"),
+            ("the_good_contractors_list", "The Good Contractors List"),
+            ("trinity_floors", "Trinity Floors"),
+            ("highland_springs", "Highland Springs"),
+            ("rohail", "Rohail")
+        ],
+
         widget=forms.Select(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
@@ -171,7 +213,7 @@ class DispatchForm(forms.ModelForm):
         label="iPad#",
     )
     crew_leads = forms.ModelChoiceField(
-        queryset=CrewStaff.objects.filter(role='leader'),
+        queryset=Crew.objects.filter(role='leader'),
         widget=forms.Select(attrs={
             'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
         }),
