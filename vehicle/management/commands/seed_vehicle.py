@@ -1,115 +1,53 @@
-import pandas as pd
-from datetime import datetime
+from django.core.management.base import BaseCommand
 from django.db import transaction
-from vehicle.models import Vehicle, AvailabilityData  # Adjust to your actual app name
+from vehicle.models import Vehicle
 
-# Load the data from the CSV file or wherever you have it stored
-data = [
-    ("11/8/2024 5:00:00", "truck", "Truck 1", "Out of Service", "11/30/2024", "12/6/2024", "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 2", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 3", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 4", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 5", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 6", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 7", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 9", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 10", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 11", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 12", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Truck 13", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "A&H 1", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "A&H 2", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "A&H 3", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "A&H 4", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "QD 1", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "QD 2", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "QD 3", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "QD 4", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "RW 1", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "RW 2", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "RW 3", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "truck", "Box Truck", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 1", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 2", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 3", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 4", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 5", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 6", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 7", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 8", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 9", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 10", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 11", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 12", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 13", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 14", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 15", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 16", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 17", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 18", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 19", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 20", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 21", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 22", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 23", "In Service", None, None, "11/8/2024 19:24:40"),
-    ("11/8/2024 5:00:00", "trailer", "Trailer 24", "In Service", None, None, "11/8/2024 19:24:40")
-]
+class Command(BaseCommand):
+    help = 'Seeds vehicle (truck and trailer) information into the database'
 
+    def handle(self, *args, **kwargs):
+        # Truck and trailer data without duplicates
+        vehicle_data = [
+            # Truck data (from previous message)
+            'Truck 1', 'Truck 2', 'Truck 3', 'Truck 4', 'Truck 5', 'Truck 6', 'Truck 7', 
+            'Truck 9', 'Truck 10', 'Truck 11', 'Truck 12', 'Truck 13', 'A&H 1', 'A&H 2', 
+            'A&H 3', 'A&H 4', 'QD 1', 'QD 2', 'QD 3', 'QD 4', 'RW 1', 'RW 2', 'RW 3', 
+            'Box Truck', 'new truck', 'abc', 'halllo', '16ft Cargo',
+            
+            # Trailer data (from your message)
+            'Trailer 1', 'Trailer 2', 'Trailer 3', 'Trailer 4', 'Trailer 5', 'Trailer 6', 
+            'Trailer 7', 'Trailer 8', 'Trailer 9', 'Trailer 10', 'Trailer 11', 'Trailer 12', 
+            'Trailer 13', 'Trailer 14', 'Trailer 15', 'Trailer 16', 'Trailer 17', 'Trailer 18',
+            'Trailer 19', 'Trailer 20', 'Trailer 21', 'Trailer 22', '16ft Cargo', 'fsdfsdf'
+        ]
+        
+        # Create unique vehicle entries (trucks and trailers)
+        vehicles = []
+        for number in vehicle_data:
+            vehicles.append(
+                {'vehicle_type': 'truck' if 'Truck' in number else 'trailer', 'number': number}
+            )
+        
+        # Remove duplicates by converting the list of dictionaries to a set of tuples (number, type)
+        unique_vehicles = set(
+            (vehicle['number'], vehicle['vehicle_type']) for vehicle in vehicles
+        )
+        
+        # Convert back to a list of dictionaries
+        vehicles_to_create = [{'vehicle_type': vehicle_type, 'number': number} for number, vehicle_type in unique_vehicles]
 
-# Convert the data into a DataFrame
-df = pd.DataFrame(data, columns=["Date", "Vehicle Type", "Vehicle Number", "Status", "Estimated Back In Service Date", "Actual Back In Service Date", "Date Saved"])
-
-# Prepare a list for AvailabilityData instances
-availability_to_create = []
-
-# Loop through each row and prepare AvailabilityData instances
-for index, row in df.iterrows():
-    try:
-        # Get the vehicle object (handle cases where the vehicle might not exist)
-        vehicle = Vehicle.objects.get(vehicle_number=row["Vehicle Number"])
-
-        estimated_back_in_service_date = datetime.strptime(row["Estimated Back In Service Date"], "%m/%d/%Y") if row["Estimated Back In Service Date"] else None
-        back_in_service_date = datetime.strptime(row["Actual Back In Service Date"], "%m/%d/%Y") if row["Actual Back In Service Date"] else None
-        date_saved = datetime.strptime(row["Date Saved"], "%m/%d/%Y %H:%M:%S")
-
-        # Create AvailabilityData dictionary
-        availability_data = {
-            'vehicle': vehicle,
-            'status': row["Status"],
-            'estimated_back_in_service_date': estimated_back_in_service_date,
-            'back_in_service_date': back_in_service_date,
-            'date_saved': date_saved,
-        }
-
-        # Add to the list of instances to be created
-        availability_to_create.append(AvailabilityData(**availability_data))
-    
-    except Vehicle.DoesNotExist:
-        print(f"Vehicle with number {row['Vehicle Number']} does not exist.")
-        continue
-
-# Remove duplicates from the list if any, based on the combination of vehicle and status
-# Create a set of tuples (vehicle_id, status, start_date, end_date) for uniqueness
-unique_availability = set(
-    (avail.vehicle.id, avail.status, avail.start_date, avail.end_date) for avail in availability_to_create
-)
-
-# Convert the set back to AvailabilityData objects
-unique_availability_objects = [
-    AvailabilityData(
-        vehicle=Vehicle.objects.get(id=vehicle_id),
-        status=status,
-        start_date=start_date,
-        end_date=end_date
-    )
-    for vehicle_id, status, start_date, end_date in unique_availability
-]
-
-# Start database transaction for bulk creation
-try:
-    with transaction.atomic():
-        # Bulk create AvailabilityData instances
-        AvailabilityData.objects.bulk_create(unique_availability_objects)
-    print("Availability data import complete!")
-except Exception as e:
-    print(f"An error occurred while importing data: {e}")
+        # Start database transaction
+        try:
+            with transaction.atomic():
+                # Prepare Vehicle objects for creation
+                vehicles_to_create_objects = [
+                    Vehicle(vehicle_type=vehicle['vehicle_type'], number=vehicle['number'])
+                    for vehicle in vehicles_to_create
+                ]
+                
+                # Bulk create Vehicles
+                Vehicle.objects.bulk_create(vehicles_to_create_objects)
+                
+            self.stdout.write(self.style.SUCCESS('Vehicles seeded successfully!'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"An error occurred: {e}"))
