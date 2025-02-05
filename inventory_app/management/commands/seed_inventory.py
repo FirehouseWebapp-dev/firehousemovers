@@ -7,6 +7,8 @@ class Command(BaseCommand):
     help = 'Seeds inventory data into the database'
 
     def handle(self, *args, **kwargs):
+        # Resync the ID sequence
+        self.resync_id_sequence()
         inventory_data = [
             ("S Grey Marbled Short Sleeve", 23, 0, 15, 38, 0, 0),
             ("M Grey Marbled Short Sleeve", 48, 0, 140, 188, 0, 0),
@@ -146,17 +148,17 @@ class Command(BaseCommand):
             ("XL Golf Polo Jackets - Dark Blue", 0, 0, 2, 2, 0, 0),
             ("S Golf Polo Jackets - Grey", 0, 0, 1, 1, 0, 0),
             ("XLGolf Polo Jackets - Grey", 0, 0, 2, 2, 0, 0),
+            ("S Golf Polo Jackets - Black", 0, 0, 1, 1, 0, 0),
             ("XL Golf Polo Jackets - Black", 0, 0, 2, 2, 0, 0)
         ]
 
         try:
             with transaction.atomic():
-                # Iterate through each entry and associate it with the correct UniformCatalog
                 uniforms_to_create = []
                 for uniform in inventory_data:
                     # Fetch the uniform by name (assuming name uniqueness)
                     uniform_instance = UniformCatalog.objects.filter(name=uniform[0]).first()
-                    
+
                     # Only proceed if the uniform exists
                     if uniform_instance:
                         inventory_instance = Inventory(
@@ -168,8 +170,6 @@ class Command(BaseCommand):
                             return_to_supplier=uniform[5],
                             total_bought=uniform[6]
                         )
-                        inventory_instance.save()  # This will trigger the `save` method to calculate `total_stock`
-
                         uniforms_to_create.append(inventory_instance)
 
                 # Bulk insert into the Inventory table
@@ -179,3 +179,4 @@ class Command(BaseCommand):
 
         except Exception as e:
             print(f"❌ An error occurred: {e}")
+
