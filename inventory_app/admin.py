@@ -15,7 +15,6 @@ class UniformAssignmentAdmin(admin.ModelAdmin):
 class InventoryAdmin(admin.ModelAdmin):
     list_display = ['uniform', 'new_stock', 'used_stock','in_use','disposed','return_to_supplier','total_bought']
     search_fields = ['uniform']
-    list_filter = ['uniform']
 
 class InventoryTransactionAdmin(admin.ModelAdmin):
     list_display = ['date', 'transaction_type', 'uniform','quantity','condition']
