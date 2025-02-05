@@ -1,6 +1,6 @@
 from django.db import models
 from authentication.models import UserProfile
-from vehicle.models import Vehicle
+from vehicle.models import Crew, Vehicle
 from decimal import Decimal
 
 
@@ -141,8 +141,8 @@ class Onsite_inspection(models.Model):
     customer_phone = models.CharField(max_length=20)
     pickup_address = models.TextField()
     delivery_address = models.TextField()
-    crew_leader = models.ForeignKey(UserProfile,on_delete=models.CASCADE,null=True, blank=True,related_name="crew_leader_inspections")
-    crew_members = models.ManyToManyField(UserProfile, blank=True, related_name="crew_member_inspections")
+    crew_leader = models.ForeignKey(Crew,on_delete=models.DO_NOTHING,null=True, blank=True,related_name="crew_leader_inspections")
+    crew_members = models.ManyToManyField(Crew, blank=True, related_name="crew_member_inspections")
 
     # Prior to Move
     materials_check_rating = models.IntegerField(choices=[(i, i) for i in range(1,6)], null=True, blank=True)

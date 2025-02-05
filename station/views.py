@@ -29,7 +29,7 @@ class report_view(View):
                 return HttpResponseForbidden("You do not have permission to view this page.")
         return super().dispatch(request, *args, **kwargs)
     
-    template_name = "reports.html"
+    template_name = "report.html"
 
     def get(self, request, station_number):
         active_tab = request.GET.get("tab", "order_report")  # Default to 'order_report'

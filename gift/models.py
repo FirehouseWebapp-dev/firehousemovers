@@ -2,37 +2,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from authentication.models import UserProfile
 
-
-class Employee(models.Model):
-    GENDER_CHOICES = [
-        ('male', 'Male'),
-        ('female', 'Female'),
-        ('other', 'Other'),
-    ]
-    DESIGNATION_CHOICES = [
-        ('llc/field', 'LLC/Field'),
-        ('llc/owner', 'LLC/Owner'),
-        ('sales', 'Sales'),
-        ('field', 'Field'),
-        ('driver', 'Driver'),
-        ('manager', 'Manager'),
-        ('rwh', 'RWH'),
-        ('admin', 'Admin'),
-        ('warehouse', 'Warehouse'),
-        ('mover', 'Mover'),
-        ('technician', 'Technician'),
-        ('mover- crew member', 'Mover- Crew member'),
-        ('customers- per trevor', 'Customers- Per Trevor'),
-    ]
-
-    name = models.CharField(max_length=255, default='unknown')
-    designation = models.CharField(max_length=40,choices=DESIGNATION_CHOICES,null=True, blank=True)
-    gender = models.CharField(max_length=40,choices=GENDER_CHOICES,null=True, blank=True)
-
-    def __str__(self):
-        return self.name 
-
-
 class Gift_company(models.Model):
     name = models.CharField(max_length=255,null=True, blank=True)
 
@@ -58,7 +27,7 @@ class Gift_card(models.Model):
 
 class Award(models.Model):
     date_award = models.DateField(null=True, blank=True)
-    employee_name = models.ForeignKey(Employee,on_delete=models.CASCADE,related_name="employee_names")
+    employee_name = models.ForeignKey(UserProfile,on_delete=models.CASCADE,related_name="employee_names")
     card = models.ForeignKey(Gift_card,on_delete=models.CASCADE,related_name="gift_card")
     amount=models.IntegerField(null=True, blank=True)
     reason=models.TextField(null=True, blank=True)

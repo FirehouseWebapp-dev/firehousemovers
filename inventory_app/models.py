@@ -1,5 +1,5 @@
 from django.db import models
-from gift.models import Employee
+from authentication.models import UserProfile
 
 
 
@@ -15,14 +15,14 @@ class UniformCatalog(models.Model):
 
 class UniformAssignment(models.Model):
     date = models.DateField(null=True, blank=True)
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True, blank=True)
+    employee = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True)
     uniform = models.ForeignKey(UniformCatalog, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField(null=True, blank=True)
     condition = models.CharField(max_length=10, choices=[("New", "New"), ("Used", "Used")], null=True, blank=True)
     status = models.CharField(max_length=20, choices=[("Active", "Active"), ("Returned", "Returned")], null=True, blank=True)
 
     def __str__(self):
-        return f"{self.uniform.name} assigned to {self.employee.name}"
+        return f"{self.uniform.name} assigned to {self.employee}"
 
 
 class Inventory(models.Model):

@@ -1,5 +1,6 @@
 from django import forms
-from gift.models import Employee
+
+from authentication.models import UserProfile
 from .models import  UniformCatalog,Inventory,UniformAssignment,InventoryTransaction
 
 
@@ -41,7 +42,7 @@ class UniformCatalogForm(forms.ModelForm):
 class UniformIssueForm(forms.ModelForm):
 
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.all(),
+        queryset=UserProfile.objects.all(),
         widget=forms.Select(attrs={
             'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
         }),
@@ -80,10 +81,10 @@ class AddEmployeeForm(forms.ModelForm):
             ('driver', 'Driver'),
             ('manager', 'Manager'),
             ('rwh', 'RWH'),
+            ('technician', 'Technician'),
             ('admin', 'Admin'),
             ('warehouse', 'Warehouse'),
             ('mover', 'Mover'),
-            ('mover- crew member', 'Mover- Crew member'),
             ('customers- per trevor', 'Customers- Per Trevor'),
         ]
 
@@ -95,13 +96,7 @@ class AddEmployeeForm(forms.ModelForm):
         }),
         required=True
     )
-    gender = forms.ChoiceField(
-        choices=[("male", "Male"), ("female", "Female"), ("unisex", "Unisex")],
-        widget=forms.Select(attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
-        })
-    )
-    designation = forms.ChoiceField(
+    role = forms.ChoiceField(
         choices=DESIGNATION_CHOICES,
         widget=forms.Select(attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
@@ -109,8 +104,8 @@ class AddEmployeeForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Employee
-        fields = ['name', 'gender', 'designation']
+        model = UserProfile
+        fields = ['name', 'role']
 
 
 class InventoryForm(forms.ModelForm):

@@ -59,7 +59,7 @@
                         {% elif step == 1 and field.name == "crew_members" %}
                          <!-- Select Field for 'crew_members' in Step 1 (Multiple Select with Choices.js) -->
                          <select class="form-select crew-members-select" id="{{ field.id_for_label }}" name="{{ field.name }}" multiple>
-                            {% for leader in crew_leader_choices %}
+                            {% for leader in crew_member_choices %}
                                 <option value="{{ leader.id }}" {% if field.value and leader.id in field.value %}selected{% endif %}>{{ leader }}</option>
                             {% endfor %}
                         </select>

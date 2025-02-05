@@ -4,19 +4,11 @@ from authentication.models import UserProfile
 
 class Crew(models.Model):
     name = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
-    
-
-class CrewStaff(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    crew = models.ForeignKey(Crew,on_delete=models.CASCADE)
     role = models.CharField(max_length=50, choices=[('leader', 'Leader'), ('member', 'Member')], default='member')
 
     def __str__(self):
         return self.name
-
+    
 
 # Vehicle Information Model
 class Vehicle(models.Model):
@@ -69,7 +61,7 @@ class Order(models.Model):
     moved_before = models.BooleanField(default=False,null=True, blank=True)
     moved_before_crew_name = models.CharField(max_length=100, null=True, blank=True)
     referral_source = models.CharField(max_length=100,null=True, blank=True)
-    crew_name = models.CharField(max_length=100,null=True, blank=True)
+    crew_name = models.ForeignKey(Crew,on_delete=models.DO_NOTHING,null=True, blank=True)
     crew_available = models.BooleanField(default=False,null=True, blank=True)
     number_of_trucks = models.PositiveIntegerField(null=True, blank=True)
     number_of_trailers = models.PositiveIntegerField(null=True, blank=True)
@@ -94,7 +86,7 @@ class Dispatch(models.Model):
         )
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='dispatches')
     ipad = models.CharField(max_length=50, null=True, blank=True)
-    crew_leads = models.CharField(max_length=100,null=True, blank=True)
+    crew_leads = models.ForeignKey(Crew,on_delete=models.DO_NOTHING,null=True, blank=True)
     drivers = models.CharField(max_length=100,null=True, blank=True)
     truck_1 = models.CharField(max_length=50, null=True, blank=True)
     trailer_1 = models.CharField(max_length=50, null=True, blank=True)

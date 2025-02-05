@@ -1,7 +1,7 @@
 from django import forms
-from .models import Award, Employee, Gift_card, Gift_company
-from django.core.exceptions import ValidationError
 
+from authentication.models import UserProfile
+from .models import Award, Gift_card, Gift_company
 
 class GiftCardForm(forms.ModelForm):
     date_of_purchase = forms.DateField(
@@ -48,7 +48,7 @@ class AwardCardForm(forms.ModelForm):
         })
     )
     employee_name = forms.ModelChoiceField(
-        queryset=Employee.objects.all(),
+        queryset=UserProfile.objects.all(),
         widget=forms.Select(attrs={
             'class': 'border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full'
         }),
