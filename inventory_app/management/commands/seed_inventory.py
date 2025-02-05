@@ -146,7 +146,6 @@ class Command(BaseCommand):
             ("XL Golf Polo Jackets - Dark Blue", 0, 0, 2, 2, 0, 0),
             ("S Golf Polo Jackets - Grey", 0, 0, 1, 1, 0, 0),
             ("XLGolf Polo Jackets - Grey", 0, 0, 2, 2, 0, 0),
-            ("S Golf Polo Jackets - Black", 0, 0, 1, 1, 0, 0),
             ("XL Golf Polo Jackets - Black", 0, 0, 2, 2, 0, 0)
         ]
 
