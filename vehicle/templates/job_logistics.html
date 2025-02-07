@@ -2,13 +2,13 @@
 {% load static %}
 {% block content %}
 
-<div class="container mx-auto p-2 h-screen flex flex-col">
+<div class="container mx-auto h-screen flex flex-col">
     <div class="grid grid-cols-12 gap-4 flex-grow overflow-hidden ">
         
         <!-- Form Section -->
-        <div class="col-span-9 bg-white pr-4 pb-4 pl-4 rounded-lg shadow-md h-full overflow-auto border border-white">
+        <div class="col-span-9 bg-white pr-4 pb-4 pl-4 shadow-md h-full overflow-auto border border-white">
 
-            <h2 class="text-red-600 text-2xl font-bold my-4">Order Details</h2>
+            <h2 class="text-3xl font-bold mb-6 text-center text-black mt-6">Order Details</h2>
             <form method="post" class="grid grid-cols-3 gap-3 border border-gray-300 p-4 rounded-lg">
                 {% csrf_token %}
                 {{ form.non_field_errors }}
@@ -110,13 +110,13 @@
                     
                 </div>
                 <div class="col-span-3 text-center">
-                    <button type="submit" name="submit_order" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 w-full">
+                    <button type="submit" name="submit_order" class="px-6 py-2 text-white font-semibold rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300  w-full">
                         Save Order Details
                     </button>
                 </div>
             </form>
 
-            <h2 class="text-red-600 text-2xl font-bold my-4">Dispatch Details</h2>
+            <h2 class="text-black text-2xl font-bold my-4">Dispatch Details</h2>
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
@@ -285,7 +285,7 @@
                 </div>
 
                 <div class="text-center mt-6">
-                    <button type="submit" name="submit_dispatch" class="px-6 py-2 bg-red-500 text-white font-semibold rounded-full hover:bg-red-600 w-full">
+                    <button type="submit" name="submit_dispatch" class="px-6 py-2  text-white font-semibold rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300  w-full">
                         Save Dispatch Details
                     </button>
                 </div>
@@ -293,7 +293,7 @@
         </div>
 
         <!-- Orders Section -->
-        <div class="col-span-3 h-full overflow-auto">
+        <div class="col-span-3 h-full overflow-auto text-white">
             <div class="mb-4">
                 <h2 class="font-semibold text-lg">Pending Orders</h2>
                 <div class="border border-gray-300 rounded-md p-4 h-64 overflow-y-auto">
@@ -318,13 +318,13 @@
                                data-number_of_trucks="{{ job_order.number_of_trucks }}"
                                data-number_of_trailers="{{ job_order.number_of_trailers }}"
                                data-notes_order_detail="{{ job_order.notes_order_detail }}">
-                        <label for="job_order_{{ forloop.counter }}" class="text-gray-700">{{ job_order.job_no }}</label>
+                        <label for="job_order_{{ forloop.counter }}">{{ job_order.job_no }}</label>
                     </div>
                     {% endfor %}
                     
                 </div>
                 <button type="button" 
-                        class="mt-4 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 w-full pending-order-btn" 
+                        class="mt-4 px-4 py-2 text-white rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300  w-full pending-order-btn" 
                         data-selected="">
                     Select Order
                 </button>
@@ -373,13 +373,13 @@
                             data-labels_for_speedy_inventory="{{ dispatch.labels_for_speedy_inventory }}"
                             data-notes_dispatcher="{{ dispatch.notes_dispatcher }}">
 
-                            <label for="dispatch_{{ forloop.counter }}" class="text-gray-700">{{ dispatch.order.job_no }}</label>
+                            <label for="dispatch_{{ forloop.counter }}" >{{ dispatch.order.job_no }}</label>
                         </div>
                     {% endfor %}
 
                 </div>
                 <button type="button" 
-                        class="mt-4 px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 w-full completed-order-btn" 
+                        class="mt-4 px-4 py-2 text-white rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300  w-full completed-order-btn" 
                         data-selected="">
                     Select Order
                 </button>

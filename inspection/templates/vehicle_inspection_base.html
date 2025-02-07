@@ -5,19 +5,19 @@
 
     <div class="flex h-screen ">
         <!-- Sidebar -->
-        <aside class="sidebar bg-[#262626] text-white flex flex-col  transition-all duration-300 ease-in-out">
+        <aside class="w-full sm:w-36 md:w-64  bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out">
             <h1 class="text-lg sm:text-xl md:text-2xl font-bold py-4 px-2 sm:px-4 md:px-6"></h1>
         
             <!-- Main Menu -->
             <nav class="flex-grow space-y-2 px-2 sm:px-4">
-                <a href="{% url 'truck_inspection'%}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Inspection</a>
-                <a href="{% url 'trailer_inspection'%}" class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Inspection</a>
-                <a href="{% url 'inspection_report'%}"class="block w-full py-2 px-4 rounded bg-white hover:bg-opacity-90 text-red-500 text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
+                <a href="{% url 'truck_inspection'%}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white  text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Truck Inspection</a>
+                <a href="{% url 'trailer_inspection'%}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white  text-left"><i class="fa-solid fa-trailer mr-2 text-xl"></i>Trailer Inspection</a>
+                <a href="{% url 'inspection_report'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white  text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
             </nav>
         </aside>
         
         <!-- Main Content -->
-        <main class="flex-grow bg-white shadow-lg">
+        <main class="flex-grow bg-black shadow-lg">
             {% block content %}
             <!-- Dynamic content will load here -->
             {% endblock %}

@@ -3,136 +3,120 @@
 {% block body %}
 {% include "navbar.html" %}
 
-<div class="text-left text-center">
-    <div class="relative overflow-hidden">
-        <!-- Container for the slider -->
-        <div class="slider w-full h-[80vh] relative">
-            <!-- Each Slide -->
-            <div class="slides flex transition-all duration-1000">
-                <!-- Slide 1 -->
-                <div class="slide w-full flex-shrink-0 relative">
-                    <img src="{% static 'images/ai_img.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-30">
-                    <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
-                        <!-- Text or other content for Slide 1 can go here -->
+<!-- Page load transition -->
+<div class="page-transition opacity-0">
+
+    <div class="text-left text-center">
+        <div class="relative overflow-hidden">
+            <!-- Container for the slider -->
+            <div class="slider w-full h-[80vh] relative">
+                <!-- Each Slide -->
+                <div class="slides flex transition-all duration-1000 ease-in-out">
+                    <!-- Slide 1 -->
+                    <div class="slide w-full flex-shrink-0 relative">
+                        <img src="{% static 'images/slide1.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-30 transition-all duration-500 ease-in-out">
+                        <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
+                            <!-- Text or other content for Slide 1 with transition -->
+                            <i class="text-2xl text-red-500 animate-slideUp font-serif font-bold shadow-lg bg-black">WELCOME TO FIREHOUSE MOVERS</i>
+                        </div>
                     </div>
-                </div>
-                <!-- Slide 2 -->
-                <div class="slide w-full flex-shrink-0 relative">
-                    <img src="{% static 'images/ai_img2.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover  filter brightness-40">
-                    <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
-                        <!-- Text or other content for Slide 2 can go here -->
+                    <!-- Slide 2 -->
+                    <div class="slide w-full flex-shrink-0 relative">
+                        <img src="{% static 'images/ai_img2.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-40 transition-all duration-500 ease-in-out">
+                        <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
+                            <!-- Text or other content for Slide 2 can go here -->
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            
         </div>
     </div>
-</div>
+    
 
+    <!-- Welcome Section -->
+    <section class="text-center mb-5">
 
-<!-- Welcome Section -->
-<section class="text-center mb-5 ">
+        <!-- Grid Container for 3 Images -->
+        <div class="flex justify-between gap-2 mt-6 w-full">
 
-    <!-- Grid Container for 3 Images -->
-    <div class="flex justify-between gap-2 mt-6 w-full">
-        <!-- Truck Availability & Job Logistics -->
-        <div class="bg-white text-center w-[calc(40%-0.5rem)] px-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg">
-            <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-[500px] transition-all duration-500 ease-in-out">
-            <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 ease-in-out hover:opacity-100">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
+            <!-- Truck Availability & Job Logistics -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'availability_logitics' %}">
+                    <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
+                </a>
+            </div>
+
+            <!-- Truck & Trailer Inspection -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'inspection' %}">
+                    <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK & TRAILER INSPECTION</h3>
+                </a>
+            </div>
+
+            <!-- Firehouse Station -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'station' %}">
+                    <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">FIREHOUSE STATION</h3>
+                </a>
+            </div>
         </div>
 
-        <!-- Truck & Trailer Inspection -->
-        <div class="bg-white text-center w-[calc(40%-0.5rem)] px-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg">
-            <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-[500px] transition-all duration-500 ease-in-out">
-            <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 ease-in-out hover:opacity-100">TRUCK & TRAILER INSPECTION</h3>
-        </div>
+    </section>
 
-        <!-- Firehouse Station -->
-        <div class="bg-white text-center w-[calc(40%-0.5rem)] px-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg">
-            <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-[500px] transition-all duration-500 ease-in-out">
-            <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 ease-in-out hover:opacity-100">FIREHOUSE STATION</h3>
-        </div>
-    </div>
+    <!-- Additional Sections -->
+    <section class="text-center mt-10">
+        <div class="flex flex-wrap justify-start w-full gap-x-4">
+            <!-- Uniform Inventory System -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'inventory' %}">
+                    <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Uniform Inventory System</p>
+                </a>
+            </div>
 
+            <!-- Gift Cards -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'gift_card' %}">
+                    <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Gift Cards</p>
+                </a>
+            </div>
 
-</section>
+            <!-- On Site Inspection -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'onsite_inspection' %}">
+                    <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">On Site Inspection</p>
+                </a>
+            </div>
 
+            <!-- Packaging & Supplies -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
+            </div>
+        </div>
+    </section>
 
-<!-- Additional Sections -->
-<section class="text-center mt-10">
-    <div class="flex flex-wrap justify-start w-full gap-x-4">
-        <!-- Uniform Inventory System -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500   hover:shadow-lg">
-            <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 ">
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Uniform Inventory System</p>
-        </div>
-        
-        <!-- Gift Cards -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-auto  transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Gift Cards</p>
-        </div>
-        
-        <!-- On Site Inspection -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-auto  transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">On Site Inspection</p>
-        </div>
-        
-        <!-- Packaging & Supplies -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Packaging & Supplies</p>
-        </div>
-    </div>
-</section>
-
-
-
-<!-- Additional Sections -->
-<section class="text-center mt-10">
-    <div class="flex flex-wrap justify-start gap-x-4 w-full">
-        <!-- Marketing Inventory -->
-        <div class="bg-white  text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 ">
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Marketing Inventory</p>
-        </div>
-        <!-- Acknowledgments -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto  transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Prizes & Acknowledgments Form</p>
-        </div>
-        <!-- Employees Evaluation -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto  transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Employees Evaluation</p>
-        </div>
-        <!-- Fleet Fueling Status -->
-        <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500  hover:shadow-lg">
-            <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-auto  transition-all duration-500 "> 
-            <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500  hover:opacity-100">Fleet Fueling Status</p>
-        </div>
-    </div>
-</section>
-
-
-<!-- About Us Section -->
-<div class="text-left mt-10 text-center">
-    <div class="relative group">
-        <!-- Footer Image with full screen width and margin for border -->
-        <div class="w-full overflow-hidden relative" style="padding: 0;">
-            <img src="{% static 'images/footer_ai_2.webp' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-20">
-            <!-- About Us Content on Hover -->
-            <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
-                <div class="text-white text-center text-gray-200 ">
-                    <h1 class="text-3xl font-bold ">ABOUT US</h1>
-                    <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
+    <!-- About Us Section -->
+    <div class="text-left mt-10 text-center">
+        <div class="relative group">
+            <div class="w-full overflow-hidden relative" style="padding: 0;">
+                <img src="{% static 'images/footer_ai_2.webp' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-20">
+                <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
+                    <div class="text-white text-center text-gray-200 ">
+                        <h1 class="text-3xl font-bold">ABOUT US</h1>
+                        <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <script>
     let currentIndex = 0;
     const slides = document.querySelectorAll('.slide');
@@ -145,6 +129,61 @@
     }
 
     setInterval(changeSlide, 3000); // Change slide every 3 seconds
+
+    // Page load fade-in transition
+    window.addEventListener('load', () => {
+        document.querySelector('.page-transition').classList.remove('opacity-0');
+        document.querySelector('.page-transition').classList.add('opacity-100');
+        document.querySelector('.page-transition').classList.add('transition-opacity', 'duration-1000');
+    });
+
+
+    // Get the slide container and individual slides
+    const slide = document.querySelectorAll('.slide');
+    let currentindex = 0;
+
+    // Function to animate text on slide change
+    function animateText(slideIndex) {
+        const textElement = slide[slideIndex].querySelector('i');
+        // Reset animation by removing and adding the class
+        textElement.classList.remove('animate-slideUp');
+        void textElement.offsetWidth; // Trigger reflow
+        textElement.classList.add('animate-slideUp');
+    }
+
+    // Function to move to the next slide
+    function goToNextSlide() {
+        slide[currentindex].classList.remove('active');
+        currentindex = (currentindex + 1) % slide.length;
+        slide[currentindex].classList.add('active');
+        
+        // Animate text for the new slide
+        animateText(currentindex);
+    }
+
+    // Auto slide transition every 3 seconds
+    setInterval(goToNextSlide, 3000);
+
+
 </script>
 
+<style>
+    /* Custom animation for sliding up text */
+    @layer utilities {
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slideUp {
+            animation: slideUp 2s ease-out;
+        }
+    }
+</style>
 {% endblock %}

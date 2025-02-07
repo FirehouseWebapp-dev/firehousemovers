@@ -93,9 +93,9 @@
         <!-- Navigation Buttons -->
         <div class="flex justify-between mt-6">
             {% if step > 1 %}
-                <a href="?step={{ step|add:"-1" }}" class="btn bg-red-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-red-400">Back</a>
+                <a href="?step={{ step|add:"-1" }}" class="btn text-white py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">Back</a>
             {% endif %}
-            <button type="submit" class="btn bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+            <button type="submit" class="btn text-white py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
                 {% if step == steps|length %}Submit{% else %}Next{% endif %}
             </button>
         </div>

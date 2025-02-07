@@ -2,8 +2,8 @@
 {% load static %}
 {% block content %}
 
-<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Truck Inspection Form</h1>
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg pt-6">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Truck Inspection Form</h1>
 
     <form method="post" class="space-y-6">
         {% csrf_token %}
@@ -22,7 +22,7 @@
 
         <!-- Truck Status -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-lg font-semibold text-red-600">Trash & Clean Status</h2>
+            <h2 class="text-lg font-semibold text-black">Trash & Clean Status</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                     <label for="id_clean_status" class="block text-gray-700 font-medium">Clean/Wash/Detailed</label>
@@ -42,7 +42,7 @@
         <!-- Equipment Checklist -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
             <div class="overflow-y-auto max-h-[calc(100vh-500px)]">
-                <h2 class="text-lg font-semibold text-red-600">Equipment Checklist</h2>
+                <h2 class="text-lg font-semibold text-black">Equipment Checklist</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div>
                         <label for="id_cones" class="block text-gray-700 font-medium">(Bed of Truck)  4 Cones</label>
@@ -60,7 +60,7 @@
                 </div>
                 
                 
-                <h2 class="text-lg font-semibold text-red-600 mt-3 mb-3">In Cab</h2>
+                <h2 class="text-lg font-semibold text-black mt-3 mb-3">In Cab</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {% for field in form %}
@@ -74,7 +74,7 @@
 
                 </div>
 
-                <h2 class="text-lg font-semibold text-red-600 mt-3 mb-3">Tool Box</h2>
+                <h2 class="text-lg font-semibold text-black mt-3 mb-3">Tool Box</h2>
 
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -98,7 +98,7 @@
 
         <!-- Submit Button -->
         <div class="text-center">
-            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+            <button type="submit" class="text-white font-medium py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
                 Submit Inspection
             </button>
         </div>

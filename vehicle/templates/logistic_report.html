@@ -1,9 +1,9 @@
 {% extends "availability_logistic_base.html" %}
 {% block content %}
 
-<div class="container mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+<div class="container mx-auto  p-6 bg-white rounded-lg shadow-md h-screen">
     <!-- Title -->
-    <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Order Report</h2>
+    <h2 class="text-3xl font-bold mb-6 text-center text-black">Order Report</h2>
 
     <!-- Date Filters -->
     <form method="get" action="" class="mb-8">
@@ -22,21 +22,21 @@
         </div>
     
         <!-- Report Options (Buttons) -->
-        <div class="flex space-x-4 justify-start flex-nowrap mb-8 overflow-x-auto">
+        <div class="flex space-x-4 justify-center flex-nowrap mb-8 overflow-x-auto">
             <!-- Daily Job Summary -->
-            <button type="submit" name="report_type" value="daily_job_summary" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+            <button type="submit" name="report_type" value="daily_job_summary" class=" text-white rounded-full py-3 px-6 shadow-lg bg-[#262626] hover:bg-red-600 transition-all duration-300  sm:text-xl md:text-lg">
                 <h3 class="font-bold">Daily Job Summary</h3>
             </button>
             <!-- Crew Performance -->
-            <button type="submit" name="report_type" value="crew_performance" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+            <button type="submit" name="report_type" value="crew_performance" class=" text-white rounded-full py-3 px-6 shadow-lg bg-[#262626] hover:bg-red-600 transition-all duration-300 sm:text-xl md:text-lg">
                 <h3 class="font-bold">Crew Performance</h3>
             </button>
             <!-- Vehicle Utilization -->
-            <button type="submit" name="report_type" value="vehicle_utilization" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+            <button type="submit" name="report_type" value="vehicle_utilization" class="text-white rounded-full py-3 px-6 shadow-lg bg-[#262626] hover:bg-red-600 transition-all duration-300 sm:text-xl md:text-lg">
                 <h3 class="font-bold">Vehicle Utilization</h3>
             </button>
             <!-- Referral Effectiveness -->
-            <button type="submit" name="report_type" value="referral_effectiveness" class="bg-red-500 text-white rounded-full py-3 px-6 shadow-lg hover:bg-red-600 sm:text-xl md:text-lg">
+            <button type="submit" name="report_type" value="referral_effectiveness" class="text-white rounded-full py-3 px-6 shadow-lg bg-[#262626] hover:bg-red-600 transition-all duration-300 sm:text-xl md:text-lg">
                 <h3 class="font-bold">Referral Effectiveness</h3>
             </button>
         </div>
