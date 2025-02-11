@@ -33,7 +33,7 @@
                     {% for truck in trucks %}
                     <div class="space-y-4 bg-gray-50 p-4 rounded-lg shadow">
                         <div class="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 items-start">
-                            <p class="text-gray-700 font-semibold">{{ truck.name }} ({{ truck.number }})</p>
+                            <p class="text-gray-700 font-semibold">{{ truck.number }}</p>
                             <select name="truck_{{ truck.id }}" 
                                 class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full lg:w-1/2">
                                 <option value="In Service" {% if truck.availability and truck.availability.0.status == "In Service" %}selected{% endif %}>
@@ -61,7 +61,7 @@
                     {% for trailer in trailers %}
                     <div class="space-y-4 bg-gray-50 p-4 rounded-lg shadow">
                         <div class="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0 items-start">
-                            <p class="text-gray-700 font-semibold">{{ trailer.name }} ({{ trailer.number }})</p>
+                            <p class="text-gray-700 font-semibold">{{ trailer.number }}</p>
                             <select id="trailer_{{ trailer.id }}" name="trailer_{{ trailer.id }}" 
                                 class="h-10 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full lg:w-1/2">
                                 <option value="In Service" {% if trailer.availability and trailer.availability.0.status == "In Service" %}selected{% endif %}>
@@ -71,6 +71,7 @@
                                     Out of Service
                                 </option>
                             </select>
+                            
                             <div class="w-full lg:w-1/2">
                                 <input type="date" id="trailer_{{ trailer.id }}_date" name="trailer_{{ trailer.id }}_date" 
                                     value="{{ trailer.availability.0.estimated_back_in_service_date|date:'Y-m-d' }}" 

@@ -22,7 +22,7 @@ class Vehicle(models.Model):
     last_inspection_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.vehicle_type.capitalize()} - {self.name} ({self.number})"
+        return f"{self.vehicle_type.capitalize()} - ({self.number})"
 
 
 # Availability Data Model
