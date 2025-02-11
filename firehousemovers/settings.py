@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 
 import dj_database_url
+from django.contrib.messages import constants as messages
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -63,6 +65,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'bg-gray-200 text-gray-800 border border-gray-400',  # for debug messages
+    messages.INFO: 'bg-blue-100 text-blue-800 border border-blue-400',   # for info messages
+    messages.SUCCESS: 'bg-green-100 text-green-800 border border-green-400',  # for success messages
+    messages.WARNING: 'bg-yellow-100 text-yellow-800 border border-yellow-400',  # for warning messages
+    messages.ERROR: 'bg-red-100 text-red-800 border border-red-400',  # for error messages
+}
+
 
 ROOT_URLCONF = "firehousemovers.urls"
 

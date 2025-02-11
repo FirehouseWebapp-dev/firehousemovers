@@ -228,7 +228,7 @@ class DispatchForm(forms.ModelForm):
     )
     truck_1 = forms.ChoiceField(
         required=False,
-        choices=[(truck.id, truck.name) for truck in Vehicle.objects.filter(vehicle_type='truck')],
+        choices=[(truck.id,truck.number) for truck in Vehicle.objects.filter(vehicle_type='truck')],
         widget=forms.Select(attrs={
             "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
         }),
@@ -389,12 +389,12 @@ class DispatchForm(forms.ModelForm):
         trailers = vehicles_with_availability.filter(vehicle_type='trailer')
 
         if  check:
-            truck_choices = [(truck.id, truck.name) for truck in trucks]
-            trailer_choices = [(trailer.id, trailer.name) for trailer in trailers]
+            truck_choices = [(truck.id,truck.number) for truck in trucks]
+            trailer_choices = [(trailer.id, trailer.number) for trailer in trailers]
 
         else:
-            truck_choices = [(None, "None")] + [(truck.id, truck.name) for truck in trucks if truck.availability]
-            trailer_choices = [(None, "None")] + [(trailer.id, trailer.name) for trailer in trailers if trailer.availability]
+            truck_choices = [(None, "None")] + [(truck.id, truck.number) for truck in trucks if truck.availability]
+            trailer_choices = [(None, "None")] + [(trailer.id, trailer.number) for trailer in trailers if trailer.availability]
 
 
         super().__init__(*args, **kwargs)

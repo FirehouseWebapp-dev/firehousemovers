@@ -20,6 +20,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
+from django.contrib import messages
 
 
 
@@ -102,6 +103,7 @@ class LoginView(RedirectURLMixin, FormView):
     @method_decorator(sensitive_post_parameters())
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
+    
     def dispatch(self, request, *args, **kwargs):
         if self.redirect_authenticated_user and self.request.user.is_authenticated:
 
@@ -132,6 +134,7 @@ class LoginView(RedirectURLMixin, FormView):
     def form_valid(self, form):
         """Security check complete. Log the user in."""
         auth_login(self.request, form.get_user())
+        messages.success(self.request, "Login successful!" )
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):

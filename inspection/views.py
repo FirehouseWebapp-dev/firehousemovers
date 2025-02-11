@@ -12,6 +12,7 @@ from inspection.forms import  OnsiteInspectionForm, TrailerInspectionForm, Truck
 from inspection.models import  Onsite_inspection, Trailer_inspection, Truck_inspection
 from inventory_app.permissions import IsManager
 from vehicle.models import Crew, Vehicle
+from django.contrib import messages
 
 
 
@@ -109,7 +110,6 @@ class onsite_inspection_view(View):
         })
     
     def post(self, request):
-        print("================= POST METHOD START ==================")
         step = int(request.GET.get("step", 1))
 
         # Define steps and the fields associated with each step
@@ -159,7 +159,6 @@ class onsite_inspection_view(View):
             # Add inspector
             user = UserProfile.objects.get(user=request.user)
             combined_data["inspector"] = user
-            print("Final Combined Data: ", combined_data)
 
             # Create the form and validate it
             final_form = OnsiteInspectionForm(combined_data)
@@ -168,44 +167,35 @@ class onsite_inspection_view(View):
 
                 # Handle crew_leader field manually
                 crew_leader = combined_data.get("crew_leader")
-                print(f"crew_leader ID from combined_data: {crew_leader}")
 
                 try:
                     crew_leader_instance = Crew.objects.get(id=crew_leader)
-                    print(f"Found Crew for crew_leader_id={crew_leader}: {crew_leader_instance}")
                     final_instance.crew_leader = crew_leader_instance
                 except Crew.DoesNotExist:
-                    print(f"Crew with ID {crew_leader} does not exist.")
                     final_instance.crew_leader = None
 
                 # Save the instance (this will give it an ID)
                 final_instance.save()
-                print(f"final_instance saved with ID {final_instance.id}")
 
                 # Now handle crew_members field
                 crew_members_ids = combined_data.get("crew_members")
-                print(f"crew_members_ids from combined_data: {crew_members_ids}")
-
                 if crew_members_ids:
                     try:
                         # Fetch Crew instances for crew_members
                         crew_members_instances = Crew.objects.filter(id__in=crew_members_ids)
-                        print(f"Found Crew instances for crew_members: {crew_members_instances}")
                         final_instance.crew_members.set(crew_members_instances)
                         final_instance.save()  # Save again after updating many-to-many field
-                        print(f"Many-to-many field 'crew_members' set successfully.")
                     except Crew.DoesNotExist:
-                        print("No valid Crew instances found for crew_members.")
                         final_instance.crew_members.clear()
 
                 # Clear the session data after saving
                 for s in range(1, len(steps) + 1):
                     request.session.pop(f"step_{s}_data", None)
 
-                print("Redirecting after successful save.")
+                messages.success(request, "Inspection Submitted Successfully!")
                 return redirect('onsite_inspection')
             else:
-                print(f"Form validation failed: {final_form.errors}")
+                messages.error(request, final_form.errors)
                 return render(request, "onsite_inspection.html", {
                     "form": final_form,
                     "step": step,
@@ -213,7 +203,6 @@ class onsite_inspection_view(View):
                     "current_fields": steps[step],
                 })
         else:
-            print(f"Redirecting to step {step + 1}")
             return redirect(f"/onsite-inspection/?step={step + 1}")
 
 
@@ -832,7 +821,6 @@ class inspection_report_view(View):
         return report_data
 
 
-
 class trailer_inspection_view(View):   
 
     permission_classes = [IsAuthenticated, IsManager] 
@@ -859,8 +847,11 @@ class trailer_inspection_view(View):
             inspection.saved_by=user
             
             inspection.save()
-
+            messages.success(request, "Trailer Inspection Submitted Successfully!")
             return redirect('trailer_inspection')
+            
+        else:
+            messages.error(request, form.errors)
         
         return render(request, "trailer_inspection.html", {"form": form})
 
@@ -894,6 +885,9 @@ class truck_inspection_view(View):
             inspection.saved_by=user
             inspection.save()
 
+            messages.success(request, "Truck Inspection Submitted Successfully!")
             return redirect('truck_inspection')
+        else:
+            messages.error(request, form.errors)
         
         return render(request, "truck_inspection.html", {"form": form})

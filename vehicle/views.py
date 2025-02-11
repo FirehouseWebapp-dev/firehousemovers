@@ -1,5 +1,3 @@
-import json
-
 from inventory_app.permissions import IsManager
 from .models import AvailabilityData, Dispatch, Order, Vehicle
 from .forms import  DispatchForm, OrderForm
@@ -15,6 +13,8 @@ from django.db.models import Q
 from django.db.models import Max, Subquery, Prefetch, Q
 from datetime import timedelta
 from django.http import HttpResponseForbidden
+from django.contrib import messages
+
 
 
 
@@ -143,6 +143,8 @@ class vehicle_availability_view(View):
                         )
                         new_availability.save()
 
+                        messages.success(self.request, "Availability Set Successfully!" )
+
         # Redirect back to the same page with the selected date to reflect updated data
         return redirect(f'/vehicle-availability/?date={selected_date}')
 
@@ -193,7 +195,10 @@ class JobLogisticsPage(View):
                 order.saved_by = request.user.username
                 order.saved_on=timezone.now().date()
                 order.save()
+                messages.success(self.request, "Order Created Successfully!" )
                 return redirect('/job-logistics/')
+            else:
+                messages.error(self.request, form1.errors )
             
         
         elif 'submit_dispatch' in request.POST:
@@ -244,14 +249,14 @@ class JobLogisticsPage(View):
                                 )
                                 new_availability.save()
 
+                        messages.success(self.request, "Order Completed Successfully!" )
                         return redirect('/job-logistics/')
                     except Order.DoesNotExist:
                         form2.add_error(None, "Selected order does not exist or is not pending.")
                 else:
                     form2.add_error(None, "No order selected. Please select a pending order.")
             else:
-                # Log errors for debugging
-                print("Dispatch form errors:", form2.errors)
+                messages.error(self.request, form1.errors )
 
         # If neither form is valid or no form is submitted, render the page with both forms and their errors
         return render(request, "job_logistics.html", {

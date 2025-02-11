@@ -2,6 +2,7 @@
 {% load static %}
 {% block body %}
 {% include "navbar.html" %}
+{% include "messages.html" %}
 
 <!-- Page load transition -->
 <div class="page-transition opacity-0">
@@ -14,7 +15,7 @@
                 <div class="slides flex transition-all duration-1000 ease-in-out">
                     <!-- Slide 1 -->
                     <div class="slide w-full flex-shrink-0 relative">
-                        <img src="{% static 'images/slide1.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-30 transition-all duration-500 ease-in-out">
+                        <img src="{% static 'images/two_trucks.jpg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-40 transition-all duration-500 ease-in-out">
                         <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
                             <!-- Text or other content for Slide 1 with transition -->
                             <i class="text-2xl text-red-500 animate-slideUp font-serif font-bold shadow-lg bg-black">WELCOME TO FIREHOUSE MOVERS</i>
@@ -22,7 +23,7 @@
                     </div>
                     <!-- Slide 2 -->
                     <div class="slide w-full flex-shrink-0 relative">
-                        <img src="{% static 'images/ai_img2.webp' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-40 transition-all duration-500 ease-in-out">
+                        <img src="{% static 'images/truck.jpeg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-[0.8] transition-all duration-500 ease-in-out">
                         <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
                             <!-- Text or other content for Slide 2 can go here -->
                         </div>
@@ -31,7 +32,6 @@
             </div>
         </div>
     </div>
-    
 
     <!-- Welcome Section -->
     <section class="text-center mb-5">
@@ -101,11 +101,40 @@
         </div>
     </section>
 
+    <!-- Additional Sections -->
+    <section class="text-center mt-10">
+        <div class="flex flex-wrap justify-start w-full gap-x-4">
+            <!-- Uniform Inventory System -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Uniform Inventory System</p>
+            </div>
+
+            <!-- Gift Cards -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Gift Cards</p>
+            </div>
+
+            <!-- On Site Inspection -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">On Site Inspection</p>
+            </div>
+
+            <!-- Packaging & Supplies -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
+            </div>
+        </div>
+    </section>
+
     <!-- About Us Section -->
     <div class="text-left mt-10 text-center">
         <div class="relative group">
             <div class="w-full overflow-hidden relative" style="padding: 0;">
-                <img src="{% static 'images/footer_ai_2.webp' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-20">
+                <img src="{% static 'images/line.jpg' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-[0.8]">
                 <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
                     <div class="text-white text-center text-gray-200 ">
                         <h1 class="text-3xl font-bold">ABOUT US</h1>

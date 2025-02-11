@@ -8,7 +8,7 @@ from django.http import HttpResponseForbidden
 from inventory_app.permissions import IsManager
 from station.forms import FleetOrderForm, StationInspectionForm,VehicleInspectionForm
 from station.models import Fleet_order, Station, Station_inspection,Vehicle_inspection
-
+from django.contrib import messages
 
 
 def station_view(request):    
@@ -146,8 +146,10 @@ class station_inspection_view(View):
             inspection.submitted_by=request.user.username
             inspection.save()
 
+            messages.success(request,"Station Inspection Completed Successfully!")
             return redirect('station_inspection', station_number=station_number)
-        
+        else:
+            messages.error(request,form.errors)
         return render(request, "station_inspection.html", {"form": form, "station_number": station_number})
 
 
@@ -181,9 +183,11 @@ class vehicle_inspection_view(View):
             inspection.submitted_by=request.user.username
             inspection.save()
 
+            messages.success(request,f"{vehicle} Inspection Completed Successfully!")
             return redirect('vehicle_inspection', station_number=station_number, vehicle=vehicle)
+        else:
+            messages.error(request, form.errors)
         
-
         return render(request, "vehicle_inspection.html", {"form": form, "station_number": station_number,"vehicle":vehicle})
      
 
@@ -218,6 +222,9 @@ class order_view(View):
             order.type=type
             order.save()
 
+            messages.success(request,f"{type} Order Submitted Successfully!")
             return redirect('order', station_number=station_number, type=type)
+        else:
+            messages.error(request,form.errors)
 
         return render(request, "order.html", {"form": form, "station_number": station_number, "type":type})

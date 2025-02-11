@@ -8,7 +8,7 @@ from authentication.models import UserProfile
 from inventory_app.forms import AddEmployeeForm, InventoryForm, UniformCatalogForm,UniformIssueForm
 from inventory_app.models import Inventory, InventoryTransaction, UniformAssignment,UniformCatalog
 from datetime import datetime
-
+from django.contrib import messages
 from inventory_app.permissions import IsManager
 
 
@@ -42,6 +42,9 @@ class Add_uniform_view(View):
         form=UniformCatalogForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Uniform Added Successfully!")
+        else:
+            messages.error(request, form.errors)
         return render(request, "inventory_base.html",{"form":form})
 
 
@@ -85,8 +88,10 @@ class Return_uniform_view(View):
                 
                 # Update any relevant uniforms or return information
                 uniforms = UniformAssignment.objects.filter(employee=employee, status='Active')
+                messages.success(request, "Uniform Returned Successfully!")
                 return render(request, "inventory_base.html", {"employees": employees, "uniforms": uniforms})
             else:
+                messages.error(request, "Failed to Return Uniform!")
                 return HttpResponseForbidden("No active uniform found for this employee.")
 
         except UserProfile.DoesNotExist:
@@ -160,7 +165,10 @@ class Issue_uniform_view(View):
             assignment.date=datetime.now()
             assignment.status='Active'
             assignment.save()
+            messages.success(request, "Uniform Assigned Successfully!")
             return redirect('inventory') 
+        else:
+            messages.error(request, form.errors)
         return render(request, "issue_uniform.html",{"form":form})
 
     
@@ -195,10 +203,13 @@ class Employee_view(View):
                     user = emp.user
                     emp.delete()  
                     user.delete()  
+                    messages.success(request, "Employee Deleted Successfully!")
                     
                     return redirect('employee')
                 except UserProfile.DoesNotExist:
                     pass
+            else:
+                messages.error(request,"Failed to  Delete Employee!")
 
             return redirect('employee')
 
@@ -218,8 +229,10 @@ class Employee_view(View):
             user_profile.user = user  
             user_profile.save() 
 
-            return redirect('inventory') 
+            messages.success(request, "Employee Added Successfully!")
+            return redirect('employee') 
         else:
+            messages.error(request, form.errors)
             employees = UserProfile.objects.all()
             return render(request, "employee.html", {"form": form, "employees": employees})
 
@@ -297,6 +310,8 @@ class inventory_view(View):
                 if new_in_use < 0:
                     new_in_use = 0 
                 inventory.in_use = new_in_use
+
+                messages.success(request,"Inventory Deleted Successfully!")
             else:
                 transaction_type='Purchase'
                 template='add_inventory.html'
@@ -307,6 +322,8 @@ class inventory_view(View):
 
                 inventory.total_bought = (inventory.total_bought or 0) + quantity
                 inventory.in_use=in_use_uniforms+quantity
+
+                messages.success(request,"Inventory Added Successfully!")
             
             InventoryTransaction.objects.create(transaction_type=transaction_type,notes=notes,date=datetime.now(),
                                                     uniform=uniform,quantity=quantity,condition=condition)
@@ -314,6 +331,7 @@ class inventory_view(View):
 
             return redirect('inventory') 
         else:
+            messages.success(request, form.errors)
             template= 'add_inventory.html'
         return render(request, template, {'form': form})
 
