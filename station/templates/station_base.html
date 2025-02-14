@@ -11,6 +11,7 @@
     <link rel="icon" href="{% static 'images/fire_house_logo.svg' %}" type="image/icon type">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         let submenuHistory = []; // Stack for submenu navigation history
     
@@ -105,7 +106,7 @@
 
     <div class="flex h-screen ">
         <!-- Sidebar -->
-        <aside class="w-full sm:w-36 md:w-64  bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out pt-10">
+        <aside class=" w-full sm:w-36 md:w-64  bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out pt-10" >
         
             <!-- Back Button -->
             <button id="back-button" onclick="goBack()" class="hidden py-2 px-4 text-black  bg-gray-100 hover:bg-white rounded mx-2">
@@ -131,7 +132,7 @@
                 <!-- Submenus -->
                 <!-- Station 1 Options -->
                 <div id="station1-options" class="submenu hidden flex-grow space-y-2 px-2 sm:px-4">
-                    <a href="#" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
+                    <a href="{% url 'excel_station_1'%}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-box text-xl mr-2"></i> Vaults</a>
                     <a href="{% url 'station_inspection' station_number=1 %}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-clipboard-check mr-2 text-xl"></i> Station Inspection</a>
                     <button onclick="toggleSubMenu('station1-fleet')" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-truck mr-2 text-xl"></i> Fleet</button>
                     <a href="{% url 'report' station_number=1 %}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>

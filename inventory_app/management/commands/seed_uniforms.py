@@ -1,8 +1,9 @@
 from django.core.management.base import BaseCommand
-from inventory_app.models import UniformCatalog  
+from inventory_app.models import UniformCatalog
+
 
 class Command(BaseCommand):
-    help = 'Seeds uniform catalog data into the database'
+    help = "Seeds uniform catalog data into the database"
 
     def handle(self, *args, **kwargs):
         uniform_data = [
@@ -151,11 +152,18 @@ class Command(BaseCommand):
 
         # Prepare the list of UniformCatalog objects
         uniforms_to_create = [
-            UniformCatalog(name=uniform[0], category=uniform[1], gender=uniform[2], minimum_stock_level=uniform[3])
+            UniformCatalog(
+                name=uniform[0],
+                category=uniform[1],
+                gender=uniform[2],
+                minimum_stock_level=uniform[3],
+            )
             for uniform in uniform_data
         ]
 
         # Bulk create the uniform entries in the database
         UniformCatalog.objects.bulk_create(uniforms_to_create)
 
-        self.stdout.write(self.style.SUCCESS("✅ Uniform catalog data seeded successfully!"))
+        self.stdout.write(
+            self.style.SUCCESS("✅ Uniform catalog data seeded successfully!")
+        )

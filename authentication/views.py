@@ -23,7 +23,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 
 
-
 class SignUpView(View):
 
     def get(self, request):
@@ -38,24 +37,28 @@ class SignUpView(View):
             # Check if a user profile with the given email already exists
             if UserProfile.objects.filter(user__email=email).exists():
                 request.session.flush()
-                messages.error(request, "Email already exists. Please choose another one.")
+                messages.error(
+                    request, "Email already exists. Please choose another one."
+                )
                 return render(request, "signup.html", {"form": form})
-            
+
             if first_name:
-                existing_user_count = UserProfile.objects.filter(user__username__startswith=first_name.lower()).count()
+                existing_user_count = UserProfile.objects.filter(
+                    user__username__startswith=first_name.lower()
+                ).count()
                 user_name = f"{first_name.lower()}{existing_user_count + 1}"
 
-            user = form.save(commit=False) 
-            user.username = user_name  
-            
-            user.set_password(form.cleaned_data["password1"]) 
-            user.save() 
-            
+            user = form.save(commit=False)
+            user.username = user_name
+
+            user.set_password(form.cleaned_data["password1"])
+            user.save()
+
             UserProfile.objects.create(user=user)
             login(request, user)
             messages.success(request, "You have successfully signed up!")
             return redirect("/")
-        
+
         return render(request, "signup.html", {"form": form})
 
 
@@ -86,8 +89,8 @@ class RedirectURLMixin:
         """Return the default redirect URL."""
         if self.next_page:
             return resolve_url(self.next_page)
-        return '/' 
-        
+        return "/"
+
 
 class LoginView(RedirectURLMixin, FormView):
     """
@@ -103,7 +106,6 @@ class LoginView(RedirectURLMixin, FormView):
     @method_decorator(sensitive_post_parameters())
     @method_decorator(csrf_protect)
     @method_decorator(never_cache)
-    
     def dispatch(self, request, *args, **kwargs):
         if self.redirect_authenticated_user and self.request.user.is_authenticated:
 
@@ -121,7 +123,7 @@ class LoginView(RedirectURLMixin, FormView):
         if self.next_page:
             return resolve_url(self.next_page)
         else:
-            return resolve_url('/')
+            return resolve_url("/")
 
     def get_form_class(self):
         return self.authentication_form or self.form_class
@@ -134,7 +136,7 @@ class LoginView(RedirectURLMixin, FormView):
     def form_valid(self, form):
         """Security check complete. Log the user in."""
         auth_login(self.request, form.get_user())
-        messages.success(self.request, "Login successful!" )
+        messages.success(self.request, "Login successful!")
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -177,9 +179,9 @@ class LogoutView(RedirectURLMixin, TemplateView):
     def get_default_redirect_url(self):
         """Return the default redirect URL."""
         if self.next_page:
-            return resolve_url(self.next_page)  
+            return resolve_url(self.next_page)
         else:
-            return resolve_url('/')
+            return resolve_url("/")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

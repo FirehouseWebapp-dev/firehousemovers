@@ -6,23 +6,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gift', '0001_initial'),
+        ("gift", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='employee',
-            name='designation',
-            field=models.CharField(blank=True, choices=[('llc/field', 'LLC/Field'), ('llc/owner', 'LLC/Owner'), ('sales', 'Sales'), ('field', 'Field'), ('driver', 'Driver'), ('manager', 'Manager'), ('rwh', 'RWH'), ('admin', 'Admin'), ('warehouse', 'Warehouse'), ('mover', 'Mover'), ('mover- crew member', 'Mover- Crew member'), ('customers- per trevor', 'Customers- Per Trevor')], max_length=40, null=True),
+            model_name="employee",
+            name="designation",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("llc/field", "LLC/Field"),
+                    ("llc/owner", "LLC/Owner"),
+                    ("sales", "Sales"),
+                    ("field", "Field"),
+                    ("driver", "Driver"),
+                    ("manager", "Manager"),
+                    ("rwh", "RWH"),
+                    ("admin", "Admin"),
+                    ("warehouse", "Warehouse"),
+                    ("mover", "Mover"),
+                    ("mover- crew member", "Mover- Crew member"),
+                    ("customers- per trevor", "Customers- Per Trevor"),
+                ],
+                max_length=40,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='name',
-            field=models.CharField(default='unknown', max_length=255),
+            model_name="employee",
+            name="name",
+            field=models.CharField(default="unknown", max_length=255),
         ),
         migrations.AlterField(
-            model_name='gift_company',
-            name='name',
+            model_name="gift_company",
+            name="name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

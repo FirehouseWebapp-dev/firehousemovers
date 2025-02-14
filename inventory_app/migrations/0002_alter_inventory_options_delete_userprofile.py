@@ -6,15 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory_app', '0001_initial'),
+        ("inventory_app", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='inventory',
-            options={'verbose_name': 'Inventory', 'verbose_name_plural': 'Inventories'},
+            name="inventory",
+            options={"verbose_name": "Inventory", "verbose_name_plural": "Inventories"},
         ),
         migrations.DeleteModel(
-            name='UserProfile',
+            name="UserProfile",
         ),
     ]

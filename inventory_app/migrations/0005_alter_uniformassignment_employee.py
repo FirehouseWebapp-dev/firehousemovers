@@ -7,14 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0002_alter_userprofile_role'),
-        ('inventory_app', '0004_uniformcatalog_remove_inventoryassignment_employee_and_more'),
+        ("authentication", "0002_alter_userprofile_role"),
+        (
+            "inventory_app",
+            "0004_uniformcatalog_remove_inventoryassignment_employee_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='uniformassignment',
-            name='employee',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='authentication.userprofile'),
+            model_name="uniformassignment",
+            name="employee",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="authentication.userprofile",
+            ),
         ),
     ]

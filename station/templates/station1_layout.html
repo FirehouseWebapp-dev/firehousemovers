@@ -1,0 +1,115 @@
+{% extends "station_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mx-auto p-4 bg-white">
+    <h1 class="text-2xl font-bold mb-3 text-center">Station1 Layout</h1>
+
+    <!-- Scrollable Table Container -->
+    <div class="border bg-white shadow-lg overflow-auto"
+         style="max-height: 80vh; max-width: 100%; padding: 10px;">
+        {% autoescape off %}
+            {{ excel_html }}
+        {% endautoescape %}
+    </div>
+
+    <!-- Save Changes Button -->
+    <button id="saveChanges" class="mt-4 px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+        Save Changes
+    </button>
+</div>
+
+<style>
+    .overflow-auto {
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    .excel-table {
+        border-collapse: collapse;
+        width: auto;
+        min-width: 1500px;
+    }
+
+    td {
+        border: 1px solid #ccc;
+        padding: 12px;
+        text-align: center;
+        word-wrap: break-word;
+        white-space: nowrap;
+        min-width: 120px;
+        max-width: 250px;
+        height: 40px;
+        cursor: pointer;
+    }
+
+    .editable {
+        outline: none;
+    }
+
+    .save-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    .save-btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let editedCells = [];
+
+        // Track edited cells
+        document.querySelectorAll("td[contenteditable='true']").forEach(cell => {
+            cell.addEventListener("input", function () {
+                const row = this.getAttribute("data-row");
+                const col = this.getAttribute("data-col");
+                const value = this.innerText.trim();
+
+                // Check if cell exists in editedCells array
+                let existing = editedCells.find(item => item.row == row && item.col == col);
+                if (existing) {
+                    existing.value = value;
+                } else {
+                    editedCells.push({ row: row, col: col, value: value });
+                }
+            });
+        });
+
+        // Save Changes Button Click
+        document.getElementById("saveChanges").addEventListener("click", function () {
+            if (editedCells.length === 0) {
+                alert("No changes made.");
+                return;
+            }
+
+            fetch("{% url 'save_excel_changes' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ data: editedCells })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert("Changes saved successfully!");
+                    editedCells = []; // Reset after saving
+                } else {
+                    alert("Error saving data: " + data.error);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+</script>
+
+{% endblock %}

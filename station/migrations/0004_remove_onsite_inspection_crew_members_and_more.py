@@ -6,18 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0001_initial'),
-        ('station', '0003_onsite_inspection'),
+        ("authentication", "0001_initial"),
+        ("station", "0003_onsite_inspection"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='onsite_inspection',
-            name='crew_members',
+            model_name="onsite_inspection",
+            name="crew_members",
         ),
         migrations.AddField(
-            model_name='onsite_inspection',
-            name='crew_members',
-            field=models.ManyToManyField(blank=True, null=True, related_name='crew_member_inspections', to='authentication.userprofile'),
+            model_name="onsite_inspection",
+            name="crew_members",
+            field=models.ManyToManyField(
+                blank=True,
+                null=True,
+                related_name="crew_member_inspections",
+                to="authentication.userprofile",
+            ),
         ),
     ]

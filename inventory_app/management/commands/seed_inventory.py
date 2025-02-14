@@ -5,7 +5,7 @@ from django.db import connection
 
 
 class Command(BaseCommand):
-    help = 'Seeds inventory data into the database'
+    help = "Seeds inventory data into the database"
 
     def handle(self, *args, **kwargs):
         inventory_data = [
@@ -148,7 +148,7 @@ class Command(BaseCommand):
             ("S Golf Polo Jackets - Grey", 0, 0, 1, 1, 0, 0),
             ("XLGolf Polo Jackets - Grey", 0, 0, 2, 2, 0, 0),
             ("S Golf Polo Jackets - Black", 0, 0, 1, 1, 0, 0),
-            ("XL Golf Polo Jackets - Black", 0, 0, 2, 2, 0, 0)
+            ("XL Golf Polo Jackets - Black", 0, 0, 2, 2, 0, 0),
         ]
 
         try:
@@ -159,13 +159,19 @@ class Command(BaseCommand):
             with transaction.atomic():
                 uniforms_to_create = []
                 for uniform in inventory_data:
-                    uniform_instance = UniformCatalog.objects.filter(name=uniform[0]).first()
+                    uniform_instance = UniformCatalog.objects.filter(
+                        name=uniform[0]
+                    ).first()
 
                     # Only proceed if the uniform exists
                     if uniform_instance:
                         # Check if the inventory for the given uniform already exists
-                        existing_inventory = Inventory.objects.filter(uniform=uniform_instance).first()
-                        if not existing_inventory:  # If no existing inventory, create a new one
+                        existing_inventory = Inventory.objects.filter(
+                            uniform=uniform_instance
+                        ).first()
+                        if (
+                            not existing_inventory
+                        ):  # If no existing inventory, create a new one
                             inventory_instance = Inventory(
                                 uniform=uniform_instance,
                                 new_stock=uniform[1],
@@ -173,16 +179,20 @@ class Command(BaseCommand):
                                 in_use=uniform[3],
                                 disposed=uniform[4],
                                 return_to_supplier=uniform[5],
-                                total_bought=uniform[6]
+                                total_bought=uniform[6],
                             )
                             uniforms_to_create.append(inventory_instance)
 
                 # Bulk insert into the Inventory table
                 if uniforms_to_create:
                     Inventory.objects.bulk_create(uniforms_to_create)
-                    self.stdout.write(self.style.SUCCESS("✅ Inventory data seeded successfully!"))
+                    self.stdout.write(
+                        self.style.SUCCESS("✅ Inventory data seeded successfully!")
+                    )
                 else:
-                    self.stdout.write(self.style.SUCCESS("✅ No new inventory records to seed."))
+                    self.stdout.write(
+                        self.style.SUCCESS("✅ No new inventory records to seed.")
+                    )
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ An error occurred: {e}"))
@@ -193,8 +203,12 @@ class Command(BaseCommand):
         to ensure the id is properly incremented.
         """
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT setval(pg_get_serial_sequence('inventory_app_inventory', 'id'), 
                               COALESCE((SELECT MAX(id) FROM inventory_app_inventory), 1), false);
-            """)
-            self.stdout.write(self.style.SUCCESS("✅ Inventory sequence reset successfully!"))
+            """
+            )
+            self.stdout.write(
+                self.style.SUCCESS("✅ Inventory sequence reset successfully!")
+            )
