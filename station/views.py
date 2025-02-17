@@ -331,7 +331,7 @@ class order_view(View):
 
 
 
-EXCEL_FILE_PATH = "station/test.xlsx"
+EXCEL_FILE_PATH = "station/station_1.xlsx"
 
 def get_merged_cell_ranges(sheet):
     """Get merged cell range details as a dictionary with coordinates."""
@@ -349,11 +349,12 @@ def get_hex_color(cell):
     """Convert OpenPyXL color to hex format, handling indexed and theme colors correctly."""
     if not cell.fill or not cell.fill.fgColor:
         return "#FFFFFF"
-
-    if cell.fill.fgColor.type == "rgb":
+    
+    if cell.fill.fgColor.type == "rgb":        
         return f"#{cell.fill.fgColor.rgb[-6:]}"  
+    
 
-    if cell.fill.fgColor.type == "indexed":
+    if cell.fill.fgColor.type == "theme":
         indexed_colors = {
             8: "#000000",
             9: "#FFFFFF",
@@ -361,8 +362,12 @@ def get_hex_color(cell):
             11: "#00FF00",
             12: "#0000FF",
             13: "#FFFF00",
+            14: "#4F81BD",
+            15: "B71C1C",
+            16: "C0504D",
+            17: "c0504d"  
         }
-        return indexed_colors.get(cell.fill.fgColor.indexed, "#FFFFFF")
+        return indexed_colors.get(cell.fill.fgColor.indexed, "#4f81bd")
 
     return "#FFFFFF"
 
