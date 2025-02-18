@@ -330,9 +330,6 @@ class order_view(View):
 
 
 
-
-EXCEL_FILE_PATH = "station/station_1.xlsx"
-
 def get_merged_cell_ranges(sheet):
     """Get merged cell range details as a dictionary with coordinates."""
     merged_cells = {}
@@ -344,6 +341,7 @@ def get_merged_cell_ranges(sheet):
                 if (row, col) != (min_row, min_col):
                     merged_cells[(row, col)] = None
     return merged_cells
+
 
 def get_hex_color(cell):
     """Convert OpenPyXL color to hex format, handling indexed and theme colors correctly."""
@@ -372,7 +370,15 @@ def get_hex_color(cell):
     return "#FFFFFF"
 
 
-def excel_view(request):
+def excel_view(request,station_number):
+
+    EXCEL_FILE_PATH = ''
+
+    if station_number==1:
+        EXCEL_FILE_PATH = "station/station_1.xlsx"
+    else:
+        EXCEL_FILE_PATH = "station/station2.xlsx"
+
     wb = openpyxl.load_workbook(EXCEL_FILE_PATH, data_only=True)
     sheet = wb.active
     merged_cells = get_merged_cell_ranges(sheet)
@@ -399,10 +405,18 @@ def excel_view(request):
         html_table += '</tr>'
     html_table += '</table>'
 
-    return render(request, "station1_layout.html", {"excel_html": html_table})
+    return render(request, "station_layout.html", {"excel_html": html_table,"station_number":station_number})
 
 
-def save_excel_changes(request):
+def save_excel_changes(request,station_number):
+
+    EXCEL_FILE_PATH = ''
+
+    if station_number==1:
+        EXCEL_FILE_PATH = "station/station_1.xlsx"
+    else:
+        EXCEL_FILE_PATH = "station/station2.xlsx"
+
     if request.method == "POST":
         try:
             data = json.loads(request.body)

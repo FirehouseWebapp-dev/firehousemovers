@@ -23,6 +23,6 @@ urlpatterns = [
         name="vehicle_inspection",
     ),
     path("order/<int:station_number>/<str:type>/", order_view.as_view(), name="order"),
-    path("excel/", excel_view, name="excel_station_1"),
-    path("save-excel/", save_excel_changes, name="save_excel_changes"),
+    path("excel/<int:station_number>/", excel_view, name="excel_station_1"),
+    path("save-excel/<int:station_number>/", save_excel_changes, name="save_excel_changes"),
 ]
