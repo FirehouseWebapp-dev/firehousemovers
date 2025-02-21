@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+{% extends "onsite_inspection_base.html" %}
 {% load static %}
 {% block body %}
 {% include "navbar.html" %}
 {% include "messages.html" %}
 
-<div class="container mt-5 mx-auto max-w-4xl">
+<div class="container mt-5 mx-auto max-w-4xl" >
     <form method="post" class="p-6 shadow-lg rounded-lg bg-white">
         {% csrf_token %}
         

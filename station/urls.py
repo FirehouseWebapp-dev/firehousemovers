@@ -10,7 +10,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("", station_view, name="station"),
+    path("", station_view.as_view(), name="station"),
     path("report/<int:station_number>/", report_view.as_view(), name="report"),
     path(
         "station-inspection/<int:station_number>/",
@@ -24,5 +24,9 @@ urlpatterns = [
     ),
     path("order/<int:station_number>/<str:type>/", order_view.as_view(), name="order"),
     path("excel/<int:station_number>/", excel_view, name="excel_station_1"),
-    path("save-excel/<int:station_number>/", save_excel_changes, name="save_excel_changes"),
+    path(
+        "save-excel/<int:station_number>/",
+        save_excel_changes,
+        name="save_excel_changes",
+    ),
 ]

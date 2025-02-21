@@ -25,8 +25,8 @@
                 <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Inventory Report</h1>
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto bg-white shadow-md ">
-                        <thead >
-                            <tr class="bg-red-600 text-black">
+                        <thead>
+                            <tr class="bg-red-600 text-white">
                                 <th class="px-4 py-2 text-left ">Uniform Name</th>
                                 <th class="px-4 py-2 text-left ">New Stock</th>
                                 <th class="px-4 py-2 text-left ">Used Stock</th>
@@ -37,9 +37,9 @@
                                 <th class="px-4 py-2 text-left ">Total Bought</th>
                             </tr>
                         </thead>
-                        <tbody class="text-gray-700">
+                        <tbody class="text-gray-700 ">
                             {% for record in inventory_records %}
-                                <tr class="border-t">
+                                <tr class="border-t even:bg-gray-100 ">
                                     <td class="px-4 py-2">{{ record.uniform.name }}</td>
                                     <td class="px-4 py-2 text-left">{{ record.new_stock }}</td>
                                     <td class="px-4 py-2 text-left">{{ record.used_stock }}</td>
@@ -61,8 +61,8 @@
                 <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">Employee Report</h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full table-auto bg-white shadow-md ">
-                        <thead >
-                            <tr class="bg-red-600 text-black">
+                        <thead>
+                            <tr class="bg-red-600 text-white">
                                 <th class="px-4 py-2 text-left ">Employee</th>
                                 <th class="px-4 py-2 text-left ">Uniform</th>
                                 <th class="px-4 py-2 text-left ">Quantity</th>
@@ -71,7 +71,7 @@
                         <tbody class="text-gray-700">
                             {% for employee, uniforms in employee_data.items %}
                                 {% for uniform, quantity in uniforms.items %}
-                                    <tr class="border-t">
+                                    <tr class="border-t even:bg-gray-100">
                                         <td class="px-4 py-2">{{ employee }}</td>
                                         <td class="px-4 py-2">{{ uniform }}</td>
                                         <td class="px-4 py-2 ">{{ quantity }}</td>

@@ -17,9 +17,7 @@ class GiftCardView(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -52,9 +50,7 @@ class AwardCardView(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

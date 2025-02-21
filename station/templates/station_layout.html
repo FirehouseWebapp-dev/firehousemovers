@@ -1,131 +1,159 @@
-{% extends "station_base.html" %}
-{% load static %}
-{% block content %}
+{% extends "station_base.html" %} {% load static %} {% block content %}
 
-<div class="container mx-auto p-4 bg-white">
-    <h1 class="text-2xl font-bold text-center">Station {{station_number}} Layout</h1>
-    
+<div class="container mx-auto p-4 bg-white max-w-[1200px]">
+  <h1 class="text-2xl font-bold text-center">
+    Station {{station_number}} Layout
+  </h1>
+
+  <!-- Zoom Control -->
+  <div class="flex justify-center gap-4 mt-4">
+    <button
+      id="zoomOut"
+      class="px-4 py-2 text-white bg-[#262626] rounded-full hover:bg-red-600"
+    >
+      <i class="fa-solid fa-minus"></i>
+    </button>
+
+    <!-- Save Changes Button -->
+    <button
+      id="saveChanges"
+      class="px-6 py-2 text-white rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300"
+    >
+      Save Changes
+    </button>
+
     <!-- Zoom Control -->
-    <div class="flex justify-center gap-4 mt-4">
-        <button id="zoomOut" class="px-4 py-2 text-white bg-[#262626] rounded-full hover:bg-red-600"><i class="fa-solid fa-minus"></i></button>
-        
-        <!-- Save Changes Button -->
-        <button id="saveChanges" class="px-6 py-2 text-white rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300">
-            Save Changes
-        </button>
+    <button
+      id="zoomIn"
+      class="px-4 py-2 text-white bg-[#262626] rounded-full hover:bg-red-600"
+    >
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
 
-        <!-- Zoom Control -->
-        <button id="zoomIn" class="px-4 py-2 text-white bg-[#262626] rounded-full hover:bg-red-600"><i class="fa-solid fa-plus"></i></button>
+  <!-- Scrollable Table Container -->
+  <div
+    class="border bg-white shadow-lg overflow-auto mt-3"
+    style="max-height: 80vh; max-width: 100%"
+  >
+    {% autoescape off %}
+    <div
+      id="tableContainer"
+      style="transition: transform 0.3s; transform-origin: top left"
+    >
+      {{ excel_html }}
     </div>
-
-    <!-- Scrollable Table Container -->
-    <div class="border bg-white shadow-lg overflow-auto mt-3" style="max-height: 80vh; max-width: 100%; ">
-        {% autoescape off %}
-            <div id="tableContainer" style="transition: transform 0.3s; transform-origin: top left;">
-                {{ excel_html }}
-            </div>
-        {% endautoescape %}
-    </div>
+    {% endautoescape %}
+  </div>
 </div>
 
 <style>
-    .overflow-auto {
-        overflow-x: auto;
-        overflow-y: auto;
-    }
+  .overflow-auto {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
 
-    .excel-table {
-        border-collapse: collapse;
-        width: auto;
-        min-width: 1500px;
-    }
+  .excel-table {
+    border-collapse: collapse;
+    width: auto;
+    min-width: 1500px;
+  }
 
-    td {
-        border: 1px solid #ccc;
-        padding: 12px;
-        text-align: center;
-        word-wrap: break-word;
-        white-space: nowrap;
-        min-width: 120px;
-        max-width: 250px;
-        height: 40px;
-        cursor: pointer;
-    }
+  td {
+    /* border: 1px solid #ccc; */
+    color: white;
+    padding: 12px;
+    text-align: center;
+    word-wrap: break-word;
+    white-space: nowrap;
+    min-width: 120px;
+    max-width: 250px;
+    height: 40px;
+    font-weight: bold;
+  }
 
-    .editable {
-        outline: none;
-    }
+  .editable {
+    outline: none;
+  }
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let editedCells = [];
+  document.addEventListener("DOMContentLoaded", function () {
+    let editedCells = [];
 
-        // Track edited cells
-        document.querySelectorAll("td[contenteditable='true']").forEach(cell => {
-            cell.addEventListener("input", function () {
-                const row = this.getAttribute("data-row");
-                const col = this.getAttribute("data-col");
-                const value = this.innerText.trim();
-            
-                // Check if cell exists in editedCells array
-                let existing = editedCells.find(item => item.row == row && item.col == col);
-                if (existing) {
-                    existing.value = value;
-                } else {
-                    editedCells.push({ row: row, col: col, value: value });
-                }
-            });
-        });
+    // Set initial zoom level (zoomed out)
+    let zoomLevel = 0.5; // Initial zoom level
+    const tableContainer = document.getElementById("tableContainer");
 
-        // Zoom In Button Click
-        let zoomLevel = 1;
-        document.getElementById("zoomIn").addEventListener("click", function () {
-            if (zoomLevel < 2) {
-                zoomLevel += 0.1;
-                document.getElementById("tableContainer").style.transform = `scale(${zoomLevel})`;
-            }
-        });
+    // Apply the zoom scale immediately on page load
+    tableContainer.style.transform = `scale(${zoomLevel})`;
+    tableContainer.style.transformOrigin = "top left"; // Ensure the zoom starts from top-left corner
 
-        // Zoom Out Button Click
-        document.getElementById("zoomOut").addEventListener("click", function () {
-            if (zoomLevel > 0.5) {
-                zoomLevel -= 0.1;
-                document.getElementById("tableContainer").style.transform = `scale(${zoomLevel})`;
-            }
-        });
+    // Track edited cells
+    document.querySelectorAll("td[contenteditable='true']").forEach((cell) => {
+      cell.addEventListener("input", function () {
+        const row = this.getAttribute("data-row");
+        const col = this.getAttribute("data-col");
+        const value = this.innerText.trim();
 
-        // Save Changes Button Click
-        document.getElementById("saveChanges").addEventListener("click", function () {
-            
-            if (editedCells.length === 0) {
-                alert("No changes made.");
-                return;
-            }
-
-            fetch("{% url 'save_excel_changes' station_number=station_number %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({ data: editedCells })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);  // Show success message returned from the server
-                    editedCells = []; // Reset after saving
-                } else if (data.error) {
-                    alert("Error: " + data.error);  // Handle error if returned
-                }
-            })
-            .catch(error => {
-                alert("An error occurred while saving changes.");
-            });
-        });
-
+        // Check if cell exists in editedCells array
+        let existing = editedCells.find(
+          (item) => item.row == row && item.col == col
+        );
+        if (existing) {
+          existing.value = value;
+        } else {
+          editedCells.push({ row: row, col: col, value: value });
+        }
+      });
     });
-</script>
 
+    // Zoom In Button Click
+    document.getElementById("zoomIn").addEventListener("click", function () {
+      if (zoomLevel < 1) {
+        zoomLevel += 0.1;
+        tableContainer.style.transform = `scale(${zoomLevel})`;
+      }
+    });
+
+    // Zoom Out Button Click
+    document.getElementById("zoomOut").addEventListener("click", function () {
+      if (zoomLevel > 0.2) {
+        zoomLevel -= 0.1;
+        tableContainer.style.transform = `scale(${zoomLevel})`;
+      }
+    });
+
+    // Save Changes Button Click
+    document
+      .getElementById("saveChanges")
+      .addEventListener("click", function () {
+        if (editedCells.length === 0) {
+          alert("No changes made.");
+          return;
+        }
+
+        fetch("{% url 'save_excel_changes' station_number=station_number %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: JSON.stringify({ data: editedCells }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message) {
+              alert(data.message); // Show success message returned from the server
+              editedCells = []; // Reset after saving
+            } else if (data.error) {
+              alert("Error: " + data.error); // Handle error if returned
+            }
+          })
+          .catch((error) => {
+            alert("An error occurred while saving changes.");
+          });
+      });
+  });
+</script>
 {% endblock %}

@@ -23,6 +23,9 @@
         <main class="flex-grow bg-black shadow-lg">
             {% include "messages.html" %}
             {% block content %}
+
+            <img src="{% static 'images/uniform.jpg' %}" alt="Warehouse" class="w-full h-full">
+
             <!-- Dynamic content will load here -->
             {% endblock %}
         </main>

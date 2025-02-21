@@ -17,8 +17,11 @@ from inspection.models import Onsite_inspection, Trailer_inspection, Truck_inspe
 from inventory_app.permissions import IsManager
 from vehicle.models import Crew, Vehicle
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 
+
+@login_required(login_url='authentication:login')
 def inspection_view(request):
     """Render the home page."""
     return render(request, "vehicle_inspection_base.html")
@@ -32,9 +35,7 @@ class onsite_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -314,9 +315,7 @@ class inspection_report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1097,9 +1096,7 @@ class trailer_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1139,9 +1136,7 @@ class truck_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

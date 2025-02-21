@@ -13,11 +13,14 @@ import json
 from django.http import JsonResponse
 import openpyxl
 from django.utils.html import escape
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-def station_view(request):
-    """Render the home page."""
-    return render(request, "station_base.html")
+
+class station_view(LoginRequiredMixin, TemplateView):
+    template_name = "station_base.html"
+    login_url = 'authentication:login'  # Redirect to your login page if not authenticated
 
 
 class report_view(View):
@@ -29,9 +32,7 @@ class report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     template_name = "report.html"
@@ -167,9 +168,7 @@ class station_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number):
@@ -225,9 +224,7 @@ class vehicle_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, vehicle):
@@ -283,9 +280,7 @@ class order_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return HttpResponseForbidden(
-                    "You do not have permission to view this page."
-                )
+                return redirect('authentication:login')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, type):
@@ -329,13 +324,15 @@ class order_view(View):
         )
 
 
-
 def get_merged_cell_ranges(sheet):
     """Get merged cell range details as a dictionary with coordinates."""
     merged_cells = {}
     for merged_range in sheet.merged_cells.ranges:
         min_col, min_row, max_col, max_row = merged_range.bounds
-        merged_cells[(min_row, min_col)] = {"rowspan": max_row - min_row + 1, "colspan": max_col - min_col + 1}
+        merged_cells[(min_row, min_col)] = {
+            "rowspan": max_row - min_row + 1,
+            "colspan": max_col - min_col + 1,
+        }
         for row in range(min_row, max_row + 1):
             for col in range(min_col, max_col + 1):
                 if (row, col) != (min_row, min_col):
@@ -343,16 +340,19 @@ def get_merged_cell_ranges(sheet):
     return merged_cells
 
 
-def get_hex_color(cell):
-    """Convert OpenPyXL color to hex format, handling indexed and theme colors correctly."""
-    if not cell.fill or not cell.fill.fgColor:
-        return "#FFFFFF"
-    
-    if cell.fill.fgColor.type == "rgb":        
-        return f"#{cell.fill.fgColor.rgb[-6:]}"  
-    
+def get_hex_color(cell, is_background=True):
+    """Convert OpenPyXL color to hex format, handling indexed and theme colors correctly.
+    By default, this checks the background color (is_background=True), 
+    but you can use is_background=False to get text color.
+    """
+    color = cell.fill.fgColor if is_background else cell.font.color
+    if not color:
+        return "#000000"  # Default to black if no color is found.
 
-    if cell.fill.fgColor.type == "theme":
+    if color.type == "rgb":
+        return f"#{color.rgb[-6:]}"
+
+    if color.type == "theme":
         indexed_colors = {
             8: "#000000",
             9: "#FFFFFF",
@@ -363,59 +363,77 @@ def get_hex_color(cell):
             14: "#4F81BD",
             15: "B71C1C",
             16: "C0504D",
-            17: "c0504d"  
+            17: "c0504d",
         }
-        return indexed_colors.get(cell.fill.fgColor.indexed, "#4f81bd")
+        return indexed_colors.get(color.indexed, "#4f81bd")
 
-    return "#FFFFFF"
+    return "#000000"  # Default to black if type is not matched
 
 
-def excel_view(request,station_number):
 
-    EXCEL_FILE_PATH = ''
+def excel_view(request, station_number):
+    EXCEL_FILE_PATH = ""
 
-    if station_number==1:
-        EXCEL_FILE_PATH = "station/station_1.xlsx"
+    if station_number == 1:
+        EXCEL_FILE_PATH = "station/station_1_.xlsx"
     else:
-        EXCEL_FILE_PATH = "station/station2.xlsx"
+        EXCEL_FILE_PATH = "station/station_2_.xlsx"
 
     wb = openpyxl.load_workbook(EXCEL_FILE_PATH, data_only=True)
     sheet = wb.active
     merged_cells = get_merged_cell_ranges(sheet)
 
+    # Find the last row and column with data
+    last_row = sheet.max_row
+    last_col = sheet.max_column
+
+    # Strip out any empty rows or columns at the bottom
+    while last_row > 0 and all(sheet.cell(row=last_row, column=col).value is None for col in range(1, last_col + 1)):
+        last_row -= 1
+
+    while last_col > 0 and all(sheet.cell(row=row, column=last_col).value is None for row in range(1, last_row + 1)):
+        last_col -= 1
+
+    # Build the HTML table for only the used rows and columns
     html_table = '<table class="excel-table">'
-    for row_idx, row in enumerate(sheet.iter_rows(), start=1):
-        html_table += '<tr>'
-        for col_idx, cell in enumerate(row, start=1):
+    for row_idx in range(1, last_row + 1):  # Only iterate up to last_row
+        html_table += "<tr>"
+        for col_idx in range(1, last_col + 1):  # Only iterate up to last_col
+            cell = sheet.cell(row=row_idx, column=col_idx)
             if (row_idx, col_idx) in merged_cells and merged_cells[(row_idx, col_idx)] is None:
                 continue
 
             value = escape(str(cell.value)) if cell.value else ""
-            bg_color = get_hex_color(cell)
+            bg_color = get_hex_color(cell, is_background=True)  # Background color
+            text_color = get_hex_color(cell, is_background=False)  # Text color
             rowspan = merged_cells.get((row_idx, col_idx), {}).get("rowspan", 1)
             colspan = merged_cells.get((row_idx, col_idx), {}).get("colspan", 1)
 
-            html_table += f'<td contenteditable="true" data-row="{row_idx-1}" data-col="{col_idx-1}" style="background-color: {bg_color};"'
+            html_table += f'<td contenteditable="true" data-row="{row_idx-1}" data-col="{col_idx-1}" ' \
+                          f'style="background-color: {bg_color};"'
+
             if rowspan > 1:
                 html_table += f' rowspan="{rowspan}"'
             if colspan > 1:
                 html_table += f' colspan="{colspan}"'
-            html_table += f'>{value}</td>'
 
-        html_table += '</tr>'
-    html_table += '</table>'
+            html_table += f">{value}</td>"
 
-    return render(request, "station_layout.html", {"excel_html": html_table,"station_number":station_number})
+        html_table += "</tr>"
+    html_table += "</table>"
+
+    return render(request, "station_layout.html", {"excel_html": html_table, "station_number": station_number})
 
 
-def save_excel_changes(request,station_number):
 
-    EXCEL_FILE_PATH = ''
+def save_excel_changes(request, station_number):
 
-    if station_number==1:
-        EXCEL_FILE_PATH = "station/station_1.xlsx"
+    EXCEL_FILE_PATH = ""
+
+    if station_number == 1:
+        EXCEL_FILE_PATH = "station/station_1_.xlsx"
     else:
-        EXCEL_FILE_PATH = "station/station2.xlsx"
+        EXCEL_FILE_PATH = "station/station_2_.xlsx"
 
     if request.method == "POST":
         try:
@@ -436,7 +454,7 @@ def save_excel_changes(request,station_number):
             wb.save(EXCEL_FILE_PATH)
 
             return JsonResponse({"message": "Changes saved successfully!"})
-        
+
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
