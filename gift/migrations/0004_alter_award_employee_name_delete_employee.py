@@ -7,18 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0002_alter_userprofile_role'),
-        ('gift', '0003_alter_employee_designation'),
-        ('inventory_app', '0005_alter_uniformassignment_employee'),
+        ("authentication", "0002_alter_userprofile_role"),
+        ("gift", "0003_alter_employee_designation"),
+        ("inventory_app", "0005_alter_uniformassignment_employee"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='award',
-            name='employee_name',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_names', to='authentication.userprofile'),
+            model_name="award",
+            name="employee_name",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="employee_names",
+                to="authentication.userprofile",
+            ),
         ),
         migrations.DeleteModel(
-            name='Employee',
+            name="Employee",
         ),
     ]

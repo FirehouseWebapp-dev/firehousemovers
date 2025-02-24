@@ -9,72 +9,361 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('authentication', '0001_initial'),
-        ('vehicle', '0003_delete_inspection'),
+        ("authentication", "0001_initial"),
+        ("vehicle", "0003_delete_inspection"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Station',
+            name="Station",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('location', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("location", models.CharField(blank=True, max_length=255, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Fleet_order',
+            name="Fleet_order",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.CharField(blank=True, choices=[('fleet', 'Fleet'), ('office supplies', 'Office Supplies')], max_length=40, null=True)),
-                ('urgency_level', models.CharField(blank=True, choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High')], max_length=40, null=True)),
-                ('status', models.CharField(blank=True, choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High')], default='pending approval', max_length=40, null=True)),
-                ('item_description', models.TextField(blank=True, null=True)),
-                ('date', models.DateField(blank=True, null=True)),
-                ('quantity', models.IntegerField()),
-                ('requested_by', models.CharField(blank=True, max_length=100, null=True)),
-                ('submitted_by', models.CharField(blank=True, max_length=100, null=True)),
-                ('approved_on', models.DateField(blank=True, null=True)),
-                ('saved_on', models.DateField(blank=True, null=True)),
-                ('station', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='station_orders', to='station.station')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("fleet", "Fleet"),
+                            ("office supplies", "Office Supplies"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "urgency_level",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                        ],
+                        default="pending approval",
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                ("item_description", models.TextField(blank=True, null=True)),
+                ("date", models.DateField(blank=True, null=True)),
+                ("quantity", models.IntegerField()),
+                (
+                    "requested_by",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "submitted_by",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("approved_on", models.DateField(blank=True, null=True)),
+                ("saved_on", models.DateField(blank=True, null=True)),
+                (
+                    "station",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="station_orders",
+                        to="station.station",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Station_inspection',
+            name="Station_inspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('back_lot_cleanliness', models.CharField(blank=True, choices=[('Clean and orderly', 'Clean and orderly'), ('Mostly clean, minor issues', 'Mostly clean, minor issues'), ('Needs cleaning', 'Needs cleaning')], max_length=40, null=True)),
-                ('back_lot_maintenance', models.CharField(blank=True, choices=[('No maintenance required', 'No maintenance required'), ('Minor repairs needed', 'Minor repairs needed'), ('Major repairs needed', 'Major repairs needed')], max_length=40, null=True)),
-                ('front_yard_cleanliness', models.CharField(blank=True, choices=[('Clean and presentable', 'Clean and presentable'), ('Acceptable', 'Acceptable'), ('Needs Attention', 'Needs Attention')], max_length=40, null=True)),
-                ('front_yard_landscaping', models.CharField(blank=True, choices=[('Well-maintained', 'Well-maintained'), ('Needs minor work', 'Needs minor work'), ('Requires significant work', 'Requires significant work')], max_length=40, null=True)),
-                ('inventory_status', models.CharField(blank=True, choices=[('All tools present', 'All tools present'), ('Some tools missing', 'Some tools missing'), ('Major inventory issues', 'Major inventory issues')], max_length=40, null=True)),
-                ('missing_tools', models.CharField(blank=True, max_length=255, null=True)),
-                ('tool_cleanliness', models.CharField(blank=True, choices=[('Clean and maintained', 'Clean and maintained'), ('Mostly clean, some need attention', 'Mostly clean, some need attention'), ('Needs thorough cleaning', 'Needs thorough cleaning')], max_length=40, null=True)),
-                ('tool_functionality', models.CharField(blank=True, choices=[('All tools working', 'All tools working'), ('Minor repairs needed', 'Minor repairs needed'), ('Major repairs needed', 'Major repairs needed')], max_length=40, null=True)),
-                ('bathroom_cleanliness', models.CharField(blank=True, choices=[('Clean and hygienic', 'Clean and hygienic'), ('Needs minor cleaning', 'Needs minor cleaning'), ('Requires thorough cleaning', 'Requires thorough cleaning')], max_length=40, null=True)),
-                ('bathroom_maintenance', models.CharField(blank=True, choices=[('No maintenance required', 'No maintenance required'), ('Minor repairs needed', 'Minor repairs needed'), ('Major repairs needed', 'Major repairs needed')], max_length=40, null=True)),
-                ('supplies', models.CharField(blank=True, choices=[('Water supply', 'Water supply'), ('Paper towels', 'Paper towels'), ('Proper lighting', 'Proper lighting'), ('Waste bin (not full)', 'Waste bin (not full)'), ('Hand soap', 'Hand soap'), ('Toilet paper', 'Toilet paper'), ('Hand dryer', 'Hand dryer')], max_length=40, null=True)),
-                ('extinguisher_status', models.CharField(blank=True, choices=[('All present and current', 'All present and current'), ('Some need attention', 'Some need attention'), ('Critical issues', 'Critical issues')], max_length=40, null=True)),
-                ('emergency_exit_status', models.CharField(blank=True, choices=[('Clear and marked', 'Clear and marked'), ('Partially obstructed', 'Partially obstructed'), ('Blocked or unmarked', 'Blocked or unmarked')], max_length=40, null=True)),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('date', models.CharField(blank=True, max_length=100, null=True)),
-                ('submitted_by', models.CharField(blank=True, max_length=100, null=True)),
-                ('saved_on', models.DateField(blank=True, null=True)),
-                ('station', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='inspections', to='station.station')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "back_lot_cleanliness",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Clean and orderly", "Clean and orderly"),
+                            (
+                                "Mostly clean, minor issues",
+                                "Mostly clean, minor issues",
+                            ),
+                            ("Needs cleaning", "Needs cleaning"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "back_lot_maintenance",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("No maintenance required", "No maintenance required"),
+                            ("Minor repairs needed", "Minor repairs needed"),
+                            ("Major repairs needed", "Major repairs needed"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "front_yard_cleanliness",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Clean and presentable", "Clean and presentable"),
+                            ("Acceptable", "Acceptable"),
+                            ("Needs Attention", "Needs Attention"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "front_yard_landscaping",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Well-maintained", "Well-maintained"),
+                            ("Needs minor work", "Needs minor work"),
+                            ("Requires significant work", "Requires significant work"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "inventory_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("All tools present", "All tools present"),
+                            ("Some tools missing", "Some tools missing"),
+                            ("Major inventory issues", "Major inventory issues"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "missing_tools",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "tool_cleanliness",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Clean and maintained", "Clean and maintained"),
+                            (
+                                "Mostly clean, some need attention",
+                                "Mostly clean, some need attention",
+                            ),
+                            ("Needs thorough cleaning", "Needs thorough cleaning"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "tool_functionality",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("All tools working", "All tools working"),
+                            ("Minor repairs needed", "Minor repairs needed"),
+                            ("Major repairs needed", "Major repairs needed"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "bathroom_cleanliness",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Clean and hygienic", "Clean and hygienic"),
+                            ("Needs minor cleaning", "Needs minor cleaning"),
+                            (
+                                "Requires thorough cleaning",
+                                "Requires thorough cleaning",
+                            ),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "bathroom_maintenance",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("No maintenance required", "No maintenance required"),
+                            ("Minor repairs needed", "Minor repairs needed"),
+                            ("Major repairs needed", "Major repairs needed"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "supplies",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Water supply", "Water supply"),
+                            ("Paper towels", "Paper towels"),
+                            ("Proper lighting", "Proper lighting"),
+                            ("Waste bin (not full)", "Waste bin (not full)"),
+                            ("Hand soap", "Hand soap"),
+                            ("Toilet paper", "Toilet paper"),
+                            ("Hand dryer", "Hand dryer"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "extinguisher_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("All present and current", "All present and current"),
+                            ("Some need attention", "Some need attention"),
+                            ("Critical issues", "Critical issues"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                (
+                    "emergency_exit_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Clear and marked", "Clear and marked"),
+                            ("Partially obstructed", "Partially obstructed"),
+                            ("Blocked or unmarked", "Blocked or unmarked"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, null=True)),
+                ("date", models.CharField(blank=True, max_length=100, null=True)),
+                (
+                    "submitted_by",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("saved_on", models.DateField(blank=True, null=True)),
+                (
+                    "station",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="inspections",
+                        to="station.station",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Vehicle_inspection',
+            name="Vehicle_inspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.CharField(blank=True, choices=[('regular maintenance', 'Regular Maintenance'), ('repair', 'Repair'), ('inspection', 'Inspection')], max_length=40, null=True)),
-                ('date', models.DateField(blank=True, null=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('submitted_by', models.CharField(blank=True, max_length=100, null=True)),
-                ('saved_on', models.DateField(blank=True, null=True)),
-                ('station', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='vehicle_inspections', to='station.station')),
-                ('technician', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='authentication.userprofile')),
-                ('vehicle', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='vehicle.vehicle')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("regular maintenance", "Regular Maintenance"),
+                            ("repair", "Repair"),
+                            ("inspection", "Inspection"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
+                ("date", models.DateField(blank=True, null=True)),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "submitted_by",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("saved_on", models.DateField(blank=True, null=True)),
+                (
+                    "station",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="vehicle_inspections",
+                        to="station.station",
+                    ),
+                ),
+                (
+                    "technician",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "vehicle",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="vehicle.vehicle",
+                    ),
+                ),
             ],
         ),
     ]

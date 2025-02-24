@@ -7,18 +7,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vehicle', '0004_crew_crewstaff_delete_support'),
+        ("vehicle", "0004_crew_crewstaff_delete_support"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dispatch',
-            name='crew_leads',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='vehicle.crewstaff'),
+            model_name="dispatch",
+            name="crew_leads",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="vehicle.crewstaff",
+            ),
         ),
         migrations.AlterField(
-            model_name='order',
-            name='crew_name',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='vehicle.crew'),
+            model_name="order",
+            name="crew_name",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="vehicle.crew",
+            ),
         ),
     ]

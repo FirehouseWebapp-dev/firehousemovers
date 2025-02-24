@@ -7,19 +7,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inspection', '0001_initial'),
-        ('vehicle', '0005_alter_dispatch_crew_leads_alter_order_crew_name'),
+        ("inspection", "0001_initial"),
+        ("vehicle", "0005_alter_dispatch_crew_leads_alter_order_crew_name"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='onsite_inspection',
-            name='crew_leader',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='crew_leader_inspections', to='vehicle.crewstaff'),
+            model_name="onsite_inspection",
+            name="crew_leader",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="crew_leader_inspections",
+                to="vehicle.crewstaff",
+            ),
         ),
         migrations.AlterField(
-            model_name='onsite_inspection',
-            name='crew_members',
-            field=models.ManyToManyField(blank=True, related_name='crew_member_inspections', to='vehicle.crewstaff'),
+            model_name="onsite_inspection",
+            name="crew_members",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="crew_member_inspections",
+                to="vehicle.crewstaff",
+            ),
         ),
     ]

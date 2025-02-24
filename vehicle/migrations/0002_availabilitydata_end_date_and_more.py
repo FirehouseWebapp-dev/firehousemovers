@@ -7,32 +7,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vehicle', '0001_initial'),
+        ("vehicle", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='availabilitydata',
-            name='end_date',
+            model_name="availabilitydata",
+            name="end_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='availabilitydata',
-            name='start_date',
+            model_name="availabilitydata",
+            name="start_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='availabilitydata',
-            name='vehicle',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='availabilities', to='vehicle.vehicle'),
+            model_name="availabilitydata",
+            name="vehicle",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="availabilities",
+                to="vehicle.vehicle",
+            ),
         ),
         migrations.AlterField(
-            model_name='vehicle',
-            name='number',
+            model_name="vehicle",
+            name="number",
             field=models.CharField(blank=True, max_length=50, null=True, unique=True),
         ),
         migrations.AlterUniqueTogether(
-            name='availabilitydata',
-            unique_together={('vehicle', 'start_date')},
+            name="availabilitydata",
+            unique_together={("vehicle", "start_date")},
         ),
     ]

@@ -2,88 +2,214 @@
 {% load static %}
 {% block body %}
 {% include "navbar.html" %}
+{% include "messages.html" %}
 
-<!-- Welcome Section -->
-<section class="text-center mb-5">
-    <div class="text-5xl mb-5 mt-10 font-bold">
-        <h2 class="text-center uppercase font-serif">Welcome to Firehouse Movers Forms</h2>
-        <div class="mt-3 mx-auto w-4/5 h-3 bg-red-500 rounded-xl"></div>
-    </div>
-    
-    <!-- Grid Container for 3 Images -->
-    <div class="flex flex-wrap justify-center gap-12 mt-12">
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
-            <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
-            <h3 class="text-3xl mt-4">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
-            <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-4/5 rounded-md">
-            <h3 class="text-3xl mt-4">TRUCK & TRAILER INSPECTION</h3>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 lg:w-1/4 px-4 sm:px-2">
-            <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md">
-            <h3 class="text-3xl mt-4">FIREHOUSE STATION</h3>
-        </div>
-    </div>
-</section>
+<!-- Page load transition -->
+<div class="page-transition opacity-0">
 
-<!-- Additional Sections -->
-<section class="text-center mt-10">
-    <div class="flex flex-wrap justify-center gap-4">
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
-            <p class="mt-4">Uniform Inventory System</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">Gift Cards</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">On Site Inspection</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">Packaging & Supplies</p>
+    <div class="text-left text-center">
+        <div class="relative overflow-hidden">
+            <!-- Container for the slider -->
+            <div class="slider w-full h-[80vh] relative">
+                <!-- Each Slide -->
+                <div class="slides flex transition-all duration-1000 ease-in-out">
+                    <!-- Slide 1 -->
+                    <div class="slide w-full flex-shrink-0 relative">
+                        <img src="{% static 'images/two_trucks.jpg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-40">
+                        <div class="absolute inset-0 flex justify-left  text-white px-4 place-items-start ml-24 mt-12">
+
+                            <div class="text-white text-center w-96 bg-opacity-90 ">
+                                <h1 class="text-3xl font-bold  ">WELCOME TO FIREHOUSE MOVERS</h1>
+                                <p class="w-full mt-3 font-bold">Let us take the stress out of moving across the state</p>
+                            </div>
+                    
+                            <!-- Text or other content for Slide 1 with transition -->
+                            <!-- <i class="text-2xl text-white font-serif font-bold shadow-lg bg-black p-2">WELCOME TO FIREHOUSE MOVERS</i>
+                            <p class="w-full mt-3">Let us take the stress out of moving across the state.</p> -->
+
+                        </div>
+                    </div>
+                    <!-- Slide 2 -->
+                    <div class="slide w-full flex-shrink-0 relative">
+                        <img src="{% static 'images/truck.jpeg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-[0.8] transition-all duration-500 ease-in-out">
+                        <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
+                            <!-- Text or other content for Slide 2 can go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</section>
 
-<section class="text-center mt-10">
-    <div class="flex flex-wrap justify-center gap-4">
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-4/5 rounded-md">
-            <p class="mt-4">Marketing Inventory</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">Prizes & Acknowledgments Form</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">Employees Evaluation</p>
-        </div>
-        <div class="bg-white rounded-lg text-center w-full sm:w-1/2 md:w-1/5 px-4 sm:px-2">
-            <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-4/5 rounded-md"> 
-            <p class="mt-4">Fleet Fueling Status</p>
-        </div>
-    </div>
-</section>
+    <!-- Welcome Section -->
+    <section class="text-center mb-5 mt-20">
 
-<!-- About Us Section -->
-<div class="text-left mt-10 px-4 sm:mx-10 md:mx-10 lg:ml-24 mb-5 text-center">
-    <div class="flex flex-col lg:flex-row md:flex-row sm:flex-row">
-        <!-- Footer Image -->
-        <div class="bg-white rounded-lg text-center w-full lg:w-4/5 sm:px-4"> <!-- Added sm:px-4 for 1padding on small screens -->
-            <img src="{% static 'images/footer.jpg' %}" alt="Truck" class="w-full h-full rounded-md">
+        <!-- Grid Container for 3 Images -->
+        <div class="flex justify-between gap-2 mt-6 w-full">
+
+            <!-- Truck Availability & Job Logistics -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'availability_logitics' %}">
+                    <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
+                </a>
+            </div>
+
+            <!-- Truck & Trailer Inspection -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'inspection' %}">
+                    <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK & TRAILER INSPECTION</h3>
+                </a>
+            </div>
+
+            <!-- Firehouse Station -->
+            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
+                <a href="{% url 'station' %}">
+                    <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
+                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">FIREHOUSE STATION</h3>
+                </a>
+            </div>
         </div>
-        <!-- About Us Text -->
-        <div class=" mt-12 lg:mr-24">
-            <h1 class="text-3xl font-bold">ABOUT US</h1>
-            <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
+
+    </section>
+
+    <!-- Additional Sections -->
+    <section class="text-center mt-10">
+        <div class="flex flex-wrap justify-start w-full gap-x-4">
+            <!-- Uniform Inventory System -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'inventory' %}">
+                    <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Uniform Inventory System</p>
+                </a>
+            </div>
+
+            <!-- Gift Cards -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'gift_card' %}">
+                    <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Gift Cards</p>
+                </a>
+            </div>
+
+            <!-- On Site Inspection -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'onsite_inspection' %}">
+                    <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">On Site Inspection</p>
+                </a>
+            </div>
+
+            <!-- Packaging & Supplies -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Additional Sections -->
+    <section class="text-center mt-10">
+        <div class="flex flex-wrap justify-start w-full gap-x-4">
+            <!-- Uniform Inventory System -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Marketing Inventory</p>
+            </div>
+
+            <!-- Gift Cards -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Prizes & Acknowledgements</p>
+            </div>
+
+            <!-- On Site Inspection -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                    <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Employees Evaluation</p>
+            </div>
+
+            <!-- Packaging & Supplies -->
+            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Fleet Fueling </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Us Section -->
+    <div class="text-left mt-20 text-center">
+        <div class="relative group">
+            <div class="w-full overflow-hidden relative" style="padding: 0;">
+                <img src="{% static 'images/line.jpg' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-[0.8]">
+                <div class="absolute inset-0 flex justify-left items-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
+                    <div class="text-white text-left text-gray-200 w-96">
+                        <h1 class="text-3xl font-bold">ABOUT US</h1>
+                        <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<script>
+    let currentIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const slideContainer = document.querySelector('.slides');
 
+    function changeSlide() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        slideContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
+    }
+
+    setInterval(changeSlide, 3000); // Change slide every 3 seconds
+
+    // Page load fade-in transition
+    window.addEventListener('load', () => {
+        document.querySelector('.page-transition').classList.remove('opacity-0');
+        document.querySelector('.page-transition').classList.add('opacity-100');
+        document.querySelector('.page-transition').classList.add('transition-opacity', 'duration-1000');
+    });
+
+
+    // Get the slide container and individual slides
+    const slide = document.querySelectorAll('.slide');
+    let currentindex = 0;
+
+    // Function to move to the next slide
+    function goToNextSlide() {
+        slide[currentindex].classList.remove('active');
+        currentindex = (currentindex + 1) % slide.length;
+        slide[currentindex].classList.add('active');
+        
+        // Animate text for the new slide
+        animateText(currentindex);
+    }
+
+    // Auto slide transition every 3 seconds
+    setInterval(goToNextSlide, 3000);
+
+
+</script>
+
+<style>
+    /* Custom animation for sliding up text */
+    @layer utilities {
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+    }
+</style>
 {% endblock %}

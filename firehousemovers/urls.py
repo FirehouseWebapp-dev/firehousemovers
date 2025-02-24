@@ -21,11 +21,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # Admin panel
-    path('', include('inventory_app.urls')),  # Include inventory_app routes
-    path('', include('authentication.urls')),  # Include authentication routes
-    path('', include('vehicle.urls')),  # Include vehicle routes
-    path('station/', include('station.urls')),  # Include station routes
-    path('', include('gift.urls')),  # Include gift routes
-    path('', include('inspection.urls')),  # Include gift routes
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path("admin/", admin.site.urls),  # Admin panel
+    path("", include("inventory_app.urls")),  # Include inventory_app routes
+    path("", include("authentication.urls")),  # Include authentication routes
+    path("", include("vehicle.urls")),  # Include vehicle routes
+    path("station/", include("station.urls")),  # Include station routes
+    path("", include("gift.urls")),  # Include gift routes
+    path("", include("inspection.urls")),  # Include gift routes
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

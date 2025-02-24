@@ -7,22 +7,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inspection', '0003_alter_onsite_inspection_crew_leader_and_more'),
-        ('vehicle', '0005_alter_dispatch_crew_leads_alter_order_crew_name'),
+        ("inspection", "0003_alter_onsite_inspection_crew_leader_and_more"),
+        ("vehicle", "0005_alter_dispatch_crew_leads_alter_order_crew_name"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dispatch',
-            name='crew_leads',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='vehicle.crew'),
+            model_name="dispatch",
+            name="crew_leads",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="vehicle.crew",
+            ),
         ),
         migrations.AddField(
-            model_name='crew',
-            name='role',
-            field=models.CharField(choices=[('leader', 'Leader'), ('member', 'Member')], default='member', max_length=50),
+            model_name="crew",
+            name="role",
+            field=models.CharField(
+                choices=[("leader", "Leader"), ("member", "Member")],
+                default="member",
+                max_length=50,
+            ),
         ),
         migrations.DeleteModel(
-            name='CrewStaff',
+            name="CrewStaff",
         ),
     ]

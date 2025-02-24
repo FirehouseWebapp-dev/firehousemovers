@@ -2,8 +2,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from vehicle.models import Crew
 
+
 class Command(BaseCommand):
-    help = 'Seeds crew leaders and members data into the database'
+    help = "Seeds crew leaders and members data into the database"
 
     def handle(self, *args, **kwargs):
         # Crew leaders and members
@@ -19,9 +20,9 @@ class Command(BaseCommand):
             "Miguel Flores",
             "Adam Rozen",
             "Jairo Mendez",
-            "Juan Torres"
+            "Juan Torres",
         ]
-        
+
         members = [
             "Logan Foster",
             "Moses Jenkins",
@@ -85,7 +86,7 @@ class Command(BaseCommand):
             "2-Razor Wire Hauling-Jay",
             "3-A & H Hauling- Alex",
             "3-QuickDraw-Chris",
-            "4-QuickDraw-Chris"
+            "4-QuickDraw-Chris",
         ]
 
         try:
@@ -94,7 +95,7 @@ class Command(BaseCommand):
                 crew_to_create = [
                     Crew(name=leader, role="leader") for leader in leaders
                 ]
-                
+
                 # Prepare Crew objects for creation: Members
                 crew_to_create += [
                     Crew(name=member, role="member") for member in members
@@ -103,7 +104,9 @@ class Command(BaseCommand):
                 # Bulk create Crew objects
                 Crew.objects.bulk_create(crew_to_create)
 
-            self.stdout.write(self.style.SUCCESS('Crew leaders and members seeded successfully'))
+            self.stdout.write(
+                self.style.SUCCESS("Crew leaders and members seeded successfully")
+            )
             print("✅ Crew leaders and members seeded successfully!")
 
         except Exception as e:

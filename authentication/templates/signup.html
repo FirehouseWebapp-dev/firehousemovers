@@ -15,7 +15,7 @@
         <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
             <h2 class="text-2xl font-semibold text-center mb-6">Sign Up</h2>
 
-            <form id="signup-form" method="post" action="{% url 'authentication:signup' %}" enctype="multipart/form-data">
+            <form id="signup-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <div class="grid grid-cols-1 gap-6">
@@ -36,8 +36,6 @@
                             {% endif %}
                         </div>
                     </div>
-
-                    
 
                     <!-- Password Fields -->
                     <div class="flex gap-4">
@@ -78,7 +76,7 @@
                     <!-- Terms & Conditions -->
                     <div class="flex justify-between items-center mt-4">
                         <p class="text-sm text-gray-600">Already have an account? <strong><a href="{% url 'authentication:login' %}"class="text-red-500 hover:underline">Log in</a></strong></p>
-                        <button type="submit" class="w-32 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none">signup</button>
+                        <button type="submit" class="w-32 py-2 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">signup</button>
                     </div>
                 </div>
             </form>

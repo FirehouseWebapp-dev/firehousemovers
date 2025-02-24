@@ -6,13 +6,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gift', '0002_alter_employee_designation_alter_employee_name_and_more'),
+        ("gift", "0002_alter_employee_designation_alter_employee_name_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='employee',
-            name='designation',
-            field=models.CharField(blank=True, choices=[('llc/field', 'LLC/Field'), ('llc/owner', 'LLC/Owner'), ('sales', 'Sales'), ('field', 'Field'), ('driver', 'Driver'), ('manager', 'Manager'), ('rwh', 'RWH'), ('admin', 'Admin'), ('warehouse', 'Warehouse'), ('mover', 'Mover'), ('technician', 'Technician'), ('mover- crew member', 'Mover- Crew member'), ('customers- per trevor', 'Customers- Per Trevor')], max_length=40, null=True),
+            model_name="employee",
+            name="designation",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("llc/field", "LLC/Field"),
+                    ("llc/owner", "LLC/Owner"),
+                    ("sales", "Sales"),
+                    ("field", "Field"),
+                    ("driver", "Driver"),
+                    ("manager", "Manager"),
+                    ("rwh", "RWH"),
+                    ("admin", "Admin"),
+                    ("warehouse", "Warehouse"),
+                    ("mover", "Mover"),
+                    ("technician", "Technician"),
+                    ("mover- crew member", "Mover- Crew member"),
+                    ("customers- per trevor", "Customers- Per Trevor"),
+                ],
+                max_length=40,
+                null=True,
+            ),
         ),
     ]

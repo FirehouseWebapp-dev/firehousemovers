@@ -6,7 +6,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 
 
-class SignUpForm(UserCreationForm):  
+class SignUpForm(UserCreationForm):
     first_name = forms.CharField(
         max_length=100,
         widget=forms.TextInput(
@@ -36,10 +36,12 @@ class SignUpForm(UserCreationForm):
         ),
     )
     role = forms.ChoiceField(
-        choices=[('manager', 'Manager'), ('driver', 'Driver')],
-        widget=forms.Select(attrs={
+        choices=[("manager", "Manager"), ("driver", "Driver")],
+        widget=forms.Select(
+            attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
-        })
+            }
+        ),
     )
     password1 = forms.CharField(
         widget=forms.PasswordInput(
@@ -75,14 +77,13 @@ class SignUpForm(UserCreationForm):
         password2 = cleaned_data.get("password2")
 
         if password1 and password2 and password1 != password2:
-            self.add_error('password2', "Password does not match")
+            self.add_error("password2", "Password does not match")
         return cleaned_data
-        
 
 
 class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(
-        label='Email Address',
+        label="Email Address",
         widget=forms.TextInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
@@ -92,7 +93,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     )
 
     password = forms.CharField(
-        label='Password',
+        label="Password",
         widget=forms.PasswordInput(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
@@ -102,7 +103,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     )
 
     def clean_username(self):
-        username = self.cleaned_data.get('username')
+        username = self.cleaned_data.get("username")
         try:
             user = get_user_model().objects.get(email=username)
         except get_user_model().DoesNotExist:

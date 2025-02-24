@@ -5,7 +5,8 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Seeds user data into the database'
+    help = "Seeds user data into the database"
+
     def handle(self, *args, **kwargs):
         # User data (Username)
         userProfiles = {
@@ -126,7 +127,7 @@ class Command(BaseCommand):
             "Jose Moreno": "driver",
             "Jose Noe Martinez": "driver",
             "Jorge Hernandez": "driver",
-            "Julian Hernandez": "driver"
+            "Julian Hernandez": "driver",
         }
 
         DEFAULT_PASSWORD = "default123"
@@ -134,13 +135,21 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 # Fetch existing usernames to avoid duplicates
-                usernames = list(userProfiles.keys()) 
-                existing_usernames = set(User.objects.filter(username__in=usernames).values_list('username', flat=True))
+                usernames = list(userProfiles.keys())
+                existing_usernames = set(
+                    User.objects.filter(username__in=usernames).values_list(
+                        "username", flat=True
+                    )
+                )
 
                 # Prepare User objects for creation
                 users_to_create = [
-                    User(username=username, email=f"{username.lower().replace(' ', '.')}@default.com")
-                    for username in usernames if username not in existing_usernames
+                    User(
+                        username=username,
+                        email=f"{username.lower().replace(' ', '.')}@default.com",
+                    )
+                    for username in usernames
+                    if username not in existing_usernames
                 ]
 
                 # Set password for each user
@@ -152,15 +161,14 @@ class Command(BaseCommand):
 
                 # Prepare UserProfile objects
                 profiles_to_create = [
-                    UserProfile(user=user, role=userProfiles[user.username]) 
+                    UserProfile(user=user, role=userProfiles[user.username])
                     for user in created_users
                 ]
 
                 # Bulk create UserProfiles
                 UserProfile.objects.bulk_create(profiles_to_create)
 
-            self.stdout.write(self.style.SUCCESS('Data seeded successfully'))
-
+            self.stdout.write(self.style.SUCCESS("Data seeded successfully"))
 
             print("✅ Users and UserProfiles seeded successfully!")
 

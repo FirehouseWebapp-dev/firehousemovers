@@ -8,7 +8,8 @@
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body style="background-image: url({% static 'images/two_trucks.jpg' %})" class="bg-cover">
+
 
     <div class="min-h-screen flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
@@ -53,14 +54,8 @@
                 {% endif %}
             
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">Log In</button>
+                <button type="submit" class="w-full py-3 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">Log In</button>
             </form>
-            
-
-            <!-- Registration Link -->
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">Don't have an account? <a href="{% url 'authentication:signup' %}" class="text-red-500 hover:underline">Register</a></p>
-            </div>
         </div>
     </div>
 

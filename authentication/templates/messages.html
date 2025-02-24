@@ -1,0 +1,26 @@
+{% for message in messages %}
+<div class="container-fluid p-0 z-50">
+  <div class="alert {{ message.tags }} rounded-lg px-4 py-2 flex items-center justify-between opacity-100 transition-opacity duration-500 ease-out" role="alert" id="alert-{{ forloop.counter }}">
+    <span>{{ message }}</span>
+    <button type="button" class="text-red-600 hover:text-red-800" aria-label="Close" onclick="this.closest('.alert').remove()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Set a timeout to fade out and then remove the message after 3 seconds (3000 ms)
+  setTimeout(function() {
+    var alertMessage = document.getElementById('alert-{{ forloop.counter }}');
+    if (alertMessage) {
+      // Apply the fade-out transition
+      alertMessage.classList.add('opacity-0');
+      
+      // After the fade-out transition (500ms), remove the message from the DOM
+      setTimeout(function() {
+        alertMessage.remove();
+      }, 500); // Wait for the transition to complete (500ms)
+    }
+  }, 3000); // 3000 milliseconds = 3 seconds
+</script>
+{% endfor %}

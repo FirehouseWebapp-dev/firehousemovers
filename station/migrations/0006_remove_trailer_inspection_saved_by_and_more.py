@@ -6,33 +6,33 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('station', '0005_alter_onsite_inspection_crew_members'),
+        ("station", "0005_alter_onsite_inspection_crew_members"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='trailer_inspection',
-            name='saved_by',
+            model_name="trailer_inspection",
+            name="saved_by",
         ),
         migrations.RemoveField(
-            model_name='trailer_inspection',
-            name='trailer',
+            model_name="trailer_inspection",
+            name="trailer",
         ),
         migrations.RemoveField(
-            model_name='truck_inspection',
-            name='saved_by',
+            model_name="truck_inspection",
+            name="saved_by",
         ),
         migrations.RemoveField(
-            model_name='truck_inspection',
-            name='truck',
+            model_name="truck_inspection",
+            name="truck",
         ),
         migrations.DeleteModel(
-            name='Onsite_inspection',
+            name="Onsite_inspection",
         ),
         migrations.DeleteModel(
-            name='Trailer_inspection',
+            name="Trailer_inspection",
         ),
         migrations.DeleteModel(
-            name='Truck_inspection',
+            name="Truck_inspection",
         ),
     ]

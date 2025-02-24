@@ -9,47 +9,125 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('authentication', '0001_initial'),
+        ("authentication", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Employee',
+            name="Employee",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.TextField(blank=True, null=True)),
-                ('designation', models.TextField(blank=True, null=True)),
-                ('gender', models.CharField(blank=True, choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], max_length=40, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.TextField(blank=True, null=True)),
+                ("designation", models.TextField(blank=True, null=True)),
+                (
+                    "gender",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("male", "Male"),
+                            ("female", "Female"),
+                            ("other", "Other"),
+                        ],
+                        max_length=40,
+                        null=True,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Gift_company',
+            name="Gift_company",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.TextField(blank=True, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.TextField(blank=True, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Gift_card',
+            name="Gift_card",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date_of_purchase', models.DateField(blank=True, null=True)),
-                ('amount', models.IntegerField(blank=True, null=True)),
-                ('added_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='added_by_user', to='authentication.userprofile')),
-                ('company', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gift.gift_company')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date_of_purchase", models.DateField(blank=True, null=True)),
+                ("amount", models.IntegerField(blank=True, null=True)),
+                (
+                    "added_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="added_by_user",
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "company",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="gift.gift_company",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Award',
+            name="Award",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date_award', models.DateField(blank=True, null=True)),
-                ('amount', models.IntegerField(blank=True, null=True)),
-                ('reason', models.TextField(blank=True, null=True)),
-                ('date_saved', models.DateField(blank=True, null=True)),
-                ('awarded_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='awarded_user', to='authentication.userprofile')),
-                ('employee_name', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_names', to='gift.employee')),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='gift_card', to='gift.gift_card')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date_award", models.DateField(blank=True, null=True)),
+                ("amount", models.IntegerField(blank=True, null=True)),
+                ("reason", models.TextField(blank=True, null=True)),
+                ("date_saved", models.DateField(blank=True, null=True)),
+                (
+                    "awarded_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="awarded_user",
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "employee_name",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="employee_names",
+                        to="gift.employee",
+                    ),
+                ),
+                (
+                    "card",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="gift_card",
+                        to="gift.gift_card",
+                    ),
+                ),
             ],
         ),
     ]

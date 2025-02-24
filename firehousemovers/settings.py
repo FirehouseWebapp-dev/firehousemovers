@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 
 import dj_database_url
+from django.contrib.messages import constants as messages
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,18 +24,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', "django-insecure-sx_hvwar&4xvjixh@pr+2&m_#$wa*gkjetdou_hb-#1@!gi2al")
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-sx_hvwar&4xvjixh@pr+2&m_#$wa*gkjetdou_hb-#1@!gi2al",
+)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False")
 
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','fire-house-movers-7f0b30006c85.herokuapp.com']
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "fire-house-movers-7f0b30006c85.herokuapp.com",
+]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Application definition
@@ -50,7 +59,7 @@ INSTALLED_APPS = [
     "vehicle",
     "station",
     "gift",
-    "inspection"
+    "inspection",
 ]
 
 MIDDLEWARE = [
@@ -64,19 +73,30 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
+MESSAGE_TAGS = {
+    messages.DEBUG: "bg-gray-200 text-gray-800 border border-gray-400",  # for debug messages
+    messages.INFO: "bg-blue-100 text-blue-800 border border-blue-400",  # for info messages
+    messages.SUCCESS: "bg-green-100 text-green-800 border border-green-400",  # for success messages
+    messages.WARNING: "bg-yellow-100 text-yellow-800 border border-yellow-400",  # for warning messages
+    messages.ERROR: "bg-red-100 text-red-800 border border-red-400",  # for error messages
+}
+
+
 ROOT_URLCONF = "firehousemovers.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR/ 'templates'],  # Ensure this points to your templates directory
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            BASE_DIR / "templates"
+        ],  # Ensure this points to your templates directory
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -90,10 +110,8 @@ WSGI_APPLICATION = "firehousemovers.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-if 'DATABASE_URL' in os.environ:
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
-    }
+if "DATABASE_URL" in os.environ:
+    DATABASES = {"default": dj_database_url.config(conn_max_age=600, ssl_require=True)}
 else:
     DATABASES = {
         "default": {
@@ -140,13 +158,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR /"static/"]  # For static files in your project
-STATIC_ROOT = BASE_DIR / "staticfiles"   # For `collectstatic` output
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static/"]  # For static files in your project
+STATIC_ROOT = BASE_DIR / "staticfiles"  # For `collectstatic` output
 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-

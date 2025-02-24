@@ -6,13 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('authentication', '0001_initial'),
+        ("authentication", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='role',
-            field=models.CharField(choices=[('llc/field', 'LLC/Field'), ('llc/owner', 'LLC/Owner'), ('sales', 'Sales'), ('field', 'Field'), ('driver', 'Driver'), ('manager', 'Manager'), ('rwh', 'RWH'), ('technician', 'Technician'), ('admin', 'Admin'), ('warehouse', 'Warehouse'), ('mover', 'Mover'), ('technician', 'Technician'), ('customers- per trevor', 'Customers- Per Trevor')], default='driver', max_length=50),
+            model_name="userprofile",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("llc/field", "LLC/Field"),
+                    ("llc/owner", "LLC/Owner"),
+                    ("sales", "Sales"),
+                    ("field", "Field"),
+                    ("driver", "Driver"),
+                    ("manager", "Manager"),
+                    ("rwh", "RWH"),
+                    ("technician", "Technician"),
+                    ("admin", "Admin"),
+                    ("warehouse", "Warehouse"),
+                    ("mover", "Mover"),
+                    ("technician", "Technician"),
+                    ("customers- per trevor", "Customers- Per Trevor"),
+                ],
+                default="driver",
+                max_length=50,
+            ),
         ),
     ]

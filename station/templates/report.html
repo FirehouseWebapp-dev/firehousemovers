@@ -1,9 +1,10 @@
 {% extends "base_template.html" %}
 {% block text %}
 
+
 <!-- Date Filters -->
-<div class="bg-white shadow-lg rounded-lg p-2 mb-4">
-    <h2 class="text-xl font-bold text-red-600 text-center">{{ title }}</h2>
+<div class="bg-white shadow-lg rounded-lg p-2 mb-4 ">
+    <h2 class="text-xl font-bold text-black text-center">{{ title }}</h2>
 
     <!-- Form -->
     <form method="get" action="" class="flex flex-wrap items-center justify-center gap-4">
@@ -23,14 +24,14 @@
 
         <!-- Update Report Button -->
         <div>
-            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md shadow">
+            <button type="submit" class="bg-[#262626] hover:bg-red-600 transition-all duration-300 text-white px-4 py-2 rounded-md shadow">
                 Update Report
             </button>
         </div>
 
         <!-- Reset Dates Button -->
         <div>
-            <a href="?tab={{ active_tab }}" class="bg-gray-400 text-white px-4 py-2 rounded-md shadow flex items-center justify-center">
+            <a href="?tab={{ active_tab }}" class="bg-[#262626] hover:bg-red-600 transition-all duration-300 text-white px-4 py-2 rounded-md shadow flex items-center justify-center">
                 Reset Dates
             </a>
         </div>
@@ -39,11 +40,11 @@
 
 
 <!-- Report Content -->
-{% if active_tab == "order_report" %}
+{% if active_tab == "order_report" %}    
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Fleet Orders Summary -->
-        <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Fleet Orders Summary</h3>
+        <div class="bg-gray-100 rounded-lg p-4 ">
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Fleet Orders Summary</h3>
 
             <!-- Summary Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -68,7 +69,7 @@
             <!-- Table -->
             <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
                 <table class="w-full border text-sm">
-                    <thead>
+                    <thead >
                         <tr class="bg-red-600 text-white">
                             <th class="py-2 px-4">Date</th>
                             <th class="py-2 px-4">Requested By</th>
@@ -91,10 +92,10 @@
                 </table>
             </div>
         </div>
-
+    
         <!-- Office Supply Orders Summary -->
         <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Office Supply Orders Summary</h3>
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Office Supply Orders Summary</h3>
 
             <!-- Summary Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -143,16 +144,18 @@
             </div>
         </div>
     </div>
+
+    
 {% elif active_tab == "vehicle_report" %}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Truck Service Summary -->
         <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Truck Service Summary</h3>
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Truck Service Summary</h3>
 
             <!-- Table -->
             <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
                 <table class="w-full border text-sm">
-                    <thead>
+                    <thead >
                         <tr class="bg-red-600 text-white">
                             <th class="py-2 px-4">Date</th>
                             <th class="py-2 px-4">Truck</th>
@@ -180,12 +183,12 @@
 
         <!-- Trailer Service Summary -->
         <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Trailer Service Summary</h3>
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Trailer Service Summary</h3>
 
             <!-- Table -->
             <div class="overflow-x-auto max-h-[calc(100vh-300px)] overflow-y-auto">
                 <table class="w-full border text-sm">
-                    <thead>
+                    <thead >
                         <tr class="bg-red-600 text-white">
                             <th class="py-2 px-4">Date</th>
                             <th class="py-2 px-4">Trailer</th>
@@ -216,22 +219,22 @@
     <div class="grid grid-cols-2 gap-6">
         <!-- Fleet Orders Summary -->
         <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Station 1 Overview</h3>
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Station 1 Overview</h3>
 
             <div>
-                <p class="text-lg font-bold text-red-600 mb-4 text-center">Last Inspection: {{station1_overview.date}}</p>
+                <p class="text-lg font-bold text-black mb-4 text-center">Last Inspection: {{station1_overview.date}}</p>
                 <p class="text-lg">Issue Requiring Attention</p>
-                <p class="text-lg text-red-500">Tools Area Inventory: {{station1_overview.inventory_status}}</p>
+                <p class="text-lg ">Tools Area Inventory: {{station1_overview.inventory_status}}</p>
                 <p class="text-lg">Missing Tools</p>
             </div>
         </div>
 
         <!-- Office Supply Orders Summary -->
         <div class="bg-gray-100 rounded-lg p-4">
-            <h3 class="text-xl font-bold text-red-600 mb-4 text-center">Station 2 Overview</h3>
+            <h3 class="text-xl font-bold text-black mb-4 text-center">Station 2 Overview</h3>
 
             <div>
-                <p class="text-lg font-bold text-red-600 mb-4 text-center">Last Inspection: {{station2_overview.date}}</p>
+                <p class="text-lg font-bold text-black mb-4 text-center">Last Inspection: {{station2_overview.date}}</p>
                 <p class="text-lg">Issue Requiring Attention</p>
                 <p class="text-lg ">Tools Area Inventory: </p>
                 <p class="text-lg text-red-500">{{station2_overview.inventory_status}}</p>

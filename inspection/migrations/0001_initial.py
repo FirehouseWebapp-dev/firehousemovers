@@ -9,137 +9,1113 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('authentication', '0001_initial'),
-        ('vehicle', '0003_delete_inspection'),
+        ("authentication", "0001_initial"),
+        ("vehicle", "0003_delete_inspection"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Onsite_inspection',
+            name="Onsite_inspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('saved_on', models.DateTimeField(auto_now_add=True)),
-                ('job_number', models.CharField(max_length=100, unique=True)),
-                ('customer_name', models.CharField(max_length=255)),
-                ('customer_phone', models.CharField(max_length=20)),
-                ('pickup_address', models.TextField()),
-                ('delivery_address', models.TextField()),
-                ('materials_check_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('vehicle_inventory_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('customer_communication_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('parking_arranged_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('customer_greeted_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('crew_introduction_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('initial_walkthrough_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('estimate_comparison_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('paperwork_signed_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('valuables_secured_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('photos_sent_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('inventory_management_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('furniture_disassembly_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('parts_management_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('loading_quality_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('padding_used_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('load_secured_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('final_walkthrough_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('customer_initials_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('follow_instructions_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('truck_prepared_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('dispatch_complete_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('dispatch_unload_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('damage_inspection_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('protection_setup_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('placement_accuracy_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('pad_management_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('furniture_reassembly_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('customer_walkthrough_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('vehicle_inspection_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('final_charges_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('customer_review_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('paperwork_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('payment_collection_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('video_testimonial_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('completion_notice_rating', models.IntegerField(blank=True, choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)], null=True)),
-                ('comments', models.TextField(blank=True, null=True)),
-                ('customer_feedback', models.TextField(blank=True, null=True)),
-                ('prior_move_score', models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=3, null=True)),
-                ('pickup_score', models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=3, null=True)),
-                ('dropoff_score', models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=3, null=True)),
-                ('overall_score', models.DecimalField(blank=True, decimal_places=2, default=0.0, max_digits=3, null=True)),
-                ('crew_leader', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='crew_leader_inspections', to='authentication.userprofile')),
-                ('crew_members', models.ManyToManyField(blank=True, related_name='crew_member_inspections', to='authentication.userprofile')),
-                ('inspector', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='inspector_inspections', to='authentication.userprofile')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("saved_on", models.DateTimeField(auto_now_add=True)),
+                ("job_number", models.CharField(max_length=100, unique=True)),
+                ("customer_name", models.CharField(max_length=255)),
+                ("customer_phone", models.CharField(max_length=20)),
+                ("pickup_address", models.TextField()),
+                ("delivery_address", models.TextField()),
+                (
+                    "materials_check_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "vehicle_inventory_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "customer_communication_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "parking_arranged_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "customer_greeted_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "crew_introduction_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "initial_walkthrough_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "estimate_comparison_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "paperwork_signed_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "valuables_secured_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "photos_sent_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "inventory_management_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "furniture_disassembly_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "parts_management_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "loading_quality_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "padding_used_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "load_secured_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "final_walkthrough_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "customer_initials_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "follow_instructions_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "truck_prepared_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "dispatch_complete_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "dispatch_unload_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "damage_inspection_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "protection_setup_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "placement_accuracy_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "pad_management_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "furniture_reassembly_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "customer_walkthrough_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "vehicle_inspection_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "final_charges_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "customer_review_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "paperwork_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "payment_collection_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "video_testimonial_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                (
+                    "completion_notice_rating",
+                    models.IntegerField(
+                        blank=True,
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+                        null=True,
+                    ),
+                ),
+                ("comments", models.TextField(blank=True, null=True)),
+                ("customer_feedback", models.TextField(blank=True, null=True)),
+                (
+                    "prior_move_score",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=0.0,
+                        max_digits=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    "pickup_score",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=0.0,
+                        max_digits=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    "dropoff_score",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=0.0,
+                        max_digits=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    "overall_score",
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=0.0,
+                        max_digits=3,
+                        null=True,
+                    ),
+                ),
+                (
+                    "crew_leader",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="crew_leader_inspections",
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "crew_members",
+                    models.ManyToManyField(
+                        blank=True,
+                        related_name="crew_member_inspections",
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "inspector",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="inspector_inspections",
+                        to="authentication.userprofile",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Trailer_inspection',
+            name="Trailer_inspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(blank=True, null=True)),
-                ('clean_status', models.CharField(blank=True, choices=[('full of trash & dirt', 'Full of Trash & Dirt'), ('free of trash', 'Free of Trash'), ('removed trash', 'Removed Trash'), ('detailed inside/out', 'Detailed Inside/Out'), ('wiped down inside/ washed outside', 'Wiped Down Inside/ Washed Outside'), ('wiped down inside only', 'Wiped Down Inside Only'), ('washed outside only', 'Washed Outside Only')], max_length=50, null=True)),
-                ('trash', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('blanket_84', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('hand_trucks_with_covers', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('four_wheel_dolly', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('short_straps', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('long_straps', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('ramp', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('rubber_bands', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('red_floor_runner', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('forearm_straps', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('wardrobe_boxes_with_bars', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('tv_box_for_rental', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('multi_tool_set', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('hand_tools_bag', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('two_carabiner', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('broom', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('date_saved', models.DateTimeField(auto_now_add=True)),
-                ('saved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='authentication.userprofile')),
-                ('trailer', models.ForeignKey(blank=True, limit_choices_to={'vehicle_type': 'trailer'}, null=True, on_delete=django.db.models.deletion.CASCADE, to='vehicle.vehicle')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(blank=True, null=True)),
+                (
+                    "clean_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("full of trash & dirt", "Full of Trash & Dirt"),
+                            ("free of trash", "Free of Trash"),
+                            ("removed trash", "Removed Trash"),
+                            ("detailed inside/out", "Detailed Inside/Out"),
+                            (
+                                "wiped down inside/ washed outside",
+                                "Wiped Down Inside/ Washed Outside",
+                            ),
+                            ("wiped down inside only", "Wiped Down Inside Only"),
+                            ("washed outside only", "Washed Outside Only"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "trash",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "blanket_84",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "hand_trucks_with_covers",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "four_wheel_dolly",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "short_straps",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "long_straps",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "ramp",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "rubber_bands",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "red_floor_runner",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "forearm_straps",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "wardrobe_boxes_with_bars",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "tv_box_for_rental",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "multi_tool_set",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "hand_tools_bag",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "two_carabiner",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "broom",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                ("date_saved", models.DateTimeField(auto_now_add=True)),
+                (
+                    "saved_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "trailer",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"vehicle_type": "trailer"},
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="vehicle.vehicle",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Truck_inspection',
+            name="Truck_inspection",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(blank=True, null=True)),
-                ('clean_status', models.CharField(blank=True, choices=[('full of trash & dirt', 'Full of Trash & Dirt'), ('free of trash', 'Free of Trash'), ('removed trash', 'Removed Trash')], max_length=50, null=True)),
-                ('in_cab', models.CharField(blank=True, choices=[('not clean', 'Not Clean'), ('dirty now clean', 'Dirty Now Clean'), ('already clean', 'Already Clean')], max_length=50, null=True)),
-                ('bed_of_truck', models.CharField(blank=True, choices=[('not clean', 'Not Clean'), ('dirty now clean', 'Dirty Now Clean'), ('already clean', 'Already Clean')], max_length=50, null=True)),
-                ('first_aid_kit', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('floor_mats', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('business_cards', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('business_cards_magnetic', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('fuses', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('two_pens', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('sharpie', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('camera', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('flash_light', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('sun_visor', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('geo_tab', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('jack_and_links', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('cab_card', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('registration', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('insurance_card', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('accident_report_form', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('process_of_accident', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('fire_extinguisher', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('expiry_date_fe', models.DateField(blank=True, null=True)),
-                ('four_way', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('min_7_orange', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('hazard_triangle_x3', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('jumper_cables', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('large_door_stops', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('trash_bag', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('roll_paper_towels', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('small_hand', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('bottle_jack', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('cones', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('spare_tire', models.CharField(blank=True, choices=[('missing-not restocked', 'Missing-Not Restocked'), ('missing restocked', 'Missing Restocked'), ('present', 'Present')], max_length=50, null=True)),
-                ('condition_spare_tyre', models.CharField(blank=True, choices=[('good', 'Good'), ('normal', 'Normal'), ('damage', 'Damage')], max_length=50, null=True)),
-                ('date_saved', models.DateTimeField(auto_now_add=True)),
-                ('saved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='authentication.userprofile')),
-                ('truck', models.ForeignKey(blank=True, limit_choices_to={'vehicle_type': 'truck'}, null=True, on_delete=django.db.models.deletion.CASCADE, to='vehicle.vehicle')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(blank=True, null=True)),
+                (
+                    "clean_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("full of trash & dirt", "Full of Trash & Dirt"),
+                            ("free of trash", "Free of Trash"),
+                            ("removed trash", "Removed Trash"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "in_cab",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("not clean", "Not Clean"),
+                            ("dirty now clean", "Dirty Now Clean"),
+                            ("already clean", "Already Clean"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "bed_of_truck",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("not clean", "Not Clean"),
+                            ("dirty now clean", "Dirty Now Clean"),
+                            ("already clean", "Already Clean"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "first_aid_kit",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "floor_mats",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "business_cards",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "business_cards_magnetic",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "fuses",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "two_pens",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "sharpie",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "camera",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "flash_light",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "sun_visor",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "geo_tab",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "jack_and_links",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "cab_card",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "registration",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "insurance_card",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "accident_report_form",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "process_of_accident",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "fire_extinguisher",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                ("expiry_date_fe", models.DateField(blank=True, null=True)),
+                (
+                    "four_way",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "min_7_orange",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "hazard_triangle_x3",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "jumper_cables",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "large_door_stops",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "trash_bag",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "roll_paper_towels",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "small_hand",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "bottle_jack",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "cones",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "spare_tire",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("missing-not restocked", "Missing-Not Restocked"),
+                            ("missing restocked", "Missing Restocked"),
+                            ("present", "Present"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "condition_spare_tyre",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("good", "Good"),
+                            ("normal", "Normal"),
+                            ("damage", "Damage"),
+                        ],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                ("date_saved", models.DateTimeField(auto_now_add=True)),
+                (
+                    "saved_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="authentication.userprofile",
+                    ),
+                ),
+                (
+                    "truck",
+                    models.ForeignKey(
+                        blank=True,
+                        limit_choices_to={"vehicle_type": "truck"},
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="vehicle.vehicle",
+                    ),
+                ),
             ],
         ),
     ]

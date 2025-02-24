@@ -7,58 +7,99 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory_app', '0002_alter_inventory_options_delete_userprofile'),
+        ("inventory_app", "0002_alter_inventory_options_delete_userprofile"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='employee',
-            name='designation',
+            model_name="employee",
+            name="designation",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='gender',
+            model_name="employee",
+            name="gender",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
         migrations.AlterField(
-            model_name='employee',
-            name='name',
+            model_name="employee",
+            name="name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AlterField(
-            model_name='inventory',
-            name='category',
+            model_name="inventory",
+            name="category",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AlterField(
-            model_name='inventory',
-            name='gender',
+            model_name="inventory",
+            name="gender",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
         migrations.AlterField(
-            model_name='inventory',
-            name='minimum_stock',
+            model_name="inventory",
+            name="minimum_stock",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='inventory',
-            name='name',
+            model_name="inventory",
+            name="name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.CreateModel(
-            name='InventoryAssignment',
+            name="InventoryAssignment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantity', models.IntegerField(blank=True, null=True)),
-                ('condition', models.CharField(blank=True, choices=[('new', 'New'), ('used', 'Used')], max_length=50, null=True)),
-                ('date_assigned', models.DateField(auto_now_add=True, null=True)),
-                ('status', models.CharField(blank=True, choices=[('active', 'Active'), ('returned', 'Returned')], default='active', max_length=50, null=True)),
-                ('employee', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='inventory_app.employee')),
-                ('uniform', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='inventory_app.inventory')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("quantity", models.IntegerField(blank=True, null=True)),
+                (
+                    "condition",
+                    models.CharField(
+                        blank=True,
+                        choices=[("new", "New"), ("used", "Used")],
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                ("date_assigned", models.DateField(auto_now_add=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        blank=True,
+                        choices=[("active", "Active"), ("returned", "Returned")],
+                        default="active",
+                        max_length=50,
+                        null=True,
+                    ),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="inventory_app.employee",
+                    ),
+                ),
+                (
+                    "uniform",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="inventory_app.inventory",
+                    ),
+                ),
             ],
         ),
         migrations.DeleteModel(
-            name='UniformAssignment',
+            name="UniformAssignment",
         ),
     ]

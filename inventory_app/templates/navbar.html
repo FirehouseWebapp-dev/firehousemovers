@@ -1,328 +1,129 @@
 {% load static %}
-<header class="flex items-center justify-between px-6 py-2 bg-white ">
+<div class="pb-16">
+<header class="fixed top-0  w-full z-50 flex items-center justify-between px-6 py-3 bg-[#262626]">
     <!-- Logo -->
     <div class="flex items-center gap-2">
+        <a href="/">
         <img src="{% static 'images/fire_house_logo.svg' %}" alt="Logo" class="w-10 h-10">
-        <h1 class="text-xl font-bold text-gray-900 font-serif">Fire House</h1>
+    </a>
+        <a href="/">
+            <h1 class="text-xl font-bold text-gray-200 hover:text-white font-serif">FIREHOUSE</h1>
+        </a>
     </div>
+
+    <!-- Navigation Links (Centered on Desktop) -->
+    <div class="flex-grow flex justify-center">
+        <nav class="hidden md:flex items-center gap-6 relative">
+            {% if user.is_authenticated %}
+            <!-- Truck Availability & Job Logistics -->
+            <div class="group relative">
+                <a href="{% url 'availability_logitics' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    AVAILABILITY & LOGISTICS
+                </a>
+            </div>
+
+            <!-- FireHouse Stations -->
+            <div class="group relative">
+                <a href="{% url 'station' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    STATIONS
+                </a>
+            </div>
+
+            <!-- Vehicle Inspection -->
+            <div class="group relative">
+                <a href="{% url 'inspection' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    VEHICLE INSPECTION
+                </a>
+            </div>
+
+            <!-- On-Site Inspection -->
+            <div class="group relative">
+                <a href="{% url 'onsite_inspection' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    ON-SITE INSPECTION
+                </a>
+            </div>
+
+            <!-- Inventory -->
+            <div class="group relative">
+                <a href="{% url 'inventory' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    INVENTORY
+                </a>
+            </div>
+
+            <!-- Gift Card -->
+            <div class="group relative">
+                <a href="{% url 'gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    GIFT
+                </a>
+            </div>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Login (visible if not authenticated) -->
     {% if not user.is_authenticated %}
-    <!-- login -->
-    <a href="{% url 'authentication:login' %}" class="ml-auto flex gap-1 text-black hover:text-black hover:bg-red-600 bg-red-500 text-white p-2 rounded-lg w-16">
+    <a href="{% url 'authentication:login' %}" class="ml-auto flex gap-1 text-black bg-white p-2 rounded-lg w-16">
         Login
     </a>
     {% endif %}
 
-    <!-- Navigation Links -->
-    <nav class="hidden md:flex items-center gap-6 relative">
-        <!-- Home -->
-        {% if user.is_authenticated %}
-        <div class="group relative">
-            <a href="/" class="flex items-center gap-1 text-black hover:text-black hover:bg-red-600 bg-red-500 text-white p-2 rounded-lg">
-                <i class="fa-solid fa-house-chimney"></i>Home
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg w-60 text-center">
-                <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Firehouse Movers</a>
-            </div>
-        </div>
-        
-
-        <!-- Truck Availability & Job Logistics -->
-        <div class="group relative">
-            <a href="#" class="flex items-center gap-1 text-black hover:text-red-600">
-                Truck Availability & Job Logistics
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg text-center">
-                <a href="{% url 'availability_logitics' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100 flex items-center">
-                    <i class="fa-solid fa-truck mr-2 flex-shrink-0 text-xl"></i>
-                    <span class="ml-2">Truck Availability & Job Logistics</span>
-                  </a>
-                  
-                <a href="https://www.youtube.com/watch?v=cQGzMUcFvwk&ab_channel=RohailNisar" target="_blank" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Video Explaining Order & Availability</a>
-            </div>
-        </div>
-
-        <!-- FireHouse Stations -->
-        <div class="group relative">
-            <a href="{% url 'station' %}" class="flex items-center gap-1 text-black hover:text-red-600">
-                FireHouse Stations
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg  w-40 text-center">
-                <a href="{% url 'station' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp</a>
-            </div>
-        </div>
-
-        <!-- Other Navigation Items -->
-        <div class="group relative">
-            <a href="{% url 'inspection' %}" class="flex items-center gap-1 text-black hover:text-red-600">
-                Truck & Trailer Inspection
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg text-center">
-                <a href="{% url 'inspection' %}"  class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Truck & Trailer Inspection</a>
-            </div>
-        </div>
-
-        
-        <div class="group relative">
-            <a href="{% url 'onsite_inspection' %}" class="flex items-center gap-1 text-black hover:text-red-600">
-                On-site Inspection
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg  w-40 text-center">
-                <a href="{% url 'onsite_inspection' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp On Site</a>
-            </div>
-        </div>
-
-        <div id="more-menu" class="group relative">
-            <a href="#" class="flex items-center gap-1 text-black hover:text-red-600 ">
-                More
-                <i class="fa-solid fa-caret-down"></i>
-            </a>
-            <div class="hidden group-hover:block absolute top-full left-0 bg-white shadow-lg rounded-lg  w-60">
-
-                <div  class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="inventory-menu">
-                        Uniform Inventory System
-                        <i class="fa-solid fa-caret-down"></i>
-                    </button>
-                    <!-- Suboptions for "Coming Soon" -->
-                    <div id="inventory-menu" class=" hidden pl-4">
-                        <a href="{% url 'inventory' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Uniforms</a>
-                        <a href="https://www.youtube.com/watch?v=b3n6NH19Q68&ab_channel=RohailNisar" target="_blank" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Video Explaining Uniforms</a>
-                    </div>
-                </div>
-
-                <div  class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="gift_cards-menu">
-                        Gift Cards
-                        <i class="fa-solid fa-caret-down"></i>
-                    </button>
-                    <!-- Suboptions for "Coming Soon" -->
-                    <div id="gift_cards-menu" class=" hidden pl-4">
-                        <a href="{% url 'gift_card' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
-                    </div>
-                </div>
-
-                <div  class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="comingSoon-menu">
-                        Coming Soon
-                        <i class="fa-solid fa-caret-down"></i>
-                    </button>
-                    <!-- Suboptions for "Coming Soon" -->
-                    <div id="comingSoon-menu" class=" hidden pl-4">
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Warehouse</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Onsite Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Packing Supplies Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Marketing Supplies Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Digitalize Application Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Employess Evaluation Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Internal Employee Inspection</a>
-                    </div>
-                </div>
-            </div>
-        </div>   
-    </nav>
-    
-    <!-- logout -->
-    <form action="{% url 'authentication:logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="dropdown-item text-danger block px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 hover:text-black" ><i class="fas fa-sign-out-alt"></i> Log Out</button>
-    </form>
-    <!-- Search Icon -->
-    <div class="text-black hover:text-gray-600 cursor-pointer">
-        <i class="fa-solid fa-magnifying-glass text-red-500 text-2xl hover:text-red-600"></i>
+    <!-- Logout (pushed to the right and visible on desktop only) -->
+    {% if user.is_authenticated %}
+    <div class="ml-auto hidden md:block">
+        <form action="{% url 'authentication:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="text-gray-200 hover:text-white text-xl"><i class="fas fa-sign-out-alt"></i></button>
+        </form>
     </div>
-        {% endif %}
+    {% endif %}
 
     <!-- Hamburger Icon (visible on mobile) -->
     <div class="md:hidden flex items-center">
-        <button id="hamburger-menu" class="text-black hover:text-red-600">
+        <button id="hamburger-menu" class="text-gray-200 hover:text-white">
             <i class="fa-solid fa-bars"></i>
         </button>
     </div>
-
-    
-
 </header>
 
-<!-- Mobile Navigation Menu -->
-<div id="mobile-menu" class="md:hidden hidden bg-white shadow-2xl p-4 absolute top-16 left-0 right-0 z-10">
-    <nav class="flex flex-col">
-        <div class="group relative">
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="home-menu">
-                Home
-                <span>&#9662;</span>
-            </button>
-            <div id="home-menu" class="hidden pl-4">
-                <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Firehouse Movers</a>
-            </div>
-        </div>
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex justify-end p-6">
+        <button id="close-menu" class="text-white text-2xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="flex justify-center items-center flex-col gap-4 text-white p-6">
+        {% if user.is_authenticated %}
+        <a href="{% url 'availability_logitics' %}" class="text-lg">AVAILABILITY & LOGISTICS</a>
+        <a href="{% url 'station' %}" class="text-lg">STATIONS</a>
+        <a href="{% url 'inspection' %}" class="text-lg">VEHICLE INSPECTION</a>
+        <a href="{% url 'onsite_inspection' %}" class="text-lg">ON-SITE INSPECTION</a>
+        <a href="{% url 'inventory' %}" class="text-lg">INVENTORY</a>
+        <a href="{% url 'gift_card' %}" class="text-lg">GIFT</a>
 
-        <div class="group relative">
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="truck-menu">
-                Truck Availability
-                <span>&#9662;</span>
-            </button>
-            <div id="truck-menu" class="hidden pl-4">
-                <a href="{% url 'availability_logitics' %}"  class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Truck Availability & Job Logistics</a>
-                <a href="https://www.youtube.com/watch?v=cQGzMUcFvwk&ab_channel=RohailNisar" target="_blank" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Video Explaining Order & Availability</a>
-            </div>
-        </div>
-
-        <div class="group relative">
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="stations-menu">
-                FireHouse Stations
-                <span>&#9662;</span>
-            </button>
-            <div id="stations-menu" class="hidden pl-4">
-                <a href="{% url 'station' %}" class="block text-black hover:text-gray-600 py-1">Webapp</a>
-            </div>
-        </div>
-
-        <div class="group relative">
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="trailer_inspection-menu">
-                Truck & Trailer Inspection
-                <span>&#9662;</span>
-            </button>
-            <div id="trailer_inspection-menu" class="hidden pl-4">
-                <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Truck & Trailer Inspection</a>
-            </div>
-        </div>
-
-        <div class="group relative">
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="onsite_inspection-menu">
-                On-site Inspection
-                <span>&#9662;</span>
-            </button>
-            <div id="onsite_inspection-menu" class="hidden pl-4">
-                <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp On Site</a>
-            </div>
-        </div>
-
-        <!-- More Option -->
-        <div class="group relative">
-            <!-- Main More Button -->
-            <button class="flex items-center justify-between w-full text-black hover:text-gray-600 py-2" data-target="mobile_more-menu">
-                More
-                <span>&#9662;</span>
-            </button>
-
-            <!-- Dropdown Menu for More -->
-            <div id="mobile_more-menu" class="hidden pl-4">
-                <!-- Uniform Inventory System Submenu -->
-                <div class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="mobile_inventory-menu">
-                        Uniform Inventory System
-                        <span class="mr-2">&#9656;</span>
-                    </button>
-                    <div id="mobile_inventory-menu" class="hidden pl-4">
-                        <a href="{% url 'inventory' %}"  class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Uniforms</a>
-                        <a href="https://www.youtube.com/watch?v=b3n6NH19Q68&ab_channel=RohailNisar" target="_blank" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Video Explaining Uniforms</a>
-                    </div>
-                </div>
-
-                <!-- Gift cards Submenu -->
-                <div class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="mobile_cards-menu">
-                        Gift Cards
-                        <span class="mr-2">&#9656;</span>
-                    </button>
-                    <div id="mobile_cards-menu" class="hidden pl-4">
-                        <a href="{% url 'gift_card' %}" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Webapp Gift Cards</a>
-                    </div>
-                </div>
-
-                <!-- Coming Soon Submenu -->
-                <div class="group relative">
-                    <button class="block px-4 py-2 text-black rounded-lg hover:bg-red-100" data-target="mobile_comingSoon-menu">
-                        Coming Soon
-                        <span class="mr-2">&#9656;</span>
-                    </button>
-                    <div id="mobile_comingSoon-menu" class="hidden pl-4">
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Warehouse</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Onsite Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Packing Supplies Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Marketing Supplies Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Digitalize Application Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Employess Evaluation Inspection</a>
-                        <a href="#" class="block px-4 py-2 text-black rounded-lg hover:bg-red-100">Internal Employee Inspection</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+        <!-- Logout (mobile) -->
+        <form action="{% url 'authentication:logout' %}" method="post" class="w-full">
+            {% csrf_token %}
+            <button type="submit" class="w-full text-center py-2 bg-red-600 rounded-lg text-white">Logout</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
 </div>
 
+
+
+<!-- Script for Mobile Menu Toggle -->
 <script>
-    // Toggle the mobile menu
     const hamburgerMenu = document.getElementById('hamburger-menu');
     const mobileMenu = document.getElementById('mobile-menu');
+    const closeMenu = document.getElementById('close-menu');
 
     hamburgerMenu.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
+        mobileMenu.classList.remove('hidden');
     });
 
-    // Handle hierarchical all dropdown
-    document.querySelectorAll('#mobile-menu button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
+    closeMenu.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
     });
-
-    // Handle hierarchical more dropdown
-    document.querySelectorAll('#more-menu button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
-    });
-
-    // Handle hierarchical mobile view more dropdown
-    document.querySelectorAll('#mobile_more-menu button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
-    });
-    
-    // Handle hierarchical "Coming Soon" dropdown
-    document.querySelectorAll('[data-target="mobile_comingSoon-menu"]').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
-    });
-
-    // Handle hierarchical "Mobile Inventory" dropdown
-    document.querySelectorAll('[data-target="mobile_inventory-menu"]').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
-    });
-
-    // Handle hierarchical "Mobile Gift Cards" dropdown
-    document.querySelectorAll('[data-target="mobile_cards-menu"]').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const targetMenu = document.getElementById(event.target.dataset.target);
-            if (targetMenu) {
-                targetMenu.classList.toggle('hidden');
-            }
-        });
-    });
-    
 </script>

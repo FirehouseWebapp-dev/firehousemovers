@@ -2,8 +2,8 @@
 {% load static %}
 {% block content %}
 
-<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Add Employee</h1>
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg pt-6 h-screen">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Add Employee</h1>
 
     <!-- Employee Add Form -->
     <form method="post" class="space-y-6">
@@ -11,7 +11,7 @@
 
         <!-- Employee Information -->
         <div class="bg-white p-4 rounded-lg shadow space-y-4">
-            <h2 class="text-lg font-semibold text-red-600">Employee Details</h2>
+            <h2 class="text-lg font-semibold text-black">Employee Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="id_name" class="block text-gray-700 font-medium">Employee Name</label>
@@ -26,7 +26,7 @@
 
         <!-- Submit Button -->
         <div class="text-center">
-            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+            <button type="submit" class="text-white font-medium py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
                 Add Employee
             </button>
         </div>
@@ -34,7 +34,7 @@
 
     <!-- Remove Employee Section -->
     <div class="bg-white p-4 rounded-lg shadow space-y-4 mt-6">
-        <h2 class="text-lg font-semibold text-red-600">Select an Employee to Remove</h2>
+        <h2 class="text-lg font-semibold text-black">Select an Employee to Remove</h2>
         
         <form method="post" action="{% url 'employee' %}">
             {% csrf_token %}
@@ -52,7 +52,7 @@
             </div>
             <!-- Submit Button for Deleting Employee -->
     <div class="text-center mt-3">
-        <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-red-700">
+        <button type="submit" class="text-white font-medium py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
             Remove Employee
         </button>
     </div>

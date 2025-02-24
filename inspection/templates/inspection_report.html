@@ -2,8 +2,8 @@
 {% load static %}
 {% block content %}
 
-<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg">
-    <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Report</h1>
+<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg pt-6 h-screen">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Report</h1>
 
     <form method="get" action="{% url 'inspection_report' %}" class="space-y-6">
         {% csrf_token %}
@@ -60,7 +60,7 @@
 
         <!-- Submit Button -->
         <div class="text-center">
-            <button type="submit" class="bg-red-600 text-white font-medium py-2 px-4 rounded-full hover:bg-red-700">
+            <button type="submit" class="text-white font-medium py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
                 Generate Report
             </button>
         </div>
@@ -69,21 +69,21 @@
 
     <!-- Report Table -->
     {% if inspections %}
-    <div class="mt-8">
+    <div class="mt-8 max-h-[calc(100vh-450px)] overflow-y-auto">
         <h2 class="text-xl font-semibold text-center mb-4">Generated Report</h2>
-        <table class="min-w-full bg-white shadow-md rounded-lg">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Type</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Inspection Count</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection Date</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Days Since Last Inspection</th>
+        <table class="min-w-full shadow-md rounded-lg text-white"">
+            <thead >
+                <tr class="bg-red-600 text-white">
+                    <th class="px-6 py-3 text-left ">Vehicle</th>
+                    <th class="px-6 py-3 text-left ">Type</th>
+                    <th class="px-6 py-3 text-left ">Inspection Count</th>
+                    <th class="px-6 py-3 text-left ">Last Inspection Date</th>
+                    <th class="px-6 py-3 text-left">Days Since Last Inspection</th>
                 </tr>
             </thead>
             <tbody>
                 {% for inspection in inspections %}
-                <tr>
+                <tr class="even:bg-white">
                     <td class="px-6 py-4">{{ inspection.vehicle.name }}</td>
                     <td class="px-6 py-4">{{ inspection.vehicle.vehicle_type }}</td>
                     <td class="px-6 py-4">{{ inspection.inspection_count }}</td>
@@ -102,11 +102,11 @@
 
 
     {% if equipment_report %}
-    <div class="mt-8">
+    <div class="mt-8 max-h-[calc(100vh-450px)] overflow-y-auto">
         <h2 class="text-xl font-semibold text-center mb-4">Generated Report</h2>
-        <table class="min-w-full bg-white shadow-md rounded-lg">
-            <thead class="bg-gray-100">
-                <tr>
+        <table class="min-w-full shadow-md rounded-lg">
+            <thead >
+                <tr class="bg-red-600 text-white">
                     <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
                     <th class="px-6 py-3 text-left text-gray-600">Missing-Not Restocked Items</th>
                     <th class="px-6 py-3 text-left text-gray-600">Inspection Date</th>
@@ -114,7 +114,7 @@
             </thead>
             <tbody>
                 {% for report in equipment_report %}
-                    <tr>
+                    <tr class="even:bg-white">
                         <td class="px-6 py-4" rowspan="{{ report.missing_items|length }}">{{ report.vehicle.name }}</td>
                         <td class="px-6 py-4">
                             {% for item in report.missing_items %}
@@ -136,17 +136,17 @@
     {% endif %}
 
     {%if readiness_report%}
-    <div class="mt-8">
+    <div class="mt-8 max-h-[calc(100vh-450px)] overflow-y-auto">
         <h2 class="text-xl font-semibold text-center mb-4">Vehicle Readiness Report</h2>
-        <table class="min-w-full bg-white shadow-md rounded-lg">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Vehicle Type</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Readiness Score (%)</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Ready Items</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Total Items</th>
+        <table class="min-w-full shadow-md rounded-lg">
+            <thead >
+                <tr class="bg-red-600 text-white even:bg-white ">
+                    <th class="px-6 py-3 text-left ">Vehicle</th>
+                    <th class="px-6 py-3 text-left ">Vehicle Type</th>
+                    <th class="px-6 py-3 text-left ">Last Inspection</th>
+                    <th class="px-6 py-3 text-left ">Readiness Score (%)</th>
+                    <th class="px-6 py-3 text-left ">Ready Items</th>
+                    <th class="px-6 py-3 text-left ">Total Items</th>
                 </tr>
             </thead>
             <tbody>
@@ -170,20 +170,20 @@
     {% endif %}
 
     {%if activity_report%}
-    <div class="mt-8">
+    <div class="mt-8 max-h-[calc(100vh-450px)] overflow-y-auto">
         <h2 class="text-xl font-semibold text-center mb-4">User Activity Report</h2>
-        <table class="min-w-full bg-white shadow-md rounded-lg">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-6 py-3 text-left text-gray-600">User</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Role</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Inspection Count</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Last Inspection Date</th>
+        <table class="min-w-full  shadow-md rounded-lg">
+            <thead >
+                <tr class="bg-red-600 text-white">
+                    <th class="px-6 py-3 text-left">User</th>
+                    <th class="px-6 py-3 text-left">Role</th>
+                    <th class="px-6 py-3 text-left">Inspection Count</th>
+                    <th class="px-6 py-3 text-left">Last Inspection Date</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in activity_report %}
-                    <tr class="border-t">
+                    <tr class="border-t even:bg-white">
                         <td class="px-6 py-4">{{ user.user__username }}</td>
                         <td class="px-6 py-4">{{ user.role }}</td>
                         <td class="px-6 py-4">{{ user.inspections_count }}</td>
@@ -200,21 +200,21 @@
     {% endif %}
 
     {%if comparison_report%}
-    <div class="mt-8">
+    <div class="mt-8 max-h-[calc(100vh-450px)] overflow-y-auto">
         <h2 class="text-xl font-semibold text-center mb-4">Inspection Comparison Report</h2>
-        <table class="min-w-full bg-white shadow-md rounded-lg">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-6 py-3 text-left text-gray-600">Vehicle</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Driver</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Manager</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Inspection Date</th>
-                    <th class="px-6 py-3 text-left text-gray-600">Discrepancies</th>
+        <table class="min-w-full  shadow-md rounded-lg">
+            <thead >
+                <tr class="bg-red-600 text-white">
+                    <th class="px-6 py-3 text-left ">Vehicle</th>
+                    <th class="px-6 py-3 text-left ">Driver</th>
+                    <th class="px-6 py-3 text-left ">Manager</th>
+                    <th class="px-6 py-3 text-left ">Inspection Date</th>
+                    <th class="px-6 py-3 text-left ">Discrepancies</th>
                 </tr>
             </thead>
             <tbody>
                 {% for report in comparison_report %}
-                    <tr class="border-t">
+                    <tr class="border-t even:bg-white" >
                         <td class="px-6 py-4">{{ report.vehicle }}</td>
                         <td class="px-6 py-4">{{ report.driver }}</td>
                         <td class="px-6 py-4">{{ report.manager }}</td>

@@ -2,8 +2,8 @@
 {% load static %}
 {% block content %}
 
-<div class="container mx-auto max-w-3xl">
-    <h2 class="text-3xl font-bold mb-4 text-center text-red-600">Station {{ station_number }} - {{ type }} Order Request</h2>
+<div class="container mx-auto p-4 bg-white">
+    <h2 class="text-3xl font-bold mb-4 text-center text-black ">Station {{ station_number }} - {{ type|title }} Order Request</h2>
 
     <!-- Scrollable Form Container -->
     <div class="max-h-[calc(100vh-150px)] overflow-y-auto bg-white rounded-lg shadow-md">
@@ -48,7 +48,7 @@
 
         <!-- Submit Button -->
         <div class="sticky bottom-0 bg-white py-1 flex justify-center shadow-md">
-            <button type="submit" form="order_form" class="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-full shadow-lg transform transition duration-200 ease-in-out hover:scale-105">
+            <button type="submit" form="order_form" class="bg-[#262626] hover:bg-red-600 transition-all duration-300 text-white py-2 px-6 rounded-full">
                 Submit Order
             </button>
         </div>
@@ -57,10 +57,10 @@
 
     <!-- Table -->
     <div class="w-full mr-4">
-        <h3 class="text-xl font-semibold text-red-500 m-4 text-center">Recent {{ type }} Orders</h3>
+        <h3 class="text-xl font-semibold text-black m-4 text-center">Recent {{ type|title }} Orders</h3>
         <div class="overflow-x-auto max-h-[calc(100vh-670px)] overflow-y-auto">
             <table class="table-auto w-full border-collapse border border-gray-200">
-                <thead class="bg-red-600">
+                <thead class="bg-red-600 text-white">
                     <tr>
                         <th class="border border-gray-300 p-2 text-left">Date</th>
                         <th class="border border-gray-300 p-2 text-left">Requested By</th>
