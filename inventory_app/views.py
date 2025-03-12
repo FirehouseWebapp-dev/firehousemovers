@@ -23,7 +23,7 @@ from inventory_app.permissions import IsManager
 from django.contrib.auth.decorators import login_required
 
 
-@login_required(login_url='authentication:login')
+@login_required(login_url="authentication:login")
 def uniform_inventory_view(request):
     """Render the home page."""
     return render(request, "inventory_base.html")
@@ -42,7 +42,7 @@ class Add_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -74,7 +74,7 @@ class Return_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -187,7 +187,7 @@ class Issue_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -222,7 +222,7 @@ class Employee_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -232,9 +232,7 @@ class Employee_view(View):
         return render(request, "employee.html", {"form": form, "employees": employees})
 
     def post(self, request):
-        action = request.POST.get(
-            "action"
-        )  # This checks whether we're adding or deleting
+        action = request.POST.get("action")
 
         if action == "delete":
             # Handle the deletion of an employee
@@ -301,7 +299,7 @@ class inventory_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -404,7 +402,7 @@ class Reports_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

@@ -47,8 +47,8 @@
         </form>
 
         <!-- Submit Button -->
-        <div class="sticky bottom-0 bg-white py-1 flex justify-center shadow-md">
-            <button type="submit" form="order_form" class="bg-[#262626] hover:bg-red-600 transition-all duration-300 text-white py-2 px-6 rounded-full">
+        <div class="sticky bottom-0 bg-white py-1 flex justify-end shadow-md">
+            <button type="submit" form="order_form" class="bg-[#262626] hover:bg-red-600 transition-all duration-300 text-white py-2 px-6 ">
                 Submit Order
             </button>
         </div>
@@ -57,10 +57,10 @@
 
     <!-- Table -->
     <div class="w-full mr-4">
-        <h3 class="text-xl font-semibold text-black m-4 text-center">Recent {{ type|title }} Orders</h3>
+        <h3 class="text-xl font-semibold text-black m-6 text-center">Recent {{ type|title }} Orders</h3>
         <div class="overflow-x-auto max-h-[calc(100vh-670px)] overflow-y-auto">
             <table class="table-auto w-full border-collapse border border-gray-200">
-                <thead class="bg-red-600 text-white">
+                <thead class="bg-[#262626] text-white">
                     <tr>
                         <th class="border border-gray-300 p-2 text-left">Date</th>
                         <th class="border border-gray-300 p-2 text-left">Requested By</th>

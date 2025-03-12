@@ -23,7 +23,7 @@
         <h4 class="mb-4 font-bold text-2xl">Prior to Move</h4>
 
         <!-- Form Fields for Current Step -->
-        <div class="space-y-4">
+        <div class="space-y-2">
             {% if step == 5 %}
                 <!-- Display Scores for Step 5 -->
                 <div class="form-group bg-gray-100 p-5 rounded-md">
@@ -50,7 +50,7 @@
 
                         {% if step == 1 and field.name == "crew_leader" %}
                             <!-- Select Field for 'crew_leader' in Step 1 -->
-                            <select class="form-select border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}">
+                            <select class="form-select rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}">
                                 <option value="">Select Crew Leader</option>
                                 {% for leader in crew_leader_choices %}
                                     <option value="{{ leader.id }}" {% if field.value == leader.id %}selected{% endif %}>{{ leader }}</option>
@@ -68,10 +68,10 @@
                             
                         {% elif step == 1 %}
                             <!-- Text Field for other fields in Step 1 and Step 5 -->
-                            <input type="text" class="form-input border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}" required>
+                            <input type="text" class="form-input rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" id="{{ field.id_for_label }}" name="{{ field.name }}" required>
                         {% elif step == 5 %}
                             <!-- Text Field for other fields in Step 1 and Step 5 -->
-                            <textarea class="form-input border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full rows:2" id="{{ field.id_for_label }}" name="{{ field.name }}" required></textarea>
+                            <textarea class="form-input rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full rows:2" id="{{ field.id_for_label }}" name="{{ field.name }}" required></textarea>
                         {% else %}
                             <!-- Star Rating Field for Step 2, 3, 4 -->
                             <div class="star-rating flex gap-2 mt-2 " id="{{ field.id_for_label }}_rating">
@@ -93,13 +93,17 @@
 
         <!-- Navigation Buttons -->
         <div class="flex justify-between mt-6">
-            {% if step > 1 %}
-                <a href="?step={{ step|add:"-1" }}" class="btn text-white py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">Back</a>
-            {% endif %}
-            <button type="submit" class="btn text-white py-2 px-4 rounded-full bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
+            <div class="flex-1">
+                {% if step > 1 %}
+                    <a href="?step={{ step|add:"-1" }}" class="btn text-white py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300">Back</a>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn text-white py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300">
                 {% if step == steps|length %}Submit{% else %}Next{% endif %}
             </button>
         </div>
+        
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -176,7 +180,7 @@
          stars.forEach((s, index) => {
              const svg = s.querySelector("svg");
              if (index < value) {
-                 svg.style.fill = "#f5b342"; // Apply gold color (golden color for selected stars)
+                 svg.style.fill = '#e60505'; // Apply gold color (golden color for selected stars)
              } else {
                  svg.style.fill = "#ccc"; // Apply default gray color for unselected stars
              }
@@ -190,7 +194,7 @@
     /* Style for the star */
     /* Hover effect: stars turn yellow */
     .star-rating :hover {
-        fill: #f5b342;
+        fill: #e60505;
     }
 </style>
 

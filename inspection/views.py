@@ -20,8 +20,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 
-
-@login_required(login_url='authentication:login')
+@login_required(login_url="authentication:login")
 def inspection_view(request):
     """Render the home page."""
     return render(request, "vehicle_inspection_base.html")
@@ -35,7 +34,7 @@ class onsite_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -164,6 +163,15 @@ class onsite_inspection_view(View):
 
     def post(self, request):
         step = int(request.GET.get("step", 1))
+
+        job_number = request.POST.get("job_number")
+
+        try:
+            job = Onsite_inspection.objects.get(job_number=job_number)
+            messages.error(request, f"Job number {job_number} already exist!")
+            return redirect(f"/onsite-inspection/?step={1}")
+        except Onsite_inspection.DoesNotExist:
+            pass
 
         # Define steps and the fields associated with each step
         steps = {
@@ -315,7 +323,7 @@ class inspection_report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1096,7 +1104,7 @@ class trailer_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1136,7 +1144,7 @@ class truck_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

@@ -17,10 +17,11 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-
 class station_view(LoginRequiredMixin, TemplateView):
     template_name = "station_base.html"
-    login_url = 'authentication:login'  # Redirect to your login page if not authenticated
+    login_url = (
+        "authentication:login"  # Redirect to your login page if not authenticated
+    )
 
 
 class report_view(View):
@@ -32,7 +33,7 @@ class report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     template_name = "report.html"
@@ -168,7 +169,7 @@ class station_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number):
@@ -224,7 +225,7 @@ class vehicle_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, vehicle):
@@ -280,7 +281,7 @@ class order_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, type):
@@ -342,7 +343,7 @@ def get_merged_cell_ranges(sheet):
 
 def get_hex_color(cell, is_background=True):
     """Convert OpenPyXL color to hex format, handling indexed and theme colors correctly.
-    By default, this checks the background color (is_background=True), 
+    By default, this checks the background color (is_background=True),
     but you can use is_background=False to get text color.
     """
     color = cell.fill.fgColor if is_background else cell.font.color
@@ -370,7 +371,6 @@ def get_hex_color(cell, is_background=True):
     return "#000000"  # Default to black if type is not matched
 
 
-
 def excel_view(request, station_number):
     EXCEL_FILE_PATH = ""
 
@@ -388,10 +388,16 @@ def excel_view(request, station_number):
     last_col = sheet.max_column
 
     # Strip out any empty rows or columns at the bottom
-    while last_row > 0 and all(sheet.cell(row=last_row, column=col).value is None for col in range(1, last_col + 1)):
+    while last_row > 0 and all(
+        sheet.cell(row=last_row, column=col).value is None
+        for col in range(1, last_col + 1)
+    ):
         last_row -= 1
 
-    while last_col > 0 and all(sheet.cell(row=row, column=last_col).value is None for row in range(1, last_row + 1)):
+    while last_col > 0 and all(
+        sheet.cell(row=row, column=last_col).value is None
+        for row in range(1, last_row + 1)
+    ):
         last_col -= 1
 
     # Build the HTML table for only the used rows and columns
@@ -400,7 +406,9 @@ def excel_view(request, station_number):
         html_table += "<tr>"
         for col_idx in range(1, last_col + 1):  # Only iterate up to last_col
             cell = sheet.cell(row=row_idx, column=col_idx)
-            if (row_idx, col_idx) in merged_cells and merged_cells[(row_idx, col_idx)] is None:
+            if (row_idx, col_idx) in merged_cells and merged_cells[
+                (row_idx, col_idx)
+            ] is None:
                 continue
 
             value = escape(str(cell.value)) if cell.value else ""
@@ -409,8 +417,10 @@ def excel_view(request, station_number):
             rowspan = merged_cells.get((row_idx, col_idx), {}).get("rowspan", 1)
             colspan = merged_cells.get((row_idx, col_idx), {}).get("colspan", 1)
 
-            html_table += f'<td contenteditable="true" data-row="{row_idx-1}" data-col="{col_idx-1}" ' \
-                          f'style="background-color: {bg_color};"'
+            html_table += (
+                f'<td contenteditable="true" data-row="{row_idx-1}" data-col="{col_idx-1}" '
+                f'style="background-color: {bg_color};"'
+            )
 
             if rowspan > 1:
                 html_table += f' rowspan="{rowspan}"'
@@ -422,8 +432,11 @@ def excel_view(request, station_number):
         html_table += "</tr>"
     html_table += "</table>"
 
-    return render(request, "station_layout.html", {"excel_html": html_table, "station_number": station_number})
-
+    return render(
+        request,
+        "station_layout.html",
+        {"excel_html": html_table, "station_number": station_number},
+    )
 
 
 def save_excel_changes(request, station_number):
