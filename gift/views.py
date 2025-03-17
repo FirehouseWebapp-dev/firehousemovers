@@ -17,7 +17,7 @@ class GiftCardView(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -28,6 +28,7 @@ class GiftCardView(View):
         form = GiftCardForm(request.POST)
         if form.is_valid():
             gift_card = form.save(commit=False)
+
             current_user = request.user
             user = UserProfile.objects.get(user=current_user)
             gift_card.added_by = user
@@ -50,7 +51,7 @@ class AwardCardView(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect('authentication:login')
+                return redirect("authentication:login")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
