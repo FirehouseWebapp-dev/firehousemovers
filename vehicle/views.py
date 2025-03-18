@@ -12,7 +12,6 @@ from django.db.models.functions import TruncDate
 from django.db.models import Q
 from django.db.models import Max, Subquery, Prefetch, Q
 from datetime import timedelta
-from django.http import HttpResponseForbidden
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 

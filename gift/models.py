@@ -26,13 +26,13 @@ class Gift_card(models.Model):
                 )
 
     def __str__(self):
-        return f"{self.company }- {self.amount}"
+        return f"{self.id} - ({self.company }- {self.amount})"
 
 
 class Award(models.Model):
     date_award = models.DateField(null=True, blank=True)
-    employee_name = models.ForeignKey(
-        UserProfile, on_delete=models.CASCADE, related_name="employee_names"
+    employees = models.ManyToManyField(
+        UserProfile, related_name="awards"
     )
     card = models.ForeignKey(
         Gift_card, on_delete=models.CASCADE, related_name="gift_card"
@@ -57,4 +57,4 @@ class Award(models.Model):
         super(Award, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.employee_name }- {self.card}"
+        return f"{self.card}"

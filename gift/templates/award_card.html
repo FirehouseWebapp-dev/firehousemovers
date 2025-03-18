@@ -11,62 +11,20 @@
             
             <form method="POST" class="space-y-4">
                 {% csrf_token %}
-                
-                <!-- Date Awarded Field -->
-                <div>
-                    <label for="{{ form.date_award.id_for_label }}" class="block text-sm font-medium text-gray-700">Date Awarded</label>
-                    <div class="mt-1">
-                        {{ form.date_award }}
-                    </div>
-                    {% if form.date_award.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.date_award.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
 
-                 <!-- Employee Name Select Field -->
-                 <div>
-                    <label for="{{ form.employee_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Employee Name</label>
-                    <div class="mt-1">
-                        {{ form.employee_name }}
-                    </div>
-                    {% if form.employee_name.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.employee_name.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Company Name Select Field -->
+                <!-- Select Field for 'employee_name' (Multiple Select) -->
                 <div>
-                    <label for="{{ form.company_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Company Name</label>
+                    <label for="{{ form.employees.id_for_label }}" class="block text-sm font-medium text-gray-700">Employee</label>
                     <div class="mt-1">
-                        {{ form.company_name }}
-                    </div>
-                    {% if form.company_name.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.company_name.errors %}
-                                <p>{{ error }}</p>
+                        <select class="form-select crew-members-select" id="{{ form.employees.id_for_label }}" name="{{ form.employees.name }}" multiple>
+                            {% for value, label in form.employees.field.choices %}
+                                <option value="{{ value }}" {% if value in form.employees.value %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-               
-                <!-- Amount Field -->
-                <div>
-                    <label for="{{ form.amount.id_for_label }}" class="block text-sm font-medium text-gray-700">Amount</label>
-                    <div class="mt-1">
-                        {{ form.amount }}
+                        </select>
                     </div>
-                    {% if form.amount.errors %}
+                    {% if form.employees.errors %}
                         <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.amount.errors %}
+                            {% for error in form.employees.errors %}
                                 <p>{{ error }}</p>
                             {% endfor %}
                         </div>
@@ -108,16 +66,30 @@
                 <!-- Submit Button -->
                 <div class=" text-center justify-center">
                     <button type="submit" class="text-white  bg-[#262626] hover:bg-red-600 transition-all duration-300  px-6 py-2  focus:outline-none">
-                        Award Gift Card
+                        Distributing gift card
                     </button>
                 </div>
             </form>
 
             <div class="flex justify-between items-center mt-2 w-full">
                 <a href="{% url 'gift_card' %}" class="w-full py-2 text-white  bg-[#262626] hover:bg-red-600 transition-all duration-300 focus:outline-none text-center block">
-                    <i class="fas fa-arrow-left mr-2"></i>Go to Gift Card
+                    <i class="fas fa-arrow-left mr-2"></i>Manual gift card input
                 </a>
             </div>
             
         </div>
+        
+        <!-- Scripts -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var selectElement = document.querySelector('.crew-members-select');  // Match the class used in the HTML
+                if (selectElement) {
+                    new Choices(selectElement, {
+                        removeItemButton: true,
+                        placeholder: true,
+                        placeholderValue: 'Select Employees'
+                    });
+                }
+            });
+        </script>
 {% endblock %}
