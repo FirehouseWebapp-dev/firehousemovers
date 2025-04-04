@@ -5,91 +5,112 @@
 {% include "messages.html" %}
 
     <!-- Flexbox to center the form -->
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md m-auto mt-6">
-            
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Award Gift Card</h2>
-            
-            <form method="POST" class="space-y-4">
-                {% csrf_token %}
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md m-auto mt-6">
+        
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Award Gift Card</h2>
+        
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
 
-                <!-- Select Field for 'employee_name' (Multiple Select) -->
-                <div>
-                    <label for="{{ form.employees.id_for_label }}" class="block text-sm font-medium text-gray-700">Employee</label>
-                    <div class="mt-1">
-                        <select class="form-select crew-members-select" id="{{ form.employees.id_for_label }}" name="{{ form.employees.name }}" multiple>
-                            {% for value, label in form.employees.field.choices %}
-                                <option value="{{ value }}" {% if value in form.employees.value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
+            <!-- Select Field for 'employee_name' (Multiple Select) -->
+            <div>
+                <label for="{{ form.employees.id_for_label }}" class="block text-sm font-medium text-gray-700">Employee</label>
+                <div class="mt-1">
+                    <select class="form-select crew-members-select" id="{{ form.employees.id_for_label }}" name="{{ form.employees.name }}" multiple>
+                        {% for value, label in form.employees.field.choices %}
+                            <option value="{{ value }}" {% if value in form.employees.value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if form.employees.errors %}
+                    <div class="text-red-500 text-sm mt-2">
+                        {% for error in form.employees.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
                     </div>
-                    {% if form.employees.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.employees.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Card Number Field -->
-                 
-                <div>
-                    <label for="{{ form.card.id_for_label }}" class="block text-sm font-medium text-gray-700">Card Number</label>
-                    <div class="mt-1">
-                        {{ form.card }}
-                    </div>
-                    {% if form.card.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.card.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                
-
-                <!-- Reason Field -->
-                <div>
-                    <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700">Reason for Gift Given</label>
-                    <div class="mt-1">
-                        {{ form.reason }}
-                    </div>
-                    {% if form.reason.errors %}
-                        <div class="text-red-500 text-sm mt-2">
-                            {% for error in form.reason.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Submit Button -->
-                <div class=" text-center justify-center">
-                    <button type="submit" class="text-white  bg-[#262626] hover:bg-red-600 transition-all duration-300  px-6 py-2  focus:outline-none">
-                        Distributing gift card
-                    </button>
-                </div>
-            </form>
-
-            <div class="flex justify-between items-center mt-2 w-full">
-                <a href="{% url 'gift_card' %}" class="w-full py-2 text-white  bg-[#262626] hover:bg-red-600 transition-all duration-300 focus:outline-none text-center block">
-                    <i class="fas fa-arrow-left mr-2"></i>Manual gift card input
-                </a>
+                {% endif %}
             </div>
-            
+
+            <!-- Card Number Field -->
+            <div>
+                <label for="{{ form.card.id_for_label }}" class="block text-sm font-medium text-gray-700">Card Number</label>
+                <div class="mt-1">
+                    {{ form.card }}
+                </div>
+                {% if form.card.errors %}
+                    <div class="text-red-500 text-sm mt-2">
+                        {% for error in form.card.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Reason Field -->
+            <div>
+                <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700">Reason for Gift Given</label>
+                <div class="mt-1">
+                    {{ form.reason }}
+                </div>
+                {% if form.reason.errors %}
+                    <div class="text-red-500 text-sm mt-2">
+                        {% for error in form.reason.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Emails Field (Text Area) -->
+            <div>
+                <label for="emails" class="block text-sm font-medium text-gray-700">Employee Emails</label>
+                <textarea id="emails" name="emails" class="form-textarea border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" rows="3"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center justify-center">
+                <button type="submit" class="text-white bg-[#262626] hover:bg-red-600 transition-all duration-300 px-6 py-2 focus:outline-none">
+                    Distribute Gift Card
+                </button>
+            </div>
+        </form>
+
+        <div class="flex justify-between items-center mt-2 w-full">
+            <a href="{% url 'gift_card' %}" class="w-full py-2 text-white bg-[#262626] hover:bg-red-600 transition-all duration-300 focus:outline-none text-center block">
+                <i class="fas fa-arrow-left mr-2"></i>Manual Gift Card Input
+            </a>
         </div>
         
-        <!-- Scripts -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var selectElement = document.querySelector('.crew-members-select');  // Match the class used in the HTML
-                if (selectElement) {
-                    new Choices(selectElement, {
-                        removeItemButton: true,
-                        placeholder: true,
-                        placeholderValue: 'Select Employees'
-                    });
-                }
-            });
-        </script>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var selectElement = document.querySelector('.crew-members-select');
+            var emailsTextArea = document.getElementById('emails');
+
+            if (selectElement) {
+                new Choices(selectElement, {
+                    removeItemButton: true,
+                    placeholder: true,
+                    placeholderValue: 'Select Employees'
+                });
+
+                // Add an event listener to handle the change event
+                selectElement.addEventListener('change', function() {
+                    var selectedValues = Array.from(selectElement.selectedOptions).map(option => option.value);
+                    
+                    // Make an AJAX request to get the emails of selected employees
+                    fetch("{% url 'get_emails' %}?employee_ids=" + selectedValues.join(','))
+                        .then(response => response.json())
+                        .then(data => {
+                            var emails = data.emails.map(emailObj => emailObj.name + ' <' + emailObj.email + '>').join('\n');
+                            emailsTextArea.value = emails;
+                        })
+                        .catch(error => console.error('Error fetching emails:', error));
+                });
+            }
+        });
+    </script>
+
 {% endblock %}

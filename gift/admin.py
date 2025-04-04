@@ -17,8 +17,9 @@ class Award_Admin(admin.ModelAdmin):
 
     list_display = ['date_award', 'employee_names', 'card', 'amount', 'reason', 'awarded_by', 'date_saved']
     list_filter = ['employees', 'awarded_by']
-    search_fields = ['employees__user__username', 'awarded_by__user__username']   
-     
+    search_fields = ['employees__user__username', 'awarded_by__user__username']
+
+
 class Gift_Card_Admin(admin.ModelAdmin):
     def sequential_id(self, obj):
         return obj.pk  
@@ -29,6 +30,7 @@ class Gift_Card_Admin(admin.ModelAdmin):
     search_fields = ["company__name", "added_by__username"]
     list_filter = ["added_by", "company"]
     ordering = ('-date_of_purchase',)
+
 
 admin.site.register(Gift_company)
 admin.site.register(Gift_card, Gift_Card_Admin)

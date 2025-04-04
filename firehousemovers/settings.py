@@ -12,13 +12,19 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-
 import dj_database_url
 from django.contrib.messages import constants as messages
+import environ
+env = environ.Env()
+
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# read th .env file
+environ.Env.read_env(env_file=str(BASE_DIR) + '/.env')  
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -31,8 +37,8 @@ SECRET_KEY = os.environ.get(
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False")
-
+# DEBUG = os.getenv("DEBUG", "False")
+DEBUG = env("DEBUG", default="False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -44,6 +50,18 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+EMAIL_FROM = f"{DEFAULT_FROM_EMAIL}"
+
+
+BASE_URL = os.getenv('BASE_URL', 'http://localhost:8000')
 
 # Application definition
 
@@ -161,7 +179,6 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static/"]  # For static files in your project
 STATIC_ROOT = BASE_DIR / "staticfiles"  # For `collectstatic` output
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
