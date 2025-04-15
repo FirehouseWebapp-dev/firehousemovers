@@ -21,6 +21,7 @@ from datetime import datetime
 from django.contrib import messages
 from inventory_app.permissions import IsManager
 from django.contrib.auth.decorators import login_required
+from authentication.mailer import send_issue_uniform_email,send_return_uniform_email
 
 
 @login_required(login_url="authentication:login")
@@ -87,6 +88,7 @@ class Return_uniform_view(View):
         )
 
     def post(self, request):
+        email = request.POST.get('email')
         employees = UserProfile.objects.all()
         employee_id = request.POST.get("employee")
         uniform_id = request.POST.get("uniform")
@@ -115,6 +117,11 @@ class Return_uniform_view(View):
                     employee=employee, status="Active"
                 )
                 messages.success(request, "Uniform Returned Successfully!")
+                try:
+                    send_return_uniform_email(email, employee.user.username, uniform_catalog.name)
+                except Exception as e:
+                    print(f"Failed to send the email. Error: {str(e)}")
+                    messages.error(request, f"Failed to send the email. Error: {str(e)}")
                 return render(
                     request,
                     "inventory_base.html",
@@ -201,13 +208,22 @@ class Issue_uniform_view(View):
         )
 
     def post(self, request):
+        email = request.POST.get('email')
         form = UniformIssueForm(request.POST)
         if form.is_valid():
+            employee = form.cleaned_data["employee"]
+            uniform = form.cleaned_data["uniform"]
             assignment = form.save(commit=False)
             assignment.date = datetime.now()
             assignment.status = "Active"
             assignment.save()
             messages.success(request, "Uniform Assigned Successfully!")
+            try:
+                send_issue_uniform_email(email, employee, uniform)
+            except Exception as e:
+                print(f"Failed to send the email. Error: {str(e)}")
+                messages.error(request, f"Failed to send the email. Error: {str(e)}")
+
             return redirect("inventory")
         else:
             messages.error(request, form.errors)
@@ -430,3 +446,27 @@ class Reports_view(View):
             }
 
             return render(request, "reports.html", {"employee_data": employee_data})
+
+
+def get_email(request):
+    employee_id = request.GET.get('employee_id')
+
+    if employee_id:
+        try:
+            employee = UserProfile.objects.select_related('user').get(id=employee_id)
+            return JsonResponse({"email": employee.user.email})
+        except UserProfile.DoesNotExist:
+            return JsonResponse({"email": None})
+
+    return JsonResponse({"email": None})
+
+
+def low_stock_alerts(request):
+    low_stock_items = Inventory.objects.filter(
+        uniform__minimum_stock_level__isnull=False
+    )
+    low_stock_items = [item for item in low_stock_items if item.is_low_stock]
+
+    return render(request, 'low_stock_alerts.html', {
+        'low_stock_items': low_stock_items
+    })
