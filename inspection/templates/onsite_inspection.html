@@ -54,7 +54,7 @@
                                 <option value="">Select Crew Leader</option>
                                 {% for leader in crew_leader_choices %}
                                     <option value="{{ leader.id }}" {% if field.value == leader.id %}selected{% endif %}>{{ leader }}</option>
-                                {% endfor %}
+                                {% endfor %}v
                             </select>
 
                         {% elif step == 1 and field.name == "crew_members" %}

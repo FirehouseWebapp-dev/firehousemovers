@@ -56,6 +56,39 @@
                     GIFT
                 </a>
             </div>
+
+            <!-- Low Stock Alert Icon -->
+            <div class="relative group">
+                <button id="low-stock-btn" class="text-white text-xl relative">
+                    <i class="fas fa-bell"></i>
+                    {% with low_stock_count=request.session.low_stock_count %}
+                    {% if low_stock_count > 0 %}
+                    <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1">
+                        {{ low_stock_count }}
+                    </span>
+                    {% endif %}
+                    {% endwith %}
+                </button>
+
+                <!-- Popup Content -->
+                <div id="low-stock-popup"
+                    class="hidden absolute right-0 mt-2 w-80 bg-white text-black rounded-lg shadow-xl z-50 p-4">
+                    <h3 class="text-lg font-bold mb-2">Low Stock Alerts</h3>
+                    <ul>
+                        {% for item in request.session.low_stock_items|slice:":3" %}
+                            <li class="border-b py-2">
+                                <strong>{{ item.uniform_name }}</strong><br>
+                                Current Stock: {{ item.total_stock }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="text-right mt-3">
+                        <a href="{% url 'low_stock_alerts' %}" class="text-blue-600 hover:underline">See More</a>
+                    </div>
+                </div>
+            </div>
+
+
             {% endif %}
         </nav>
     </div>
@@ -125,5 +158,22 @@
 
     closeMenu.addEventListener('click', () => {
         mobileMenu.classList.add('hidden');
+    });
+
+    
+
+
+
+    const alertBtn = document.getElementById('low-stock-btn');
+    const popup = document.getElementById('low-stock-popup');
+
+    alertBtn.addEventListener('click', () => {
+        popup.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!alertBtn.contains(event.target) && !popup.contains(event.target)) {
+            popup.classList.add('hidden');
+        }
     });
 </script>

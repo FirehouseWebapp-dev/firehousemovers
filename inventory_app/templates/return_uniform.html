@@ -26,6 +26,11 @@
                     <option value="" disabled selected>Select a Uniform</option>
                 </select>
             </div>
+            <!-- Emails Field (Text Area) -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="text" id="email" name="email" class="form-textarea border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full" />
+            </div>
         </div>
 
         <!-- Submit Button -->
@@ -63,6 +68,41 @@
                     }
                 })
                 .catch(error => console.error('Error fetching uniforms:', error));
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const employeeSelect = document.getElementById('id_employee'); // Django gives the select this ID
+        const emailInput = document.getElementById('email');
+
+        if (employeeSelect) {
+            employeeSelect.addEventListener('change', function () {
+                const selectedId = employeeSelect.value;
+
+                if (selectedId) {
+                    fetch("{% url 'get_email' %}?employee_id=" + selectedId)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.email) {
+                                emailInput.value = data.email;
+                            } else {
+                                emailInput.value = '';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching email:', error);
+                            emailInput.value = '';
+                        });
+                } else {
+                    emailInput.value = '';
+                }
+            });
+
+            // Optionally trigger email load on page load if an employee is pre-selected
+            if (employeeSelect.value) {
+                const event = new Event('change');
+                employeeSelect.dispatchEvent(event);
+            }
         }
     });
 </script>

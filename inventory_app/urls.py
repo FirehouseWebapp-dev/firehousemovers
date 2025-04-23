@@ -9,6 +9,8 @@ from inventory_app.views import (
     inventory_view,
     get_uniforms,
     homeview,
+    get_email,
+    low_stock_alerts,
 )
 
 
@@ -23,4 +25,7 @@ urlpatterns = [
     path("inventory-add/", inventory_view.as_view(), name="inventory_add"),
     path("inventory-remove/", inventory_view.as_view(), name="inventory_remove"),
     path("get-uniforms/", get_uniforms, name="get_uniforms"),
+    path('get-email/', get_email, name='get_email'),
+    path('low-stock-alerts/', low_stock_alerts, name='low_stock_alerts'),
+
 ]

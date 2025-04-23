@@ -1,19 +1,9 @@
 from django import forms
-
 from authentication.models import UserProfile
 from .models import Award, Gift_card, Gift_company
 
 
 class GiftCardForm(forms.ModelForm):
-    date_of_purchase = forms.DateField(
-        input_formats=["%d/%m/%Y"],  # This is your expected input format
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "DD/MM/YYYY",  # Use a text input with a placeholder
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-    )
     amount = forms.IntegerField(
         widget=forms.NumberInput(
             attrs={
@@ -33,7 +23,7 @@ class GiftCardForm(forms.ModelForm):
 
     class Meta:
         model = Gift_card
-        fields = ["company", "date_of_purchase", "amount"]
+        fields = ["company", "amount"]
 
     def clean(self):
         cleaned_data = super().clean()  # Get the cleaned data
@@ -49,39 +39,9 @@ class GiftCardForm(forms.ModelForm):
 
 
 class AwardCardForm(forms.ModelForm):
-    date_award = forms.DateField(
-        input_formats=["%d/%m/%Y"],
-        widget=forms.DateInput(
-            attrs={
-                "placeholder": "DD/MM/YYYY",
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-    )
-    employee_name = forms.ModelChoiceField(
-        queryset=UserProfile.objects.all(),
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
-            }
-        ),
-        empty_label="Select an Employee",
-    )
-    company_name = forms.ModelChoiceField(
-        queryset=Gift_company.objects.all(),
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
-            }
-        ),
-        empty_label="Select a Company",
-    )
-    amount = forms.IntegerField(
-        widget=forms.NumberInput(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
-            }
-        )
+    employees = forms.SelectMultiple(
+        choices=[(user.id, user.user) for user in UserProfile.objects.all()],
+        attrs={"class": "form-select"},
     )
     card = forms.ModelChoiceField(
         queryset=Gift_card.objects.all(),
@@ -106,10 +66,7 @@ class AwardCardForm(forms.ModelForm):
     class Meta:
         model = Award
         fields = [
-            "date_award",
-            "employee_name",
-            "company_name",
-            "amount",
+            "employees",
             "card",
             "reason",
         ]

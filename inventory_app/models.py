@@ -63,6 +63,13 @@ class Inventory(models.Model):
         )
         super().save(*args, **kwargs)
 
+    @property
+    def is_low_stock(self):
+        if self.uniform and self.uniform.minimum_stock_level is not None:
+            total = (self.new_stock or 0) + (self.used_stock or 0)
+            return total < self.uniform.minimum_stock_level
+        return False
+
     def __str__(self):
         return f"{self.uniform.name} - Inventory"
 
