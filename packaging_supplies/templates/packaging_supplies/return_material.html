@@ -1,0 +1,131 @@
+{% extends "packaging_supplies/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-2 bg-white rounded-lg shadow-lg pt-6">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Return Materials</h1>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="space-y-6" id="returnForm">
+        {% csrf_token %}
+        
+        <!-- Job Information -->
+        <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-black">Job Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.job_id.id_for_label }}" class="block text-gray-700 font-medium mb-1">Job ID</label>
+                    {{ form.job_id }}
+                </div>
+                <div>
+                    <label for="{{ form.trailer_number.id_for_label }}" class="block text-gray-700 font-medium mb-1">Trailer Number</label>
+                    {{ form.trailer_number }}
+                </div>
+                <div>
+                    <label for="{{ form.employee.id_for_label }}" class="block text-gray-700 font-medium mb-1">Employee</label>
+                    {{ form.employee }}
+                </div>
+                <div>
+                    <label for="{{ form.employee_signature.id_for_label }}" class="block text-gray-700 font-medium mb-1">Signature</label>
+                    <input type="text" 
+                           name="employee_signature" 
+                           id="{{ form.employee_signature.id_for_label }}" 
+                           value="{{ form.employee_signature.value|default:'' }}"
+                           class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
+                           required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Quantities Table -->
+        <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-black">Material Quantities</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pulled</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Already Returned</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Returning</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for material in comparison_data.materials %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ material.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ material.pulled }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ material.already_returned }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ material.remaining }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <input type="number" 
+                                       name="{{ material.name}}" 
+                                       value="{{ material.returned }}"
+                                       class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
+                                       min="0"
+                                       max="{{ material.remaining }}">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-right">
+            <button type="submit" class="text-white font-medium py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300">
+                Submit Return
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('returnForm');
+    const jobIdSelect = document.querySelector('select[name="job_id"]');
+    const quantityInputs = document.querySelectorAll('input[type="number"]');
+    
+    // Update form when job_id changes
+    jobIdSelect.addEventListener('change', function() {
+        form.submit();
+    });
+    
+    // Validate quantities
+    quantityInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const max = parseInt(this.getAttribute('max'));
+            const value = parseInt(this.value) || 0;
+            
+            if (value > max) {
+                this.setCustomValidity(`Cannot return more than ${max} items`);
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        let totalReturning = 0;
+        
+        quantityInputs.forEach(input => {
+            totalReturning += parseInt(input.value) || 0;
+        });
+        
+
+    });
+});
+</script>
+{% endblock %} 

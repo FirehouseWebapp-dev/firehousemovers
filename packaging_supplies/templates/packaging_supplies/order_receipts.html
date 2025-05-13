@@ -1,0 +1,290 @@
+{% extends "packaging_supplies/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-2 bg-white rounded-lg shadow-lg pt-6">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Record Receipt</h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Receipt Information -->
+        <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-black">Receipt Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.date_received.id_for_label }}" class="block text-gray-700 font-medium mb-1">Date Received</label>
+                    {{ form.date_received }}
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Receipts List -->
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold mb-4 text-black">Receipts</h2>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trailer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receipts-table-body" class="bg-white divide-y divide-gray-200">
+                        {% for receipt in receipts %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.date_received|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.job_id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.transaction_type|title }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.trailer_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.employee }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ receipt.uploaded_by }}</td>
+                            <td>
+                                {% if receipt.transaction_type == 'order' and receipt.material.status %}
+                                    <span class="badge {% if receipt.material.status == 'confirmed' %}badge-success{% elif receipt.material.status == 'rejected' %}badge-danger{% else %}badge-warning{% endif %}">
+                                        {{ receipt.material.status|title }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button onclick="showDetails('{{ receipt.id }}')" class="text-blue-600 hover:text-blue-800">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Details Modal -->
+                        <div id="details-{{ receipt.id }}" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+                            <div class="flex items-center justify-center min-h-screen">
+                                <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-bold text-gray-800">Transaction Details</h3>
+                                        <button onclick="hideDetails('{{ receipt.id }}')" class="text-gray-500 hover:text-gray-700">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="space-y-3">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Job ID:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.job_id }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Type:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.transaction_type|title }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Trailer:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.trailer_number }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Employee:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.employee }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Date:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.date_received|date:"M d, Y" }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Uploaded By:</span>
+                                                <span class="text-sm text-gray-800">{{ receipt.uploaded_by }}</span>
+                                            </div>
+                                            ${receipt.type === 'Order' && receipt.status ? `
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium text-gray-600 w-24">Status:</span>
+                                                <span class="text-sm text-gray-800">
+                                                    <span class="badge ${receipt.status === 'confirmed' ? 'badge-success' : 
+                                                              receipt.status === 'rejected' ? 'badge-danger' : 
+                                                              'badge-warning'}">
+                                                        ${receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            ` : ''}
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <h4 class="text-sm font-semibold text-gray-700 mb-2">Material Quantities:</h4>
+                                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                                {% for name, quantity in receipt.material_quantities.items %}
+                                                    {% if quantity > 0 %}
+                                                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                        <span class="text-xs font-medium text-gray-600">{{ name }}</span>
+                                                        <span class="text-xs font-bold text-gray-800">{{ quantity }}</span>
+                                                    </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No receipts found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showDetails(receiptId) {
+    document.getElementById(`details-${receiptId}`).classList.remove('hidden');
+}
+
+function hideDetails(receiptId) {
+    document.getElementById(`details-${receiptId}`).classList.add('hidden');
+}
+
+// Handle date change
+document.getElementById('id_date_received').addEventListener('change', function(e) {
+    const date = e.target.value;
+    if (!date) return;
+    
+    // Show loading state
+    const tbody = document.getElementById('receipts-table-body');
+    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Loading...</td></tr>';
+    
+    // Fetch receipts for the selected date
+    fetch(`?date=${date}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.receipts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No receipts found for this date.</td></tr>';
+            return;
+        }
+        
+        // Clear existing content
+        tbody.innerHTML = '';
+        
+        // Add new rows
+        data.receipts.forEach(receipt => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.date}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.job_id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.type}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.trailer}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.employee}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.uploaded_by}</td>
+                <td>
+                    ${receipt.type === 'Order' && receipt.status ? 
+                        `<span class="badge ${receipt.status === 'confirmed' ? 'badge-success' : 
+                                            receipt.status === 'rejected' ? 'badge-danger' : 
+                                            'badge-warning'}">
+                            ${receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}
+                        </span>` 
+                        : ''}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button onclick="showDetails('${receipt.id}')" class="text-blue-600 hover:text-blue-800">
+                        View Details
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            
+            // Create modal for details
+            const modal = document.createElement('div');
+            modal.id = `details-${receipt.id}`;
+            modal.className = 'hidden fixed inset-0 bg-black bg-opacity-50 z-50';
+            modal.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">Transaction Details</h3>
+                            <button onclick="hideDetails('${receipt.id}')" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Job ID:</span>
+                                    <span class="text-sm text-gray-800">${receipt.job_id}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Type:</span>
+                                    <span class="text-sm text-gray-800">${receipt.type}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Trailer:</span>
+                                    <span class="text-sm text-gray-800">${receipt.trailer}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Employee:</span>
+                                    <span class="text-sm text-gray-800">${receipt.employee}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Date:</span>
+                                    <span class="text-sm text-gray-800">${receipt.date}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Uploaded By:</span>
+                                    <span class="text-sm text-gray-800">${receipt.uploaded_by}</span>
+                                </div>
+                                ${receipt.type === 'Order' && receipt.status ? `
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-600 w-24">Status:</span>
+                                    <span class="text-sm text-gray-800">
+                                        <span class="badge ${receipt.status === 'confirmed' ? 'badge-success' : 
+                                                          receipt.status === 'rejected' ? 'badge-danger' : 
+                                                          'badge-warning'}">
+                                            ${receipt.status.charAt(0).toUpperCase() + receipt.status.slice(1)}
+                                        </span>
+                                    </span>
+                                </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="mt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Material Quantities:</h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                    ${Object.entries(receipt.quantities)
+                                        .filter(([_, quantity]) => quantity > 0)
+                                        .map(([name, quantity]) => `
+                                            <div class="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                <span class="text-xs font-medium text-gray-600">${name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                                                <span class="text-xs font-bold text-gray-800">${quantity}</span>
+                                            </div>
+                                        `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Error loading receipts.</td></tr>';
+    });
+});
+</script>
+{% endblock %} 

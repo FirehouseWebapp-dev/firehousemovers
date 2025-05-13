@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 1rem;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .details {
+            margin-top: 2rem;
+            text-align: left;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .details p {
+            margin: 0.5rem 0;
+        }
+        .order-details {
+            margin-top: 2rem;
+            text-align: left;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .order-details h3 {
+            margin-bottom: 0.5rem;
+        }
+        .order-details p {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if status == 'confirmed' %}
+            <div class="status-icon success">✓</div>
+            <h1>Order Confirmed</h1>
+            <p>The order has been successfully confirmed.</p>
+        {% else %}
+            <div class="status-icon error">✕</div>
+            <h1>Order Rejected</h1>
+            <p>The order has been rejected.</p>
+        {% endif %}
+        
+        <div class="order-details">
+            <h3>Order Details</h3>
+            <p><strong>Job ID:</strong> {{ order.job_id }}</p>
+            <p><strong>Order Date:</strong> {{ order.date|date:"F d, Y" }}</p>
+            <p><strong>Requested By:</strong> {{ order.employee.user.username }}</p>
+            <p><strong>Status:</strong> {{ order.status|title }}</p>
+        </div>
+        
+        <p style="margin-top: 2rem; font-size: 0.9em; color: #999;">
+            You can close this window now.
+        </p>
+    </div>
+</body>
+</html> 

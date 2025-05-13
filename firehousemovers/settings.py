@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "station",
     "gift",
     "inspection",
+    "packaging_supplies",
 ]
 
 MIDDLEWARE = [

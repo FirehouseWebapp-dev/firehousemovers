@@ -1,0 +1,61 @@
+{% extends "packaging_supplies/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto p-2 bg-white rounded-lg shadow-lg pt-6">
+    <h1 class="text-2xl font-bold text-black mb-6 text-center">Order Materials</h1>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Job Information -->
+        <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-black">Job Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.job_id.id_for_label }}" class="block text-gray-700 font-medium mb-1">Job ID</label>
+                    {{ form.job_id }}
+                </div>
+                <div>
+                    <label for="{{ form.trailer_number.id_for_label }}" class="block text-gray-700 font-medium mb-1">Trailer Number</label>
+                    {{ form.trailer_number }}
+                </div>
+                <div>
+                    <label for="{{ form.employee.id_for_label }}" class="block text-gray-700 font-medium mb-1">Employee</label>
+                    {{ form.employee }}
+                </div>
+                <div>
+                    <label for="{{ form.employee_signature.id_for_label }}" class="block text-gray-700 font-medium mb-1">Signature</label>
+                    {{ form.employee_signature }}
+                </div>
+                <div>
+                    <label for="{{ form.supplier_email.id_for_label }}" class="block text-gray-700 font-medium mb-1">Supplier Email</label>
+                    {{ form.supplier_email }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Quantities -->
+        <div class="bg-gray-50 p-4 rounded-lg shadow space-y-4">
+            <h2 class="text-lg font-semibold text-black">Material Quantities</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for field in form %}
+                    {% if field.name not in 'job_id trailer_number employee employee_signature supplier_email' %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-gray-700 font-medium mb-1">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="text-right">
+            <button type="submit" class="text-white font-medium py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300">
+                Submit Order
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %} 
