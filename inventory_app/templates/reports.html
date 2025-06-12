@@ -1,96 +1,118 @@
 {% extends "inventory_base.html" %}
 {% load static %}
-{% block content %}
 
-<div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg pt-6 h-screen">
+{% block content %}
+  {# Print-only CSS: no row-breaks, repeat headers #}
+  <style media="print">
+    tr {
+      page-break-inside: avoid;
+    }
+    thead {
+      display: table-header-group;
+    }
+  </style>
+
+  <div class="container mx-auto p-2 bg-gray-100 rounded-lg shadow-lg pt-6
+              h-screen
+              print:h-auto print:overflow-visible">
     <h1 class="text-2xl font-bold text-black mb-6 text-center">Reports</h1>
 
     <form method="post" class="space-y-6">
-        {% csrf_token %}
+      {% csrf_token %}
 
-        <!-- Uniform Issue Information -->
-        <div class="bg-white p-4 rounded-lg shadow space-y-4">
-                <div>
-                    <label for="id_employee" class="block text-gray-700 font-medium">Report</label>
-                    <select name="employee" id="id_employee" class="border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
-                        <option value="" disabled selected>Select a Report</option>
-                            <option value="inventory_summary">Summary by Inventory</option>
-                            <option value="employee_summary">Summary by Employee</option>
-                    </select>
-                </div>
+      {# Selector (hidden on print) #}
+      <div class="bg-white p-4 rounded-lg shadow space-y-4 print:hidden">
+        <div>
+          <label for="id_employee" class="block text-gray-700 font-medium">Report</label>
+          <select name="employee"
+                  id="id_employee"
+                  class="border border-gray-300 rounded-md px-2 py-2
+                         focus:outline-none focus:ring-2 focus:ring-red-500 w-full">
+            <option value="" disabled selected>Select a Report</option>
+            <option value="inventory_summary">Summary by Inventory</option>
+            <option value="employee_summary">Summary by Employee</option>
+          </select>
         </div>
+      </div>
 
-        {% if inventory_records %}
-            <div class="container mx-auto p-2 max-h-[calc(100vh-350px)] overflow-y-auto">
-                <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Inventory Report</h1>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full table-auto bg-white shadow-md ">
-                        <thead>
-                            <tr class="bg-[#262626] text-white">
-                                <th class="px-4 py-2 text-left ">Uniform Name</th>
-                                <th class="px-4 py-2 text-left ">New Stock</th>
-                                <th class="px-4 py-2 text-left ">Used Stock</th>
-                                <th class="px-4 py-2 text-left ">In Use</th>
-                                <th class="px-4 py-2 text-left ">Total Stock</th>
-                                <th class="px-4 py-2 text-left ">Disposed</th>
-                                <th class="px-4 py-2 text-left ">Return to Supplier</th>
-                                <th class="px-4 py-2 text-left ">Total Bought</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-gray-700 ">
-                            {% for record in inventory_records %}
-                                <tr class="border-t even:bg-gray-100 ">
-                                    <td class="px-4 py-2">{{ record.uniform.name }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.new_stock }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.used_stock }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.in_use }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.total_stock }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.disposed }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.return_to_supplier }}</td>
-                                    <td class="px-4 py-2 text-left">{{ record.total_bought }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
-
-        {% if employee_data %}
-            <div class="container mx-auto p-2 max-h-[calc(100vh-350px)] overflow-y-auto">
-                <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">Employee Report</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full table-auto bg-white shadow-md ">
-                        <thead>
-                            <tr class="bg-[#262626] text-white">
-                                <th class="px-4 py-2 text-left ">Employee</th>
-                                <th class="px-4 py-2 text-left ">Uniform</th>
-                                <th class="px-4 py-2 text-left ">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-gray-700">
-                            {% for employee, uniforms in employee_data.items %}
-                                {% for uniform, quantity in uniforms.items %}
-                                    <tr class="border-t even:bg-gray-100">
-                                        <td class="px-4 py-2">{{ employee }}</td>
-                                        <td class="px-4 py-2">{{ uniform }}</td>
-                                        <td class="px-4 py-2 ">{{ quantity }}</td>
-                                    </tr>
-                                {% endfor %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
-        
-        <!-- Submit Button -->
-        <div class="text-right">
-            <button type="submit" class="text-white font-medium py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300 ">
-                Generate Report
-            </button>
+      {% if inventory_records %}
+        <div class="container mx-auto p-2 max-h-[calc(100vh-350px)] overflow-y-auto
+                    print:max-h-none print:overflow-visible print:border-none">
+          <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Inventory Report</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full table-auto bg-white shadow-md">
+              <thead>
+                <tr class="bg-[#262626] text-white">
+                  <th class="px-4 py-2 text-left">Uniform Name</th>
+                  <th class="px-4 py-2 text-left">New Stock</th>
+                  <th class="px-4 py-2 text-left">Used Stock</th>
+                  <th class="px-4 py-2 text-left">In Use</th>
+                  <th class="px-4 py-2 text-left">Total Stock</th>
+                  <th class="px-4 py-2 text-left">Disposed</th>
+                  <th class="px-4 py-2 text-left">Return to Supplier</th>
+                  <th class="px-4 py-2 text-left">Total Bought</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-700">
+                {% for record in inventory_records %}
+                  <tr class="border-t even:bg-gray-100">
+                    <td class="px-4 py-2">{{ record.uniform.name }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.new_stock }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.used_stock }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.in_use }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.total_stock }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.disposed }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.return_to_supplier }}</td>
+                    <td class="px-4 py-2 text-left">{{ record.total_bought }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
+      {% endif %}
+
+      {% if employee_data %}
+        <div class="container mx-auto p-2 max-h-[calc(100vh-350px)] overflow-y-auto
+                    print:max-h-none print:overflow-visible print:border-none">
+          <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Employee Report</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full table-auto bg-white shadow-md">
+              <thead>
+                <tr class="bg-[#262626] text-white">
+                  <th class="px-4 py-2 text-left">Employee</th>
+                  <th class="px-4 py-2 text-left">Uniform</th>
+                  <th class="px-4 py-2 text-left">Quantity</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-700">
+                {% for employee, uniforms in employee_data.items %}
+                  {% for uniform, quantity in uniforms.items %}
+                    <tr class="border-t even:bg-gray-100">
+                      <td class="px-4 py-2">{{ employee }}</td>
+                      <td class="px-4 py-2">{{ uniform }}</td>
+                      <td class="px-4 py-2">{{ quantity }}</td>
+                    </tr>
+                  {% endfor %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+
+      {# Print/Generate buttons (hidden on print) #}
+      <div class="text-right space-x-2 print:hidden">
+        <button type="button"
+                onclick="window.print()"
+                class="text-gray-800 bg-gray-200 hover:bg-gray-300 font-medium py-2 px-4 rounded">
+          Print Report
+        </button>
+        <button type="submit"
+                class="text-white font-medium py-2 px-4 bg-[#262626] hover:bg-red-600 transition-all duration-300 rounded">
+          Generate Report
+        </button>
+      </div>
     </form>
-</div>
-
+  </div>
 {% endblock %}

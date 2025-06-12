@@ -1,33 +1,55 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block body %}
-{% include "navbar.html" %}
+    <header class="print:hidden">
+        {% include "navbar.html" %}
+    </header>
 
-    <div class="flex h-screen ">
-        <!-- Sidebar -->
-        <aside class="w-full sm:w-36 md:w-64  bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out">
-            
-            <!-- Main Menu -->
-            <nav class="flex-grow space-y-2 px-2 sm:px-4 mt-10">
-                <a href="{% url 'uniform_issue'%}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-shirt mr-2 text-xl"></i> Issue Uniform</a>
-                <a href="{% url 'uniform_return'%}" class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-rotate-left mr-2 text-xl"></i>Return Uniform</a>
-                <a href="{% url 'uniform_add'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-circle-plus mr-2 flex-shrink-0 text-xl"></i> Add New Uniform</a>
-                <a href="{% url 'inventory_add'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-box-open mr-2 flex-shrink-0 text-xl"></i> Add Inventory</a>
-                <a href="{% url 'inventory_remove'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-circle-minus mr-2 flex-shrink-0 text-xl"></i> Remove Inventory</a>
-                <a href="{% url 'employee'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-users mr-2 flex-shrink-0 text-xl"></i> Manage Employees</a>
-                <a href="{% url 'reports'%}"class="block w-full py-2 px-4 rounded text-black  bg-gray-100 hover:bg-white text-left"><i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports</a>
-            </nav>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="flex-grow bg-black shadow-lg">
-            {% include "messages.html" %}
-            {% block content %}
+  <div class="flex h-screen">
+    <!-- Sidebar (hidden on print) -->
+    <aside class="w-full sm:w-36 md:w-64 bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out print:hidden">
+      <!-- Main Menu -->
+      <nav class="flex-grow space-y-2 px-2 sm:px-4 mt-10">
+        <a href="{% url 'uniform_issue' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-shirt mr-2 text-xl"></i> Issue Uniform
+        </a>
+        <a href="{% url 'uniform_return' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-rotate-left mr-2 text-xl"></i> Return Uniform
+        </a>
+        <a href="{% url 'uniform_add' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-circle-plus mr-2 flex-shrink-0 text-xl"></i> Add New Uniform
+        </a>
+        <a href="{% url 'inventory_add' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-box-open mr-2 flex-shrink-0 text-xl"></i> Add Inventory
+        </a>
+        <a href="{% url 'inventory_remove' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-circle-minus mr-2 flex-shrink-0 text-xl"></i> Remove Inventory
+        </a>
+        <a href="{% url 'employee' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-users mr-2 flex-shrink-0 text-xl"></i> Manage Employees
+        </a>
+        <a href="{% url 'reports' %}"
+           class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+          <i class="fa-solid fa-chart-column mr-2 flex-shrink-0 text-xl"></i> Reports
+        </a>
+      </nav>
+    </aside>
 
-            <img src="{% static 'images/uniform.jpg' %}" alt="Warehouse" class="w-full h-full">
-
-            <!-- Dynamic content will load here -->
-            {% endblock %}
-        </main>
-    </div>
-{%endblock%}
+    <!-- Main Content -->
+    <main class="flex-grow bg-black shadow-lg">
+      {% include "messages.html" %}
+      {% block content %}
+        <img src="{% static 'images/uniform.jpg' %}"
+             alt="Warehouse"
+             class="w-full h-full" />
+      {% endblock %}
+    </main>
+  </div>
+{% endblock %}
