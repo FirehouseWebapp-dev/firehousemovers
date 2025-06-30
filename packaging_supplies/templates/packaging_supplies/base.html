@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<div class="flex h-[calc(100vh-4rem)]">
+    <!-- Sidebar -->
+    <aside class="w-full sm:w-36 md:w-64 bg-[#262626] text-white flex flex-col transition-all duration-300 ease-in-out">
+        <!-- Main Menu -->
+        <nav class="flex-grow space-y-2 px-2 sm:px-4 mt-10">
+            <a href="{% url 'packaging_supplies:index' %}" class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+                <i class="fa-solid fa-chart-line mr-2 text-xl"></i> Dashboard
+            </a>
+            <a href="{% url 'packaging_supplies:pull_material' %}" class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+                <i class="fa-solid fa-box mr-2 text-xl"></i> Pull Materials
+            </a>
+            <a href="{% url 'packaging_supplies:return_material' %}" class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+                <i class="fa-solid fa-rotate-left mr-2 text-xl"></i> Return Materials
+            </a>
+            <a href="{% url 'packaging_supplies:order_material' %}" class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+                <i class="fa-solid fa-cart-shopping mr-2 text-xl"></i> Order Materials
+            </a>
+            <a href="{% url 'packaging_supplies:record_receipt' %}" class="block w-full py-2 px-4 rounded text-black bg-gray-100 hover:bg-white text-left">
+                <i class="fa-solid fa-receipt mr-2 text-xl"></i> Record Receipt
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow bg-gray-100 shadow-lg p-4 overflow-y-auto">
+        {% include "messages.html" %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% endblock %} 

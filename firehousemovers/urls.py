@@ -28,4 +28,5 @@ urlpatterns = [
     path("station/", include("station.urls")),  # Include station routes
     path("", include("gift.urls")),  # Include gift routes
     path("", include("inspection.urls")),  # Include gift routes
+    path("packaging/", include("packaging_supplies.urls")),  # Include packaging_supplies routes
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

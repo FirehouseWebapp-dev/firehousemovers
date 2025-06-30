@@ -328,3 +328,381 @@ def send_return_uniform_email(email, employee, uniform):
     msg = EmailMultiAlternatives(subject, text_content, settings.EMAIL_FROM, [email])
     msg.attach_alternative(html_content, "text/html")
     msg.send(fail_silently=False)
+
+
+def send_order_email(email, transaction, confirm_url, reject_url):
+    subject = _("New Material Order Request")
+
+    # Text content (fallback in case HTML is not supported)
+    text_content = _(
+        f"New material order has been placed.\n"
+        f"Job ID: {transaction.job_id}\n"
+        f"Order Date: {transaction.date.strftime('%B %d, %Y')}\n"
+        f"Requested By: {transaction.employee.user.username}\n\n"
+        f"Please click the following links to confirm or reject the order:\n"
+        f"Confirm: {confirm_url}\n"
+        f"Reject: {reject_url}\n\n"
+        "Best regards,\n"
+        "The Firehouse Movers Team"
+    )
+
+    # HTML content
+    html_content = _(
+        """
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: 'Montserrat', Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f0f0f0;
+                }}
+                
+                table {{
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    border: none;
+                    background-color: #ffffff;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+                }}
+                
+                td {{
+                    padding: 20px;
+                }}
+                
+                .header {{
+                    background-color: #1a1a1a;
+                    text-align: center;
+                    padding: 25px 20px;
+                    border-bottom: 3px solid #e74c3c;
+                }}
+                
+                .header h2 {{
+                    color: #ffffff;
+                    font-size: 24px;
+                    margin-top: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                }}
+                
+                .content {{
+                    padding: 30px 25px;
+                    text-align: left;
+                    background-color: #ffffff;
+                }}
+                
+                .content p {{
+                    font-size: 16px;
+                    color: #333333;
+                    line-height: 1.6;
+                }}
+                
+                .details {{
+                    background-color: #f9f9f9;
+                    padding: 15px;
+                    border-left: 4px solid #e74c3c;
+                    margin: 20px 0;
+                }}
+                
+                .details h3 {{
+                    color: #1a1a1a;
+                    margin-top: 0;
+                }}
+                
+                .details ul {{
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }}
+                
+                .details li {{
+                    margin: 5px 0;
+                }}
+                
+                .button-container {{
+                    text-align: center;
+                    margin: 30px 0;
+                }}
+                
+                .button {{
+                    display: inline-block;
+                    padding: 12px 25px;
+                    margin: 0 10px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: 600;
+                    color: #ffffff !important;
+                }}
+                
+                .confirm {{
+                    background-color: #28a745;
+                }}
+                
+                .reject {{
+                    background-color: #dc3545;
+                }}
+                
+                .footer {{
+                    background-color: #1a1a1a;
+                    padding: 20px;
+                    text-align: center;
+                    border-top: 1px solid #e74c3c;
+                }}
+                
+                .footer p {{
+                    color: #ffffff;
+                    font-size: 14px;
+                    margin: 5px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr class="header">
+                    <td>
+                        <h2>New Material Order Request</h2>
+                    </td>
+                </tr>
+                <tr class="content">
+                    <td>
+                        <p>Dear Supplier,</p>
+                        
+                        <p>A new material order has been placed. Please review the details below:</p>
+                        
+                        <div class="details">
+                            <p><strong>Job ID:</strong> {job_id}</p>
+                            <p><strong>Order Date:</strong> {order_date}</p>
+                            <p><strong>Requested By:</strong> {requested_by}</p>
+                            
+                            <h3>Order Details:</h3>
+                            <ul>
+                                {material_details}
+                            </ul>
+                        </div>
+                        
+                        <p>Please click one of the buttons below to confirm or reject this order:</p>
+                        
+                        <div class="button-container">
+                            <a href="{confirm_url}" class="button confirm">Confirm Order</a>
+                            <a href="{reject_url}" class="button reject">Reject Order</a>
+                        </div>
+                        
+                        <p style="font-size: 0.9em; color: #666;">
+                            Note: Clicking these buttons will automatically update the order status in our system.
+                        </p>
+                    </td>
+                </tr>
+                <tr class="footer">
+                    <td>
+                        <p>Best regards,<br>The Firehouse Movers Team</p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+    ).format(
+        job_id=transaction.job_id,
+        order_date=transaction.date.strftime('%B %d, %Y'),
+        requested_by=transaction.employee.user.username,
+        material_details='\n'.join([
+            f'<li>{field.replace("_", " ").title()}: {getattr(transaction, field)}</li>'
+            for field in [
+                'small_boxes', 'medium_boxes', 'large_boxes', 'xl_boxes',
+                'wardrobe_boxes', 'dish_boxes', 'singleface_protection',
+                'carpet_mask', 'paper_pads', 'packing_paper', 'tape',
+                'wine_boxes', 'stretch_wrap', 'tie_down_webbing',
+                'packing_peanuts', 'ram_board', 'mattress_bags',
+                'mirror_cartons', 'bubble_wrap', 'gondola_boxes'
+            ]
+            if getattr(transaction, field, 0) > 0
+        ]),
+        confirm_url=confirm_url,
+        reject_url=reject_url
+    )
+
+    # Send the email
+    msg = EmailMultiAlternatives(subject, text_content, settings.EMAIL_FROM, [email])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send(fail_silently=False)
+
+
+def send_order_status_update_email(email, order, status):
+    subject = _("Order Status Update")
+
+    # Text content (fallback in case HTML is not supported)
+    text_content = _(
+        f"Your material order has been {status}.\n"
+        f"Job ID: {order.job_id}\n"
+        f"Order Date: {order.date.strftime('%B %d, %Y')}\n"
+        f"Status: {status.title()}\n\n"
+        "Best regards,\n"
+        "The Firehouse Movers Team"
+    )
+
+    # HTML content
+    html_content = _(
+        """
+        <html>
+        <head>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+                
+                body {
+                    font-family: 'Montserrat', Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f0f0f0;
+                }
+                
+                table {
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    border: none;
+                    background-color: #ffffff;
+                    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+                }
+                
+                td {
+                    padding: 20px;
+                }
+                
+                .header {
+                    background-color: #1a1a1a;
+                    text-align: center;
+                    padding: 25px 20px;
+                    border-bottom: 3px solid #e74c3c;
+                }
+                
+                .header h2 {
+                    color: #ffffff;
+                    font-size: 24px;
+                    margin-top: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                }
+                
+                .content {
+                    padding: 30px 25px;
+                    text-align: left;
+                    background-color: #ffffff;
+                }
+                
+                .content p {
+                    font-size: 16px;
+                    color: #333333;
+                    line-height: 1.6;
+                }
+                
+                .status {
+                    background-color: #f9f9f9;
+                    padding: 15px;
+                    border-left: 4px solid {status_color};
+                    margin: 20px 0;
+                }
+                
+                .status h3 {
+                    color: #1a1a1a;
+                    margin-top: 0;
+                }
+                
+                .details {
+                    background-color: #f9f9f9;
+                    padding: 15px;
+                    border-left: 4px solid #e74c3c;
+                    margin: 20px 0;
+                }
+                
+                .details h3 {
+                    color: #1a1a1a;
+                    margin-top: 0;
+                }
+                
+                .details ul {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .details li {
+                    margin: 5px 0;
+                }
+                
+                .footer {
+                    background-color: #1a1a1a;
+                    padding: 20px;
+                    text-align: center;
+                    border-top: 1px solid #e74c3c;
+                }
+                
+                .footer p {
+                    color: #ffffff;
+                    font-size: 14px;
+                    margin: 5px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr class="header">
+                    <td>
+                        <h2>Order Status Update</h2>
+                    </td>
+                </tr>
+                <tr class="content">
+                    <td>
+                        <p>Dear {employee_name},</p>
+                        
+                        <div class="status">
+                            <h3>Your order has been <strong>{status}</strong></h3>
+                        </div>
+                        
+                        <p>Order Details:</p>
+                        
+                        <div class="details">
+                            <p><strong>Job ID:</strong> {job_id}</p>
+                            <p><strong>Order Date:</strong> {order_date}</p>
+                            
+                            <h3>Ordered Materials:</h3>
+                            <ul>
+                                {material_details}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="footer">
+                    <td>
+                        <p>Best regards,<br>The Firehouse Movers Team</p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+    ).format(
+        status_color='#28a745' if status == 'confirmed' else '#dc3545',
+        employee_name=order.employee.user.username,
+        status=status.title(),
+        job_id=order.job_id,
+        order_date=order.date.strftime('%B %d, %Y'),
+        material_details='\n'.join([
+            f'<li>{field.replace("_", " ").title()}: {getattr(order, field)}</li>'
+            for field in [
+                'small_boxes', 'medium_boxes', 'large_boxes', 'xl_boxes',
+                'wardrobe_boxes', 'dish_boxes', 'singleface_protection',
+                'carpet_mask', 'paper_pads', 'packing_paper', 'tape',
+                'wine_boxes', 'stretch_wrap', 'tie_down_webbing',
+                'packing_peanuts', 'ram_board', 'mattress_bags',
+                'mirror_cartons', 'bubble_wrap', 'gondola_boxes'
+            ]
+            if getattr(order, field, 0) > 0
+        ])
+    )
+
+    # Send the email
+    msg = EmailMultiAlternatives(subject, text_content, settings.EMAIL_FROM, [email])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send(fail_silently=False)

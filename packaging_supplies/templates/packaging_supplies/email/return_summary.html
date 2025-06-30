@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc2626;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .difference {
+            font-weight: bold;
+        }
+        .positive {
+            color: green;
+        }
+        .negative {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Material Return Summary</h1>
+            <p>Job: {{ pull_transaction.job.job_no }}</p>
+        </div>
+        
+        <div class="content">
+            <h2>Material Comparison</h2>
+            <table>
+                <tr>
+                    <th>Material</th>
+                    <th>Pulled</th>
+                    <th>Returned</th>
+                    <th>Difference</th>
+                </tr>
+                {% for field in fields %}
+                <tr>
+                    <td>{{ field.label }}</td>
+                    <td>{{ field.pulled }}</td>
+                    <td>{{ field.returned }}</td>
+                    <td class="difference {% if field.difference > 0 %}positive{% elif field.difference < 0 %}negative{% endif %}">
+                        {{ field.difference }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            
+            <h2>Transaction Details</h2>
+            <p><strong>Pull Date:</strong> {{ pull_transaction.date|date:"Y-m-d" }}</p>
+            <p><strong>Return Date:</strong> {{ return_transaction.date|date:"Y-m-d" }}</p>
+            <p><strong>Trailer Number:</strong> {{ return_transaction.trailer_number }}</p>
+            <p><strong>Employee:</strong> {{ return_transaction.employee.user.username }}</p>
+        </div>
+    </div>
+</body>
+</html> 

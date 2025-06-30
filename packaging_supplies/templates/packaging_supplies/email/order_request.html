@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .confirm {
+            background-color: #28a745;
+            color: white;
+        }
+        .reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        .details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>New Material Order Request</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear Supplier,</p>
+            
+            <p>A new material order has been placed. Please review the details below:</p>
+            
+            <div class="details">
+                <p><strong>Job ID:</strong> {{ transaction.job_id }}</p>
+                <p><strong>Order Date:</strong> {{ transaction.date|date:"F j, Y" }}</p>
+                <p><strong>Requested By:</strong> {{ transaction.employee.user.get_full_name }}</p>
+                
+                <h3>Order Details:</h3>
+                <ul>
+                    {% if transaction.small_boxes %}<li>Small Boxes: {{ transaction.small_boxes }}</li>{% endif %}
+                    {% if transaction.medium_boxes %}<li>Medium Boxes: {{ transaction.medium_boxes }}</li>{% endif %}
+                    {% if transaction.large_boxes %}<li>Large Boxes: {{ transaction.large_boxes }}</li>{% endif %}
+                    {% if transaction.xl_boxes %}<li>XL Boxes: {{ transaction.xl_boxes }}</li>{% endif %}
+                    {% if transaction.wardrobe_boxes %}<li>Wardrobe Boxes: {{ transaction.wardrobe_boxes }}</li>{% endif %}
+                    {% if transaction.dish_boxes %}<li>Dish Boxes: {{ transaction.dish_boxes }}</li>{% endif %}
+                    {% if transaction.singleface_protection %}<li>Single Face Protection: {{ transaction.singleface_protection }}</li>{% endif %}
+                    {% if transaction.carpet_mask %}<li>Carpet Mask: {{ transaction.carpet_mask }}</li>{% endif %}
+                    {% if transaction.paper_pads %}<li>Paper Pads: {{ transaction.paper_pads }}</li>{% endif %}
+                    {% if transaction.packing_paper %}<li>Packing Paper: {{ transaction.packing_paper }}</li>{% endif %}
+                    {% if transaction.tape %}<li>Tape: {{ transaction.tape }}</li>{% endif %}
+                    {% if transaction.wine_boxes %}<li>Wine Boxes: {{ transaction.wine_boxes }}</li>{% endif %}
+                    {% if transaction.stretch_wrap %}<li>Stretch Wrap: {{ transaction.stretch_wrap }}</li>{% endif %}
+                    {% if transaction.tie_down_webbing %}<li>Tie Down Webbing: {{ transaction.tie_down_webbing }}</li>{% endif %}
+                    {% if transaction.packing_peanuts %}<li>Packing Peanuts: {{ transaction.packing_peanuts }}</li>{% endif %}
+                    {% if transaction.ram_board %}<li>Ram Board: {{ transaction.ram_board }}</li>{% endif %}
+                    {% if transaction.mattress_bags %}<li>Mattress Bags: {{ transaction.mattress_bags }}</li>{% endif %}
+                    {% if transaction.mirror_cartons %}<li>Mirror Cartons: {{ transaction.mirror_cartons }}</li>{% endif %}
+                    {% if transaction.bubble_wrap %}<li>Bubble Wrap: {{ transaction.bubble_wrap }}</li>{% endif %}
+                    {% if transaction.gondola_boxes %}<li>Gondola Boxes: {{ transaction.gondola_boxes }}</li>{% endif %}
+                </ul>
+            </div>
+            
+            <p>Please click one of the buttons below to confirm or reject this order:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ confirm_url }}" class="button confirm">Confirm Order</a>
+                <a href="{{ reject_url }}" class="button reject">Reject Order</a>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                Note: Clicking these buttons will automatically update the order status in our system.
+            </p>
+        </div>
+    </div>
+</body>
+</html> 

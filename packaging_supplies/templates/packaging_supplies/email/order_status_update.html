@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: white;
+        }
+        .confirmed {
+            background-color: #28a745;
+        }
+        .rejected {
+            background-color: #dc3545;
+        }
+        .details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Order Status Update</h2>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ order.employee.user.get_full_name }},</p>
+            
+            <p>Your material order has been <span class="status {{ status }}">{{ status|title }}</span> by the supplier.</p>
+            
+            <div class="details">
+                <p><strong>Job ID:</strong> {{ order.job_id }}</p>
+                <p><strong>Order Date:</strong> {{ order.date|date:"F j, Y" }}</p>
+                
+                <h3>Order Details:</h3>
+                <ul>
+                    {% if order.small_boxes %}<li>Small Boxes: {{ order.small_boxes }}</li>{% endif %}
+                    {% if order.medium_boxes %}<li>Medium Boxes: {{ order.medium_boxes }}</li>{% endif %}
+                    {% if order.large_boxes %}<li>Large Boxes: {{ order.large_boxes }}</li>{% endif %}
+                    {% if order.xl_boxes %}<li>XL Boxes: {{ order.xl_boxes }}</li>{% endif %}
+                    {% if order.wardrobe_boxes %}<li>Wardrobe Boxes: {{ order.wardrobe_boxes }}</li>{% endif %}
+                    {% if order.dish_boxes %}<li>Dish Boxes: {{ order.dish_boxes }}</li>{% endif %}
+                    {% if order.singleface_protection %}<li>Single Face Protection: {{ order.singleface_protection }}</li>{% endif %}
+                    {% if order.carpet_mask %}<li>Carpet Mask: {{ order.carpet_mask }}</li>{% endif %}
+                    {% if order.paper_pads %}<li>Paper Pads: {{ order.paper_pads }}</li>{% endif %}
+                    {% if order.packing_paper %}<li>Packing Paper: {{ order.packing_paper }}</li>{% endif %}
+                    {% if order.tape %}<li>Tape: {{ order.tape }}</li>{% endif %}
+                    {% if order.wine_boxes %}<li>Wine Boxes: {{ order.wine_boxes }}</li>{% endif %}
+                    {% if order.stretch_wrap %}<li>Stretch Wrap: {{ order.stretch_wrap }}</li>{% endif %}
+                    {% if order.tie_down_webbing %}<li>Tie Down Webbing: {{ order.tie_down_webbing }}</li>{% endif %}
+                    {% if order.packing_peanuts %}<li>Packing Peanuts: {{ order.packing_peanuts }}</li>{% endif %}
+                    {% if order.ram_board %}<li>Ram Board: {{ order.ram_board }}</li>{% endif %}
+                    {% if order.mattress_bags %}<li>Mattress Bags: {{ order.mattress_bags }}</li>{% endif %}
+                    {% if order.mirror_cartons %}<li>Mirror Cartons: {{ order.mirror_cartons }}</li>{% endif %}
+                    {% if order.bubble_wrap %}<li>Bubble Wrap: {{ order.bubble_wrap }}</li>{% endif %}
+                    {% if order.gondola_boxes %}<li>Gondola Boxes: {{ order.gondola_boxes }}</li>{% endif %}
+                </ul>
+            </div>
+            
+            {% if status == 'rejected' %}
+            <p>Please contact the supplier for more information about the rejection.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 
