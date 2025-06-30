@@ -98,8 +98,10 @@
 
             <!-- Packaging & Supplies -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
+                <a href="{% url 'packaging_supplies:index' %}">
+                    <img src="{% static 'images/supplies.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
+                </a>
             </div>
         </div>
     </section>
@@ -107,25 +109,25 @@
     <!-- Additional Sections -->
     <section class="text-center mt-10">
         <div class="flex flex-wrap justify-start w-full gap-x-4">
-            <!-- Uniform Inventory System -->
+            <!-- Marketing Inventory -->
             <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
                     <img src="{% static 'images/marketing_inventory.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                     <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Marketing Inventory</p>
             </div>
 
-            <!-- Gift Cards -->
+            <!-- Prizes & Acknowledgements -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
                     <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                     <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Prizes & Acknowledgements</p>
             </div>
 
-            <!-- On Site Inspection -->
+            <!-- Employee Evaluation -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
                     <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                     <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Employees Evaluation</p>
             </div>
 
-            <!-- Packaging & Supplies -->
+            <!-- Fleet fueling -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
                 <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                 <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Fleet Fueling </p>
