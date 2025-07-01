@@ -2,6 +2,9 @@ from django.db import models
 from authentication.models import UserProfile
 from vehicle.models import Crew, Vehicle
 from decimal import Decimal
+from django.conf import settings
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from django.core.files.storage import FileSystemStorage
 
 
 class Truck_inspection(models.Model):
@@ -569,13 +572,21 @@ class Onsite_inspection(models.Model):
     def __str__(self):
         return f"inspector : {self.inspector} - Job # {self.job_number}"
 
+# inspection/models.py
 class OnsiteInspectionImage(models.Model):
     inspection = models.ForeignKey(
         Onsite_inspection,
         related_name="images",
         on_delete=models.CASCADE
     )
-    image = models.ImageField(upload_to="inspection_photos/")
+
+    # pick FileSystemStorage when DEBUG, else Cloudinary
+    _storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
+    image = models.ImageField(
+        upload_to="inspection_photos/",
+        storage=_storage
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
