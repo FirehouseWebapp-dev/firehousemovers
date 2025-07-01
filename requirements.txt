@@ -6,10 +6,12 @@ certifi==2024.12.14
 chardet==5.2.0
 charset-normalizer==3.4.0
 click==8.1.7
+cloudinary==1.44.1
 cookiecutter==2.6.0
 dj-database-url==2.3.0
 Django==5.1.4
 django-appconf==1.0.6
+django-cloudinary-storage==0.3.0
 django-compressor==4.5.1
 django-environ==0.12.0
 django-tailwind==3.8.0
