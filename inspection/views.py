@@ -13,7 +13,7 @@ from inspection.forms import (
     TrailerInspectionForm,
     TruckInspectionForm,
 )
-from inspection.models import Onsite_inspection, Trailer_inspection, Truck_inspection
+from inspection.models import Onsite_inspection, Trailer_inspection, Truck_inspection, OnsiteInspectionImage
 from inventory_app.permissions import IsManager
 from vehicle.models import Crew, Vehicle
 from django.contrib import messages
@@ -292,7 +292,13 @@ class onsite_inspection_view(View):
                         final_instance.save()  # Save again after updating many-to-many field
                     except Crew.DoesNotExist:
                         final_instance.crew_members.clear()
-
+                        
+                photos = request.FILES.getlist("photos")
+                for photo in photos:
+                    OnsiteInspectionImage.objects.create(
+                        inspection=final_instance,
+                        image=photo
+                    )
                 # Clear the session data after saving
                 for s in range(1, len(steps) + 1):
                     request.session.pop(f"step_{s}_data", None)

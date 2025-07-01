@@ -1,23 +1,54 @@
 {% extends "onsite_inspection_base.html" %}
 {% load static %}
+
+{% block head %}
+  <!-- Camera CSS -->
+  <link
+    rel="stylesheet"
+    href="{% static 'inspection/css/inspection.css' %}"
+    href="{% static 'inspection/css/forms.css' %}"
+  />
+  <script src="{% static 'inspection/js/inspection.js' %}"></script>
+  <script>
+    // make the template’s `step` available to JS
+    window.STEP_NUMBER = {{ step }};
+  </script>
+{% endblock %}
+
 {% block body %}
 {% include "navbar.html" %}
 {% include "messages.html" %}
 
 <div class="container mt-5 mx-auto max-w-4xl" >
-    <form method="post" class="p-6 shadow-lg rounded-lg bg-white">
+    <form
+        id="inspection-form"
+        method="post"
+        enctype="multipart/form-data"
+        class="p-6 shadow-lg rounded-lg bg-white"
+    >
         {% csrf_token %}
         
         <!-- Progress Bar -->
-        <div class="progress-bar-container mb-4">
-            <ul class="progress-bar list-none flex justify-between items-center">
+        <div class="progress-wrapper">
+            <ul
+                id="progressBar"
+                class="progress-bar"
+                data-steps="{{ steps|length }}"
+            >
                 {% for i in steps.keys %}
-                    <li class="step {% if i <= step %}{% if i == step %}bg-red-600 text-white{% else %}bg-red-300 text-white{% endif %}{% endif %} w-10 h-10 flex items-center justify-center rounded-full">
-                        <span class="circle text-lg font-bold">{{ i }}</span>
-                    </li>
+                <li
+                    class="step {% if i < step %}completed{% elif i == step %}current{% endif %}"
+                >
+                    {{ i }}
+                </li>
                 {% endfor %}
             </ul>
-        </div>
+
+            <!-- Truck rides on top of the red segment -->
+            <div id="truckIcon">
+                <i class="fas fa-truck-moving"></i>
+            </div>
+            </div>
 
         <!-- Current Step Header -->
         <h4 class="mb-4 font-bold text-2xl">Prior to Move</h4>
@@ -41,6 +72,25 @@
                 <div class="form-group bg-gray-100 p-5 rounded-md">
                     <b class="text-gray-700">Overall Score: {{ overall_score }}</b>
                 </div>
+                <div id="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div id="viewfinder"></div>
+                    <div id="flash"></div>
+                    <button type="button" id="snap" class="snap-fa">
+                        <i class="fas fa-camera-alt"></i>
+                    </button>
+                </div>
+
+                <!-- right after that… -->
+                <div id="previews"></div>
+                <input
+                    type="file"
+                    id="id_photos"
+                    name="photos"
+                    accept="image/*"
+                    multiple
+                    hidden
+                />
             {% endif %}
             {% for field in form.visible_fields %}
                 {% if field.name in current_fields %}

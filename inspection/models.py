@@ -568,3 +568,15 @@ class Onsite_inspection(models.Model):
 
     def __str__(self):
         return f"inspector : {self.inspector} - Job # {self.job_number}"
+
+class OnsiteInspectionImage(models.Model):
+    inspection = models.ForeignKey(
+        Onsite_inspection,
+        related_name="images",
+        on_delete=models.CASCADE
+    )
+    image = models.ImageField(upload_to="inspection_photos/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.inspection.job_number} – {self.image.name}"

@@ -5,13 +5,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fire House</title>
-    <link rel="icon" href="{% static 'images/fire_house_logo.svg' %}" type="image/icon type">
+
+    {# Favicon #}
+    <link
+      rel="icon"
+      href="{% static 'images/fire_house_logo.svg' %}"
+      type="image/svg+xml"
+    />
+
+    {# Tailwind CSS #}
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=YourCustomFont:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    {# Google Fonts #}
+    <link
+      href="https://fonts.googleapis.com/css2?family=YourCustomFont:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    {# Font Awesome (optional) #}
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+
+    {# Per-page CSS/JS insertion point #}
+    {% block head %}{% endblock %}
 </head>
-<body style="font-family: var(--titleFont); background-image: url({% static 'images/acknowledgments.jpg' %})" class="bg-opacity-90 bg-cover">
-    {% block body %}
-    {% endblock %}
+<body
+  style="font-family: var(--titleFont); background-image: url({% static 'images/acknowledgments.jpg' %})"
+  class="bg-opacity-90 bg-cover"
+>
+    {% block body %}{% endblock %}
 </body>
 </html>
+
+
