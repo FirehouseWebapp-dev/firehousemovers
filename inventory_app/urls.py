@@ -12,9 +12,6 @@ from inventory_app.views import (
     get_email,
     low_stock_alerts,
 )
-from django.conf import settings
-from django.conf.urls.static import static
-
 
 urlpatterns = [
     path("", homeview, name="home"),
@@ -29,8 +26,4 @@ urlpatterns = [
     path("get-uniforms/", get_uniforms, name="get_uniforms"),
     path('get-email/', get_email, name='get_email'),
     path('low-stock-alerts/', low_stock_alerts, name='low_stock_alerts'),
-
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
