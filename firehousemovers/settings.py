@@ -38,7 +38,7 @@ SECRET_KEY = os.environ.get(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv("DEBUG", "False")
-DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+DEBUG = os.environ.get("DJANGO_DEBUG","True") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -84,10 +84,7 @@ if DEBUG:
     MEDIA_URL  = "/media/"
     MEDIA_ROOT = BASE_DIR / "media"
 else:
-    INSTALLED_APPS += [
-        "cloudinary",
-        "cloudinary_storage",
-    ]
+    INSTALLED_APPS += ["cloudinary","cloudinary_storage"]
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
     CLOUDINARY_STORAGE = {
         "CLOUD_NAME": os.environ["CLOUDINARY_CLOUD_NAME"],

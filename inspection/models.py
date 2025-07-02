@@ -8,6 +8,15 @@ from django.core.files.storage import FileSystemStorage
 from django.core.files.storage import default_storage
 import os
 
+if settings.DEBUG:
+    # local development: save into /media/...
+    _inspection_storage = FileSystemStorage()
+else:
+    # production: send to your Cloudinary bucket
+    from cloudinary_storage.storage import MediaCloudinaryStorage
+
+    _inspection_storage = MediaCloudinaryStorage()
+
 class Truck_inspection(models.Model):
 
     CLEAN_STATUS_CHOICES = [
@@ -583,13 +592,14 @@ def inspection_upload_to(instance, filename):
     return os.path.join(folder, "inspection_photos", filename)
 
 class OnsiteInspectionImage(models.Model):
-    inspection  = models.ForeignKey(
+    inspection = models.ForeignKey(
         Onsite_inspection,
         related_name="images",
         on_delete=models.CASCADE,
     )
     image = models.ImageField(
         upload_to=inspection_upload_to,
+        storage=_inspection_storage,    # ← use the dynamic backend
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
