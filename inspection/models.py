@@ -2,7 +2,19 @@ from django.db import models
 from authentication.models import UserProfile
 from vehicle.models import Crew, Vehicle
 from decimal import Decimal
+from django.conf import settings
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from django.core.files.storage import FileSystemStorage
+import os
 
+if settings.DEBUG:
+    # local development: save into /media/...
+    _inspection_storage = FileSystemStorage()
+else:
+    # production: send to your Cloudinary bucket
+    from cloudinary_storage.storage import MediaCloudinaryStorage
+
+    _inspection_storage = MediaCloudinaryStorage()
 
 class Truck_inspection(models.Model):
 
@@ -568,3 +580,30 @@ class Onsite_inspection(models.Model):
 
     def __str__(self):
         return f"inspector : {self.inspector} - Job # {self.job_number}"
+
+def inspection_upload_to(instance, filename):
+    """
+    Puts files under either:
+      - dev_inspections/…  (when DEBUG=True)
+      - prod_inspections/… (when DEBUG=False)
+    """
+    folder = "dev_inspections" if settings.DEBUG else "prod_inspections"
+    return os.path.join(folder, "inspection_photos", filename)
+
+class OnsiteInspectionImage(models.Model):
+    inspection = models.ForeignKey(
+        Onsite_inspection,
+        related_name="images",
+        on_delete=models.CASCADE,
+    )
+    # pick FileSystemStorage when DEBUG, else Cloudinary
+    _storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
+    image = models.ImageField(
+        upload_to="inspection_photos/",
+        storage=_storage
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.inspection.job_number} – {self.image.name}"

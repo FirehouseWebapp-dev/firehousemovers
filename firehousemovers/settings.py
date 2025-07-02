@@ -38,14 +38,13 @@ SECRET_KEY = os.environ.get(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv("DEBUG", "False")
-DEBUG = env("DEBUG", default="False") == "True"
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "fire-house-movers-7f0b30006c85.herokuapp.com",
 ]
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -80,6 +79,25 @@ INSTALLED_APPS = [
     "inspection",
     "packaging_supplies",
 ]
+
+if DEBUG:
+    # Local filesystem (development)
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+else:
+    # Cloudinary (production)
+    INSTALLED_APPS += [
+        "cloudinary",
+        "cloudinary_storage",
+    ]
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    # Cloudinary credentials via env vars:
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME":  os.environ["CLOUDINARY_CLOUD_NAME"],
+        "API_KEY":     os.environ["CLOUDINARY_API_KEY"],
+        "API_SECRET":  os.environ["CLOUDINARY_API_SECRET"],
+        "SECURE":      True,
+    }
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
