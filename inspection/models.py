@@ -5,7 +5,6 @@ from decimal import Decimal
 from django.conf import settings
 from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.core.files.storage import FileSystemStorage
-from django.core.files.storage import default_storage
 import os
 
 if settings.DEBUG:
@@ -597,9 +596,12 @@ class OnsiteInspectionImage(models.Model):
         related_name="images",
         on_delete=models.CASCADE,
     )
+    # pick FileSystemStorage when DEBUG, else Cloudinary
+    _storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
     image = models.ImageField(
-        upload_to=inspection_upload_to,
-        storage=_inspection_storage,    # ← use the dynamic backend
+        upload_to="inspection_photos/",
+        storage=_storage
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

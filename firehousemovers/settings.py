@@ -38,7 +38,7 @@ SECRET_KEY = os.environ.get(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv("DEBUG", "False")
-DEBUG = os.environ.get("DJANGO_DEBUG","True") == "True"
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -81,16 +81,22 @@ INSTALLED_APPS = [
 ]
 
 if DEBUG:
-    MEDIA_URL  = "/media/"
-    MEDIA_ROOT = BASE_DIR / "media"
+    # Local filesystem (development)
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 else:
-    INSTALLED_APPS += ["cloudinary","cloudinary_storage"]
+    # Cloudinary (production)
+    INSTALLED_APPS += [
+        "cloudinary",
+        "cloudinary_storage",
+    ]
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    # Cloudinary credentials via env vars:
     CLOUDINARY_STORAGE = {
-        "CLOUD_NAME": os.environ["CLOUDINARY_CLOUD_NAME"],
-        "API_KEY":    os.environ["CLOUDINARY_API_KEY"],
-        "API_SECRET": os.environ["CLOUDINARY_API_SECRET"],
-        "SECURE":     True,
+        "CLOUD_NAME":  os.environ["CLOUDINARY_CLOUD_NAME"],
+        "API_KEY":     os.environ["CLOUDINARY_API_KEY"],
+        "API_SECRET":  os.environ["CLOUDINARY_API_SECRET"],
+        "SECURE":      True,
     }
 
 MIDDLEWARE = [
