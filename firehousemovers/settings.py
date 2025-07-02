@@ -80,24 +80,21 @@ INSTALLED_APPS = [
     "packaging_supplies",
 ]
 
-if not DEBUG:
-    # only install and activate Cloudinary in production
+if DEBUG:
+    MEDIA_URL  = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
+else:
     INSTALLED_APPS += [
         "cloudinary",
         "cloudinary_storage",
     ]
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-    # Cloudinary credentials via env vars:
     CLOUDINARY_STORAGE = {
-        "CLOUD_NAME":  os.environ["CLOUDINARY_CLOUD_NAME"],
-        "API_KEY":     os.environ["CLOUDINARY_API_KEY"],
-        "API_SECRET":  os.environ["CLOUDINARY_API_SECRET"],
-        "SECURE":      True,
+        "CLOUD_NAME": os.environ["CLOUDINARY_CLOUD_NAME"],
+        "API_KEY":    os.environ["CLOUDINARY_API_KEY"],
+        "API_SECRET": os.environ["CLOUDINARY_API_SECRET"],
+        "SECURE":     True,
     }
-else:
-    MEDIA_URL = "/media/"
-    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-    # Django will build MEDIA_URL from Cloudinary settings automatically
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
