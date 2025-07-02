@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.conf import settings
 from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage
 
 
 class Truck_inspection(models.Model):
@@ -572,20 +573,24 @@ class Onsite_inspection(models.Model):
     def __str__(self):
         return f"inspector : {self.inspector} - Job # {self.job_number}"
 
-# inspection/models.py
+def inspection_upload_to(instance, filename):
+    """
+    Puts files under either:
+      - dev_inspections/…  (when DEBUG=True)
+      - prod_inspections/… (when DEBUG=False)
+    """
+    folder = "dev_inspections" if settings.DEBUG else "prod_inspections"
+    return f"{folder}/inspection_photos/{filename}"
+
 class OnsiteInspectionImage(models.Model):
-    inspection = models.ForeignKey(
+    inspection  = models.ForeignKey(
         Onsite_inspection,
         related_name="images",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
-
-    # pick FileSystemStorage when DEBUG, else Cloudinary
-    _storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
-
     image = models.ImageField(
-        upload_to="inspection_photos/",
-        storage=_storage
+        upload_to=inspection_upload_to,
+        storage=default_storage
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 

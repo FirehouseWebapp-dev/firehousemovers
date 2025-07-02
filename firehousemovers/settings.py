@@ -38,7 +38,7 @@ SECRET_KEY = os.environ.get(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv("DEBUG", "False")
-DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -80,12 +80,8 @@ INSTALLED_APPS = [
     "packaging_supplies",
 ]
 
-if DEBUG:
-    # Local filesystem (development)
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-else:
-    # Cloudinary (production)
+if not DEBUG:
+    # only install and activate Cloudinary in production
     INSTALLED_APPS += [
         "cloudinary",
         "cloudinary_storage",
@@ -98,6 +94,9 @@ else:
         "API_SECRET":  os.environ["CLOUDINARY_API_SECRET"],
         "SECURE":      True,
     }
+else:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
     # Django will build MEDIA_URL from Cloudinary settings automatically
 
 MIDDLEWARE = [
