@@ -1,0 +1,87 @@
+/* marketing/css/vendors_items.css */
+
+/* ── Container / Form Card ── */
+.marketing-form {
+  background: #262626;
+  padding: 1.5rem;
+  border-radius: .5rem;
+  margin-bottom: 2rem;
+}
+.marketing-form h1,
+.marketing-form h2 {
+  color: #EF4444; /* firehouse red */
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+/* ── Labels & Inputs ── */
+.marketing-form label {
+  display: block;
+  color: #FFFFFF;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+.marketing-form input[type="text"],
+.marketing-form input[type="number"],
+.marketing-form select,
+.marketing-form textarea {
+  width: 100%;
+  padding: .5rem;
+  margin-bottom: 1rem;
+  background: #1a1c20;
+  color: #EFEFEF;
+  border: 1px solid #333;
+  border-radius: .25rem;
+}
+
+/* ── Buttons ── */
+.btn-add {
+  background: #EF4444;
+  color: #fff;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: .25rem;
+  transition: background .2s;
+}
+.btn-add:hover {
+  background: #DC2626;
+}
+.btn-remove {
+  background: #F59E0B;
+  color: #fff;
+  padding: .5rem 1rem;
+  border: none;
+  border-radius: .25rem;
+  transition: background .2s;
+}
+.btn-remove:hover {
+  background: #D97706;
+}
+
+/* ── Table ── */
+.marketing-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+.marketing-table th {
+  background: #1a1c20;
+  color: #EF4444;
+  text-align: left;
+  padding: .75rem;
+}
+.marketing-table td {
+  background: #262626;
+  color: #DDD;
+  padding: .75rem;
+  border-bottom: 1px solid #333;
+}
+
+/* ── Simple List ── */
+.marketing-list li {
+  background: #262626;
+  color: #DDD;
+  padding: .75rem 1rem;
+  border-radius: .25rem;
+  margin-bottom: .5rem;
+}

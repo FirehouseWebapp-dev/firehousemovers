@@ -1,0 +1,61 @@
+/* container */
+.gallery {
+  position: relative;
+  padding: 4rem 1rem;
+  overflow: hidden;
+  background: #fafefa;
+}
+
+/* 1) Stack of cards */
+.card-stack {
+  white-space: nowrap;
+  transform: translateZ(0);
+  transition: transform 0.8s ease;
+}
+.card {
+  display: inline-block;
+  width: 120px;
+  height: 180px;
+  margin-left: -80px;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  transition:
+    margin-left 0.8s ease,
+    transform 0.8s ease,
+    opacity 0.5s ease 0.3s;
+}
+
+/* 2) Photo grid (initially hidden) */
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.8s;
+}
+.photo {
+  width: calc(33% - 1rem);
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: scale(0.95);
+  transition: transform 0.5s ease 1s;
+}
+
+/* === on‐scroll “expanded” state === */
+.gallery.expanded .card-stack {
+  transform: translateX(0);
+}
+.gallery.expanded .card {
+  margin-left: 10px;
+  transform: translateY(-10px);
+  opacity: 0;            /* fade cards out */
+}
+.gallery.expanded .photo-grid {
+  opacity: 1;            /* fade in grid */
+}
+.gallery.expanded .photo {
+  transform: scale(1);   /* pop images into place */
+}

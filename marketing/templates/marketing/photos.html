@@ -1,0 +1,90 @@
+{% extends "marketing/base.html" %}
+{% load static %}
+
+{% block title %}Marketing Photos{% endblock %}
+
+{% block content %}
+  <h1 class="text-center text-4xl font-extrabold text-red-600 mb-8">
+    M a r k e t i n g &nbsp; P h o t o s
+  </h1>
+
+  <form
+    id="photo-form"
+    method="post"
+    enctype="multipart/form-data"
+    class="relative max-w-3xl mx-auto mb-16"
+  >
+    {% csrf_token %}
+
+    <!-- camera + snap -->
+    <div class="camera-wrapper">
+      <video
+        id="video"
+        class="camera-video"
+        autoplay
+        playsinline
+      ></video>
+      <div id="flash" class="camera-flash"></div>
+      <button
+        type="button"
+        id="snap"
+        class="camera-snap"
+      >
+        <i class="fas fa-camera-alt"></i>
+      </button>
+    </div>
+
+    <!-- disk-pick button -->
+    <button
+      type="button"
+      id="add-files-btn"
+      class="upload-btn"
+    >
+      Add Existing Photos
+    </button>
+
+    <!-- submit -->
+    <button
+      type="submit"
+      class="publish-btn"
+    >
+      Publish photo/s to the marketing photos
+    </button>
+
+    <!-- live previews + remove -->
+    <div id="previews" class="photo-previews"></div>
+
+    <!-- hidden file input -->
+    <input
+      type="file"
+      id="id_photos"
+      name="photos"
+      accept="image/*"
+      multiple
+      hidden
+    >
+  </form>
+
+  <!-- already-published carousel -->
+  <div class="carousel-wrapper">
+    <div class="carousel">
+      {% for photo in photos %}
+        <div class="carousel-card">
+          <img
+            src="{{ photo.image.url }}"
+            alt="Photo {{ forloop.counter }}"
+          >
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- modal preview -->
+  <div id="modal" class="modal">
+    <img id="modal-img" src="" alt="Full size photo">
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'marketing/js/photos.js' %}"></script>
+{% endblock %}

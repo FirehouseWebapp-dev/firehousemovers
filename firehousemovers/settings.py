@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "gift",
     "inspection",
     "packaging_supplies",
+    "marketing",
 ]
 
 if DEBUG:

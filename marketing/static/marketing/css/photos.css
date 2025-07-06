@@ -1,0 +1,175 @@
+/* —— camera UI + buttons —— */
+.camera-wrapper {
+  position: relative;
+  margin: 0 auto 2rem;
+  max-width: 720px;
+}
+.camera-video {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.camera-flash {
+  position: absolute; 
+  inset:0;
+  background: white; 
+  opacity: 0;
+  transition: opacity .2s ease-out;
+}
+.camera-snap {
+  position: absolute; 
+  bottom:1.25rem; 
+  left:50%;
+  transform:translateX(-50%);
+  width:3.5rem; 
+  height:3.5rem;
+  background:#B91C1C; 
+  border:none; 
+  border-radius:50%;
+  color:#fff; 
+  font-size:1.4rem;
+  display:flex; 
+  align-items:center; 
+  justify-content:center;
+  cursor:pointer;
+   box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* disk-pick button */
+.upload-btn {
+  display:inline-block;
+  margin-right:1rem; 
+  margin-bottom:1rem;
+  background:#fff; 
+  color:#B91C1C;
+  padding:.75rem 1.5rem; 
+  border:2px solid #B91C1C;
+  border-radius:4px; 
+  font-weight:600;
+  cursor:pointer; 
+  transition:background .2s,color .2s;
+}
+.upload-btn:hover {
+  background:#B91C1C; 
+  color:#fff;
+}
+
+/* publish button */
+.publish-btn {
+  display:inline-block;
+  margin-bottom:1rem;
+  background:#fff; 
+  color:#B91C1C;
+  padding:.75rem 1.5rem; 
+  border:none; 
+  border-radius:4px;
+  font-weight:600; 
+  cursor:pointer;
+  transition:background .2s,color .2s;
+}
+.publish-btn:hover {
+  background:#B91C1C; 
+  color:#fff;
+}
+
+/* —— previews + remove —— */
+.photo-previews {
+  display:flex; 
+  flex-wrap:wrap; 
+  gap:.5rem;
+  justify-content:center; 
+  margin-top:1rem;
+}
+.preview-item {
+  position:relative; 
+  width:120px; height:90px;
+}
+.photo-previews img {
+  width:100%; 
+  height:100%;
+  object-fit:cover; 
+  border-radius:4px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.remove-btn {
+  position:absolute; 
+  top:4px; right:4px;
+  background:rgba(0,0,0,0.6); 
+  color:#fff;
+  border:none; 
+  border-radius:50%;
+  width:24px; 
+  height:24px;
+  font-size:16px; 
+  line-height:24px; 
+  text-align:center;
+  cursor:pointer; 
+  padding:0;
+}
+.remove-btn:hover {
+  background:rgba(185,28,28,0.8);
+}
+/* —— carousel shelf —— */
+.carousel-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2rem auto;
+  max-width: 90%;
+  /* allow the carousel itself to overflow */
+  overflow: visible;
+}
+
+.carousel {
+  display: flex;
+  /* allow horizontal scroll, hide vertical overflow */
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 1rem;
+  scroll-behavior: smooth;  
+  padding-bottom: 0.5rem;     /* leave a little room for the scrollbar */
+}
+
+/* hide the browser scrollbar if you like */
+.carousel::-webkit-scrollbar { display: none; }
+.carousel { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* cards keep their two-corner rounding */
+.carousel-card {
+  flex-shrink: 0;
+  min-width: 200px;
+  height: 280px;
+  /* top-left & bottom-right rounded, others sharp */
+  border-radius: 8px 0 8px 0;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  background: #111;
+}
+
+.carousel-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform .3s ease-out;
+}
+.carousel-card img:hover {
+  transform: scale(1.05);
+}
+
+/* —— modal preview —— */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal.active { display: flex; }
+.modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
