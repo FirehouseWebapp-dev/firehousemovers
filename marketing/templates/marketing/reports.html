@@ -1,0 +1,131 @@
+{% extends "marketing/base.html" %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="flex">
+  <!-- Sidebar -->
+  <aside class="w-1/5 p-6 bg-[#262626] text-white" id="sidebar">
+    <h2 class="font-bold text-2xl mb-6 text-red-600">Reports</h2>
+    <ul class="space-y-2">
+      <li>
+        <a href="{% url 'marketing:reports' %}?report_type=vendor"
+           class="block px-4 py-2 rounded {% if report_type == 'vendor' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          Vendor Report
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'marketing:reports' %}?report_type=item"
+           class="block px-4 py-2 rounded {% if report_type == 'item' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          Item Report
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 p-10 bg-black text-white min-h-screen">
+    <h1 class="text-4xl font-extrabold text-red-600 mb-8">Generate {{ report_type|title }} Report</h1>
+
+    {% if report_type %}
+      <form method="get" class="space-y-4 mb-8">
+        <input type="hidden" name="report_type" value="{{ report_type }}">
+
+        <div>
+          <label class="block font-semibold mb-1 text-white">Start Date:</label>
+          <input type="date" name="start_date" value="{{ start_date }}"
+                 class="w-64 px-4 py-2 rounded border border-gray-500 bg-black text-white focus:border-red-600 focus:ring-0">
+        </div>
+
+        <div>
+          <label class="block font-semibold mb-1 text-white">End Date:</label>
+          <input type="date" name="end_date" value="{{ end_date }}"
+                 class="w-64 px-4 py-2 rounded border border-gray-500 bg-black text-white focus:border-red-600 focus:ring-0">
+        </div>
+
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow">
+          Generate Report
+        </button>
+      </form>
+
+      {% if show_report %}
+        <div id="report-section">
+          <div class="overflow-x-auto mb-6 rounded shadow-lg border border-gray-700">
+            <table class="min-w-full bg-[#1c1c1c] text-white">
+              <thead>
+                <tr>
+                  {% if report_type == "vendor" %}
+                    <th class="px-6 py-3 border-b border-gray-600 text-left">Name</th>
+                    <th class="px-6 py-3 border-b border-gray-600 text-left">Contact Info</th>
+                  {% elif report_type == "item" %}
+                    <th class="px-6 py-3 border-b border-gray-600 text-left">Name</th>
+                    <th class="px-6 py-3 border-b border-gray-600 text-left">Quantity</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for obj in data %}
+                  <tr class="hover:bg-gray-800">
+                    {% if report_type == "vendor" %}
+                      <td class="px-6 py-3 border-b border-gray-700">{{ obj.name }}</td>
+                      <td class="px-6 py-3 border-b border-gray-700">{{ obj.contact_info }}</td>
+                    {% elif report_type == "item" %}
+                      <td class="px-6 py-3 border-b border-gray-700">{{ obj.name }}</td>
+                      <td class="px-6 py-3 border-b border-gray-700">{{ obj.quantity }}</td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <button onclick="printReport()"
+                class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded shadow">
+          Print Report
+        </button>
+      {% elif start_date or end_date %}
+        <p class="mt-4 text-gray-400">No data found for selected criteria.</p>
+      {% endif %}
+    {% else %}
+      <p class="text-gray-400">Please select a report type from the sidebar.</p>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function printReport() {
+    document.getElementById('sidebar').style.display = 'none';
+    const navbar = document.querySelector('nav');
+    if (navbar) navbar.style.display = 'none';
+    window.print();
+    document.getElementById('sidebar').style.display = '';
+    if (navbar) navbar.style.display = '';
+  }
+</script>
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #report-section, #report-section * {
+      visibility: visible;
+    }
+    #report-section {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  function printReport() {
+    window.print();
+  }
+</script>
+{% endblock %}

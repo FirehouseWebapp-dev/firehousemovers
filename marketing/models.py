@@ -16,6 +16,7 @@ class MarketingPhoto(models.Model):
 class Vendor(models.Model):
     name         = models.CharField(max_length=200, unique=True)
     contact_info = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -23,6 +24,7 @@ class Vendor(models.Model):
 class PromotionalItem(models.Model):
     name     = models.CharField(max_length=200, unique=True)
     quantity = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name} ({self.quantity})"

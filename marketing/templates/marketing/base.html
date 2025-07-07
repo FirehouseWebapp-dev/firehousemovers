@@ -51,6 +51,12 @@
                 {% if current == "items" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
         🎁 Items
       </a>
+      <a href="{% url 'marketing:reports' %}"
+         class="block px-4 py-2 rounded
+                {% if current == 'vendor_report' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+        📊  Reports
+      </a>
+
     </nav>
     {% endwith %}
   </aside>
