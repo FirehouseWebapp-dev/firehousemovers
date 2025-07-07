@@ -14,8 +14,15 @@ class PhotoUploadView(LoginRequiredMixin, View):
     """
     def get(self, request):
         photos = MarketingPhoto.objects.order_by("-uploaded_at")
+
+        can_delete = request.user.is_staff
+        if hasattr(request.user, "userprofile"):
+            if request.user.userprofile.role == "manager":
+                can_delete = True
+
         return render(request, "marketing/photos.html", {
             "photos": photos,
+            "can_delete": can_delete,
         })
 
     def post(self, request):
@@ -31,16 +38,14 @@ class PhotoUploadView(LoginRequiredMixin, View):
         return redirect("marketing:photos")
 
 
-class PhotoDeleteView(
-    LoginRequiredMixin,
-    UserPassesTestMixin,
-    View
-):
-    """
-    Only staff can POST here to delete an existing MarketingPhoto.
-    """
+class PhotoDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return self.request.user.is_staff
+        user = self.request.user
+        if user.is_staff:
+            return True
+        if hasattr(user, "userprofile"):
+            return user.userprofile.role == "manager"
+        return False
 
     def post(self, request, pk):
         photo = get_object_or_404(MarketingPhoto, pk=pk)
