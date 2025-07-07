@@ -1,13 +1,18 @@
 import os
 from django.conf import settings
 from django.db import models
+from cloudinary_storage.storage import MediaCloudinaryStorage
+from django.core.files.storage import FileSystemStorage
 
 def marketing_photo_upload_to(inst, fn):
     base = "dev_marketing" if settings.DEBUG else "prod_marketing"
     return os.path.join(base, "photos", fn)
 
+# Pick storage explicitly
+_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
 class MarketingPhoto(models.Model):
-    image       = models.ImageField(upload_to=marketing_photo_upload_to)
+    image = models.ImageField(upload_to=marketing_photo_upload_to, storage=_storage)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
