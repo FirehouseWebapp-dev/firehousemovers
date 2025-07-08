@@ -38,12 +38,10 @@
 /* disk-pick button */
 .upload-btn {
   display:inline-block;
-  margin-right:1rem; 
-  margin-bottom:1rem;
+  margin:1.5rem; 
   background:#fff; 
   color:#B91C1C;
   padding:.75rem 1.5rem; 
-  border:2px solid #B91C1C;
   border-radius:4px; 
   font-weight:600;
   cursor:pointer; 
@@ -172,4 +170,25 @@
   max-height: 90%;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+/* Smooth fade-up on load */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1s ease-out, transform 1s ease-out;
+}
+
+.fade-up.loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Extra hover scaling for images (if needed) */
+.hover-zoom img {
+  transition: transform 0.5s ease;
+}
+
+.hover-zoom:hover img {
+  transform: scale(1.05);
 }
