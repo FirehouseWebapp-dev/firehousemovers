@@ -1,25 +1,34 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.contrib.auth import get_user_model
+
 from .models import MarketingPhoto, Vendor, PromotionalItem, PromotionalItemTransaction
 from .forms import VendorForm, PromotionalItemForm, PromotionalItemRemoveForm
-from django.utils.dateparse import parse_date
 
-class PhotoUploadView(LoginRequiredMixin, View):
-    """
-    GET: show the camera/upload UI + gallery of existing photos
-    POST: save any submitted 'photos' files and redirect back
-    """
+# Import permissions
+from rest_framework.permissions import IsAuthenticated
+from inventory_app.permissions import IsManager
+
+User = get_user_model()
+
+class PhotoUploadView(View):
+    permission_classes = [IsAuthenticated]
+
+    def dispatch(self, request, *args, **kwargs):
+        for permission in self.permission_classes:
+            permission_instance = permission()
+            if not permission_instance.has_permission(request, self):
+                return redirect("authentication:login")
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request):
         photos = MarketingPhoto.objects.order_by("-uploaded_at")
-
         can_delete = request.user.is_staff
-        if hasattr(request.user, "userprofile"):
-            if request.user.userprofile.role == "manager":
-                can_delete = True
-
+        if hasattr(request.user, "userprofile") and request.user.userprofile.role == "manager":
+            can_delete = True
         return render(request, "marketing/photos.html", {
             "photos": photos,
             "can_delete": can_delete,
@@ -30,22 +39,21 @@ class PhotoUploadView(LoginRequiredMixin, View):
         if not files:
             messages.error(request, "Please select or capture at least one image.")
             return redirect("marketing:photos")
-
         for img in files:
             MarketingPhoto.objects.create(image=img)
-
         messages.success(request, "Photos uploaded successfully!")
         return redirect("marketing:photos")
 
 
-class PhotoDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
-    def test_func(self):
-        user = self.request.user
-        if user.is_staff:
-            return True
-        if hasattr(user, "userprofile"):
-            return user.userprofile.role == "manager"
-        return False
+class PhotoDeleteView(View):
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def dispatch(self, request, *args, **kwargs):
+        for permission in self.permission_classes:
+            permission_instance = permission()
+            if not permission_instance.has_permission(request, self):
+                return redirect("authentication:login")
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, pk):
         photo = get_object_or_404(MarketingPhoto, pk=pk)
@@ -54,7 +62,16 @@ class PhotoDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect("marketing:photos")
 
 
-class VendorListCreateView(LoginRequiredMixin, View):
+class VendorListCreateView(View):
+    permission_classes = [IsAuthenticated]
+
+    def dispatch(self, request, *args, **kwargs):
+        for permission in self.permission_classes:
+            permission_instance = permission()
+            if not permission_instance.has_permission(request, self):
+                return redirect("authentication:login")
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request):
         form = VendorForm()
         vendors = Vendor.objects.order_by("name")
@@ -69,14 +86,24 @@ class VendorListCreateView(LoginRequiredMixin, View):
         vendors = Vendor.objects.order_by("name")
         return render(request, "marketing/vendors.html", {"form": form, "vendors": vendors})
 
-class PromotionalItemView(LoginRequiredMixin, View):
+
+class PromotionalItemView(View):
+    permission_classes = [IsAuthenticated]
+
+    def dispatch(self, request, *args, **kwargs):
+        for permission in self.permission_classes:
+            permission_instance = permission()
+            if not permission_instance.has_permission(request, self):
+                return redirect("authentication:login")
+        return super().dispatch(request, *args, **kwargs)
+
     template_name = "marketing/items.html"
 
     def get(self, request):
         return render(request, self.template_name, {
-            "add_form":    PromotionalItemForm(),
+            "add_form": PromotionalItemForm(),
             "remove_form": PromotionalItemRemoveForm(),
-            "items":       PromotionalItem.objects.all(),
+            "items": PromotionalItem.objects.all(),
             "transactions": PromotionalItemTransaction.objects.order_by("-timestamp"),
         })
 
@@ -90,32 +117,39 @@ class PromotionalItemView(LoginRequiredMixin, View):
                 return redirect("marketing:items")
         else:
             remove_form = PromotionalItemRemoveForm(request.POST)
-            add_form    = PromotionalItemForm()
+            add_form = PromotionalItemForm()
             if remove_form.is_valid():
-                item   = remove_form.cleaned_data["item"]
-                qty    = remove_form.cleaned_data["quantity"]
+                item = remove_form.cleaned_data["item"]
+                qty = remove_form.cleaned_data["quantity"]
                 reason = remove_form.cleaned_data["reason"]
                 item.quantity = max(item.quantity - qty, 0)
                 item.save()
                 PromotionalItemTransaction.objects.create(item=item, action="remove", quantity=qty, reason=reason)
                 messages.success(request, "Item removed!")
                 return redirect("marketing:items")
+
         return render(request, self.template_name, {
-            "add_form":    add_form,
+            "add_form": add_form,
             "remove_form": remove_form,
-            "items":       PromotionalItem.objects.all(),
+            "items": PromotionalItem.objects.all(),
             "transactions": PromotionalItemTransaction.objects.order_by("-timestamp"),
         })
 
 
-class ReportsView(TemplateView):
-    template_name = "marketing/reports.html"
+class ReportsView(View):
+    permission_classes = [IsAuthenticated]
 
-    def get_context_data(self, **ctx):
-        ctx = super().get_context_data(**ctx)
-        report_type = self.request.GET.get("report_type")
-        start_date_str = self.request.GET.get("start_date")
-        end_date_str = self.request.GET.get("end_date")
+    def dispatch(self, request, *args, **kwargs):
+        for permission in self.permission_classes:
+            permission_instance = permission()
+            if not permission_instance.has_permission(request, self):
+                return redirect("authentication:login")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        report_type = request.GET.get("report_type")
+        start_date_str = request.GET.get("start_date")
+        end_date_str = request.GET.get("end_date")
 
         start_date = parse_date(start_date_str) if start_date_str else None
         end_date = parse_date(end_date_str) if end_date_str else None
@@ -129,7 +163,7 @@ class ReportsView(TemplateView):
                 qs = qs.filter(created_at__date__gte=start_date)
             if end_date:
                 qs = qs.filter(created_at__date__lte=end_date)
-            show_report = True  # always show report when user clicks Generate
+            show_report = True
             data = qs.order_by("name")
         elif report_type == "item":
             qs = PromotionalItem.objects.all()
@@ -140,10 +174,10 @@ class ReportsView(TemplateView):
             show_report = True
             data = qs.order_by("name")
 
-        ctx["report_type"] = report_type
-        ctx["start_date"] = start_date_str
-        ctx["end_date"] = end_date_str
-        ctx["data"] = data
-        ctx["show_report"] = show_report
-
-        return ctx
+        return render(request, "marketing/reports.html", {
+            "report_type": report_type,
+            "start_date": start_date_str,
+            "end_date": end_date_str,
+            "data": data,
+            "show_report": show_report,
+        })

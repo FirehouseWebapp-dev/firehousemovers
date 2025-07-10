@@ -19,10 +19,10 @@
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    integrity="sha512-pVUq+4e3u3+CsFJoFvmnOKz9x+T0i8Yx4Fq3S+y/H1h2S+fIRw5NYplE1v6ci+0P36jY8+JpqZqI6HLLrTyyxg=="
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
+
 
   {# — YOUR APP-SPECIFIC CSS — #}
   <link href="{% static 'marketing/css/photos.css' %}" rel="stylesheet">
@@ -35,38 +35,48 @@
   {% include "inventory_app/navbar.html" %}
 
   {# — SIDEBAR — #}
-<aside class="w-1/5 p-6 space-y-6 bg-[#262626]">
-    <h2 class="text-2xl font-bold text-red-600">Marketing</h2>
-    {% with current=request.resolver_match.url_name %}
-    <nav class="space-y-2">
-      <a href="{% url 'marketing:photos' %}"
-         class="block px-4 py-2 rounded 
-                {% if current == "photos" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
-        📸 Photos
-      </a>
-      <a href="{% url 'marketing:vendors' %}"
-         class="block px-4 py-2 rounded 
-                {% if current == "vendors" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
-        🏷️ Vendors
-      </a>
-      <a href="{% url 'marketing:items' %}"
-         class="block px-4 py-2 rounded 
-                {% if current == "items" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
-        🎁 Items
-      </a>
-      <a href="{% url 'marketing:reports' %}"
-         class="block px-4 py-2 rounded
-                {% if current == 'vendor_report' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
-        📊  Reports
-      </a>
+  <aside class="w-1/5 p-6 space-y-6 bg-[#262626]">
+      <h2 class="text-2xl font-bold text-red-600">Marketing</h2>
+      {% with current=request.resolver_match.url_name %}
+      <nav class="space-y-2">
 
-    </nav>
-    {% endwith %}
+        <a href="{% url 'marketing:photos' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "photos" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-camera text-white"></i>
+          Photos
+        </a>
+
+        <a href="{% url 'marketing:vendors' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "vendors" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-tags text-white"></i>
+          Vendors
+        </a>
+
+        <a href="{% url 'marketing:items' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "items" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-gift text-white"></i>
+          Items
+        </a>
+
+        <a href="{% url 'marketing:reports' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == 'vendor_report' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-chart-bar text-white"></i>
+          Reports
+        </a>
+
+      </nav>
+      {% endwith %}
   </aside>
+
 
   {# — MAIN CONTENT — #}
   <main class="flex-1 overflow-auto pt-8">
     {% include "messages.html" %}
+    
     {% block content %}{% endblock %}
   </main>
 
