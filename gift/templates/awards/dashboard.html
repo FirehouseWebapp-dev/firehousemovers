@@ -58,8 +58,8 @@
       </div>
 
       <!-- Criteria modal -->
-      <div id="criteria-{{ award.category.id }}" class="fixed inset-0 hidden flex justify-center items-center z-50 bg-black bg-opacity-70">
-        <div class="choices__input p-6 rounded-xl w-full max-w-md text-center">
+      <div id="criteria-{{ award.category.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg">
+        <div class="modal-content">
           <h3 class="text-xl font-bold mb-4">{{ award.category.name|title }} Criteria</h3>
           <p>This award is given to recognize outstanding achievement in {{ award.category.name|title }}.</p>
           <button onclick="closeModal('criteria-{{ award.category.id }}')" class="mt-6 w-full bg-red-500 hover:bg-red-700 font-bold py-2 rounded">Close</button>
@@ -67,10 +67,10 @@
       </div>
 
       <!-- Details modal with big image -->
-      <div id="details-{{ award.id }}" class="fixed inset-0 hidden flex justify-center items-center z-50 bg-black bg-opacity-70 overflow-auto">
-        <div class="bg-[#222] rounded-xl w-full max-w-lg overflow-hidden">
+      <div id="details-{{ award.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg overflow-auto">
+        <div class="modal-content p-0">
           {% if award.employee_photo %}
-            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="w-full max-h-96 object-contain bg-black">
+            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="w-full max-h-96 object-contain rounded-t-xl bg-black">
           {% endif %}
           <div class="p-6">
             <h3 class="text-2xl font-extrabold mb-4">{{ award.category|title }}</h3>
