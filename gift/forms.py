@@ -92,10 +92,10 @@ class AwardForm(forms.ModelForm):
         self.fields['amount'].required = False
 
     def clean_employee_photo(self):
-        photo = self.cleaned_data.get('employee_photo')
-        if photo:
-            if not photo.content_type in ['image/jpeg', 'image/png', 'image/jpg']:
-                raise forms.ValidationError("Only JPEG, PNG, and JPG files are allowed.")
+        photo = self.cleaned_data.get("employee_photo")
+        if photo and hasattr(photo, "content_type"):
+            if not photo.content_type.startswith("image/"):
+                raise forms.ValidationError("Only image files are allowed.")
         return photo
     
     def clean(self):

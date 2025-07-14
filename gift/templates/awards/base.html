@@ -34,13 +34,13 @@
           class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}sidebar-link-active{% endif %}">
           <i class="fas fa-trophy mr-2"></i> Dashboard
         </a>
+        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
 
         <a href="{% url 'awards:category_list' %}"
           class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}sidebar-link-active{% endif %}">
           <i class="fas fa-layer-group mr-2"></i> Categories
         </a>
 
-        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
           <a href="{% url 'awards:add_award' %}"
             class="sidebar-link {% if request.resolver_match.url_name == 'add_award' %}sidebar-link-active{% endif %}">
             <i class="fas fa-plus-circle mr-2"></i> Add New Award

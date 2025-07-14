@@ -1,0 +1,48 @@
+{% extends "awards/base.html" %}
+{% load static %}
+
+{% block content %}
+  <h1 class="text-4xl font-extrabold text-center mb-10 text-red-500 drop-shadow-lg">Edit Award</h1>
+
+  <div class="bg-[#111] border border-red-600 rounded-xl p-8 max-w-xl mx-auto">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="mb-4">
+        <label for="id_category" class="block text-white mb-1">Category:</label>
+        {{ form.category }}
+      </div>
+
+      <div class="mb-4">
+        <label for="id_employees" class="block text-white mb-1">Employees:</label>
+        {{ form.employees }}
+      </div>
+
+      <div class="mb-4">
+        <label for="id_reason" class="block text-white mb-1">Reason:</label>
+        {{ form.reason }}
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-white mb-1">Employee photo:</label>
+        {% if award.employee_photo %}
+          <p class="text-gray-400 text-sm mb-2">Currently: <a href="{{ award.employee_photo.url }}" target="_blank" class="underline">{{ award.employee_photo.name }}</a></p>
+        {% endif %}
+
+        <label for="id_employee_photo" class="block cursor-pointer border-2 border-red-600 bg-black text-white font-semibold py-2 px-4 rounded-lg text-center hover:bg-red-700 transition">
+          <i class="fas fa-upload mr-2"></i> Upload Employee Photo
+        </label>
+        <input type="file" name="employee_photo" accept="image/*" id="id_employee_photo" class="hidden">
+      </div>
+
+      <div class="flex gap-4 justify-center mt-6">
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition">
+          Save Changes
+        </button>
+        <a href="{% url 'awards:dashboard' %}" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

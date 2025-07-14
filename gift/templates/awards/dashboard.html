@@ -37,7 +37,6 @@
             </span>
           </p>
 
-          <!-- Reason text with ellipsis -->
           <p class="mb-2 ellipsis">{{ award.reason|default:"N/A" }}</p>
           <button onclick="openModal('details-{{ award.id }}')" class="text-red-500 hover:underline text-sm">Read more</button>
 
@@ -46,12 +45,21 @@
               🎁 Gift Card: {{ award.card }} — ${{ award.amount }}
             </div>
           {% endif %}
+
+          {% if request.user.is_authenticated and request.user.userprofile.role in "admin manager" %}
+            <div class="mt-4 flex justify-center space-x-4">
+              <a href="{% url 'awards:edit_award' award.id %}" 
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition">Edit</a>
+              <button type="button" onclick="openModal('deleteModal-{{ award.id }}')" 
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">Delete</button>
+            </div>
+          {% endif %}
         </div>
       </div>
 
       <!-- Criteria modal -->
-      <div id="criteria-{{ award.category.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg">
-        <div class="modal-content">
+      <div id="criteria-{{ award.category.id }}" class="fixed inset-0 hidden flex justify-center items-center z-50 bg-black bg-opacity-70">
+        <div class="choices__input p-6 rounded-xl w-full max-w-md text-center">
           <h3 class="text-xl font-bold mb-4">{{ award.category.name|title }} Criteria</h3>
           <p>This award is given to recognize outstanding achievement in {{ award.category.name|title }}.</p>
           <button onclick="closeModal('criteria-{{ award.category.id }}')" class="mt-6 w-full bg-red-500 hover:bg-red-700 font-bold py-2 rounded">Close</button>
@@ -59,10 +67,10 @@
       </div>
 
       <!-- Details modal with big image -->
-      <div id="details-{{ award.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg overflow-auto">
-        <div class="modal-content p-0">
+      <div id="details-{{ award.id }}" class="fixed inset-0 hidden flex justify-center items-center z-50 bg-black bg-opacity-70 overflow-auto">
+        <div class="bg-[#222] rounded-xl w-full max-w-lg overflow-hidden">
           {% if award.employee_photo %}
-            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="w-full max-h-96 object-contain rounded-t-xl bg-black">
+            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="w-full max-h-96 object-contain bg-black">
           {% endif %}
           <div class="p-6">
             <h3 class="text-2xl font-extrabold mb-4">{{ award.category|title }}</h3>
@@ -74,6 +82,23 @@
             {% endif %}
             <button onclick="closeModal('details-{{ award.id }}')" class="mt-6 w-full bg-red-500 hover:bg-red-700 font-bold py-2 rounded">Close</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Delete confirmation modal -->
+      <div id="deleteModal-{{ award.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="modal-content text-center">
+          <h3 class="text-xl mb-4 text-white font-bold">Confirm Delete</h3>
+          <form method="post" action="{% url 'awards:delete_award' award.id %}">
+            {% csrf_token %}
+            <p class="mb-4">Are you sure you want to delete <strong>{{ award.category|title }}</strong> award for <strong>{{ award.employees.first.user.username }}</strong>?</p>
+            <button type="submit" class="modal-submit-button mb-2">
+              Yes, Delete
+            </button>
+            <button type="button" onclick="closeModal('deleteModal-{{ award.id }}')" class="modal-cancel-button">
+              Cancel
+            </button>
+          </form>
         </div>
       </div>
 
