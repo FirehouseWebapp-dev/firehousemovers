@@ -52,7 +52,7 @@
 
             <!-- Gift Card -->
             <div class="group relative">
-                <a href="{% url 'gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                <a href="{% url 'awards:gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
                     GIFT
                 </a>
             </div>
@@ -139,7 +139,7 @@
         <a href="{% url 'inspection' %}" class="text-lg">VEHICLE INSPECTION</a>
         <a href="{% url 'onsite_inspection' %}" class="text-lg">ON-SITE INSPECTION</a>
         <a href="{% url 'inventory' %}" class="text-lg">INVENTORY</a>
-        <a href="{% url 'gift_card' %}" class="text-lg">GIFT</a>
+        <a href="{% url 'awards:gift_card' %}" class="text-lg">GIFT</a>
 
         <!-- Logout (mobile) -->
         <form action="{% url 'authentication:logout' %}" method="post" class="w-full">

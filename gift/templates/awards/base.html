@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recognition Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'css/awards.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const employeeSelect = document.querySelector('.choices-multiple');
+      if (employeeSelect) {
+        new Choices(employeeSelect, {
+          removeItemButton: true,
+          placeholder: true,
+          placeholderValue: 'Select employees',
+          searchPlaceholderValue: 'Search employees',
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  {% include "inventory_app/navbar.html" %}
+
+  <div class="flex full-height">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#262626] min-h-screen p-6 fixed left-0 top-0 pt-24 sidebar">
+      <nav class="flex flex-col gap-2 text-white">
+        <a href="{% url 'awards:dashboard' %}"
+          class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}sidebar-link-active{% endif %}">
+          <i class="fas fa-trophy mr-2"></i> Dashboard
+        </a>
+
+        <a href="{% url 'awards:category_list' %}"
+          class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}sidebar-link-active{% endif %}">
+          <i class="fas fa-layer-group mr-2"></i> Categories
+        </a>
+
+        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+          <a href="{% url 'awards:add_award' %}"
+            class="sidebar-link {% if request.resolver_match.url_name == 'add_award' %}sidebar-link-active{% endif %}">
+            <i class="fas fa-plus-circle mr-2"></i> Add New Award
+          </a>
+        {% endif %}
+      </nav>
+    </aside>
+
+
+    <!-- Main content -->
+    <main class="flex-1 ml-64 px-6 py-8 bg-black">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

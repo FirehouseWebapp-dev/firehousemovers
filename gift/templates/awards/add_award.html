@@ -1,0 +1,66 @@
+{% extends "awards/base.html" %}
+
+{% block content %}
+  <h2 class="text-3xl font-extrabold text-center mb-6 text-red-500">✨ Add New Award ✨</h2>
+
+  <form method="post" enctype="multipart/form-data" class="bg-[#222] text-white p-6 rounded-xl shadow-lg max-w-xl mx-auto border border-gray-700">
+    {% csrf_token %}
+    <div class="mb-4">
+      {{ form.category.label_tag }}
+      {{ form.category }}
+    </div>
+    <div class="mb-4">
+      {{ form.employees.label_tag }}
+      {{ form.employees }}
+    </div>
+
+    <div id="card-fields" style="display: none;">
+      <div class="mb-4">
+        {{ form.card.label_tag }}
+        {{ form.card }}
+      </div>
+      <div class="mb-4">
+        {{ form.amount.label_tag }}
+        {{ form.amount }}
+      </div>
+    </div>
+
+    <div class="mb-4">
+      {{ form.employee_photo.label_tag }}
+      <label for="id_employee_photo" class="w-full flex items-center justify-center bg-black text-white border border-red-600 rounded-lg p-3 cursor-pointer hover:bg-red-600 hover:text-white transition mt-2">
+        <i class="fas fa-upload mr-2"></i> Upload Employee Photo
+      </label>
+      <input id="id_employee_photo" type="file" name="employee_photo" accept="image/*" class="hidden">
+      {% if form.employee_photo.errors %}
+        <p class="text-red-500 text-sm mt-2">{{ form.employee_photo.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="mb-4">
+      {{ form.reason.label_tag }}
+      {{ form.reason }}
+    </div>
+
+    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-3 rounded-lg text-lg shadow-lg mt-4">
+      🏅 Save Award
+    </button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const categorySelect = document.querySelector('select[name="category"]');
+      const cardFields = document.getElementById('card-fields');
+
+      function toggleCardFields() {
+        if (categorySelect.options[categorySelect.selectedIndex].text.toLowerCase() === 'gift card') {
+          cardFields.style.display = 'block';
+        } else {
+          cardFields.style.display = 'none';
+        }
+      }
+
+      categorySelect.addEventListener('change', toggleCardFields);
+      toggleCardFields();
+    });
+  </script>
+{% endblock %}

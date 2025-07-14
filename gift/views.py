@@ -1,15 +1,78 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from rest_framework.permissions import IsAuthenticated
 from authentication.mailer import send_gift_card_email
 from authentication.models import UserProfile
 from gift.forms import AwardCardForm, GiftCardForm
+from .models import AwardCategory
+from .forms import AwardCategoryForm
 from datetime import datetime
 from django.contrib import messages
 from inventory_app.permissions import IsManager
 from django.utils import timezone
 from django.http import JsonResponse
 import re
+
+
+from django.contrib.auth.decorators import login_required
+from .models import Award, AwardCategory
+from authentication.models import UserProfile
+from .forms import AwardForm
+
+@login_required
+def dashboard(request):
+    awards = Award.objects.all().order_by("-date_award")
+    return render(request, "awards/dashboard.html", {"awards": awards})
+
+
+@login_required
+def add_award(request):
+    if request.method == "POST":
+        form = AwardForm(request.POST, request.FILES)  # <-- FIXED
+        if form.is_valid():
+            award = form.save(commit=False)
+            award.awarded_by = UserProfile.objects.get(user=request.user)
+            award.save()
+            form.save_m2m()
+            return redirect("awards:dashboard")
+    else:
+        form = AwardForm()
+
+    return render(request, "awards/add_award.html", {"form": form})
+
+
+def category_list(request):
+    categories = AwardCategory.objects.all().order_by('name')
+    form = AwardCategoryForm()
+
+    if request.method == 'POST':
+        form = AwardCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('awards:category_list')
+
+    return render(request, 'awards/category_list.html', {'categories': categories, 'form': form})
+
+
+
+def edit_category(request, category_id):
+    category = get_object_or_404(AwardCategory, id=category_id)
+    if request.method == 'POST':
+        form = AwardCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return redirect('awards:category_list')
+    else:
+        form = AwardCategoryForm(instance=category)
+    return render(request, 'awards/category_edit_form.html', {'form': form, 'category': category})
+
+
+def delete_category(request, category_id):
+    category = get_object_or_404(AwardCategory, id=category_id)
+    if request.method == 'POST':
+        category.delete()
+        return redirect('awards:category_list')
+    return render(request, 'awards/delete_category_confirm.html', {'category': category})
 
 class GiftCardView(View):
     permission_classes = [IsAuthenticated, IsManager]
@@ -102,7 +165,7 @@ class AwardCardView(View):
                 messages.error(request, f"Failed to send the email. Error: {str(e)}")
             
             # Redirect to the award_card page after saving
-            return redirect("award_card")
+            return redirect("awards:award_card")
         
         else:
             # If the form is invalid, show error messages
