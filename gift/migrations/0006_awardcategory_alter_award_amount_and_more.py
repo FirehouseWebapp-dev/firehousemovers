@@ -61,8 +61,9 @@ class Migration(migrations.Migration):
             model_name="award",
             name="category",
             field=models.ForeignKey(
-                default=1,
-                on_delete=django.db.models.deletion.CASCADE,
+                null=True,
+                blank=True,
+                on_delete=django.db.models.deletion.SET_NULL,
                 to="gift.awardcategory",
             ),
         ),
