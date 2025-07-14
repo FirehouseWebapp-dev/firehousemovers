@@ -57,7 +57,7 @@ def award_photo_upload_to(instance, filename):
 award_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
 
 class Award(models.Model):
-    category = models.ForeignKey("AwardCategory", on_delete=models.CASCADE, default=1)
+    category = models.ForeignKey(AwardCategory, on_delete=models.SET_NULL, null=True, blank=True)
     date_award = models.DateField(default=timezone.now)
     employees = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="awards")
     card = models.ForeignKey("Gift_card", on_delete=models.CASCADE, related_name="gift_card", null=True, blank=True)
