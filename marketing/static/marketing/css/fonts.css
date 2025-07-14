@@ -1,0 +1,9 @@
+/* static/marketing/css/fonts.css */
+
+/* 1) import the Google-hosted Urbanist face */
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* 2) apply everywhere */
+html, body, input, button, select, textarea {
+  font-family: 'Urbanist', sans-serif !important;
+}

@@ -1,0 +1,60 @@
+{% extends "marketing/base.html" %}
+{% load static %}
+
+{% block head %}
+  <link href="{% static 'marketing/css/vendors_items.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+  <div class="marketing-form" style="margin: 2rem;">
+    <h1 class="text-3xl">🏷️ Vendors</h1>
+
+    <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {% csrf_token %}
+      <div>
+        <label for="{{ form.name.id_for_label }}">Vendor Name</label>
+        {{ form.name }}
+      </div>
+      <div>
+        <label for="{{ form.contact_info.id_for_label }}">Contact Info</label>
+        {{ form.contact_info }}
+      </div>
+      <div class="md:col-span-2">
+        <button name="add_vendor" class="btn-add">Add Vendor</button>
+      </div>
+    </form>
+  </div>
+
+<div class="overflow-x-auto px-6 py-4 pb-12">
+  <!-- Set a max height and enable vertical scroll -->
+  <div class="max-h-96 overflow-y-auto border border-gray-700 rounded-lg">
+    <table class="min-w-full bg-[#111] text-white">
+      <thead class="sticky top-0 bg-black">
+        <tr class="text-red-600 uppercase text-sm">
+          <th class="py-3 px-4 text-left">Name</th>
+          <th class="py-3 px-4 text-left">Contact Info</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vendors %}
+          <tr class="border-t border-gray-700 hover:bg-gray-800 transition">
+            <td class="py-3 px-4 font-semibold">{{ v.name }}</td>
+            <td class="py-3 px-4 text-gray-300">
+              {% if v.contact_info %}
+                {{ v.contact_info }}
+              {% else %}
+                <span class="text-gray-500">N/A</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2" class="py-4 px-4 text-center text-gray-500">No vendors yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

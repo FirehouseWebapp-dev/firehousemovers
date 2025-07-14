@@ -1,0 +1,180 @@
+{% load static %}
+<div class="pb-16">
+<header class="fixed top-0  w-full z-50 flex items-center justify-between px-6 py-3 bg-[#262626]">
+    <!-- Logo -->
+    <div class="flex items-center gap-2">
+        <a href="/">
+            <img src="{% static 'images/fire_house_logo.svg' %}" alt="Logo" class="w-10 h-10">
+        </a>
+        <a href="/">
+            <h1 class="text-xl font-bold text-gray-200 hover:text-white font-serif">FIREHOUSE</h1>
+        </a>
+    </div>
+
+    <!-- Navigation Links (Centered on Desktop) -->
+    <div class="flex-grow flex justify-center">
+        <nav class="hidden md:flex items-center gap-6 relative">
+            {% if user.is_authenticated %}
+            <!-- Truck Availability & Job Logistics -->
+            <div class="group relative">
+                <a href="{% url 'availability_logitics' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    AVAILABILITY & LOGISTICS
+                </a>
+            </div>
+
+            <!-- FireHouse Stations -->
+            <div class="group relative">
+                <a href="{% url 'station' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    STATIONS
+                </a>
+            </div>
+
+            <!-- Vehicle Inspection -->
+            <div class="group relative">
+                <a href="{% url 'inspection' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    VEHICLE INSPECTION
+                </a>
+            </div>
+
+            <!-- On-Site Inspection -->
+            <div class="group relative">
+                <a href="{% url 'onsite_inspection' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    ON-SITE INSPECTION
+                </a>
+            </div>
+
+            <!-- Inventory -->
+            <div class="group relative">
+                <a href="{% url 'inventory' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    INVENTORY
+                </a>
+            </div>
+
+            <!-- Gift Card -->
+            <div class="group relative">
+                <a href="{% url 'gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    GIFT
+                </a>
+            </div>
+
+            <!-- Packaging and Supplies -->
+            <div class="group relative">
+                <a href="{% url 'packaging_supplies:index' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                    PACKAGING & SUPPLIES
+                </a>
+            </div>
+
+            <!-- Low Stock Alert Icon -->
+            <div class="relative group">
+                <button id="low-stock-btn" class="text-white text-xl relative">
+                    <i class="fa-solid fa-bell"></i>
+                    {% with low_stock_count=request.session.low_stock_count %}
+                        {% if low_stock_count > 0 %}
+                        <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1">
+                            {{ low_stock_count }}
+                        </span>
+                        {% endif %}
+                    {% endwith %}
+                </button>
+
+                <!-- Popup Content -->
+                <div id="low-stock-popup"
+                    class="hidden absolute right-0 mt-2 w-80 bg-white text-black rounded-lg shadow-xl z-50 p-4">
+                    <h3 class="text-lg font-bold mb-2">Low Stock Alerts</h3>
+                    <ul>
+                        {% for item in request.session.low_stock_items|slice:":3" %}
+                            <li class="border-b py-2">
+                                <strong>{{ item.uniform_name }}</strong><br>
+                                Current Stock: {{ item.total_stock }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="text-right mt-3">
+                        <a href="{% url 'low_stock_alerts' %}" class="text-blue-600 hover:underline">See More</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Login (visible if not authenticated) -->
+    {% if not user.is_authenticated %}
+    <a href="{% url 'authentication:login' %}" class="ml-auto flex gap-1 justify-center text-black bg-white p-2 rounded-lg w-16">
+        Login
+    </a>
+    {% endif %}
+
+    <!-- Logout (pushed to the right and visible on desktop only) -->
+    {% if user.is_authenticated %}
+    <div class="ml-auto hidden md:block">
+        <form action="{% url 'authentication:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="text-gray-200 hover:text-white text-xl">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Hamburger Icon (visible on mobile) -->
+    <div class="md:hidden flex items-center">
+        <button id="hamburger-menu" class="text-gray-200 hover:text-white">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </div>
+</header>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex justify-end p-6">
+        <button id="close-menu" class="text-white text-2xl">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="flex justify-center items-center flex-col gap-4 text-white p-6">
+        {% if user.is_authenticated %}
+        <a href="{% url 'availability_logitics' %}" class="text-lg">AVAILABILITY & LOGISTICS</a>
+        <a href="{% url 'station' %}" class="text-lg">STATIONS</a>
+        <a href="{% url 'inspection' %}" class="text-lg">VEHICLE INSPECTION</a>
+        <a href="{% url 'onsite_inspection' %}" class="text-lg">ON-SITE INSPECTION</a>
+        <a href="{% url 'inventory' %}" class="text-lg">INVENTORY</a>
+        <a href="{% url 'gift_card' %}" class="text-lg">GIFT</a>
+
+        <!-- Logout (mobile) -->
+        <form action="{% url 'authentication:logout' %}" method="post" class="w-full">
+            {% csrf_token %}
+            <button type="submit" class="w-full text-center py-2 bg-red-600 rounded-lg text-white">Logout</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- Script for Mobile Menu Toggle -->
+<script>
+    const hamburgerMenu = document.getElementById('hamburger-menu');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const closeMenu = document.getElementById('close-menu');
+
+    hamburgerMenu.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+    });
+
+    closeMenu.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+    });
+
+    const alertBtn = document.getElementById('low-stock-btn');
+    const popup = document.getElementById('low-stock-popup');
+
+    alertBtn.addEventListener('click', () => {
+        popup.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!alertBtn.contains(event.target) && !popup.contains(event.target)) {
+            popup.classList.add('hidden');
+        }
+    });
+</script>

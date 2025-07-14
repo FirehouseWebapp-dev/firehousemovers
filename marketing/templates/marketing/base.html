@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Marketing{% endblock %}</title>
+
+  {# — CUSTOM FONT (fonts.css must @font-face your OTFs) — #}
+  <link href="{% static 'marketing/css/fonts.css' %}" rel="stylesheet">
+
+  {# — TAILWIND ONCE — #}
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- AOS CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+  {# — FONT AWESOME CAMERA ICON — #}
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+
+  {# — YOUR APP-SPECIFIC CSS — #}
+  <link href="{% static 'marketing/css/photos.css' %}" rel="stylesheet">
+
+  {% block head %}{% endblock %}
+</head>
+
+<body class="bg-black text-white flex h-screen overflow-hidden font-sans" style="margin-top: 3rem;">
+  {# — INVENTORY NAVBAR (if you include it here, it’ll show on every marketing page) — #}
+  {% include "inventory_app/navbar.html" %}
+
+  {# — SIDEBAR — #}
+  <aside class="w-1/5 p-6 space-y-6 bg-[#262626]">
+      <h2 class="text-2xl font-bold text-red-600">Marketing</h2>
+      {% with current=request.resolver_match.url_name %}
+      <nav class="space-y-2">
+
+        <a href="{% url 'marketing:photos' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "photos" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-camera text-white"></i>
+          Photos
+        </a>
+
+        <a href="{% url 'marketing:vendors' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "vendors" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-tags text-white"></i>
+          Vendors
+        </a>
+
+        <a href="{% url 'marketing:items' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == "items" %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-gift text-white"></i>
+          Items
+        </a>
+
+        <a href="{% url 'marketing:reports' %}"
+          class="flex items-center gap-2 px-4 py-2 rounded 
+                  {% if current == 'vendor_report' %}bg-red-700 hover:bg-red-600{% else %}hover:bg-gray-700{% endif %}">
+          <i class="fa-solid fa-chart-bar text-white"></i>
+          Reports
+        </a>
+
+      </nav>
+      {% endwith %}
+  </aside>
+
+
+  {# — MAIN CONTENT — #}
+  <main class="flex-1 overflow-auto pt-8">
+    {% include "messages.html" %}
+    
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}
+    {# — DEFERRED so it doesn’t block the initial render — #}
+    <script src="{% static 'marketing/js/photos.js' %}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+  {% endblock %}
+
+</body>
+</html>

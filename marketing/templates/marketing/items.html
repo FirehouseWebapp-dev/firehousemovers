@@ -1,0 +1,87 @@
+{% extends "marketing/base.html" %}
+{% load static %}
+
+{% block head %}
+  <link href="{% static 'marketing/css/vendors_items.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+  <div class="p-8">
+    <div class="marketing-form">
+    <h1 class="text-2xl">Promotional Items</h1>
+
+    <!-- Add Item -->
+    <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {% csrf_token %}
+      <div>
+        <label for="{{ add_form.name.id_for_label }}">Name</label>
+        {{ add_form.name }}
+      </div>
+      <div>
+        <label for="{{ add_form.quantity.id_for_label }}">Quantity</label>
+        {{ add_form.quantity }}
+      </div>
+      <div class="md:col-span-2">
+        <button name="add_item" class="btn-add">Add Item</button>
+      </div>
+    </form>
+
+    <!-- Remove Item -->
+    <form method="post" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {% csrf_token %}
+      <div>
+        <label for="{{ remove_form.item.id_for_label }}">Item</label>
+        {{ remove_form.item }}
+      </div>
+      <div>
+        <label for="{{ remove_form.quantity.id_for_label }}">Quantity</label>
+        {{ remove_form.quantity }}
+      </div>
+      <div>
+        <label for="{{ remove_form.reason.id_for_label }}">Reason</label>
+        {{ remove_form.reason }}
+      </div>
+      <div class="md:col-span-2">
+        <button name="remove_item" class="btn-remove">Remove Item</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Current Inventory Table -->
+  <table class="marketing-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Qty</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">No items yet.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Recent Transactions -->
+  <h2 class="text-xl font-bold text-red-600 mb-4">Recent Activity</h2>
+  <ul class="marketing-list pb-12">
+    {% for tx in transactions|slice:":10" %}
+      <li>
+        {{ tx.timestamp|date:"Y-m-d H:i" }} – 
+        {{ tx.get_action_display }} {{ tx.quantity }} of 
+        <strong>{{ tx.item.name }}</strong>
+        {% if tx.reason %} ({{ tx.reason }}){% endif %}
+      </li>
+    {% empty %}
+      <li>No transactions yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends "marketing/base.html" %}
+{% load static %}
+
+{% block title %}Marketing Photos{% endblock %}
+
+{% block content %}
+  <div style="padding-bottom: 0 !important; padding-left: 0 !important; padding-right: 0 !important; ">
+    <h1 class="text-center text-4xl font-extrabold text-red-600 mb-8">
+      M a r k e t i n g &nbsp; P h o t o s
+    </h1>
+
+    <form
+      id="photo-form"
+      method="post"
+      enctype="multipart/form-data"
+      class="relative max-w-3xl mx-auto mb-16"
+    >
+      {% csrf_token %}
+
+      <!-- camera + snap -->
+      <div class="camera-wrapper">
+        <video id="video" class="camera-video" autoplay playsinline></video>
+        <div id="flash" class="camera-flash"></div>
+        <button type="button" id="snap" class="camera-snap">
+          <i class="fas fa-camera-alt"></i>
+        </button>
+      </div>
+
+      <!-- disk-pick button -->
+      <button type="button" id="add-files-btn" class="upload-btn">
+        Add Existing Photos
+      </button>
+
+      <!-- submit -->
+      <button type="submit" class="publish-btn">
+        Publish photo/s to the marketing photos
+      </button>
+
+      <!-- live previews + remove -->
+      <div id="previews" class="photo-previews"></div>
+
+      <!-- hidden file input -->
+      <input type="file" id="id_photos" name="photos" accept="image/*" multiple hidden>
+    </form>
+
+    <!-- already-published carousel -->
+    <div class="carousel-wrapper">
+      <div class="carousel">
+        {% for photo in photos %}
+          <div class="carousel-card relative">
+            <img src="{{ photo.image.url }}" alt="Photo {{ forloop.counter }}">
+            {% if can_delete %}
+              <button
+                type="button"
+                onclick="openConfirmModal({{ photo.pk }})"
+                class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm rounded shadow">
+                Delete
+              </button>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- modal preview -->
+    <div id="modal" class="modal">
+      <img id="modal-img" src="" alt="Full size photo">
+    </div>
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+      <div class="bg-[#1c1c1c] text-white rounded-lg shadow-lg p-6 max-w-sm w-full border border-gray-700">
+        <h2 class="text-xl font-bold mb-4 text-red-600">Confirm Deletion</h2>
+        <p class="mb-6">Are you sure you want to delete this photo? This action cannot be undone.</p>
+        <form id="deleteForm" method="post">
+          {% csrf_token %}
+          <div class="flex justify-end space-x-2">
+            <button type="button" onclick="closeConfirmModal()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">Cancel</button>
+            <button type="submit" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Showcase Section -->
+    <section class="bg-white text-white py-16">
+      <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8">
+        <div class="bg-[#222] transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90 p-3 rounded-lg">
+          <img src="{% static 'marketing/img/IMG_5015.jpg' %}" alt="Moving Team" class="rounded-lg shadow-lg mb-4">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Putting customers first</h3>
+          <p>We know moving can be stressful. That’s why our team treats every move as if it were our own.</p>
+        </div>
+        <div class="bg-[#222] transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90  p-3 rounded-lg">
+          <img src="{% static 'marketing/img/IMG_1026.jpg' %}" alt="Safe Storage" class="rounded-lg shadow-lg mb-4">
+          <img src="{% static 'marketing/img/IMG_1021.jpg' %}" alt="Safe Storage" class="rounded-lg shadow-lg mb-4">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Safe and secure storage</h3>
+          <p>Our secure storage facilities keep your belongings safe and ready whenever you need them.</p>
+        </div>
+        <div class="bg-[#222] transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90 p-3 rounded-lg">
+          <img src="{% static 'marketing/img/IMG_2045.jpg' %}" alt="Happy Customer" class="rounded-lg shadow-lg mb-4">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Your moving journey made simple</h3>
+          <p>We make moves smooth and stress-free — so you can focus on your new chapter.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-[#222] text-white py-20">
+      <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-10">
+        <div class="flex flex-col justify-center transition transform duration-700 hover:-translate-y-2">
+          <h3 class="text-4xl font-bold text-red-600 mb-4">Experience the Move</h3>
+          <p class="mb-4">See our professional team in action, taking care of each step from packing to safe delivery.</p>
+          <p>We make sure every move is smooth, safe, and stress-free for our customers.</p>
+        </div>
+        <div class="w-full overflow-hidden rounded-lg shadow-lg transition transform duration-700 hover:scale-105">
+          <video controls class="w-full h-[400px] md:h-[500px] object-cover">
+            <source src="{% static 'marketing/videos/Automatic.MP4' %}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="relative bg-black text-white overflow-hidden">
+      <img src="{% static 'marketing/img/vip_5857.jpg' %}" alt="Hero" class="absolute inset-0 w-full h-full object-cover opacity-40">
+      <div class="relative z-10 max-w-4xl mx-auto py-32 text-center px-6 transition transform duration-700 hover:scale-105">
+        <h1 class="text-5xl font-extrabold mb-4">Your Move, Our Mission</h1>
+        <p class="text-xl text-gray-200">Stress-free, safe, and always on time. Let us handle the heavy lifting while you enjoy your new beginning.</p>
+      </div>
+    </section>
+
+  <section class="bg-[#fff] text-black py-20">
+    <div class="max-w-6xl mx-auto px-6 grid gap-10">
+      <div class="w-full overflow-hidden rounded-lg shadow-lg transition transform duration-700 hover:scale-105">
+        <video controls class="w-full h-[400px] md:h-[500px] object-cover">
+          <source src="{% static 'marketing/videos/IMG_3495.MP4' %}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <div class="flex flex-col justify-center transition transform duration-700 hover:-translate-y-2">
+        <h2 class="text-4xl font-bold text-red-600 mb-4">Meet Our Team</h2>
+        <p class="mb-4">“We believe in building a team culture where everyone supports each other like family. Hear directly from our crew about their experience at Firehouse Movers.”</p>
+        <p>From professional growth to making lifelong friendships, our employees share why they love working with us.</p>
+      </div>
+    </div>
+  </section>
+
+
+    <section class="bg-[#111] text-white py-20">
+      <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 px-6">
+        <div class="text-center transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90">
+          <img src="{% static 'marketing/img/IMG_2121.jpg' %}" alt="Team" class="mx-auto mb-4 rounded shadow-lg">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Expert Team</h3>
+          <p>Our movers are trained professionals who handle your belongings with care and precision.</p>
+        </div>
+        <div class="text-center transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90">
+          <img src="{% static 'marketing/img/IMG_6395.jpg' %}" alt="Safety" class="mx-auto mb-4 rounded shadow-lg">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Safety Guaranteed</h3>
+          <p>We provide secure transport and storage options so you can move with peace of mind.</p>
+        </div>
+        <div class="text-center transition transform duration-700 hover:-translate-y-2 hover:opacity-100 opacity-90">
+          <img src="{% static 'marketing/img/IMG_5019.jpg' %}" alt="Easy" class="mx-auto mb-4 rounded shadow-lg">
+          <h3 class="text-xl font-bold text-red-600 mb-2">Seamless Process</h3>
+          <p>From booking to delivery, our process is smooth and transparent every step of the way.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="relative bg-black text-white overflow-hidden py-20">
+    <img src="{% static 'marketing/img/IMG_0143.jpg' %}" alt="Background" class="absolute inset-0 w-full h-full object-cover opacity-50">
+    <div class="relative max-w-5xl mx-auto px-6 flex justify-right items-center" style="justify-content: right;">
+      <div class="bg-gradient-to-r from-[#94b8beb8] via-[#dececebf] to-[#f3d3d3cf] text-black p-8 rounded-tr-[50px] rounded-bl-[50px] shadow-lg max-w-lg">
+        <p class="uppercase tracking-wider text-sm mb-2">Our Employees</p>
+        <h2 class="text-3xl font-extrabold mb-4">From hard work to heartfelt smiles</h2>
+        <p class="mb-4">At Firehouse Movers, we believe our team is our greatest asset. Their dedication, positivity, and teamwork drive our success every single day.</p>
+        <p class="font-bold">Moving with heart and hustle.</p>
+      </div>
+    </div>
+  </section>
+
+
+    <section class="bg-white text-black py-20">
+      <div class="max-w-5xl mx-auto relative overflow-hidden">
+        <div id="testimonialCarousel" class="relative w-full">
+          <!-- Slide 1 -->
+          <div class="testimonial-slide transition-opacity duration-1000 opacity-100">
+            <div class="grid md:grid-cols-2 gap-10 px-6 items-center">
+              <img src="{% static 'marketing/img/FHM.jpg' %}" alt="Customer 1" class="rounded-lg shadow-lg w-full">
+              <div>
+                <h3 class="text-2xl font-bold text-red-600 mb-4">"Wow! Blown away by the service!"</h3>
+                <p class="mb-4">“I am forever grateful for Firehouse movers. The team they sent out were top notch! 
+                  They were respectful of me and my stuff. They made sure everything was handled with care. I felt like the red carpet was rolled out for me. 
+                  Julio, David, and Jorge are the team to ask for! They work hard and see to it that all the details are covered! Great work guys! Thank you!!!”</p>
+                <p class="font-bold">Jennie Lieber</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 2 -->
+          <div class="testimonial-slide absolute top-0 left-0 w-full transition-opacity duration-1000 opacity-0">
+            <div class="grid md:grid-cols-2 gap-10 px-6 items-center">
+              <img src="{% static 'marketing/img/3.png' %}" alt="Customer 2" class="rounded-lg shadow-lg w-full">
+              <div>
+                <h3 class="text-2xl font-bold text-red-600 mb-4">"Wow! Wow! Wow!"</h3>
+                <p class="mb-4">“
+                  So thankful we partnered with Firehouse Movers to tackle our inner house move for an extensive downstairs flooring project that required us to move all furniture into our garage. 
+                  From the start, communication was great with setup, logistics, paperwork and it extended into the actual move day. 
+                  Move day —Received a call, as promised, that Jose, Izzy and Krezian would be at our place within the hour. 
+                  This mighty crew of young men were punctual and they knocked out the whole thing in less than two hours. 
+                  They were professional and so careful with all our possessions …. wrapping everything up and placing blankets down to get the job done. 
+                  Jose, Izzy and Krezian were so respectful, kind and worked quickly and well together. Very, very nice and capable guys. 
+                  When our flooring project is complete in a few weeks, we will definitely be reaching out again to partner with Firehouse Movers to bring all of our furniture back inside. 
+                  Thank you Firehouse Movers for alleviating a lot of stress and doing the back breaking work for us!”</p>
+                <p class="font-bold">Maria Vining</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 3 -->
+          <div class="testimonial-slide absolute top-0 left-0 w-full transition-opacity duration-1000 opacity-0">
+            <div class="grid md:grid-cols-2 gap-10 px-6 items-center">
+              <img src="{% static 'marketing/img/2.png' %}" alt="Customer 3" class="rounded-lg shadow-lg w-full">
+              <div>
+                <h3 class="text-2xl font-bold text-red-600 mb-4">"The team at Firehouse Movers made the transition smoother and easy!"</h3>
+                <p class="mb-4">“Coming from another state to help my daughter move was nerve racking! However, from start to finish the team at Firehouse Movers made the transition smoother and easy! 
+                  Cherry and the dispatch team kept us updated. Every step was precise and on time as promised. And then when the moving team arrived, Stephen, Chris & Gabriel wasted no time moving boxes, taking down the furniture and packing the truck! They were so polite and careful with everything! From beginning to end, they eased our minds! My ONLY complaint is that one of the young men is a Cowboys fan (we are Saints fans!⚜️)😁 IYKYK! But we won’t hold it against him since they did an excellent job!👍🏽 10/10 I would recommend this moving company! THANK YOU SO MUCH FIREHOUSE MOVERS!!!”</p>
+                <p class="font-bold">Chicbychan5</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Slide 4 -->
+          <div class="testimonial-slide absolute top-0 left-0 w-full transition-opacity duration-1000 opacity-0">
+            <div class="grid md:grid-cols-2 gap-10 px-6 items-center">
+              <img src="{% static 'marketing/img/1.png' %}" alt="Customer 4" class="rounded-lg shadow-lg w-full">
+              <div>
+                <h3 class="text-2xl font-bold text-red-600 mb-4">"10/10 would recommend"</h3>
+                <p class="mb-4">“Moving into my first condo was so stressful, but Firehouse Movers made everything so easy! 
+                  The guys are fast, funny, reliable AND efficient. They are seriously fast. 
+                  My drive was almost an hour and they were done in an hour and a half. I won’t use another company when it’s time to move again.
+                  I can’t say enough great things about this company and the crew! 10/10 would recommend”</p>
+                <p class="font-bold">Dyamon Cobb</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="bg-[#222] text-white py-20">
+      <div class="max-w-4xl mx-auto text-center px-6">
+        <h2 class="text-3xl font-extrabold mb-4">Why Choose Firehouse Movers?</h2>
+        <p class="mb-6">We’re more than just a moving company — we’re your moving partner. We take pride in delivering top-tier service, tailored to your needs.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="p-4 bg-black rounded shadow hover:scale-105 transition">
+            <h4 class="text-lg font-bold text-red-600 mb-2">Licensed & Insured</h4>
+            <p>Your belongings are safe with us at every step.</p>
+          </div>
+          <div class="p-4 bg-black rounded shadow hover:scale-105 transition">
+            <h4 class="text-lg font-bold text-red-600 mb-2">Personalized Service</h4>
+            <p>Custom plans for every family or business move.</p>
+          </div>
+          <div class="p-4 bg-black rounded shadow hover:scale-105 transition">
+            <h4 class="text-lg font-bold text-red-600 mb-2">Transparent Pricing</h4>
+            <p>No hidden fees — clear and upfront estimates.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'marketing/js/photos.js' %}"></script>
+  <script>
+    function openConfirmModal(photoId) {
+      const modal = document.getElementById('confirmModal');
+      const form = document.getElementById('deleteForm');
+      form.action = `/marketing/photos/${photoId}/delete/`;
+      modal.classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll('.fade-up').forEach(el => {
+        el.classList.add('loaded');
+      });
+    });
+
+  </script>
+  <script>
+  const slides = document.querySelectorAll('.testimonial-slide');
+  let currentSlide = 0;
+
+  function showSlide(index) {
+    slides.forEach((slide, i) => {
+      slide.style.opacity = (i === index) ? '1' : '0';
+    });
+  }
+
+  function nextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    showSlide(currentSlide);
+  }
+
+  setInterval(nextSlide, 5000); // Change slide every 5 seconds
+
+  // Show first slide on load
+  showSlide(currentSlide);
+</script>
+
+  
+{% endblock %}
