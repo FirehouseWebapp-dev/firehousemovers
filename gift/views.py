@@ -24,7 +24,7 @@ def is_manager_or_admin(user):
 # ------------------------
 # Dashboard
 # ------------------------
-class DashboardView(LoginRequiredMixin, ListView):
+class DashboardView(ListView):
     model = Award
     template_name = "awards/dashboard.html"
     context_object_name = "awards"
