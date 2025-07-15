@@ -7,7 +7,7 @@
 <div class="flex p-8">
   <!-- Sidebar -->
   <aside class="w-1/5 p-6 bg-[#262626] text-white" id="sidebar">
-    <h2 class="font-bold text-2xl mb-6 text-red-600">Reports</h2>
+    <h2 class="font-bold text-2xl mb-6 text-red-500">Reports</h2>
     <ul class="space-y-2">
       <li>
         <a href="{% url 'marketing:reports' %}?report_type=vendor"
@@ -26,7 +26,7 @@
 
   <!-- Main content -->
   <main class="flex-1 p-10 bg-black text-white min-h-screen">
-    <h1 class="text-4xl font-extrabold text-red-600 mb-8">Generate {{ report_type|title }} Report</h1>
+    <h1 class="text-4xl font-extrabold text-red-500 mb-8">Generate {{ report_type|title }} Report</h1>
 
     {% if report_type %}
       <form method="get" class="space-y-4 mb-8">

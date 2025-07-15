@@ -27,7 +27,7 @@
 
     <div class="mb-4">
       {{ form.employee_photo.label_tag }}
-      <label for="id_employee_photo" class="w-full flex items-center justify-center bg-black text-white border border-red-600 rounded-lg p-3 cursor-pointer hover:bg-red-600 hover:text-white transition mt-2">
+      <label for="id_employee_photo" class="w-full flex items-center justify-center bg-black text-white border border-red-500 rounded-lg p-3 cursor-pointer hover:bg-red-600 hover:text-white transition mt-2">
         <i class="fas fa-upload mr-2"></i> Upload Employee Photo
       </label>
       <input id="id_employee_photo" type="file" name="employee_photo" accept="image/*" class="hidden">
@@ -41,7 +41,7 @@
       {{ form.reason }}
     </div>
 
-    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-3 rounded-lg text-lg shadow-lg mt-4">
+    <button type="submit" class="w-full bg-red-500 hover:bg-red-700 transition font-bold py-3 rounded-lg text-lg shadow-lg mt-4">
       🏅 Save Award
     </button>
   </form>

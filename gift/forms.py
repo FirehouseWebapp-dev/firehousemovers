@@ -1,7 +1,6 @@
 from django import forms
 from authentication.models import UserProfile
-from .models import Award, Gift_card, Gift_company
-
+from .models import Award, Gift_card, Gift_company, AwardCategory, HallOfFameEntry
 
 class GiftCardForm(forms.ModelForm):
     amount = forms.IntegerField(
@@ -37,7 +36,6 @@ class GiftCardForm(forms.ModelForm):
 
         return cleaned_data
 
-
 class AwardCardForm(forms.ModelForm):
     employees = forms.SelectMultiple(
         choices=[(user.id, user.user) for user in UserProfile.objects.all()],
@@ -70,8 +68,6 @@ class AwardCardForm(forms.ModelForm):
             "card",
             "reason",
         ]
-
-# awards/forms.py
 
 class AwardForm(forms.ModelForm):
     class Meta:
@@ -112,20 +108,58 @@ class AwardForm(forms.ModelForm):
 
         return cleaned_data
 
-from .models import AwardCategory
-
 class AwardCategoryForm(forms.ModelForm):
     class Meta:
         model = AwardCategory
-        fields = ['name']
+        fields = ['name', 'description', 'criteria']
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            })
+            }),
+            "description": forms.Textarea(attrs={
+                "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500",
+                "rows": 3,
+                "placeholder": "Brief description of the award category..."
+            }),
+            "criteria": forms.Textarea(attrs={
+                "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500",
+                "rows": 3,
+                "placeholder": "Criteria to win this award..."
+            }),
         }
 
     def clean_name(self):
-        name = self.cleaned_data['name']
-        if AwardCategory.objects.filter(name__iexact=name).exists():
+        name = self.cleaned_data.get('name', '').strip()
+        qs = AwardCategory.objects.filter(name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError("A category with this name already exists.")
         return name
+
+    def clean_description(self):
+        desc = self.cleaned_data.get('description', '')
+        if desc and len(desc.strip()) < 10:
+            raise forms.ValidationError("Description must be at least 10 characters long if provided.")
+        return desc
+
+    def clean_criteria(self):
+        criteria = self.cleaned_data.get('criteria', '')
+        if criteria and len(criteria.strip()) < 10:
+            raise forms.ValidationError("Criteria must be at least 10 characters long if provided.")
+        return criteria
+
+
+class HallOfFameForm(forms.ModelForm):
+    class Meta:
+        model = HallOfFameEntry
+        fields = ['name', 'description', 'photo']
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            }),
+            "description": forms.TextInput(attrs={
+                "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500",
+            }),
+            "photo": forms.ClearableFileInput(attrs={"class": "hidden"}),
+        }

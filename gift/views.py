@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.http import JsonResponse
@@ -10,10 +10,10 @@ from datetime import datetime
 import re
 
 from authentication.models import UserProfile
-from .models import Award, AwardCategory
-from .forms import AwardForm, AwardCategoryForm, GiftCardForm, AwardCardForm
+from .models import Award, AwardCategory, HallOfFameEntry
+from .forms import AwardForm, AwardCategoryForm, GiftCardForm, AwardCardForm, HallOfFameForm
 from authentication.mailer import send_gift_card_email
-from inventory_app.permissions import IsManager
+
 
 # Helper function for permission
 def is_manager_or_admin(user):
@@ -161,3 +161,95 @@ def get_emails(request):
         emails = [{"name": emp.user.username, "email": emp.user.email} for emp in employees]
         return JsonResponse({"emails": emails})
     return JsonResponse({"emails": []})
+
+
+class PrizesDescriptionView(TemplateView):
+    template_name = "awards/prizes_description.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = AwardCategory.objects.all().order_by("name")
+        return context
+
+class HallOfFameView(ListView):
+    model = HallOfFameEntry
+    template_name = "awards/hall_of_fame.html"
+    context_object_name = "entries"
+
+class HallOfFameListView(View):
+    template_name = "awards/hall_of_fame.html"
+
+    def get(self, request):
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+
+        # Year filter
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        selected_year = request.GET.get("year")
+        if selected_year:
+            entries = entries.filter(created_at__year=selected_year)
+
+        return render(request, self.template_name, {
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": selected_year,
+        })
+
+class HallOfFameCreateView(View):
+    template_name = "awards/hall_of_fame_add.html"
+
+    def get(self, request):
+        form = HallOfFameForm()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = HallOfFameForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("awards:hall_of_fame")
+        return render(request, self.template_name, {"form": form})
+
+
+class HallOfFameView(View):
+    template_name = "awards/hall_of_fame.html"
+
+    def get(self, request):
+        form = HallOfFameForm()
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+
+        # Get years for filter
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        selected_year = request.GET.get("year")
+        if selected_year:
+            entries = entries.filter(created_at__year=selected_year)
+
+        return render(request, self.template_name, {
+            "form": form,
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": selected_year,
+        })
+
+    def post(self, request):
+        form = HallOfFameForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("awards:hall_of_fame")
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        return render(request, self.template_name, {
+            "form": form,
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": None,
+        })
+
+class HallOfFameUpdateView(LoginRequiredMixin, ManagerOrAdminMixin, UpdateView):
+    model = HallOfFameEntry
+    form_class = HallOfFameForm
+    template_name = "awards/hall_of_fame_add.html"  # You can create a separate edit template if you'd like
+    success_url = reverse_lazy("awards:hall_of_fame")
+
+class HallOfFameDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
+    model = HallOfFameEntry
+    template_name = "awards/confirm_delete_award.html"  # Reuse or create a new confirm template
+    success_url = reverse_lazy("awards:hall_of_fame")

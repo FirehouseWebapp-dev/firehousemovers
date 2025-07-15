@@ -15,7 +15,21 @@
       <p class="text-red-500 text-sm">{{ error }}</p>
     {% endfor %}
   </div>
-  <button type="submit" name="add_category" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-3 rounded-lg text-lg shadow-lg">
+  <div class="mb-4">
+    {{ form.description.label_tag }}
+    {{ form.description }}
+    {% for error in form.description.errors %}
+      <p class="text-red-500 text-sm">{{ error }}</p>
+    {% endfor %}
+  </div>
+  <div class="mb-4">
+    {{ form.criteria.label_tag }}
+    {{ form.criteria }}
+    {% for error in form.criteria.errors %}
+      <p class="text-red-500 text-sm">{{ error }}</p>
+    {% endfor %}
+  </div>
+  <button type="submit" name="add_category" class="w-full bg-red-500 hover:bg-red-700 transition font-bold py-3 rounded-lg text-lg shadow-lg">
     <i class="fas fa-plus-circle"></i> Add New Category
   </button>
 </form>
@@ -25,16 +39,18 @@
     <thead class="bg-custom-dark">
       <tr class="border-b border-gray-700 transition">
         <th class="py-3 px-4 text-red-500 text-sm uppercase tracking-wider">Category Name</th>
+        <th class="py-3 px-4 text-red-500 text-sm uppercase tracking-wider">Description</th>
+        <th class="py-3 px-4 text-red-500 text-sm uppercase tracking-wider">Criteria</th>
         <th class="py-3 px-4 text-red-500 text-sm uppercase tracking-wider">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for category in categories %}
         <tr class="border-b border-gray-700 bg-custom-dark-hover transition">
-          <td class="py-3 px-4 text-gray-200 font-medium justify-left">
-            {{ category.name|nice_title }}
-          </td>
-          <td class="py-3 px-4 flex justify-center space-x-4 ">
+          <td class="py-3 px-4 text-gray-200 font-medium">{{ category.name|nice_title }}</td>
+          <td class="py-3 px-4 text-gray-400">{{ category.description|default:"—" }}</td>
+          <td class="py-3 px-4 text-gray-400">{{ category.criteria|default:"—" }}</td>
+          <td class="py-3 px-4 flex justify-center space-x-4">
             <button onclick="openModal('editModal-{{ category.id }}')" class="text-green-400 hover:text-green-600 transition">
               <i class="fas fa-edit"></i>
             </button>
@@ -50,13 +66,11 @@
             <h3 class="text-xl mb-4 text-white font-bold">Edit Category</h3>
             <form method="post" action="{% url 'awards:edit_category' category.id %}">
               {% csrf_token %}
-              <input type="text" name="name" value="{{ category.name }}" class="modal-input">
-              <button type="submit" class="modal-submit-button">
-                Save Changes
-              </button>
-              <button type="button" onclick="closeModal('editModal-{{ category.id }}')" class="modal-cancel-button">
-                Cancel
-              </button>
+              <input type="text" name="name" value="{{ category.name }}" class="modal-input mb-2">
+              <textarea name="description" class="modal-input mb-2" rows="3">{{ category.description }}</textarea>
+              <textarea name="criteria" class="modal-input mb-2" rows="3">{{ category.criteria }}</textarea>
+              <button type="submit" class="modal-submit-button">Save Changes</button>
+              <button type="button" onclick="closeModal('editModal-{{ category.id }}')" class="modal-cancel-button">Cancel</button>
             </form>
           </div>
         </div>
@@ -68,12 +82,8 @@
             <p class="mb-4">Are you sure you want to delete <strong>{{ category.name|nice_title }}</strong>?</p>
             <form method="post" action="{% url 'awards:delete_category' category.id %}">
               {% csrf_token %}
-              <button type="submit" class="modal-submit-button mb-2">
-                Yes, Delete
-              </button>
-              <button type="button" onclick="closeModal('deleteModal-{{ category.id }}')" class="modal-cancel-button">
-                Cancel
-              </button>
+              <button type="submit" class="modal-submit-button mb-2">Yes, Delete</button>
+              <button type="button" onclick="closeModal('deleteModal-{{ category.id }}')" class="modal-cancel-button">Cancel</button>
             </form>
           </div>
         </div>

@@ -1,5 +1,12 @@
 from django.urls import path
 from . import views
+from .views import (
+  HallOfFameCreateView, 
+  HallOfFameView, 
+  HallOfFameListView,
+  HallOfFameUpdateView, 
+  HallOfFameDeleteView,
+)
 
 app_name = "awards"
 
@@ -19,4 +26,12 @@ urlpatterns = [
     path("gift-card/", views.gift_card_view, name="gift_card"),
     path("award-card/", views.award_card_view, name="award_card"),
     path("get-emails/", views.get_emails, name="get_emails"),
+
+    path("prizes/", views.PrizesDescriptionView.as_view(), name="prizes_description"),
+    path("hall-of-fame/", HallOfFameListView.as_view(), name="hall_of_fame"),
+    path("hall-of-fame/add/", HallOfFameCreateView.as_view(), name="hall_of_fame_add"),
+    path("hall-of-fame/edit/<int:pk>/", HallOfFameUpdateView.as_view(), name="hall_of_fame_edit"),
+    path("hall-of-fame/delete/<int:pk>/", HallOfFameDeleteView.as_view(), name="hall_of_fame_delete"),
+
+
 ]

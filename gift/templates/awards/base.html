@@ -34,19 +34,30 @@
           class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}sidebar-link-active{% endif %}">
           <i class="fas fa-trophy mr-2"></i> Dashboard
         </a>
-        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
 
-        <a href="{% url 'awards:category_list' %}"
-          class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}sidebar-link-active{% endif %}">
-          <i class="fas fa-layer-group mr-2"></i> Categories
-        </a>
+        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+          <a href="{% url 'awards:category_list' %}"
+            class="sidebar-link {% if request.resolver_match.url_name == 'category_list' %}sidebar-link-active{% endif %}">
+            <i class="fas fa-layer-group mr-2"></i> Categories
+          </a>
 
           <a href="{% url 'awards:add_award' %}"
             class="sidebar-link {% if request.resolver_match.url_name == 'add_award' %}sidebar-link-active{% endif %}">
             <i class="fas fa-plus-circle mr-2"></i> Add New Award
           </a>
+
+
         {% endif %}
+        <a href="{% url 'awards:prizes_description' %}"
+          class="sidebar-link {% if request.resolver_match.url_name == 'prizes_description' %}sidebar-link-active{% endif %}">
+          <i class="fas fa-gift mr-2"></i> Prizes & Criteria
+        </a>
+        <a href="{% url 'awards:hall_of_fame' %}"
+          class="sidebar-link {% if request.resolver_match.url_name == 'hall_of_fame' %}sidebar-link-active{% endif %}">
+          <i class="fas fa-star mr-2"></i> Hall of Fame
+        </a>
       </nav>
+
     </aside>
 
 
