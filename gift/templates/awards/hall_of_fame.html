@@ -1,0 +1,71 @@
+{% extends "awards/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<h2 class="text-3xl font-extrabold text-center mb-6 text-red-500">Movers Hall of Fame</h2>
+{% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+  <div class="flex mb-6">
+    <a href="{% url 'awards:hall_of_fame_add' %}" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition">
+      <i class="fas fa-plus"></i> Add New Entry
+    </a>
+  </div>
+{% endif %}
+<div class="flex space-x-4 mb-8">
+  <a href="{% url 'awards:hall_of_fame' %}" class="px-4 py-2 border border-red-600 text-white rounded hover:bg-red-600 transition {% if not selected_year %}bg-red-600{% endif %}">All Years</a>
+  {% for y in years %}
+    <a href="?year={{ y }}" class="px-4 py-2 border border-red-600 text-white rounded hover:bg-red-600 transition {% if selected_year|default:'' == y|stringformat:'s' %}bg-red-600{% endif %}">
+      {{ y }}
+    </a>
+  {% endfor %}
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for entry in entries %}
+    <div class="relative rounded-lg overflow-hidden shadow-lg hover:scale-105 transition transform duration-300">
+      <img src="{{ entry.photo.url }}" alt="{{ entry.name }}" class="w-full h-85 object-cover">
+      <div class="absolute bottom-0 bg-black bg-opacity-70 w-64 p-4">
+        {% with entry.name|split_name as parts %}
+          <h3 class="text-lg font-semibold text-white">{{ parts.0 }}</h3>
+          <h2 class="text-2xl font-extrabold text-red-500 uppercase">
+            {% for part in parts|slice:"1:" %}
+              {{ part }}
+            {% endfor %}
+          </h2>
+        {% endwith %}
+        <p class="text-gray-300"> {{ entry.description }}</p>
+      </div>
+      {% if request.user.is_authenticated and request.user.userprofile.role in "admin manager" %}
+        <div class="absolute top-2 right-2 flex space-x-2">
+          <a href="{% url 'awards:hall_of_fame_edit' entry.id %}"
+            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-bold transition">Edit</a>
+          <button onclick="openModal('deleteModal-{{ entry.id }}')"
+            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-bold transition">Delete</button>
+        </div>
+      {% endif %}
+    </div>
+    <div id="deleteModal-{{ entry.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div class=" p-6 rounded-xl bg-custom-dark text-center shadow-2xl w-full max-w-md">
+        <h3 class="text-xl text-white mb-4 font-bold">Confirm Delete</h3>
+        <p class="mb-4 text-gray-300">Are you sure you want to delete <strong>{{ entry.name }}</strong>?</p>
+        <form method="post" action="{% url 'awards:hall_of_fame_delete' entry.id %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-2 rounded-lg mb-2">Yes, Delete</button>
+          <button type="button" onclick="closeModal('deleteModal-{{ entry.id }}')" class="w-full bg-gray-700 hover:bg-gray-800 transition font-bold py-2 rounded-lg">Cancel</button>
+        </form>
+      </div>
+    </div>
+   
+  {% endfor %}
+</div>
+
+
+<script>
+function openModal(id) {
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+</script>
+
+{% endblock %}

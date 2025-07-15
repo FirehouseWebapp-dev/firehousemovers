@@ -1,128 +1,255 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from django.views import View
-from rest_framework.permissions import IsAuthenticated
-from authentication.mailer import send_gift_card_email
-from authentication.models import UserProfile
-from gift.forms import AwardCardForm, GiftCardForm
-from datetime import datetime
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from inventory_app.permissions import IsManager
-from django.utils import timezone
 from django.http import JsonResponse
+from django.utils import timezone
+from datetime import datetime
 import re
 
-class GiftCardView(View):
-    permission_classes = [IsAuthenticated, IsManager]
+from authentication.models import UserProfile
+from .models import Award, AwardCategory, HallOfFameEntry
+from .forms import AwardForm, AwardCategoryForm, GiftCardForm, AwardCardForm, HallOfFameForm
+from authentication.mailer import send_gift_card_email
 
-    def dispatch(self, request, *args, **kwargs):
-        # Manually check permissions before executing the view logic
-        for permission in self.permission_classes:
-            permission_instance = permission()
-            if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
-        return super().dispatch(request, *args, **kwargs)
 
+# Helper function for permission
+def is_manager_or_admin(user):
+    if not hasattr(user, "userprofile"):
+        return False
+    return user.userprofile.role in ["manager", "admin"]
+
+# ------------------------
+# Dashboard
+# ------------------------
+class DashboardView(ListView):
+    model = Award
+    template_name = "awards/dashboard.html"
+    context_object_name = "awards"
+    ordering = ["-date_award"]
+
+# ------------------------
+# Award CRUD (CBVs)
+# ------------------------
+class ManagerOrAdminMixin(UserPassesTestMixin):
+    def test_func(self):
+        return is_manager_or_admin(self.request.user)
+
+class AwardCreateView(LoginRequiredMixin, ManagerOrAdminMixin, CreateView):
+    model = Award
+    form_class = AwardForm
+    template_name = "awards/add_award.html"
+    success_url = reverse_lazy("awards:dashboard")
+
+    def form_valid(self, form):
+        form.instance.awarded_by = UserProfile.objects.get(user=self.request.user)
+        return super().form_valid(form)
+
+class AwardUpdateView(LoginRequiredMixin, ManagerOrAdminMixin, UpdateView):
+    model = Award
+    form_class = AwardForm
+    template_name = "awards/edit_award.html"
+    success_url = reverse_lazy("awards:dashboard")
+
+class AwardDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
+    model = Award
+    template_name = "awards/confirm_delete_award.html"
+    success_url = reverse_lazy("awards:dashboard")
+
+# ------------------------
+# Award Category CRUD (CBVs)
+# ------------------------
+class CategoryListView(LoginRequiredMixin, ManagerOrAdminMixin, View):
     def get(self, request):
-        form = GiftCardForm()
-        return render(request, "gift_card.html", {"form": form})
+        categories = AwardCategory.objects.all().order_by("name")
+        form = AwardCategoryForm()
+        return render(request, "awards/category_list.html", {"categories": categories, "form": form})
 
     def post(self, request):
+        form = AwardCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("awards:category_list")
+        categories = AwardCategory.objects.all().order_by("name")
+        return render(request, "awards/category_list.html", {"categories": categories, "form": form})
+
+class CategoryUpdateView(LoginRequiredMixin, ManagerOrAdminMixin, UpdateView):
+    model = AwardCategory
+    form_class = AwardCategoryForm
+    template_name = "awards/category_edit_form.html"
+    success_url = reverse_lazy("awards:category_list")
+
+class CategoryDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
+    model = AwardCategory
+    template_name = "awards/delete_category_confirm.html"
+    success_url = reverse_lazy("awards:category_list")
+
+# ------------------------
+# Gift Card View (FBV)
+# ------------------------
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def gift_card_view(request):
+    if request.method == "POST":
         form = GiftCardForm(request.POST)
         if form.is_valid():
             gift_card = form.save(commit=False)
-
-            current_user = request.user
-            user = UserProfile.objects.get(user=current_user)
+            user = UserProfile.objects.get(user=request.user)
             gift_card.added_by = user
-            gift_card.date_of_purchase=timezone.now().date()
+            gift_card.date_of_purchase = timezone.now().date()
             gift_card.save()
-
             messages.success(request, "Gift Card Added Successfully!")
-            return redirect("gift_card")
+            return redirect("awards:gift_card")
         else:
             messages.error(request, form.errors)
-            form = GiftCardForm()
+    else:
+        form = GiftCardForm()
+    return render(request, "gift_card.html", {"form": form})
 
-        return render(request, "gift_card.html", {"form": form})
-
-
-class AwardCardView(View):
-    permission_classes = [IsAuthenticated, IsManager]
-
-    def dispatch(self, request, *args, **kwargs):
-        # Manually check permissions before executing the view logic
-        for permission in self.permission_classes:
-            permission_instance = permission()
-            if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
-        return super().dispatch(request, *args, **kwargs)
-
-    def get(self, request):
-        form = AwardCardForm()
-        return render(request, "award_card.html", {"form": form})
-
-    def post(self, request):
+# ------------------------
+# Award Card View (FBV)
+# ------------------------
+@login_required
+def award_card_view(request):
+    if request.method == "POST":
         form = AwardCardForm(request.POST)
         if form.is_valid():
-            # Get the cleaned data from the form
             employees = form.cleaned_data["employees"]
             card = form.cleaned_data["card"]
             reason = form.cleaned_data["reason"]
-            email_text = request.POST.get('emails')
-
-            # Parse emails from the text area (name <email@example.com>)
-            email_pattern = r'[\w\.-]+@[\w\.-]+'  # This regex will match any valid email address
+            email_text = request.POST.get("emails")
+            email_pattern = r"[\w\.-]+@[\w\.-]+"
             emails = re.findall(email_pattern, email_text)
-            
-            # Save the Award instance without committing the ManyToManyField yet
+
             gift_card = form.save(commit=False)
-            
-            # Get the current user (the user who is awarding the gift card)
-            current_user = request.user
-            user = UserProfile.objects.get(user=current_user)
+            user = UserProfile.objects.get(user=request.user)
             gift_card.awarded_by = user
             gift_card.date_award = timezone.now().date()
             gift_card.date_saved = datetime.now()
-            gift_card.save()  # Save the Award instance without saving the ManyToManyField yet
+            gift_card.save()
+            gift_card.employees.set(employees)
+            gift_card.save()
 
-            # Save the ManyToManyField (employees) after the Award object is saved
-            gift_card.employees.set(employees)  # Associate the employees with the Award instance
-            gift_card.save()  # Save again to ensure the employees are saved properly
-
-            # Prepare the employee usernames to display in the success message
-            empl_usernames = [emp.user.username for emp in employees]
-            empl_list = ", ".join(empl_usernames)
-
-            # Show success message
+            empl_list = ", ".join([emp.user.username for emp in employees])
             messages.success(request, f"Gift Card Awarded to {empl_list}!")
+
             try:
                 send_gift_card_email(emails, card, reason)
             except Exception as e:
-                print(f"Failed to send the email. Error: {str(e)}")
-                messages.error(request, f"Failed to send the email. Error: {str(e)}")
-            
-            # Redirect to the award_card page after saving
-            return redirect("award_card")
-        
+                print(f"Failed to send email: {str(e)}")
+                messages.error(request, f"Failed to send email: {str(e)}")
+
+            return redirect("awards:award_card")
         else:
-            # If the form is invalid, show error messages
             messages.error(request, form.errors)
-            form = AwardCardForm()
+    else:
+        form = AwardCardForm()
+    return render(request, "award_card.html", {"form": form})
 
-        # Render the form again if not successful
-        return render(request, "award_card.html", {"form": form})
-    
-
-
+# ------------------------
+# Get Emails API (FBV)
+# ------------------------
+@login_required
 def get_emails(request):
-    employee_ids = request.GET.get('employee_ids')
-    
+    employee_ids = request.GET.get("employee_ids")
     if employee_ids:
-        employee_ids = employee_ids.split(',')
+        employee_ids = employee_ids.split(",")
         employees = UserProfile.objects.filter(id__in=employee_ids)
-        
-        # Prepare the response with emails
         emails = [{"name": emp.user.username, "email": emp.user.email} for emp in employees]
-        
         return JsonResponse({"emails": emails})
     return JsonResponse({"emails": []})
+
+
+class PrizesDescriptionView(TemplateView):
+    template_name = "awards/prizes_description.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = AwardCategory.objects.all().order_by("name")
+        return context
+
+class HallOfFameView(ListView):
+    model = HallOfFameEntry
+    template_name = "awards/hall_of_fame.html"
+    context_object_name = "entries"
+
+class HallOfFameListView(View):
+    template_name = "awards/hall_of_fame.html"
+
+    def get(self, request):
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+
+        # Year filter
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        selected_year = request.GET.get("year")
+        if selected_year:
+            entries = entries.filter(created_at__year=selected_year)
+
+        return render(request, self.template_name, {
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": selected_year,
+        })
+
+class HallOfFameCreateView(View):
+    template_name = "awards/hall_of_fame_add.html"
+
+    def get(self, request):
+        form = HallOfFameForm()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = HallOfFameForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("awards:hall_of_fame")
+        return render(request, self.template_name, {"form": form})
+
+
+class HallOfFameView(View):
+    template_name = "awards/hall_of_fame.html"
+
+    def get(self, request):
+        form = HallOfFameForm()
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+
+        # Get years for filter
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        selected_year = request.GET.get("year")
+        if selected_year:
+            entries = entries.filter(created_at__year=selected_year)
+
+        return render(request, self.template_name, {
+            "form": form,
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": selected_year,
+        })
+
+    def post(self, request):
+        form = HallOfFameForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect("awards:hall_of_fame")
+        entries = HallOfFameEntry.objects.all().order_by("-created_at")
+        years = HallOfFameEntry.objects.dates("created_at", "year", order="DESC")
+        return render(request, self.template_name, {
+            "form": form,
+            "entries": entries,
+            "years": [y.year for y in years],
+            "selected_year": None,
+        })
+
+class HallOfFameUpdateView(LoginRequiredMixin, ManagerOrAdminMixin, UpdateView):
+    model = HallOfFameEntry
+    form_class = HallOfFameForm
+    template_name = "awards/hall_of_fame_add.html"  # You can create a separate edit template if you'd like
+    success_url = reverse_lazy("awards:hall_of_fame")
+
+class HallOfFameDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
+    model = HallOfFameEntry
+    template_name = "awards/confirm_delete_award.html"  # Reuse or create a new confirm template
+    success_url = reverse_lazy("awards:hall_of_fame")

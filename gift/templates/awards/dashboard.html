@@ -1,0 +1,123 @@
+{% extends "awards/base.html" %}
+
+{% block content %}
+  <h1 class="text-4xl font-extrabold text-center mb-10 text-red-500 drop-shadow-lg">
+    Recognition Dashboard
+  </h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% for award in awards %}
+      <div class="relative bg-[#111] text-white rounded-2xl p-6 shadow-2xl border-2 border-red-500 transform hover:scale-105 hover:shadow-red-600/50 transition-all duration-300">
+
+        <!-- Award title opens criteria modal -->
+        <button onclick="openModal('criteria-{{ award.category.id }}')" class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-red-500 w-max text-white px-3 py-1 text-center rounded-full text-sm font-bold shadow-md hover:bg-red-700 transition">
+          <i class="fas fa-award mr-1"></i> {{ award.category|title }}
+        </button>
+
+        <!-- Employee Photo -->
+        {% if award.employee_photo %}
+          <div class="relative mx-auto w-24 h-24 mt-6 mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg transform hover:scale-110 transition">
+            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="object-cover w-full h-full">
+            <div class="absolute inset-0 flex justify-center items-center text-2xl opacity-0 hover:opacity-100 transition-opacity">
+              🎉 ✨
+            </div>
+          </div>
+        {% else %}
+          <div class="relative mx-auto w-24 h-24 mt-6 mb-4 rounded-full bg-gray-700 flex justify-center items-center border-4 border-gray-600">
+            <i class="fas fa-user text-gray-400 text-3xl"></i>
+          </div>
+        {% endif %}
+
+        <div class="text-center">
+          <p class="italic text-gray-400 mb-2">Date: <span class="font-semibold text-white">{{ award.date_award|date:"M d, Y" }}</span></p>
+          
+          <p class="mb-2">Awarded to:
+            <span class="font-bold text-red-400">
+              {{ award.employees.user.username }}
+            </span>
+          </p>
+
+          <p class="mb-2 ellipsis">{{ award.reason|default:"N/A" }}</p>
+          <button onclick="openModal('details-{{ award.id }}')" class="text-red-500 hover:underline text-sm">Read more</button>
+
+          {% if award.card %}
+            <div class="mt-4 p-3 bg-red-700/20 text-white rounded-lg font-medium shadow-inner border border-red-500">
+              🎁 Gift Card: {{ award.card }} — ${{ award.amount }}
+            </div>
+          {% endif %}
+
+          {% if request.user.is_authenticated and request.user.userprofile.role in "admin manager" %}
+            <div class="mt-4 flex justify-center space-x-4">
+              <a href="{% url 'awards:edit_award' award.id %}" 
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition">Edit</a>
+              <button type="button" onclick="openModal('deleteModal-{{ award.id }}')" 
+                class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">Delete</button>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Criteria modal -->
+      <div id="criteria-{{ award.category.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg">
+        <div class="modal-content">
+          <h3 class="text-xl font-bold mb-4">{{ award.category.name|title }} Criteria</h3>
+          <p>{{ award.category.description }}.</p>
+          <button onclick="closeModal('criteria-{{ award.category.id }}')" class="mt-6 w-full bg-red-500 hover:bg-red-700 font-bold py-2 rounded">Close</button>
+        </div>
+      </div>
+
+      <!-- Details modal with big image -->
+      <div id="details-{{ award.id }}" class="fixed inset-0 hidden justify-center items-center z-50 modal-bg overflow-auto">
+        <div class="modal-content p-0">
+          {% if award.employee_photo %}
+            <img src="{{ award.employee_photo.url }}" alt="Employee Photo" class="w-full max-h-96 object-contain rounded-t-xl bg-black">
+          {% endif %}
+          <div class="p-6">
+            <h3 class="text-2xl font-extrabold mb-4">{{ award.category|title }}</h3>
+            <p class="mb-2"><strong>Employee:</strong> {{ award.employees.user.username }}</p>
+            <p class="mb-2"><strong>Reason:</strong> {{ award.reason|default:"N/A" }}</p>
+            <p class="mb-2"><strong>Date:</strong> {{ award.date_award|date:"M d, Y" }}</p>
+            {% if award.card %}
+              <p class="mt-2"><strong>Gift Card:</strong> {{ award.card }} — ${{ award.amount }}</p>
+            {% endif %}
+            <button onclick="closeModal('details-{{ award.id }}')" class="mt-6 w-full bg-red-500 hover:bg-red-700 font-bold py-2 rounded">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete confirmation modal -->
+      <div id="deleteModal-{{ award.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="modal-content text-center">
+          <h3 class="text-xl mb-4 text-white font-bold">Confirm Delete</h3>
+          <form method="post" action="{% url 'awards:delete_award' award.id %}">
+            {% csrf_token %}
+            <p class="mb-4">Are you sure you want to delete <strong>{{ award.category|title }}</strong> award for <strong>{{ award.employees.first.user.username }}</strong>?</p>
+            <button type="submit" class="modal-submit-button mb-2">
+              Yes, Delete
+            </button>
+            <button type="button" onclick="closeModal('deleteModal-{{ award.id }}')" class="modal-cancel-button">
+              Cancel
+            </button>
+          </form>
+        </div>
+      </div>
+
+    {% empty %}
+      <p class="text-center text-gray-400 col-span-3">No awards yet. Start recognizing your stars! 🌟</p>
+    {% endfor %}
+  </div>
+
+  <script>
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  </script>
+{% endblock %}

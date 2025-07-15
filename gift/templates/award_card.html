@@ -76,7 +76,7 @@
         </form>
 
         <div class="flex justify-between items-center mt-2 w-full">
-            <a href="{% url 'gift_card' %}" class="w-full py-2 text-white bg-[#262626] hover:bg-red-600 transition-all duration-300 focus:outline-none text-center block">
+            <a href="{% url 'awards:gift_card' %}" class="w-full py-2 text-white bg-[#262626] hover:bg-red-600 transition-all duration-300 focus:outline-none text-center block">
                 <i class="fas fa-arrow-left mr-2"></i>Manual Gift Card Input
             </a>
         </div>
@@ -101,7 +101,7 @@
                     var selectedValues = Array.from(selectElement.selectedOptions).map(option => option.value);
                     
                     // Make an AJAX request to get the emails of selected employees
-                    fetch("{% url 'get_emails' %}?employee_ids=" + selectedValues.join(','))
+                    fetch("{% url 'awards:get_emails' %}?employee_ids=" + selectedValues.join(','))
                         .then(response => response.json())
                         .then(data => {
                             var emails = data.emails.map(emailObj => emailObj.name + ' <' + emailObj.email + '>').join('\n');

@@ -16,3 +16,18 @@ class IsManager(permissions.BasePermission):
             return False
 
         return True
+
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import redirect
+
+def manager_or_admin_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        if not hasattr(request.user, "userprofile") or request.user.userprofile.role not in ["manager", "admin"]:
+            messages.error(request, "You do not have permission to perform this action.")
+            return redirect("awards:dashboard")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view

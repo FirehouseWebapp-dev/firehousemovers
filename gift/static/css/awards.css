@@ -1,0 +1,189 @@
+/* ========== GLOBAL STYLES ========== */
+html, body {
+  height: 100%;
+}
+
+.full-height {
+  min-height: 100vh;
+}
+
+.sidebar {
+  min-height: 100vh;
+}
+
+body {
+  background-color: #222;
+  color: white;
+}
+
+.header {
+  color: #e3342f;
+}
+
+.award-card {
+  background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
+  color: black;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+  transition: transform 0.3s;
+}
+
+.award-card:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+.btn-red {
+  background-color: #e3342f;
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 0.5rem;
+  transition: background 0.3s;
+}
+
+.btn-red:hover {
+  background-color: #cc1f1a;
+}
+
+.gold-text {
+  color: #FFD700;
+}
+
+/* ========== CHOICES JS CUSTOM STYLES ========== */
+.choices__inner {
+  background-color: #1f2937 !important;
+  color: white !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #414345 !important;
+  padding-left: 0.5rem !important;
+}
+
+.choices__input {
+  background-color: #1f2937 !important;
+  color: white !important;
+}
+
+.choices__list--dropdown, .choices__list[role=listbox] {
+  background-color: #111827 !important;
+  color: white !important;
+}
+
+.choices__item--selectable.is-highlighted {
+  background-color: #e3342f !important;
+  color: white !important;
+}
+
+/* ========== CUSTOM DARK BACKGROUNDS ========== */
+.bg-custom-dark {
+  background-color: #222 !important;
+}
+
+.bg-custom-dark-hover:hover {
+  background-color: #333 !important;
+}
+
+/* Modal content */
+.modal-content {
+  background-color: #222;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 24rem;
+}
+
+/* Modal input field */
+.modal-input {
+  width: 100%;
+  background-color: #222;
+  color: white;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #4b5563;
+  outline: none;
+}
+
+.modal-input:focus {
+  border-color: #e3342f;
+  box-shadow: 0 0 0 2px rgba(227, 52, 47, 0.5);
+}
+
+/* Submit button inside modal */
+.modal-submit-button {
+  margin-top: 1rem;
+  width: 100%;
+  background-color: #e3342f;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.3s;
+}
+
+.modal-submit-button:hover {
+  background-color: #cc1f1a;
+}
+
+/* Cancel button inside modal */
+.modal-cancel-button {
+  margin-top: 0.5rem;
+  width: 100%;
+  background-color: #444;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.3s;
+}
+
+.modal-cancel-button:hover {
+  background-color: #555;
+}
+
+.border-inpput {
+  border: 1px solid #414345 !important;
+}
+
+.category-list-table {
+  width: 80%;
+  margin: auto;
+}
+.sidebar-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background 0.3s, color 0.3s;
+}
+
+.sidebar-link:hover {
+  background-color: #333;
+}
+
+.sidebar-link-active {
+  background-color: #e3342f;
+  color: white !important;
+}
+
+.modal-bg {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+  background-color: #222;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  color: white;
+  position: relative;
+}
+
+.ellipsis {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Change to 2 if you'd like only 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.width-seventy {
+  width: 70%;
+}

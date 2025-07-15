@@ -52,7 +52,7 @@
 
             <!-- Gift Card -->
             <div class="group relative">
-                <a href="{% url 'gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
+                <a href="{% url 'awards:gift_card' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
                     GIFT
                 </a>
             </div>
@@ -70,7 +70,7 @@
                     <i class="fas fa-bell"></i>
                     {% with low_stock_count=request.session.low_stock_count %}
                     {% if low_stock_count > 0 %}
-                    <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1">
+                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
                         {{ low_stock_count }}
                     </span>
                     {% endif %}
@@ -139,7 +139,7 @@
         <a href="{% url 'inspection' %}" class="text-lg">VEHICLE INSPECTION</a>
         <a href="{% url 'onsite_inspection' %}" class="text-lg">ON-SITE INSPECTION</a>
         <a href="{% url 'inventory' %}" class="text-lg">INVENTORY</a>
-        <a href="{% url 'gift_card' %}" class="text-lg">GIFT</a>
+        <a href="{% url 'awards:gift_card' %}" class="text-lg">GIFT</a>
 
         <!-- Logout (mobile) -->
         <form action="{% url 'authentication:logout' %}" method="post" class="w-full">

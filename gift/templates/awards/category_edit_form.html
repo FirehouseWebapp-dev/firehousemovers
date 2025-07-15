@@ -1,0 +1,11 @@
+<form method="post">
+    {% csrf_token %}
+    {{ form.name.label_tag }}
+    {{ form.name }}
+    {% for error in form.name.errors %}
+      <p class="text-red-500 text-sm">{{ error }}</p>
+    {% endfor %}
+    <button type="submit" class="mt-4 w-full bg-red-500 hover:bg-red-700 transition font-bold py-2 rounded-lg text-lg">
+      Save Changes
+    </button>
+</form>

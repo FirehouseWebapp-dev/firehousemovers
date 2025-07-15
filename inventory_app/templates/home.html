@@ -82,7 +82,7 @@
 
             <!-- Gift Cards -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'gift_card' %}">
+                <a href="{% url 'awards:gift_card' %}">
                     <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                     <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Gift Cards</p>
                 </a>
@@ -119,8 +119,10 @@
 
             <!-- Prizes & Acknowledgements -->
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+                <a href="{% url 'awards:dashboard' %}">
                     <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
                     <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Prizes & Acknowledgements</p>
+                </a>
             </div>
 
             <!-- Employee Evaluation -->
