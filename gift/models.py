@@ -26,11 +26,11 @@ class Gift_card(models.Model):
         if self.amount:
             if self.amount < 1:
                 raise ValidationError(
-                    f"The Gift Card amount cannot be less then one ({self.amount})."
+                    f"The Gift Card amount cannot be less than one ({self.amount})."
                 )
 
     def __str__(self):
-        return f"{self.id} - ({self.company }- {self.amount})"
+        return f"{self.id} - ({self.company}- {self.amount})"
 
 
 class AwardCategory(models.Model):
@@ -58,11 +58,20 @@ class AwardCategory(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+
 def award_photo_upload_to(instance, filename):
     base = "dev_awards" if settings.DEBUG else "prod_awards"
     return os.path.join(base, "photos", filename)
 
+
+def hall_of_fame_upload_to(instance, filename):
+    base = "dev_hall_of_fame" if settings.DEBUG else "prod_hall_of_fame"
+    return os.path.join(base, "photos", filename)
+
+
 award_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+hall_of_fame_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
 
 class Award(models.Model):
     category = models.ForeignKey(AwardCategory, on_delete=models.SET_NULL, null=True, blank=True)
@@ -91,10 +100,11 @@ class Award(models.Model):
     def __str__(self):
         return f"{self.card}"
 
+
 class HallOfFameEntry(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    photo = models.ImageField(upload_to="hall_of_fame_photos/", blank=True, null=True)
+    photo = models.ImageField(upload_to=hall_of_fame_upload_to, storage=hall_of_fame_storage, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
