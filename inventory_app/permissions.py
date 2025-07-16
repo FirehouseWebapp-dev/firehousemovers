@@ -1,6 +1,5 @@
 from rest_framework import permissions
 
-
 class IsManager(permissions.BasePermission):
     """
     Custom permission to allow access only to users with the 'manager' role.
@@ -12,10 +11,12 @@ class IsManager(permissions.BasePermission):
             return False
 
         # Check if the user's role is 'manager'
-        if request.user.userprofile.role != "manager":
-            return False
+        if request.user.is_superuser:
+            return True
 
-        return True
+        role = getattr(getattr(request.user, "userprofile", None), "role", None)
+        return role in ["manager", "admin"]
+
 
 from functools import wraps
 from django.contrib import messages
