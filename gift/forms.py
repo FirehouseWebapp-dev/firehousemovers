@@ -170,3 +170,4 @@ class HallOfFameForm(forms.ModelForm):
             if not photo.content_type.startswith("image/"):
                 raise forms.ValidationError("Only image files are allowed.")
         return photo
+

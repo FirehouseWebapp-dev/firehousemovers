@@ -73,6 +73,37 @@ award_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorag
 hall_of_fame_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
 
 
+class AwardCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    criteria = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        if len(self.name.strip()) < 3:
+            raise ValidationError("Category name must be at least 3 characters long.")
+        if self.description and len(self.description.strip()) < 10:
+            raise ValidationError("Description must be at least 10 characters if provided.")
+        if self.criteria and len(self.criteria.strip()) < 10:
+            raise ValidationError("Criteria must be at least 10 characters if provided.")
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.strip().title()
+        if self.description:
+            self.description = self.description.strip()
+        if self.criteria:
+            self.criteria = self.criteria.strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+def award_photo_upload_to(instance, filename):
+    base = "dev_awards" if settings.DEBUG else "prod_awards"
+    return os.path.join(base, "photos", filename)
+
+award_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
+
 class Award(models.Model):
     category = models.ForeignKey(AwardCategory, on_delete=models.SET_NULL, null=True, blank=True)
     date_award = models.DateField(default=timezone.now)
