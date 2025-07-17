@@ -22,4 +22,4 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=50, choices=Employee_choices, default="driver")
 
     def __str__(self):
-        return self.user.username
+        return self.user.get_full_name() or self.user.username

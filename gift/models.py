@@ -6,6 +6,9 @@ from django.conf import settings
 from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.core.files.storage import FileSystemStorage
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Gift_company(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True)
@@ -129,14 +132,14 @@ class Award(models.Model):
         super(Award, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.card}"
+        return f"{self.employees.get_full_name()} - {self.category.name if self.category else 'No Category'}"
 
 
 class HallOfFameEntry(models.Model):
-    name = models.CharField(max_length=255)
+    employee = models.ForeignKey(User, on_delete=models.CASCADE)
     description = models.TextField()
-    photo = models.ImageField(upload_to=hall_of_fame_upload_to, storage=hall_of_fame_storage, blank=True, null=True)
+    photo = models.ImageField(upload_to="hall_of_fame_photos/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.employee.get_full_name()}"

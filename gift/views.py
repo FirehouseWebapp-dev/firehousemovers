@@ -7,12 +7,11 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime
-import re
-
 from authentication.models import UserProfile
 from .models import Award, AwardCategory, HallOfFameEntry
 from .forms import AwardForm, AwardCategoryForm, GiftCardForm, AwardCardForm, HallOfFameForm
 from authentication.mailer import send_gift_card_email
+import re
 
 
 # Helper function for permission
@@ -28,7 +27,49 @@ class DashboardView(ListView):
     model = Award
     template_name = "awards/dashboard.html"
     context_object_name = "awards"
-    ordering = ["-date_award"]
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("category", "employees")
+
+        # Filters
+        category_id = self.request.GET.get("category")
+        month = self.request.GET.get("month")
+        year = self.request.GET.get("year")
+
+        if category_id:
+            qs = qs.filter(category__id=category_id)
+
+        if month:
+            qs = qs.filter(date_award__month=month)
+
+        if year:
+            qs = qs.filter(date_award__year=year)
+
+        return qs.order_by("-date_award")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = AwardCategory.objects.all()
+        context["selected_category"] = self.request.GET.get("category", "")
+        context["selected_month"] = self.request.GET.get("month", "")
+        context["selected_year"] = self.request.GET.get("year", "")
+        context["years"] = Award.objects.dates('date_award', 'year', order='DESC')
+        context["months"] = [
+            {"value": "01", "name": "January"},
+            {"value": "02", "name": "February"},
+            {"value": "03", "name": "March"},
+            {"value": "04", "name": "April"},
+            {"value": "05", "name": "May"},
+            {"value": "06", "name": "June"},
+            {"value": "07", "name": "July"},
+            {"value": "08", "name": "August"},
+            {"value": "09", "name": "September"},
+            {"value": "10", "name": "October"},
+            {"value": "11", "name": "November"},
+            {"value": "12", "name": "December"},
+        ]
+        return context
+
 
 # ------------------------
 # Award CRUD (CBVs)
