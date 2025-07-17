@@ -16,7 +16,7 @@
             <div>
                 <label for="{{ form.employees.id_for_label }}" class="block text-sm font-medium text-gray-700">Employee</label>
                 <div class="mt-1">
-                    <select class="form-select crew-members-select" id="{{ form.employees.id_for_label }}" name="{{ form.employees.name }}" multiple>
+                    <select class="form-select crew-members-select" id="{{ form.employees.id_for_label }}" name="{{ form.employees.user.get_full_name }}" multiple>
                         {% for value, label in form.employees.field.choices %}
                             <option value="{{ value }}" {% if value in form.employees.value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}

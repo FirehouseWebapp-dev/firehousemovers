@@ -70,6 +70,12 @@ class AwardCardForm(forms.ModelForm):
         ]
 
 class AwardForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['card'].required = False
+        self.fields['amount'].required = False
+        self.fields['employees'].label_from_instance = lambda obj: obj.user.get_full_name() if hasattr(obj, 'user') else str(obj)
+
     class Meta:
         model = Award
         fields = ['category', 'employees', 'card', 'amount', 'employee_photo', 'reason']
@@ -151,11 +157,15 @@ class AwardCategoryForm(forms.ModelForm):
 
 
 class HallOfFameForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["employee"].label_from_instance = lambda obj: obj.get_full_name() or obj.username
+
     class Meta:
         model = HallOfFameEntry
-        fields = ['name', 'description', 'photo']
+        fields = ['employee', 'description', 'photo']
         widgets = {
-            "name": forms.TextInput(attrs={
+            "employee": forms.Select(attrs={
                 "class": "w-full bg-custom-dark text-white rounded-lg p-3 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             }),
             "description": forms.TextInput(attrs={
@@ -163,3 +173,10 @@ class HallOfFameForm(forms.ModelForm):
             }),
             "photo": forms.ClearableFileInput(attrs={"class": "hidden"}),
         }
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        if photo and hasattr(photo, "content_type") and not photo.content_type.startswith("image/"):
+            raise forms.ValidationError("Only image files are allowed.")
+        return photo
+

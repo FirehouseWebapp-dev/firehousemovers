@@ -5,6 +5,58 @@
     Recognition Dashboard
   </h1>
 
+  <form method="get" class="mb-10 flex flex-wrap gap-4 items-end">
+    <!-- Category -->
+    <div>
+      <label class="block text-white mb-1">Category</label>
+      <select name="category"
+        class="w-48 bg-custom-dark text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        <option value="">All</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Month -->
+    <div>
+      <label class="block text-white mb-1">Month</label>
+      <select name="month"
+        class="w-36 bg-custom-dark text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        <option value="">All</option>
+        {% for m in months %}
+          <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>
+            {{ m.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Year -->
+    <div>
+      <label class="block text-white mb-1">Year</label>
+      <select name="year"
+        class="w-28 bg-custom-dark text-white border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        <option value="">All</option>
+        {% for y in years %}
+          <option value="{{ y.year }}" {% if selected_year == y.year|stringformat:"s" %}selected{% endif %}>
+            {{ y.year }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Submit Button -->
+    <div>
+      <button type="submit"
+        class="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-200">
+        Filter
+      </button>
+    </div>
+  </form>
+
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
     {% for award in awards %}
       <div class="relative bg-[#111] text-white rounded-2xl p-6 shadow-2xl border-2 border-red-500 transform hover:scale-105 hover:shadow-red-600/50 transition-all duration-300">
@@ -33,7 +85,7 @@
           
           <p class="mb-2">Awarded to:
             <span class="font-bold text-red-400">
-              {{ award.employees.user.username }}
+              {{ award.employees.user.get_full_name }}
             </span>
           </p>
 
@@ -74,7 +126,7 @@
           {% endif %}
           <div class="p-6">
             <h3 class="text-2xl font-extrabold mb-4">{{ award.category|title }}</h3>
-            <p class="mb-2"><strong>Employee:</strong> {{ award.employees.user.username }}</p>
+            <p class="mb-2"><strong>Employee:</strong> {{ award.employees.user.get_full_name }}</p>
             <p class="mb-2"><strong>Reason:</strong> {{ award.reason|default:"N/A" }}</p>
             <p class="mb-2"><strong>Date:</strong> {{ award.date_award|date:"M d, Y" }}</p>
             {% if award.card %}
