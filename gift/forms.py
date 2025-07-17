@@ -163,3 +163,10 @@ class HallOfFameForm(forms.ModelForm):
             }),
             "photo": forms.ClearableFileInput(attrs={"class": "hidden"}),
         }
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        if photo and hasattr(photo, "content_type"):
+            if not photo.content_type.startswith("image/"):
+                raise forms.ValidationError("Only image files are allowed.")
+        return photo

@@ -1,5 +1,6 @@
 {% extends "awards/base.html" %}
 {% load custom_filters %}
+{% load static %}
 
 {% block content %}
 <h2 class="text-3xl font-extrabold text-center mb-6 text-red-500">Movers Hall of Fame</h2>
@@ -22,7 +23,12 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {% for entry in entries %}
     <div class="relative rounded-lg overflow-hidden shadow-lg hover:scale-105 transition transform duration-300">
-      <img src="{{ entry.photo.url }}" alt="{{ entry.name }}" class="w-full h-85 object-cover">
+      {% if entry.photo %}
+        <img src="{{ entry.photo.url }}" alt="{{ entry.name }}" class="w-full h-85 object-cover">
+      {% else %}
+        <img src="{% static 'images/user_icon.jpg' %}" alt="No Photo" class="w-full h-85 object-cover">
+      {% endif %}
+
       <div class="absolute bottom-0 bg-black bg-opacity-70 w-64 p-4">
         {% with entry.name|split_name as parts %}
           <h3 class="text-lg font-semibold text-white">{{ parts.0 }}</h3>
