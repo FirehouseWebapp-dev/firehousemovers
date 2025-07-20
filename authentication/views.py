@@ -1,14 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, resolve_url
 from django.contrib.auth import login
-from django.shortcuts import redirect
 from django.views.generic import FormView
 from django.contrib import messages
 from django.views import View
-from authentication.forms import EmailAuthenticationForm, SignUpForm
-from .models import UserProfile
+from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm
+from django.db.models import Q
+from .models import UserProfile, User
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import resolve_url
 from django.contrib.auth import login as auth_login
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -21,6 +20,16 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .forms import ProfileUpdateForm
+from django.shortcuts import render, get_object_or_404
+
+
+# Helper function for permission
+def is_manager_or_admin(user):
+    if not hasattr(user, "userprofile"):
+        return False
+    return user.userprofile.role in ["manager", "admin"]
 
 
 class SignUpView(View):
@@ -31,34 +40,48 @@ class SignUpView(View):
 
     def post(self, request):
         form = SignUpForm(request.POST, request.FILES)
+
         if form.is_valid():
             first_name = form.cleaned_data.get("first_name")
             email = form.cleaned_data.get("email")
-            # Check if a user profile with the given email already exists
-            if UserProfile.objects.filter(user__email=email).exists():
-                request.session.flush()
+            profile_pic = form.cleaned_data.get("profile_picture")
+
+            # ✅ Check if user already exists (correct model)
+            if User.objects.filter(email=email).exists():
                 messages.error(
                     request, "Email already exists. Please choose another one."
                 )
                 return render(request, "signup.html", {"form": form})
 
+            # ✅ Generate a unique username
             if first_name:
-                existing_user_count = UserProfile.objects.filter(
-                    user__username__startswith=first_name.lower()
+                existing_user_count = User.objects.filter(
+                    username__startswith=first_name.lower()
                 ).count()
                 user_name = f"{first_name.lower()}{existing_user_count + 1}"
+            else:
+                user_name = email.split("@")[0]
 
+            # ✅ Save user
             user = form.save(commit=False)
             user.username = user_name
-
             user.set_password(form.cleaned_data["password1"])
             user.save()
 
-            UserProfile.objects.create(user=user)
+            # ✅ Create user profile
+            UserProfile.objects.create(
+                user=user,
+                profile_picture=profile_pic
+            )
+
+            # ✅ Log in and redirect
             login(request, user)
             messages.success(request, "You have successfully signed up!")
-            return redirect("/")
+            return redirect("authentication:profile")
 
+
+        # ❌ If form is invalid
+        print("Form errors:", form.errors)
         return render(request, "signup.html", {"form": form})
 
 
@@ -202,3 +225,116 @@ def check_email_availability(request):
     email = request.GET.get("email", None)
     data = {"is_taken": UserProfile.objects.filter(user__email=email).exists()}
     return JsonResponse(data)
+
+
+
+@login_required
+def profile_view(request):
+    user = request.user
+    profile = user.userprofile
+
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            profile_form = form.save(commit=False)
+            if request.FILES.get("profile_picture"):
+                profile.profile_picture = request.FILES["profile_picture"]
+            profile.save()
+            return redirect("authentication:profile")
+    else:
+        form = ProfileUpdateForm(instance=user)
+
+    # ✅ Get team members who share the same manager
+    manager = profile.manager
+    team_members = UserProfile.objects.filter(manager=manager).exclude(user=user) if manager else []
+
+    return render(request, "authentication/profile.html", {
+        "form": form,
+        "profile": profile,
+        "team_members": team_members,
+    })
+
+
+@login_required
+def view_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    profile = profile_user.userprofile
+
+    if profile.manager:
+        team_members = UserProfile.objects.filter(manager=profile.manager).exclude(user=profile.user)
+    else:
+        team_members = []  
+   
+    return render(request, "authentication/view_profile.html", {
+        "profile_user": profile_user,
+        'team_members': team_members,
+        "profile": profile
+    })
+from django.contrib.auth.views import PasswordChangeView
+from .forms import StyledPasswordChangeForm
+
+class CustomPasswordChangeView(PasswordChangeView):
+    form_class = StyledPasswordChangeForm
+    template_name = 'authentication/change_password.html'
+    success_url = '/profile/'
+
+
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def team_view(request):
+    user_profile = request.user.userprofile
+    team_members = []
+
+    selected_role = request.GET.get("role")
+
+    if user_profile.role in ["manager", "admin"]:
+        team_members = UserProfile.objects.filter(manager=user_profile)
+        if selected_role:
+            team_members = team_members.filter(role=selected_role)
+    else:
+        team_members = []
+
+    roles = UserProfile.EMPLOYEE_CHOICES
+
+    return render(request, "authentication/team_view.html", {
+        "team_members": team_members,
+        "roles": roles,
+        "selected_role": selected_role
+    })
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def add_team_member(request):
+    if request.method == 'POST':
+        form = AddTeamMemberForm(request.POST)
+        if form.is_valid():
+            team_member = form.cleaned_data['user']
+            role = form.cleaned_data['role']
+            profile = team_member.userprofile
+            profile.manager = request.user.userprofile
+            profile.role = role
+            profile.save()
+            return redirect('authentication:team')
+    else:
+        form = AddTeamMemberForm()
+    return render(request, 'authentication/add_member.html', {'form': form})
+
+
+from django.views.decorators.http import require_POST
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def remove_team_member(request, user_id):
+    member_profile = get_object_or_404(UserProfile, user__id=user_id)
+
+    if member_profile.manager != request.user.userprofile:
+        messages.error(request, "You do not have permission to remove this user.")
+        return redirect("authentication:team")
+
+    if request.method == "POST":
+        member_profile.manager = None
+        member_profile.save()
+        messages.success(request, f"{member_profile.user.get_full_name()} was removed from your team.")
+        return redirect("authentication:team")

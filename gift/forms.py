@@ -37,10 +37,13 @@ class GiftCardForm(forms.ModelForm):
         return cleaned_data
 
 class AwardCardForm(forms.ModelForm):
-    employees = forms.SelectMultiple(
-        choices=[(user.id, user.user) for user in UserProfile.objects.all()],
-        attrs={"class": "form-select"},
+    employees = forms.MultipleChoiceField(
+        choices=[],
+        widget=forms.SelectMultiple(attrs={"class": "form-select"}),
+        required=True,
+        label="Employees"
     )
+
     card = forms.ModelChoiceField(
         queryset=Gift_card.objects.all(),
         widget=forms.Select(
@@ -50,6 +53,7 @@ class AwardCardForm(forms.ModelForm):
         ),
         empty_label="Select a Card",
     )
+
     reason = forms.CharField(
         widget=forms.Textarea(
             attrs={
@@ -68,6 +72,18 @@ class AwardCardForm(forms.ModelForm):
             "card",
             "reason",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        try:
+            self.fields["employees"].choices = [
+                (user.id, str(user.user)) for user in UserProfile.objects.all()
+            ]
+        except Exception:
+            # Safeguard during initial migrations
+            self.fields["employees"].choices = []
+
 
 class AwardForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):

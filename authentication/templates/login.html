@@ -56,6 +56,12 @@
                 <!-- Submit Button -->
                 <button type="submit" class="w-full py-3 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">Log In</button>
             </form>
+            <p class="text-sm text-gray-600 mt-4 text-center">
+                Don't have an account?
+                <a href="{% url 'authentication:signup' %}" class="text-red-500 hover:underline font-semibold">
+                    Sign up here
+                </a>
+            </p>
         </div>
     </div>
 

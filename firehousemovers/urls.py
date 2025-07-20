@@ -31,6 +31,8 @@ urlpatterns = [
     path("packaging/", include("packaging_supplies.urls")),  # Include packaging_supplies routes
     path("marketing/", include("marketing.urls", namespace="marketing")),
     path("awards/", include("gift.urls", namespace="awards")),
+    path("accounts/", include("django.contrib.auth.urls")),  # ✅ this line is required
+
 
 ]
 

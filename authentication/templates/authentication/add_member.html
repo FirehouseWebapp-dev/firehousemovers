@@ -1,0 +1,48 @@
+{% extends 'authentication/base_profile.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="min-h-screen bg-black text-white py-10 px-4 sm:px-8 md:px-16">
+  <div class="max-w-3xl mx-auto bg-[#1e1e1e] p-8 rounded-xl shadow-xl border border-gray-700">
+    <h2 class="text-3xl font-extrabold text-red-500 mb-8 text-center">Add Team Member</h2>
+
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- User -->
+      <div>
+        <label for="id_user" class="block text-sm font-semibold text-gray-300 mb-1">Select User</label>
+        {{ form.user|add_class:"w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none" }}
+      </div>
+
+      <!-- Role -->
+      <div>
+        <label for="id_role" class="block text-sm font-semibold text-gray-300 mb-1">Select Role</label>
+        {{ form.role|add_class:"w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none" }}
+      </div>
+
+      <!-- Start Date -->
+      <div>
+        <label for="id_start_date" class="block text-sm font-semibold text-gray-300 mb-1">Start Date</label>
+        <input type="date" name="start_date" id="id_start_date"
+               class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white focus:outline-none"
+               value="{{ form.start_date.value|default_if_none:'' }}">
+      </div>
+
+      <!-- Submit -->
+      <div class="pt-6 text-center">
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+          Add Member
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center mt-6">
+      <a href="{% url 'authentication:team' %}" class="text-sm text-gray-400 hover:text-white underline">
+        ← Back to Team View
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

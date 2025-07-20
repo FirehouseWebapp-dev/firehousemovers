@@ -1,11 +1,13 @@
 {% load static %}
 <div class="pb-16">
-<header class="fixed top-0  w-full z-50 flex items-center justify-between px-6 py-3 bg-[#262626]">
+<link href="{% static 'marketing/css/fonts.css' %}" rel="stylesheet">
+
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 py-3 bg-[#262626] shadow-lg" style="background-color: #262626;">
     <!-- Logo -->
     <div class="flex items-center gap-2">
         <a href="/">
-        <img src="{% static 'images/fire_house_logo.svg' %}" alt="Logo" class="w-10 h-10">
-    </a>
+            <img src="{% static 'images/fire_house_logo.svg' %}" alt="Logo" class="w-10 h-10">
+        </a>
         <a href="/">
             <h1 class="text-xl font-bold text-gray-200 hover:text-white font-serif">FIREHOUSE</h1>
         </a>
@@ -57,7 +59,7 @@
                 </a>
             </div>
 
-            <!-- packaging and sipplies -->
+            <!-- Packaging and Supplies -->
             <div class="group relative">
                 <a href="{% url 'packaging_supplies:index' %}" class="flex items-center gap-1 text-gray-200 hover:text-white text-sm hover:border-b hover:border-white">
                     PACKAGING & SUPPLIES
@@ -67,13 +69,13 @@
             <!-- Low Stock Alert Icon -->
             <div class="relative group">
                 <button id="low-stock-btn" class="text-white text-xl relative">
-                    <i class="fas fa-bell"></i>
+                    <i class="fa-solid fa-bell"></i>
                     {% with low_stock_count=request.session.low_stock_count %}
-                    {% if low_stock_count > 0 %}
-                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
-                        {{ low_stock_count }}
-                    </span>
-                    {% endif %}
+                        {% if low_stock_count > 0 %}
+                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+                            {{ low_stock_count }}
+                        </span>
+                        {% endif %}
                     {% endwith %}
                 </button>
 
@@ -94,27 +96,43 @@
                     </div>
                 </div>
             </div>
-
-
             {% endif %}
         </nav>
     </div>
 
     <!-- Login (visible if not authenticated) -->
     {% if not user.is_authenticated %}
-    <a href="{% url 'authentication:login' %}" class="ml-auto flex gap-1 justify-center text-black bg-white p-2 rounded-lg w-16 ">
+    <a href="{% url 'authentication:login' %}" class="ml-auto flex gap-1 justify-center text-black bg-white p-2 rounded-lg w-16">
         Login
     </a>
     {% endif %}
 
     <!-- Logout (pushed to the right and visible on desktop only) -->
     {% if user.is_authenticated %}
-    <div class="ml-auto hidden md:block">
-        <form action="{% url 'authentication:logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="text-gray-200 hover:text-white text-xl"><i class="fas fa-sign-out-alt"></i></button>
-        </form>
-    </div>
+        <div class="ml-auto hidden md:flex items-center gap-4">
+            <!-- Profile Picture Link -->
+            <a href="{% url 'authentication:profile' %}" class="flex items-center bg-white/10 px-3 py-1 rounded-full shadow-md hover:bg-white/20 transition">
+                <div class="w-10 h-10 rounded-full overflow-hidden">
+                    {% if request.user.userprofile.profile_picture %}
+                    <img src="{{ request.user.userprofile.profile_picture.url }}" alt="Profile" class="w-full h-full object-cover">
+                    {% else %}
+                    <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+                <div class="ml-3 text-left leading-tight">
+                    <p class="text-sm font-semibold text-white">{{ request.user.first_name|capfirst }}</p>
+                    <p class="text-xs text-gray-300">{{ request.user.userprofile.role|default:"" }}</p>
+                </div>
+            </a>
+
+            <!-- Logout Icon -->
+            <form action="{% url 'authentication:logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="text-gray-200 hover:text-white text-xl">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </form>
+        </div>
     {% endif %}
 
     <!-- Hamburger Icon (visible on mobile) -->
@@ -151,8 +169,6 @@
 </div>
 </div>
 
-
-
 <!-- Script for Mobile Menu Toggle -->
 <script>
     const hamburgerMenu = document.getElementById('hamburger-menu');
@@ -166,10 +182,6 @@
     closeMenu.addEventListener('click', () => {
         mobileMenu.classList.add('hidden');
     });
-
-    
-
-
 
     const alertBtn = document.getElementById('low-stock-btn');
     const popup = document.getElementById('low-stock-popup');
