@@ -1,0 +1,64 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<h2 class="text-3xl font-extrabold text-center mb-10 text-red-500"> My Achievements</h2>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+  <!-- 🏅 Awards Section -->
+  <div>
+    <h3 class="text-2xl font-bold text-white mb-6 border-b pb-2 border-red-500"> Awards</h3>
+    {% if awards %}
+      <div class="space-y-6">
+        {% for award in awards %}
+          <div class="flex items-center bg-[#1e1e1e] rounded-lg shadow-md overflow-hidden hover:scale-[1.02] transition">
+            {% if award.employee_photo %}
+              <img src="{{ award.employee_photo.url }}" alt="Award Photo" class="w-24 h-24 object-cover">
+            {% else %}
+              <img src="{% static 'images/user_icon.jpg' %}" alt="Default Photo" class="w-24 h-24 object-cover">
+            {% endif %}
+            <div class="p-4 text-white flex-1">
+              <h4 class="text-xl font-semibold text-red-500">{{ award.category.name }}</h4>
+              <p class="text-sm text-gray-300 mt-1">{{ award.reason|default:"No reason provided." }}</p>
+              <p class="text-xs text-gray-400 mt-2">Awarded on {{ award.date_award }}</p>
+              {% if award.amount %}
+                <p class="text-green-400 mt-1 font-bold">${{ award.amount }}</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-400">You have not received any awards yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- 🌟 Hall of Fame Section -->
+  <div>
+    <h3 class="text-2xl font-bold text-white mb-6 border-b pb-2 border-red-500"> Hall of Fame</h3>
+    {% if hall_of_fame_entries %}
+      <div class="space-y-6">
+        {% for entry in hall_of_fame_entries %}
+          <div class="flex items-center bg-[#1e1e1e] rounded-lg shadow-md overflow-hidden hover:scale-[1.02] transition">
+            {% if entry.photo %}
+              <img src="{{ entry.photo.url }}" alt="HOF Photo" class="w-24 h-24 object-cover">
+            {% else %}
+              <img src="{% static 'images/user_icon.jpg' %}" alt="Default Photo" class="w-24 h-24 object-cover">
+            {% endif %}
+            <div class="p-4 text-white flex-1">
+              <h4 class="text-xl font-bold text-red-500">{{ entry.employee.get_full_name }}</h4>
+              <p class="text-sm text-gray-300 mt-1">{{ entry.description|default:"No description." }}</p>
+              <p class="text-xs text-gray-400 mt-2">Inducted on {{ entry.created_at|date:"F j, Y" }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-400">No Hall of Fame entries yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

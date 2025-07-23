@@ -294,3 +294,17 @@ class HallOfFameDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
     model = HallOfFameEntry
     template_name = "awards/confirm_delete_award.html"  # Reuse or create a new confirm template
     success_url = reverse_lazy("awards:hall_of_fame")
+
+from django.utils.timezone import now
+
+@login_required
+def my_awards_view(request):
+    profile = UserProfile.objects.get(user=request.user)
+    awards = Award.objects.filter(employees=profile).order_by("-date_award")
+    hall_of_fame_entries = HallOfFameEntry.objects.filter(employee=request.user.id).order_by("-created_at")
+
+
+    return render(request, "awards/my_awards.html", {
+        "awards": awards,
+        "hall_of_fame_entries": hall_of_fame_entries,
+    })

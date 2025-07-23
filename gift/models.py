@@ -132,7 +132,7 @@ class Award(models.Model):
         super(Award, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.employees.get_full_name()} - {self.category.name if self.category else 'No Category'}"
+        return f"Award to {self.employees.user.get_full_name()} - {self.category.name if self.category else 'No Category'}"
 
 
 class HallOfFameEntry(models.Model):

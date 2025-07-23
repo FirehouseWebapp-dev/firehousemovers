@@ -2,164 +2,132 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
     <title>Sign Up</title>
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
+    <link rel="stylesheet" href="{% static 'css/awards.css' %}">
+    <link href="{% static 'marketing/css/fonts.css' %}" rel="stylesheet">
 
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-semibold text-center mb-6">Sign Up</h2>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  </head>
+    <body class="bg-black text-white">
+    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      
+      <!-- Left: Signup Form -->
+      <div class="flex items-center justify-center p-10">
+        <div class="w-full max-w-md p-5 border border-gray-600 rounded-lg">
+          <h2 class="text-3xl font-bold text-red-500 mb-5">Create Your Account</h2>
+          <p class="text-gray-300 mb-6 text-sm">Join the team that moves with purpose. Fast, strong, and trusted.</p>
+          {% if form.non_field_errors %}
+          <div class="text-red-500 text-sm mb-4 bg-red-100 p-3 rounded">
+              {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+          </div>
+          {% endif %}
 
-            <form id="signup-form" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
+          <form method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
 
-                <div class="grid grid-cols-1 gap-6">
-                    <!-- First Name & Last Name -->
-                    <div class="flex gap-4">
-                        <div class="w-1/2">
-                            <label for="first_name" class="block text-sm font-medium text-gray-700 ">First Name</label>
-                            {{ form.first_name }}
-                            {% if form.first_name.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.first_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="w-1/2">
-                            <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
-                            {{ form.last_name }}
-                            {% if form.last_name.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.last_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+            <!-- First & Last Name -->
+            <div class="flex gap-4">
+              <div class="w-1/2">
+                <p for="first_name" class="text-sm mb-3">First Name</p>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.first_name.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+              <div class="w-1/2">
+                <p for="last_name" class="text-sm mb-3">Last Name</p>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.last_name.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
 
-                    <!-- Password Fields -->
-                    <div class="flex gap-4">
-                        <div class="w-1/2">
-                            <label for="password1" class="block text-sm font-medium text-gray-700">Password</label>
-                            {{ form.password1 }}
-                            {% if form.password1.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.password1.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="w-1/2">
-                            <label for="password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            {{ form.password2 }}
-                            {% if form.password2.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+            <!-- Email -->
+            <div>
+              <p for="email" class="text-sm mb-3">Email</p>
+              {{ form.email }}
+              {% if form.email.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.email.errors.0 }}
+                  </p>
+              {% endif %}
+            </div>
 
-                    <!-- Email & Role -->
-                    <div class="flex gap-4">
-                        <div class="w-1/2">
-                            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="w-1/2">
-                            <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
-                            {{ form.role }}
-                            {% if form.role.errors %}
-                                <div class="text-red-500 text-xs mt-1">{{ form.role.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+            <!-- Passwords -->
+            <div class="flex gap-4">
+              <div class="w-1/2">
+                <p for="password1" class="text-sm mb-3">Password</p>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.password1.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+              <div class="w-1/2">
+                <p for="password2" class="text-sm mb-3">Confirm Password</p>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.password2.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
 
-                    <!-- Terms & Conditions -->
-                    <div class="flex justify-between items-center mt-4">
-                        <p class="text-sm text-gray-600">Already have an account? <strong><a href="{% url 'authentication:login' %}"class="text-red-500 hover:underline">Log in</a></strong></p>
-                        <button type="submit" class="w-32 py-2 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">signup</button>
-                    </div>
+            <!-- Profile Picture -->
+            <div>
+                <p for="profile_picture" class="text-sm mb-3">Profile Picture</p>
+                <input 
+                type="file" 
+                name="profile_picture" 
+                accept="image/*"
+                class="w-full text-sm text-white
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-white file:font-semibold
+                        file:bg-red-500 hover:file:bg-red-600
+                        cursor-pointer"
+                />
+            </div>
+
+            <!-- Submit -->
+            <div class="flex justify-between items-center pt-4">
+              <p class="text-sm text-gray-400">
+                Already have an account?
+                <a href="{% url 'authentication:login' %}" class="text-red-500 hover:underline font-semibold">Log in</a>
+              </p>
+              <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded font-semibold">
+                Sign Up
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right: Image + Text -->
+        <div class="relative hidden lg:block h-screen">
+            <img src="{% static 'marketing/img/IMG_2045.jpg' %}" alt="Movers" class="w-full h-full object-cover opacity-60" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 flex flex-col justify-end p-10">
+                <div class="">
+                    <h2 class="text-4xl font-extrabold text-white mb-2">Move with Confidence</h2>
+                    <p class="text-lg text-gray-200">Trusted by thousands, we deliver with care, precision, and speed. Be part of the force that keeps homes moving.</p>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-
-    <script>
-        document.getElementById('signup-form').addEventListener('submit', function(event) {
-            let termsChecked = document.getElementById('terms').checked;
-            let password1 = document.getElementById('id_password1').value;
-            let password2 = document.getElementById('id_password2').value;
-            let passwordsMatch = password1 === password2;
-
-            const countryCode = document.querySelector('[name="country_code"]').value;
-            const phoneNumber = document.getElementById('id_phone_number').value;
-
-            if (!countryCode || !phoneNumber) {
-                event.preventDefault();
-                alert('Please select a country code and enter your phone number.');
-                return;
-            }
-
-            document.getElementById('id_phone_number').value = '+' + countryCode + phoneNumber;
-
-            if (!termsChecked) {
-                event.preventDefault();
-                document.getElementById('terms-error').style.display = 'block';
-            } else {
-                document.getElementById('terms-error').style.display = 'none';
-            }
-
-            if (!passwordsMatch) {
-                event.preventDefault();
-                document.getElementById('id_password2').classList.add('is-invalid');
-                let errorDiv = document.createElement('div');
-                errorDiv.className = 'invalid-feedback';
-                errorDiv.innerHTML = 'Passwords do not match';
-                let parentDiv = document.getElementById('id_password2').parentElement;
-                if (!parentDiv.querySelector('.invalid-feedback')) {
-                    parentDiv.appendChild(errorDiv);
-                }
-            } else {
-                document.getElementById('id_password2').classList.remove('is-invalid');
-                let parentDiv = document.getElementById('id_password2').parentElement;
-                let errorDiv = parentDiv.querySelector('.invalid-feedback');
-                if (errorDiv) {
-                    errorDiv.remove();
-                }
-            }
-        });
-
-        $(document).ready(function() {
-            $('#id_email').on('input', function() {
-                var email = $(this).val();
-                $.ajax({
-                    url: "{% url 'authentication:check_email_availability' %}",
-                    data: {
-                        'email': email
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.is_taken) {
-                            event.preventDefault();
-                            document.getElementById('id_email').classList.add('is-invalid');
-                            let errorDiv = document.createElement('div');
-                            errorDiv.className = 'invalid-feedback';
-                            errorDiv.innerHTML = 'Email already exists';
-                            let parentDiv = document.getElementById('id_email').parentElement;
-                            if (!parentDiv.querySelector('.invalid-feedback')) {
-                                parentDiv.appendChild(errorDiv);
-                            }
-                        } else {
-                            document.getElementById('id_email').classList.remove('is-invalid');
-                            let parentDiv = document.getElementById('id_email').parentElement;
-                            let errorDiv = parentDiv.querySelector('.invalid-feedback');
-                            if (errorDiv) {
-                                errorDiv.remove();
-                            }
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-</body>
+  </body>
 </html>

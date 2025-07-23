@@ -109,14 +109,30 @@
 
     <!-- Logout (pushed to the right and visible on desktop only) -->
     {% if user.is_authenticated %}
-    <div class="ml-auto hidden md:block">
-        <form action="{% url 'authentication:logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="text-gray-200 hover:text-white text-xl">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
-        </form>
-    </div>
+        <div class="ml-auto hidden md:flex items-center gap-4">
+            <!-- Profile Picture Link -->
+            <a href="{% url 'authentication:profile' %}" class="flex items-center bg-white/10 px-3 py-1 rounded-full shadow-md hover:bg-white/20 transition">
+                <div class="w-10 h-10 rounded-full overflow-hidden">
+                    {% if request.user.userprofile.profile_picture %}
+                    <img src="{{ request.user.userprofile.profile_picture.url }}" alt="Profile" class="w-full h-full object-cover">
+                    {% else %}
+                    <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+                <div class="ml-3 text-left leading-tight">
+                    <p class="text-sm font-semibold text-white">{{ request.user.first_name|capfirst }}</p>
+                    <p class="text-xs text-gray-300">{{ request.user.userprofile.role|default:"" }}</p>
+                </div>
+            </a>
+
+            <!-- Logout Icon -->
+            <form action="{% url 'authentication:logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="text-gray-200 hover:text-white text-xl">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </form>
+        </div>
     {% endif %}
 
     <!-- Hamburger Icon (visible on mobile) -->

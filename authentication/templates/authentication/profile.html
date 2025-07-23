@@ -1,0 +1,278 @@
+{% extends 'authentication/base_profile.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex min-h-screen relative bg-black text-white">
+  <!-- Truck Animation Background -->
+  <div class="absolute top-0 left-0 w-full h-full z-0 overflow-hidden">
+    <img src="{% static 'images/truck-animation.svg' %}" alt="Truck" class="absolute animate-move-truck opacity-10 w-64 md:w-96 -bottom-10 left-1/2 transform -translate-x-1/2">
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-10 space-y-12 relative z-10">
+    <!-- Hero Card -->
+    <div class="relative w-full bg-gradient-to-r from-red-500 via-black to-red-500 p-6 rounded-xl shadow-md mb-10 text-white">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        
+        <!-- Left: Image and Info -->
+        <div class="flex flex-col md:flex-row items-center gap-6">
+          <!-- Profile Picture -->
+          <div class="relative">
+            {% if profile.profile_picture %}
+              <img src="{{ profile.profile_picture.url }}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow" alt="Profile Picture">
+            {% else %}
+              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-700 flex items-center justify-center text-4xl font-bold shadow">
+                    <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Name and Info -->
+          <div>
+            <h1 class="text-3xl font-extrabold">{{ request.user.first_name|capfirst }} {{ request.user.last_name|capfirst }}</h1>
+            <p class="text-gray-200">
+              Employee ID - {{ profile.id }} 
+              {% if profile.start_date %}
+              | Tenure: {{ profile.start_date|date:"d M Y" }} - Present
+              <span class="text-sm text-gray-300 ml-1">({{ profile.start_date|timesince }} experience)</span>
+              {% endif %}
+            </p>
+
+            {% if profile.role %}
+              <div class="inline-block mt-2 px-4 py-1 text-sm rounded-full border border-white text-white bg-black/30">
+                {{ profile.role }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info Icons -->
+      <div class="flex flex-wrap gap-6 mt-6 items-center text-sm text-white">
+        <div class="flex items-center">
+          <div class="w-9 h-9 flex items-center justify-center">
+            <i class="fas fa-envelope text-white"></i>
+          </div>
+          <span>{{ request.user.email }}</span>
+        </div>
+
+        <div class="flex items-center">
+          <div class="w-9 h-9 flex items-center justify-center">
+            <i class="fas fa-phone text-white"></i>
+          </div>
+          <span>{{ profile.phone_number|default:"N/A" }}</span>
+          <span class="text-xs text-gray-300 ml-2">Work</span>
+        </div>
+
+        <div class="flex items-center">
+          <div class="w-9 h-9 flex items-center justify-center">
+            <i class="fas fa-map-marker-alt text-white"></i>
+          </div>
+          <span>{{ profile.location|default:"Not Set" }}</span>
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <!-- Profile Section -->
+    <section id="profile" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Profile</h3>
+      <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-md font-bold">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<p class="text-red-500 text-xs">{{ form.first_name.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold">Last Name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<p class="text-red-500 text-xs">{{ form.last_name.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-md font-bold">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<p class="text-red-500 text-xs">{{ form.email.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold">Phone Number</label>
+            {{ form.phone_number }}
+            {% if form.phone_number.errors %}<p class="text-red-500 text-xs">{{ form.phone_number.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold">Role</label>
+            {{ form.role }}
+            {% if form.role.errors %}<p class="text-red-500 text-xs">{{ form.role.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold">Location</label>
+            {{ form.location }}
+            {% if form.location.errors %}<p class="text-red-500 text-xs">{{ form.location.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold">Start Date</label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}<p class="text-red-500 text-xs">{{ form.start_date.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="text-md font-bold block mb-1">Profile Picture</label>
+            <input type="file" name="profile_picture" class="text-sm text-white w-full">
+            {% if form.profile_picture.errors %}<p class="text-red-500 text-xs">{{ form.profile_picture.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+
+        <!-- Personal Section -->
+        <div class="mt-8 border-t border-gray-600 pt-6">
+          <h4 class="text-lg font-semibold text-red-400 mb-4">Personal</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-mdfont-bold">Hobbies</label>
+              {{ form.hobbies }}
+              {% if form.hobbies.errors %}<p class="text-red-500 text-xs">{{ form.hobbies.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="text-md font-bold">Favourite Quote</label>
+              {{ form.favourite_quote }}
+              {% if form.favourite_quote.errors %}<p class="text-red-500 text-xs">{{ form.favourite_quote.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="mt-6 bg-red-500 hover:bg-red-600 transition px-6 py-2 rounded-lg font-semibold">
+          Save Profile
+        </button>
+      </form>
+    </section>
+
+
+    <!-- Security Section -->
+    <section id="security" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Security</h3>
+      <ul class="space-y-3">
+        <li class="flex items-center justify-between">
+          <div>
+            <p class="font-semibold">Change Password</p>
+            <p class="text-sm text-gray-400">Update your password for account security.</p>
+          </div>
+          <a href="{% url 'authentication:password_change' %}" class="bg-red-500 hover:bg-red-600 px-4 py-1 rounded">Change</a>
+        </li>
+        <li class="flex items-center justify-between">
+          <div>
+            <p class="font-semibold">Email</p>
+            <p class="text-sm text-gray-400">{{ request.user.email }}</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Team</h3>
+
+      <!-- Manager Card -->
+      <div class="mb-6">
+        <h4 class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">Manager</h4>
+        {% if profile.manager %}
+        <div class="bg-gray-100 rounded-lg shadow-md w-full max-w-xs">
+          <a href="{% url 'authentication:view_profile' profile.manager.user.id %}">
+            <div class="rounded-lg overflow-hidden hover:shadow-lg transition duration-300 bg-[#2a2a2a]  hover:bg-[#3a3a3a] ">
+              {% if profile.manager.profile_picture and profile.manager.profile_picture.name %}
+                <img src="{{ profile.manager.profile_picture.url }}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
+              {% else %}
+                <img src="{% static 'images/user_icon.jpg' %}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
+              {% endif %}
+              <div class="p-3 text-center">
+                <h3 class="text-lg font-semibold text-red-500">
+                  {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}                
+                </h3>
+                <p class="text-sm text-gray-400">{{ profile.manager.role|default:"No Role" }}</p>
+                <p class="text-sm text-gray-300">ID: {{ profile.manager.user.id }}</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% else %}
+          <p class="text-red-500">No manager assigned.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Teammates</h3>
+      <!-- Team Members -->
+      <div>
+        {% if teammates %}
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {% for teammate in teammates %}
+              <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+                {% if teammate.profile_picture and teammate.profile_picture.name %}
+                  <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                {% else %}
+                  <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                {% endif %}
+                <div>
+                  <p class="text-lg font-semibold text-white">
+                    {{ teammate.user.get_full_name|default:teammate.user.username }}
+                  </p>
+                  <p class="text-sm text-gray-400">{{ teammate.role|default:"No Role" }}</p>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-gray-400 italic">No Teammate yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Teammates Section -->
+    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Team Members</h3>
+
+      {% if team_members %}
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {% for mate in team_members %}
+            <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+              {% if mate.profile_picture and mate.profile_picture.name %}
+                <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+              {% else %}
+                <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+              {% endif %}
+              <div>
+                <p class="text-lg font-semibold text-white">
+                  {{ mate.user.get_full_name|default:mate.user.username }}
+                </p>
+                <p class="text-sm text-gray-400">{{ mate.role|default:"No Role" }}</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-400 italic">No team members reporting to you.</p>
+      {% endif %}
+    </section>
+
+
+
+
+    <!-- Settings Section (Placeholder) -->
+    <section id="settings" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Settings</h3>
+      <p class="text-sm text-gray-400">Additional preferences coming soon...</p>
+    </section>
+  </main>
+</div>
+
+<style>
+@keyframes move-truck {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-move-truck {
+  animation: move-truck 40s linear infinite;
+}
+</style>
+{% endblock %}
