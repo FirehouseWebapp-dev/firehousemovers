@@ -3,39 +3,45 @@
 
 {% block content %}
 <div class="p-10 text-white">
-  <h1 class="text-2xl font-bold text-red-500 mb-6">Your Team Members</h1>
+  <h1 class="text-3xl font-bold text-red-500 mb-8">Your Team Members</h1>
 
-  <a href="{% url 'authentication:add_team_member' %}" class="bg-red-500 hover:bg-red-700 px-4 py-2 rounded-md text-white font-semibold">+ Add Member</a>
+  <a href="{% url 'authentication:add_team_member' %}" class="bg-red-500 hover:bg-red-700 px-5 py-2.5 rounded-md text-white font-semibold mb-4 inline-block">+ Add Member</a>
 
-  <form method="get" class="mb-4 mt-4 flex gap-2 items-center">
-    <select name="role" class="px-3 py-2 rounded bg-[#2a2a2a] text-white">
+  <!-- Filter Form -->
+  <form method="get" class="mb-6 flex gap-2 items-center">
+    <select name="role" class="px-4 py-2 rounded bg-[#2a2a2a] text-white border border-gray-600">
       <option value="">All Roles</option>
       {% for value, label in roles %}
         <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
-    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Filter</button>
+    <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-5 py-2 rounded font-semibold">Filter</button>
   </form>
 
   {% if team_members %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {% for member in team_members %}
-        <div class="relative bg-[#2a2a2a] p-4 rounded-xl">
-          <div class="flex items-center gap-4">
-            <img src="{% if member.profile_picture and member.profile_picture.name %}{{ member.profile_picture.url }}{% else %}{% static 'images/user_icon.jpg' %}{% endif %}" class="w-16 h-16 rounded-full object-cover border-2 border-white">
+        <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col justify-between min-h-[220px] hover:scale-[1.01] transition">
+          <div class="flex items-center gap-5">
+            <img src="{% if member.profile_picture and member.profile_picture.name %}{{ member.profile_picture.url }}{% else %}{% static 'images/user_icon.jpg' %}{% endif %}" class="w-24 h-24 rounded-full object-cover border-2 border-white">
             <div>
-              <h2 class="text-lg font-semibold">{{ member.user.get_full_name|default:member.user.username }}</h2>
-              <p class="text-sm text-gray-400">{{ member.role|default:"No Role" }}</p>
+              <h2 class="text-xl font-bold">{{ member.user.get_full_name|default:member.user.username }}</h2>
+              <p class="text-sm text-gray-400">{{ member.role|default:"No Role"|capfirst }}</p>
               <p class="text-sm text-gray-500">Email: {{ member.user.email }}</p>
             </div>
           </div>
-          <button
-            type="button"
-            class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-xs rounded"
-            onclick="openModal('{{ member.user.id }}', '{{ member.user.get_full_name|default:member.user.username }}')"
-          >
-            Remove
-          </button>
+          <div class="flex justify-end gap-4 mt-6">
+            <a href="{% url 'authentication:edit_profile' member.user.id %}" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">
+              Edit
+            </a>
+            <button
+              type="button"
+              class="text-sm bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold"
+              onclick="openModal('{{ member.user.id }}', '{{ member.user.get_full_name|default:member.user.username }}')"
+            >
+              Remove
+            </button>
+          </div>
         </div>
       {% endfor %}
     </div>
@@ -54,7 +60,7 @@
       {% csrf_token %}
       <div class="flex justify-end gap-4">
         <button type="button" onclick="closeModal()" class="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700">Cancel</button>
-        <button type="submit" class="px-4 py-2 rounded bg-red-600 hover:bg-red-700">Remove</button>
+        <button type="submit" class="px-4 py-2 rounded bg-red-500 hover:bg-red-600">Remove</button>
       </div>
     </form>
   </div>

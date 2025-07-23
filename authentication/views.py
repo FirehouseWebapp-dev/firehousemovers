@@ -21,9 +21,9 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import ProfileUpdateForm
+from .forms import ProfileUpdateForm, TeamMemberEditForm
 from django.shortcuts import render, get_object_or_404
-
+from django.core.exceptions import PermissionDenied
 
 # Helper function for permission
 def is_manager_or_admin(user):
@@ -69,10 +69,9 @@ class SignUpView(View):
             user.save()
 
             # ✅ Create user profile
-            UserProfile.objects.create(
-                user=user,
-                profile_picture=profile_pic
-            )
+            user_profile = user.userprofile
+            user_profile.profile_picture = profile_pic
+            user_profile.save()
 
             # ✅ Log in and redirect
             login(request, user)
@@ -232,45 +231,56 @@ def check_email_availability(request):
 def profile_view(request):
     user = request.user
     profile = user.userprofile
+    team_members = UserProfile.objects.filter(manager=profile)
 
     if request.method == "POST":
-        form = ProfileUpdateForm(request.POST, request.FILES, instance=user)
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=profile, user=user)
         if form.is_valid():
             form.save()
-            profile_form = form.save(commit=False)
-            if request.FILES.get("profile_picture"):
-                profile.profile_picture = request.FILES["profile_picture"]
-            profile.save()
-            return redirect("authentication:profile")
+            # ✅ Reload fresh data after saving
+            user.refresh_from_db()
+            profile = user.userprofile
+            form = ProfileUpdateForm(instance=profile, user=user)  # re-init form with user
+            messages.success(request, "Profile updated successfully!")
     else:
-        form = ProfileUpdateForm(instance=user)
+        form = ProfileUpdateForm(instance=profile, user=user)
 
-    # ✅ Get team members who share the same manager
     manager = profile.manager
-    team_members = UserProfile.objects.filter(manager=manager).exclude(user=user) if manager else []
+    teammates = UserProfile.objects.filter(manager=manager).exclude(user=user) if manager else []
 
     return render(request, "authentication/profile.html", {
         "form": form,
         "profile": profile,
         "team_members": team_members,
+        "teammates": teammates,
     })
+
+
+
 
 
 @login_required
 def view_profile(request, user_id):
     profile_user = get_object_or_404(User, id=user_id)
-    profile = profile_user.userprofile
+    profile = get_object_or_404(UserProfile, user=profile_user)
 
+    # Get team mates (same manager)
     if profile.manager:
-        team_members = UserProfile.objects.filter(manager=profile.manager).exclude(user=profile.user)
+        teammates = UserProfile.objects.filter(manager=profile.manager).exclude(user=profile_user)
     else:
-        team_members = []  
-   
+        teammates = []
+
+    # Get team members (users where this profile is their manager)
+    team_members = UserProfile.objects.filter(manager=profile)
+
     return render(request, "authentication/view_profile.html", {
         "profile_user": profile_user,
-        'team_members': team_members,
-        "profile": profile
+        "profile": profile,
+        "team_members": team_members,
+        "teammates": teammates,
     })
+
+
 from django.contrib.auth.views import PasswordChangeView
 from .forms import StyledPasswordChangeForm
 
@@ -338,3 +348,27 @@ def remove_team_member(request, user_id):
         member_profile.save()
         messages.success(request, f"{member_profile.user.get_full_name()} was removed from your team.")
         return redirect("authentication:team")
+
+
+@login_required
+@user_passes_test(is_manager_or_admin)
+def edit_team_member(request, user_id):
+    user_profile = get_object_or_404(UserProfile, user__id=user_id)
+
+    # Ensure only managers or admins can edit
+    if request.user.userprofile != user_profile.manager and not request.user.is_superuser:
+        return HttpResponseForbidden("You are not allowed to edit this profile.")
+
+    if request.method == "POST":
+        form = TeamMemberEditForm(request.POST, instance=user_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Team member profile updated successfully.")
+            return redirect("authentication:team")
+    else:
+        form = TeamMemberEditForm(instance=user_profile)
+
+    return render(request, "authentication/edit_team_member.html", {
+        "form": form,
+        "team_member": user_profile
+    })

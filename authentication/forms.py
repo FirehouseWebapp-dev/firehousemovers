@@ -196,18 +196,23 @@ class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['role'].disabled = True
+        self.fields['start_date'].disabled = True
+        self.fields['profile_picture'].required = False
 
-        if user:
+        if user and isinstance(user, User):
+            # Populate initial values from User model
             self.fields['first_name'].initial = user.first_name
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
+
 
     def save(self, commit=True):
         profile = super().save(commit=False)
         user = profile.user
 
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
+        user.first_name = self.cleaned_data['first_name'].capitalize()
+        user.last_name = self.cleaned_data['last_name'].capitalize()
         user.email = self.cleaned_data['email']
 
         if commit:
@@ -258,3 +263,27 @@ class AddTeamMemberForm(forms.Form):
             "class": "w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-600 text-white"
         })
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user'].label_from_instance = lambda obj: obj.get_full_name() or obj.username
+
+
+class TeamMemberEditForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['role', 'start_date']
+        widgets = {
+            'role': forms.Select(attrs={
+                "class": "w-full bg-gray-800 border border-gray-600 text-white rounded px-3 py-2"
+            }),
+            'start_date': forms.DateInput(attrs={
+                "type": "date",
+                "class": "w-full bg-gray-800 border border-gray-600 text-white rounded px-3 py-2"
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].label = "Assign Role"
+        self.fields['start_date'].label = "Set Start Date"

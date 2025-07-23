@@ -6,6 +6,7 @@ from .views import (
   HallOfFameListView,
   HallOfFameUpdateView, 
   HallOfFameDeleteView,
+  my_awards_view,
 )
 
 app_name = "awards"
@@ -32,6 +33,5 @@ urlpatterns = [
     path("hall-of-fame/add/", HallOfFameCreateView.as_view(), name="hall_of_fame_add"),
     path("hall-of-fame/edit/<int:pk>/", HallOfFameUpdateView.as_view(), name="hall_of_fame_edit"),
     path("hall-of-fame/delete/<int:pk>/", HallOfFameDeleteView.as_view(), name="hall_of_fame_delete"),
-
-
+    path("my-awards/", my_awards_view, name="my_awards"),
 ]

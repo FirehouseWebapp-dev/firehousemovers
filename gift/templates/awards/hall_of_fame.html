@@ -6,15 +6,15 @@
 <h2 class="text-3xl font-extrabold text-center mb-6 text-red-500">Movers Hall of Fame</h2>
 {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
   <div class="flex mb-6">
-    <a href="{% url 'awards:hall_of_fame_add' %}" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition">
+    <a href="{% url 'awards:hall_of_fame_add' %}" class="bg-red-500 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition">
       <i class="fas fa-plus"></i> Add New Entry
     </a>
   </div>
 {% endif %}
 <div class="flex space-x-4 mb-8">
-  <a href="{% url 'awards:hall_of_fame' %}" class="px-4 py-2 border border-red-600 text-white rounded hover:bg-red-600 transition {% if not selected_year %}bg-red-600{% endif %}">All Years</a>
+  <a href="{% url 'awards:hall_of_fame' %}" class="px-4 py-2 border border-red-500 text-white rounded hover:bg-red-600 transition {% if not selected_year %}bg-red-500{% endif %}">All Years</a>
   {% for y in years %}
-    <a href="?year={{ y }}" class="px-4 py-2 border border-red-600 text-white rounded hover:bg-red-600 transition {% if selected_year|default:'' == y|stringformat:'s' %}bg-red-600{% endif %}">
+    <a href="?year={{ y }}" class="px-4 py-2 border border-red-500 text-white rounded hover:bg-red-600 transition {% if selected_year|default:'' == y|stringformat:'s' %}bg-red-500{% endif %}">
       {{ y }}
     </a>
   {% endfor %}
@@ -55,7 +55,7 @@
         <p class="mb-4 text-gray-300">Are you sure you want to delete <strong>{{ entry.name }}</strong>?</p>
         <form method="post" action="{% url 'awards:hall_of_fame_delete' entry.id %}">
           {% csrf_token %}
-          <button type="submit" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-2 rounded-lg mb-2">Yes, Delete</button>
+          <button type="submit" class="w-full bg-red-500 hover:bg-red-700 transition font-bold py-2 rounded-lg mb-2">Yes, Delete</button>
           <button type="button" onclick="closeModal('deleteModal-{{ entry.id }}')" class="w-full bg-gray-700 hover:bg-gray-800 transition font-bold py-2 rounded-lg">Cancel</button>
         </form>
       </div>

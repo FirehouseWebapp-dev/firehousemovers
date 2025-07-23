@@ -51,6 +51,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     profile_picture_preview.short_description = "Preview"
 
     def manager_display(self, obj):
-        return obj.manager.user.username if obj.manager else "None"
+        if obj.manager and obj.manager.user:
+            return obj.manager.user.get_full_name() or obj.manager.user.username
+        return "None"
 
-    manager_display.short_description = "Manager"

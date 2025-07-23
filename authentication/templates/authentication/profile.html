@@ -31,7 +31,7 @@
           <div>
             <h1 class="text-3xl font-extrabold">{{ request.user.first_name|capfirst }} {{ request.user.last_name|capfirst }}</h1>
             <p class="text-gray-200">
-              Employee ID - {{ request.user.id }}  
+              Employee ID - {{ profile.id }} 
               {% if profile.start_date %}
               | Tenure: {{ profile.start_date|date:"d M Y" }} - Present
               <span class="text-sm text-gray-300 ml-1">({{ profile.start_date|timesince }} experience)</span>
@@ -186,7 +186,7 @@
               {% endif %}
               <div class="p-3 text-center">
                 <h3 class="text-lg font-semibold text-red-500">
-                  {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}
+                  {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}                
                 </h3>
                 <p class="text-sm text-gray-400">{{ profile.manager.role|default:"No Role" }}</p>
                 <p class="text-sm text-gray-300">ID: {{ profile.manager.user.id }}</p>
@@ -198,13 +198,15 @@
           <p class="text-red-500">No manager assigned.</p>
         {% endif %}
       </div>
+    </section>
 
+    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Teammates</h3>
       <!-- Team Members -->
       <div>
-        <h4 class="text-md text-gray-300 font-semibold mb-2">Team Members</h4>
-        {% if team_members %}
+        {% if teammates %}
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {% for teammate in team_members %}
+            {% for teammate in teammates %}
               <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
                 {% if teammate.profile_picture and teammate.profile_picture.name %}
                   <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
@@ -221,10 +223,38 @@
             {% endfor %}
           </div>
         {% else %}
-          <p class="text-gray-400 italic">No Team member yet.</p>
+          <p class="text-gray-400 italic">No Teammate yet.</p>
         {% endif %}
       </div>
     </section>
+
+    <!-- Teammates Section -->
+    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
+      <h3 class="text-xl font-semibold text-red-400 mb-4">Team Members</h3>
+
+      {% if team_members %}
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {% for mate in team_members %}
+            <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+              {% if mate.profile_picture and mate.profile_picture.name %}
+                <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+              {% else %}
+                <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+              {% endif %}
+              <div>
+                <p class="text-lg font-semibold text-white">
+                  {{ mate.user.get_full_name|default:mate.user.username }}
+                </p>
+                <p class="text-sm text-gray-400">{{ mate.role|default:"No Role" }}</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-400 italic">No team members reporting to you.</p>
+      {% endif %}
+    </section>
+
 
 
 

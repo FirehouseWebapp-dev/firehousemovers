@@ -1,0 +1,22 @@
+{% extends 'authentication/base_profile.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-10 text-white min-h-screen bg-black">
+  <h1 class="text-3xl font-extrabold text-red-500 mb-6">Edit Team Member Profile</h1>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-6 bg-[#1e1e1e] p-6 rounded-xl border border-gray-700 max-w-3xl">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="block text-sm font-semibold text-gray-200 mb-1">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-sm text-red-500 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-semibold">Save Changes</button>
+  </form>
+</div>
+{% endblock %}
