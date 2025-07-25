@@ -81,10 +81,24 @@ INSTALLED_APPS = [
     "marketing",  "widget_tweaks",
 ]
 
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+]
+
 if DEBUG:
     # Local filesystem (development)
     DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+    INSTALLED_APPS += ["django_mail_viewer"]
+    EMAIL_BACKEND = 'django_mail_viewer.backends.locmem.EmailBackend'
 else:
     # Cloudinary (production)
     INSTALLED_APPS += [
@@ -99,17 +113,8 @@ else:
         "API_SECRET":  os.environ["CLOUDINARY_API_SECRET"],
         "SECURE":      True,
     }
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-]
 
 MESSAGE_TAGS = {
     messages.DEBUG: "bg-gray-200 text-gray-800 border border-gray-400",  # for debug messages
@@ -207,4 +212,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # For `collectstatic` output
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = '/profile/'
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/login/'
+LOGIN_URL = 'authentication:login'
+LOGOUT_URL = 'authentication:logout'
+LOGIN_REDIRECT_URL = '/profile/'

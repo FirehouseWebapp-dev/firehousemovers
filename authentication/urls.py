@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from .views import (
   LoginView, 
@@ -33,4 +33,27 @@ urlpatterns = [
     path('team/add/', add_team_member, name='add_team_member'),
     path("team/remove/<int:user_id>/", remove_team_member, name="remove_team_member"),
     path("profile/edit/<int:user_id>/", edit_team_member, name="edit_profile"),
+    path(
+        "password-reset/", 
+        auth_views.PasswordResetView.as_view(
+            template_name="authentication/password_reset_form.html", 
+            email_template_name="authentication/password_reset_email.txt",  # plain text fallback
+            html_email_template_name="authentication/password_reset_email.html",
+            subject_template_name="authentication/password_reset_subject.txt",  # optional
+            success_url=reverse_lazy("authentication:password_reset_done")  # ✅ important!
+        ), 
+        name="password_reset"
+    ),
+    path("password-reset/done/", auth_views.PasswordResetDoneView.as_view(
+        template_name="authentication/password_reset_done.html"
+    ), name="password_reset_done"),
+
+    path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(
+        template_name="authentication/password_reset_confirm.html",
+        success_url=reverse_lazy("authentication:password_reset_complete")
+    ), name="password_reset_confirm"),
+
+    path("reset/done/", auth_views.PasswordResetCompleteView.as_view(
+        template_name="authentication/password_reset_complete.html"
+    ), name="password_reset_complete"),
 ]
