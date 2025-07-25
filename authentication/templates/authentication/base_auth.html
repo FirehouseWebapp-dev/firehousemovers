@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Auth Page{% endblock %}</title>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-black text-white min-h-screen flex flex-col">
+
+  <!-- 🔥 Header -->
+  <header class="bg-[#262626] px-6 py-4 shadow-md">
+    <div class="flex items-center gap-4 max-w-7xl mx-auto">
+      <img src="{% static 'images/fire_house_logo.svg' %}" alt="Firehouse Logo" class="h-10 w-10">
+      <h1 class="text-2xl font-bold text-red-500 tracking-wide font-serif">FIREHOUSE</h1>
+    </div>
+  </header>
+
+  <!-- Main wrapper: fills remaining screen and centers content -->
+  <div class="flex-grow flex items-center justify-center">
+    <main class="max-w-md w-full space-y-6 p-8 rounded-2xl shadow-2xl">
+
+      <!-- Page header -->
+      <div class="text-center mb-4">
+        {% block header %}{% endblock %}
+      </div>
+
+      <!-- Messages -->
+      {% if messages %}
+        <ul class="text-sm text-green-400">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <!-- Form content -->
+      {% block content %}{% endblock %}
+
+    </main>
+  </div>
+
+</body>
+</html>
