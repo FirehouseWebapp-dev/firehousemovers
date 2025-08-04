@@ -10,7 +10,10 @@ class Command(BaseCommand):
     help = 'Create weekly evaluation records for all employees under managers.'
 
     def handle(self, *args, **options):
-        # today = date(2025, 8, 4)
+        if now().weekday() != 0:   # 0 = Monday
+            self.stdout.write("Not Monday—skipping.")
+            return
+
         today = now().date()
 
         weekday = today.weekday()
