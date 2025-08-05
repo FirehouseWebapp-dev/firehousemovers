@@ -258,34 +258,46 @@ def team_totals_api(request):
 @login_required
 def metrics_api(request):
     profile = request.user.userprofile
-    # all for admin/employee, filtered by manager for managers:
-    qs = Evaluation.objects.all() if profile.role!="manager" else Evaluation.objects.filter(manager=profile)
 
+    # managers see only their team's evaluations,
+    # employees see only their own
+    if profile.role == "manager":
+        qs = Evaluation.objects.filter(manager=profile)
+    else:
+        qs = Evaluation.objects.filter(employee=profile)
+
+    # optional employee filter still works for managers
     emp = request.GET.get("employee_id")
     if emp and emp!="all":
         qs = qs.filter(employee_id=emp)
 
+    # date filtering
     start, end = request.GET.get("start"), request.GET.get("end")
-    if start: qs = qs.filter(week_start__gte=start)
-    if end:   qs = qs.filter(week_start__lte=end)
+    if start:
+        qs = qs.filter(week_start__gte=start)
+    if end:
+        qs = qs.filter(week_start__lte=end)
 
+    # annotate & return
     data = (
         qs.values("week_start")
           .annotate(
               avg_satisfaction=Avg("avg_customer_satisfaction_score"),
               avg_reliability=Avg("reliability_rating"),
               avg_revenue=Avg("avg_revenue_per_move"),
-              total_moves=Sum("moves_within_schedule"),
+              total_moves=  Sum("moves_within_schedule"),
           )
           .order_by("week_start")
     )
+
     return JsonResponse({
         "labels":       [x["week_start"].isoformat() for x in data],
         "satisfaction": [float(x["avg_satisfaction"] or 0) for x in data],
-        "reliability":  [float(x["avg_reliability"] or 0)  for x in data],
-        "revenue":      [float(x["avg_revenue"] or 0)      for x in data],
-        "moves":        [int(x["total_moves"] or 0)        for x in data],
+        "reliability":  [float(x["avg_reliability"]  or 0) for x in data],
+        "revenue":      [float(x["avg_revenue"]      or 0) for x in data],
+        "moves":        [int(x["total_moves"]       or 0) for x in data],
     })
+
 
 
 @login_required
