@@ -1,0 +1,202 @@
+{% extends "evaluation/base.html" %}
+{% block title %}Evaluation Analytics{% endblock %}
+{% block extra_js %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+
+  <h1 class="text-3xl font-bold text-red-500">Evaluation Analytics</h1>
+
+  {# ========== SUMMARY CARDS (managers: team; employees: self) ========== #}
+  {% if is_manager or is_employee %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    {% for card in cards %}
+    <div class="bg-[#1a1a1a] rounded-lg p-4 flex flex-col items-center text-white border-l-4 border-red-500">
+      <i class="{{ card.icon }} text-2xl text-gray-400 mb-2"></i>
+      <div id="{{ card.id }}"
+           class="text-3xl font-bold {% if card.negative %}text-red-400{% else %}text-green-500{% endif %}">
+        0
+      </div>
+      <div class="mt-1 text-gray-400 flex items-center">
+        {{ card.label }}
+        <i class="fas fa-arrow-{% if card.negative %}down{% else %}up{% endif %} ml-2 text-red-400"></i>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ========== FILTER CONTROLS ========== #}
+  <form id="filterForm" class="flex flex-wrap gap-4 items-end">
+    {% if is_manager %}
+      <div class="flex-1 min-w-[12rem]">
+        <label class="block text-gray-400 mb-1">Employee</label>
+        <select id="employeeSelect" class="input-field">
+          <option value="all">All</option>
+          {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.user.get_full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+    <div class="flex-1 min-w-[12rem]">
+      <label class="block text-gray-400 mb-1">From</label>
+      <input id="startDate" type="date" class="input-field" />
+    </div>
+    <div class="flex-1 min-w-[12rem]">
+      <label class="block text-gray-400 mb-1">To</label>
+      <input id="endDate" type="date" class="input-field" />
+    </div>
+    <div>
+      <button
+        type="button"
+        onclick="fetchAndRender()"
+        class="bg-red-500 hover:bg-red-700 text-white px-6 py-2 rounded"
+      >Apply</button>
+    </div>
+  </form>
+
+  {# ========== LINE CHART ========== #}
+  <div class="bg-[#1a1a1a] p-6 rounded-lg shadow-lg">
+    <canvas id="metricsChart" class="w-full h-64"></canvas>
+  </div>
+
+  {# ========== PIE CHARTS (managers only) ========== #}
+  {% if is_manager %}
+    <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for pie in pies %}
+      <div class="bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
+        <h3 class="text-lg font-bold text-gray-300 mb-2">{{ pie.title }}</h3>
+        <canvas id="{{ pie.id }}" class="w-full h-48"></canvas>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  const LINE_COLORS = [
+    {border:'#ef4444', bg:'rgba(239,68,68,0.3)'},    // satisfaction
+    {border:'#ffffff', bg:'rgba(248,113,113,0.3)'},  // reliability
+    {border:'#6b7280', bg:'rgba(107,114,128,0.3)'},  // revenue
+    {border:'#4b5563', bg:'rgba(75,85,99,0.3)'}       // moves
+  ];
+  const PIE_COLORS  = ['#ef4444','#dc2626','#9ca3af','#6b7280','#374151'];
+
+  let metricsChart;
+  const pieCharts = {};
+
+  function animateCount(id, end) {
+    const el = document.getElementById(id),
+          isFloat = !Number.isInteger(end),
+          dur = 800,
+          start = performance.now();
+
+    function step(now) {
+      const t = Math.min((now - start)/dur, 1),
+            v = end * t;
+      el.innerText = isFloat ? v.toFixed(1) : Math.floor(v);
+      if (t < 1) requestAnimationFrame(step);
+      else el.innerText = isFloat ? end.toFixed(1) : end;
+    }
+    requestAnimationFrame(step);
+  }
+
+  function fetchAndRender() {
+    const params = new URLSearchParams();
+    {% if is_manager %}
+      params.set("employee_id", document.getElementById("employeeSelect").value);
+    {% endif %}
+    const s = document.getElementById("startDate").value,
+          e = document.getElementById("endDate").value;
+    if (s) params.set("start", s);
+    if (e) params.set("end", e);
+
+    // summaries (team for manager, self for employee)
+    fetch("{% url 'evaluation:team_totals_api' %}?"+params)
+      .then(r=>r.json()).then(s=>{
+        animateCount('stat-5stars',     s.total_5_star);
+        animateCount('stat-satisfaction',s.avg_satisfaction);
+        animateCount('stat-revenue',     s.total_revenue);
+        animateCount('stat-moves',       s.total_moves);
+        animateCount('stat-negative',    s.total_negative);
+      });
+
+    // line chart
+    fetch("{% url 'evaluation:metrics_api' %}?"+params)
+      .then(r=>r.json()).then(d=>{
+        const ctx = document.getElementById("metricsChart").getContext("2d");
+        if (metricsChart) metricsChart.destroy();
+        metricsChart = new Chart(ctx, {
+          type:'line',
+          data:{
+            labels: d.labels,
+            datasets:[
+              {
+                label:"Avg Satisfaction",
+                data:d.satisfaction,
+                borderColor:LINE_COLORS[0].border,
+                backgroundColor:LINE_COLORS[0].bg,
+                tension:0.3
+              },
+              {
+                label:"Avg Reliability",
+                data:d.reliability,
+                borderColor:LINE_COLORS[1].border,
+                backgroundColor:LINE_COLORS[1].bg,
+                tension:0.3
+              },
+              {
+                label:"Moves Completed",
+                data:d.moves,
+                borderColor:LINE_COLORS[3].border,
+                backgroundColor:LINE_COLORS[3].bg,
+                tension:0.3
+              }
+            ]
+          },
+          options:{
+            responsive:true,
+            scales:{
+              x:{grid:{color:"#333"},ticks:{color:"#eee"}},
+              y:{grid:{color:"#333"},ticks:{color:"#eee"}}
+            },
+            plugins:{legend:{labels:{color:"#fff"}}}
+          }
+        });
+      });
+
+    {% if is_manager %}
+    // pies (team breakdown)
+    fetch("{% url 'evaluation:metrics_by_employee_api' %}?"+params)
+      .then(r=>r.json()).then(d=>{
+        const {labels, satisfaction, reliability, moves, revenue} = d;
+        const arrs = { satisfaction, reliability, moves, revenue };
+
+        function renderPie(id, dataArr) {
+          const c = document.getElementById(id);
+          if (!c) return;
+          if (pieCharts[id]) pieCharts[id].destroy();
+          pieCharts[id] = new Chart(c, {
+            type:'pie',
+            data:{ labels, datasets:[{ data:dataArr, backgroundColor:PIE_COLORS.slice(0,labels.length), borderColor:'#111', borderWidth:1 }]},
+            options:{plugins:{legend:{labels:{color:'#fff'}}}}
+          });
+        }
+
+        renderPie('satisfactionPie', satisfaction);
+        renderPie('reliabilityPie',  reliability);
+        renderPie('movesPie',        moves);
+        renderPie('revenuePie',      revenue);
+      });
+    {% endif %}
+  }
+
+  document.addEventListener("DOMContentLoaded", fetchAndRender);
+</script>
+{% endblock %}
+    

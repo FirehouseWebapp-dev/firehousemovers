@@ -1,4 +1,6 @@
 {% load static %}
+{% load form_tags %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,9 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-    }
+    body { font-family: 'Montserrat', sans-serif; }
     .input-field {
       width: 100%;
       background-color: #000;
@@ -35,13 +35,44 @@
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
-      <h2 class="text-xl font-semibold mb-4 text-red-500">Evaluation Panel</h2>
       <nav class="space-y-4">
-        <a href="{% url 'evaluation:dashboard' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/evaluation/dashboard/' %}bg-red-500{% endif %}">
-          <i class="fas fa-chart-line mr-2"></i> Dashboard
-        </a>
-        <a href="{% url 'evaluation:pending' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/evaluation/pending/' %}bg-red-500{% endif %}">
-          <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
+        {# Manager & Admin Links #}
+        {% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+          {% url 'evaluation:dashboard' as dash_url %}
+          <a href="{{ dash_url }}"
+             class="block py-2 px-3 rounded hover:bg-red-500
+               {% if request.path == dash_url %}bg-red-500{% endif %}">
+            <i class="fas fa-chart-line mr-2"></i> Dashboard
+          </a>
+
+          {% url 'evaluation:pending' as pending_url %}
+          <a href="{{ pending_url }}"
+             class="block py-2 px-3 rounded hover:bg-red-500
+               {% if request.path == pending_url %}bg-red-500{% endif %}">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
+          </a>
+
+          {# Analytics Link #}
+          {% url 'evaluation:analytics' as analytics_url %}
+          <a href="{{ analytics_url }}"
+             class="block py-2 px-3 rounded hover:bg-red-500
+               {% if request.path|startswith:analytics_url %}bg-red-500{% endif %}">
+            <i class="fas fa-chart-pie mr-2"></i> Analytics
+          </a>
+        {% endif %}
+           {# Analytics Link #}
+          {% url 'evaluation:analytics' as analytics_url %}
+          <a href="{{ analytics_url }}"
+             class="block py-2 px-3 rounded hover:bg-red-500
+               {% if request.path|startswith:analytics_url %}bg-red-500{% endif %}">
+            <i class="fas fa-chart-pie mr-2"></i> Analytics
+          </a>
+        {# Employee Link (everyone) #}
+        {% url 'evaluation:my_evaluations' as my_evals_url %}
+        <a href="{{ my_evals_url }}"
+           class="block py-2 px-3 rounded hover:bg-red-500
+             {% if request.path|startswith:my_evals_url %}bg-red-500{% endif %}">
+          <i class="fas fa-list mr-2"></i> My Evaluations
         </a>
       </nav>
     </aside>
