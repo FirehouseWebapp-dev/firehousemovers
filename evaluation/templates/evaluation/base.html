@@ -51,14 +51,6 @@
                {% if request.path == pending_url %}bg-red-500{% endif %}">
             <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
           </a>
-
-          {# Analytics Link #}
-          {% url 'evaluation:analytics' as analytics_url %}
-          <a href="{{ analytics_url }}"
-             class="block py-2 px-3 rounded hover:bg-red-500
-               {% if request.path|startswith:analytics_url %}bg-red-500{% endif %}">
-            <i class="fas fa-chart-pie mr-2"></i> Analytics
-          </a>
         {% endif %}
            {# Analytics Link #}
           {% url 'evaluation:analytics' as analytics_url %}
