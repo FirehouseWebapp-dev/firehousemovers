@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "inspection",
     "packaging_supplies",
     "marketing",  "widget_tweaks",
+    'evaluation',
 ]
 
 
@@ -91,6 +92,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    'evaluation.middleware.EvaluationLockMiddleware'
 ]
 
 if DEBUG:
@@ -196,7 +198,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
