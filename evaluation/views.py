@@ -16,21 +16,30 @@ from authentication.models import UserProfile
 from .models import Evaluation
 from .forms import EvaluationForm
 
+
 @login_required
 def evaluation_dashboard(request):
     """
-    Manager view: list all evaluations, with optional search.
+    Dashboard view: managers see their team's evaluations; admins see all.
+    Supports optional search by employee name/username.
     """
     query = request.GET.get("q", "")
-    manager = request.user.userprofile
+    profile = request.user.userprofile
     today = now().date()
 
-    evaluations = (
-        Evaluation.objects
-        .filter(manager=manager)
-        .select_related("employee__user")
-        .order_by("-week_start")
-    )
+    if profile.role == "admin":
+        evaluations = (
+            Evaluation.objects
+            .select_related("employee__user")
+            .order_by("-week_start")
+        )
+    else:
+        evaluations = (
+            Evaluation.objects
+            .filter(manager=profile)
+            .select_related("employee__user")
+            .order_by("-week_start")
+        )
 
     if query:
         evaluations = evaluations.filter(
@@ -180,52 +189,55 @@ def evaluation_detail(request, evaluation_id):
         "evaluation": evaluation,
     })
 
-from django.shortcuts       import render
-from django.contrib.auth.decorators import login_required
-from django.http           import JsonResponse, HttpResponseForbidden
-from django.db.models      import Avg, Sum, F, FloatField, ExpressionWrapper
-from .models               import Evaluation
-from authentication.models import UserProfile
 
 @login_required
 def analytics_dashboard(request):
-    profile    = request.user.userprofile
-    is_manager = profile.role == "manager"
-    is_employee = profile.role != "manager"
-    employees  = UserProfile.objects.filter(manager=profile) if is_manager else []
+    profile     = request.user.userprofile
+    is_manager  = profile.role == "manager" or profile.role == "admin"
+    is_employee = profile.role not in ["manager", "admin"]
+
+    employees = UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk) \
+        if profile.role == "admin" else (
+        UserProfile.objects.filter(manager=profile).exclude(pk=profile.pk) if is_manager else []
+    )
 
     cards = [
-        {"id":"stat-5stars",      "icon":"fas fa-star",          "label":"5★ Reviews",       "negative":False},
-        {"id":"stat-satisfaction","icon":"fas fa-smile",        "label":"Avg Satisfaction", "negative":False},
-        {"id":"stat-revenue",     "icon":"fas fa-dollar-sign",  "label":"Total Revenue",    "negative":False},
-        {"id":"stat-moves",       "icon":"fas fa-truck-moving", "label":"Moves Completed",  "negative":False},
-        {"id":"stat-negative",    "icon":"fas fa-frown",        "label":"Negative Reviews","negative":True},
+        {"id": "stat-5stars",       "icon": "fas fa-star",         "label": "5★ Reviews",        "negative": False},
+        {"id": "stat-satisfaction", "icon": "fas fa-smile",        "label": "Avg Satisfaction",  "negative": False},
+        {"id": "stat-revenue",      "icon": "fas fa-dollar-sign",  "label": "Total Revenue",     "negative": False},
+        {"id": "stat-moves",        "icon": "fas fa-truck-moving", "label": "Moves Completed",   "negative": False},
+        {"id": "stat-negative",     "icon": "fas fa-frown",        "label": "Negative Reviews",  "negative": True},
     ]
+
     pies = [
-        {"title":"Avg Satisfaction","id":"satisfactionPie"},
-        {"title":"Avg Reliability", "id":"reliabilityPie"},
-        {"title":"Moves Completed", "id":"movesPie"},
-        {"title":"Avg Revenue",     "id":"revenuePie"},
+        {"title": "Avg Satisfaction", "id": "satisfactionPie"},
+        {"title": "Avg Reliability",  "id": "reliabilityPie"},
+        {"title": "Moves Completed",  "id": "movesPie"},
+        {"title": "Avg Revenue",      "id": "revenuePie"},
     ]
 
     return render(request, "evaluation/analytics.html", {
         "is_manager": is_manager,
         "is_employee": is_employee,
-        "employees":  employees,
-        "cards":      cards,
-        "pies":       pies,
+        "employees": employees,
+        "cards": cards,
+        "pies": pies,
     })
-
 
 @login_required
 def team_totals_api(request):
     profile = request.user.userprofile
 
-    # managers get their team; everyone else gets just their own evals
+    # managers get their team; admins get all; everyone else gets just their own evals
     if profile.role == "manager":
         qs = Evaluation.objects.filter(manager=profile)
+    elif profile.role == "admin":
+        qs = Evaluation.objects.all()
     else:
         qs = Evaluation.objects.filter(employee=profile)
+
+    # include only submitted evaluations
+    qs = qs.filter(status="completed")
 
     # optional date filters
     start, end = request.GET.get("start"), request.GET.get("end")
@@ -259,10 +271,11 @@ def team_totals_api(request):
 def metrics_api(request):
     profile = request.user.userprofile
 
-    # managers see only their team's evaluations,
-    # employees see only their own
+    # managers see only their team's evaluations; admins see all; employees see only their own
     if profile.role == "manager":
         qs = Evaluation.objects.filter(manager=profile)
+    elif profile.role == "admin":
+        qs = Evaluation.objects.all()
     else:
         qs = Evaluation.objects.filter(employee=profile)
 
@@ -270,6 +283,9 @@ def metrics_api(request):
     emp = request.GET.get("employee_id")
     if emp and emp!="all":
         qs = qs.filter(employee_id=emp)
+
+    # only submitted evaluations
+    qs = qs.filter(status="completed")
 
     # date filtering
     start, end = request.GET.get("start"), request.GET.get("end")
@@ -303,10 +319,17 @@ def metrics_api(request):
 @login_required
 def metrics_by_employee_api(request):
     profile = request.user.userprofile
-    if profile.role != "manager":
+    if profile.role not in ["manager", "admin"]:
         return HttpResponseForbidden()
 
-    qs = Evaluation.objects.filter(manager=profile)
+    if profile.role == "manager":
+        qs = Evaluation.objects.filter(manager=profile)
+    else:  # admin
+        qs = Evaluation.objects.all()
+
+    # only submitted evaluations
+    qs = qs.filter(status="completed")
+
     start, end = request.GET.get("start"), request.GET.get("end")
     if start: qs = qs.filter(week_start__gte=start)
     if end:   qs = qs.filter(week_start__lte=end)
