@@ -22,7 +22,7 @@ class Command(BaseCommand):
         this_sunday = this_monday + timedelta(days=6)
 
         # --- MONDAY: create evals ---
-        if weekday == 4:
+        if weekday == 1:
             self.stdout.write("🔨 Monday: creating weekly evaluations...")
             created_count = 0
 
@@ -44,7 +44,7 @@ class Command(BaseCommand):
             self.stdout.write(f"✅ Created {created_count} evaluations for week {this_monday}–{this_sunday}")
 
         # --- FRIDAY: send reminders ---
-        elif weekday == 0:
+        elif weekday == 4:
             self.stdout.write("✉️ Friday: sending pending‐eval reminders...")
             # Find all pending evals for THIS week
             pending_qs = Evaluation.objects.filter(
