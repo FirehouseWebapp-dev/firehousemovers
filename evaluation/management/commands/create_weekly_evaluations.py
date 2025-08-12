@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db import models
 
 from evaluation.models import Evaluation
 from authentication.models import UserProfile
@@ -31,16 +30,15 @@ class Command(BaseCommand):
             self.stdout.write("🔨 Monday: creating weekly evaluations...")
             created_count = 0
 
-            # Managers who actually manage someone
+            # Managers who actually manage someone (role=manager AND have team members)
             managers = (
                 UserProfile.objects
-                .filter(models.Q(is_manager=True) | models.Q(role="manager"))
-                .filter(team_members__isnull=False)      # must have reports
+                .filter(role="manager", team_members__isnull=False)
                 .distinct()
             )
 
             for mgr in managers:
-                # All direct reports (any role)
+                # All direct reports of this manager (any role)
                 team = UserProfile.objects.filter(manager=mgr).distinct()
                 for emp in team:
                     ev, was_created = Evaluation.objects.get_or_create(
@@ -50,7 +48,7 @@ class Command(BaseCommand):
                         week_end=this_sunday,
                         defaults={
                             "status": "pending",
-                            # safe defaults so INSERT never violates NOT NULL
+                            # safe defaults for NOT NULL model fields
                             "avg_customer_satisfaction_score": 0,
                             "five_star_reviews": 0,
                             "negative_reviews": 0,
@@ -76,7 +74,6 @@ class Command(BaseCommand):
         elif weekday == 4:
             self.stdout.write("✉️ Friday: sending pending‑eval reminders...")
 
-            # All pending evals for THIS week
             pending_qs = (
                 Evaluation.objects
                 .filter(week_start=this_monday, week_end=this_sunday, status="pending")
