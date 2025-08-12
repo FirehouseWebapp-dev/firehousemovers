@@ -125,15 +125,19 @@
                 </a>
             </div>
 
-            <!-- Employee Evaluation -->
+            {# Employee Evaluation tile #}
             <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                {% if request.user.is_superuser or request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+                {% with up=request.user.userprofile role=request.user.userprofile.role %}
+                    {% if up.is_senior_management or role in "ceo vp llc/owner" %}
+                    <a href="{% url 'evaluation:regular_reviews' %}">
+                    {% elif role == "manager" or up.is_manager or role == "admin" or request.user.is_superuser %}
                     <a href="{% url 'evaluation:dashboard' %}">
-                {% else %}
+                    {% else %}
                     <a href="{% url 'evaluation:my_evaluations' %}">
-                {% endif %}
-                    <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Employees Evaluation</p>
+                    {% endif %}
+                {% endwith %}
+                <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
+                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Employees Evaluation</p>
                 </a>
             </div>
 

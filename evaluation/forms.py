@@ -1,5 +1,5 @@
 from django import forms
-from .models import Evaluation
+from .models import Evaluation, ManagerEvaluation, ReviewCycle
 
 EMOJI_CHOICES = [
     (1, "😡"),  # Very Dissatisfied
@@ -59,3 +59,62 @@ class EvaluationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs.setdefault('class', 'input-field')
+
+
+RATING_CHOICES = [("", "—"), (1, "★☆☆☆☆"), (2, "★★☆☆☆"), (3, "★★★☆☆"), (4, "★★★★☆"), (5, "★★★★★")]
+
+class ManagerEvaluationForm(forms.ModelForm):
+    # Hidden int field we control via the star widget in the template
+    overall_rating = forms.IntegerField(required=False, min_value=1, max_value=5, widget=forms.HiddenInput())
+
+    class Meta:
+        model = ManagerEvaluation
+        fields = [
+            # conditional section fields (we decide in __init__)
+            "regular_evaluations",      # monthly only
+            "performance_summary",      # quarterly only
+            "annual_review",            # annual only
+            # always present:
+            "goals_achieved",
+            "objectives_set",
+            "strengths",
+            "improvement_areas",
+            "overall_rating",
+            "supervisors_comments",     # keep as a free comment field for all cycles
+        ]
+        widgets = {
+            "regular_evaluations":  forms.Textarea(attrs={"rows": 4, "class": "input-field"}),
+            "performance_summary":  forms.Textarea(attrs={"rows": 4, "class": "input-field"}),
+            "annual_review":        forms.Textarea(attrs={"rows": 4, "class": "input-field"}),
+            "goals_achieved":       forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+            "objectives_set":       forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+            "strengths":            forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+            "improvement_areas":    forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+            "supervisors_comments": forms.Textarea(attrs={"rows": 3, "class": "input-field"}),
+        }
+
+    def __init__(self, *args, cycle: ReviewCycle = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hide non‑relevant section based on cycle type
+        if not cycle:
+            cycle = getattr(self.instance, "cycle", None)
+
+        for fld in ["regular_evaluations", "performance_summary", "annual_review"]:
+            self.fields[fld].required = False  # default to optional
+
+        if cycle:
+            t = cycle.cycle_type
+            if t == ReviewCycle.CycleType.MONTHLY:
+                # show regular_evaluations; hide others
+                self.fields["performance_summary"].widget = forms.HiddenInput()
+                self.fields["annual_review"].widget = forms.HiddenInput()
+            elif t == ReviewCycle.CycleType.QUARTERLY:
+                self.fields["regular_evaluations"].widget = forms.HiddenInput()
+                self.fields["annual_review"].widget = forms.HiddenInput()
+            elif t == ReviewCycle.CycleType.ANNUAL:
+                self.fields["regular_evaluations"].widget = forms.HiddenInput()
+                self.fields["performance_summary"].widget = forms.HiddenInput()
+
+    def clean_overall_rating(self):
+        v = self.cleaned_data.get("overall_rating")
+        return v or None

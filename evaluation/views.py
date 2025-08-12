@@ -1,21 +1,26 @@
 # evaluation/views.py
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.utils.timezone import now
-from django.core.mail import send_mail
+from datetime import date, timedelta
+
 from django.conf import settings
-from django.urls import reverse
-from django.db.models import Avg, Sum, F, FloatField, ExpressionWrapper, Q
-from datetime import timedelta
-from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Avg, Sum, F, FloatField, ExpressionWrapper, Q, Count
 from django.http import JsonResponse, HttpResponseForbidden
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.timezone import now
+from django.core.paginator import Paginator
 
 from authentication.models import UserProfile
-from .models import Evaluation
-from .forms import EvaluationForm
+from .forms import EvaluationForm, ManagerEvaluationForm
+from .models import Evaluation, ReviewCycle, ManagerEvaluation
 
+
+# --------------------------------------------------------------------
+# Employee weekly evaluations (manager -> employees)  [YOUR ORIGINALS]
+# --------------------------------------------------------------------
 
 @login_required
 def evaluation_dashboard(request):
@@ -146,7 +151,7 @@ def pending_evaluation_view(request):
     percent_complete = int((completed / total) * 100) if total else 100
 
     # list only those still pending
-    pending_evaluations = stats_qs.filter(status="pending")\
+    pending_evaluations = stats_qs.filter(status="pending") \
         .order_by('-week_start', 'employee__user__last_name')
 
     return render(request, "evaluation/pending.html", {
@@ -192,14 +197,13 @@ def evaluation_detail(request, evaluation_id):
 
 @login_required
 def analytics_dashboard(request):
-    profile     = request.user.userprofile
-    is_manager  = profile.role == "manager" or profile.role == "admin"
+    profile = request.user.userprofile
+    is_manager = profile.role == "manager" or profile.role == "admin"
     is_employee = profile.role not in ["manager", "admin"]
 
-    employees = UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk) \
-        if profile.role == "admin" else (
-        UserProfile.objects.filter(manager=profile).exclude(pk=profile.pk) if is_manager else []
-    )
+    employees = (UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk)
+                 if profile.role == "admin"
+                 else (UserProfile.objects.filter(manager=profile).exclude(pk=profile.pk) if is_manager else []))
 
     cards = [
         {"id": "stat-5stars",       "icon": "fas fa-star",         "label": "5★ Reviews",        "negative": False},
@@ -223,6 +227,7 @@ def analytics_dashboard(request):
         "cards": cards,
         "pies": pies,
     })
+
 
 @login_required
 def team_totals_api(request):
@@ -281,7 +286,7 @@ def metrics_api(request):
 
     # optional employee filter still works for managers
     emp = request.GET.get("employee_id")
-    if emp and emp!="all":
+    if emp and emp != "all":
         qs = qs.filter(employee_id=emp)
 
     # only submitted evaluations
@@ -301,7 +306,7 @@ def metrics_api(request):
               avg_satisfaction=Avg("avg_customer_satisfaction_score"),
               avg_reliability=Avg("reliability_rating"),
               avg_revenue=Avg("avg_revenue_per_move"),
-              total_moves=  Sum("moves_within_schedule"),
+              total_moves=Sum("moves_within_schedule"),
           )
           .order_by("week_start")
     )
@@ -311,9 +316,8 @@ def metrics_api(request):
         "satisfaction": [float(x["avg_satisfaction"] or 0) for x in data],
         "reliability":  [float(x["avg_reliability"]  or 0) for x in data],
         "revenue":      [float(x["avg_revenue"]      or 0) for x in data],
-        "moves":        [int(x["total_moves"]       or 0) for x in data],
+        "moves":        [int(x["total_moves"]        or 0) for x in data],
     })
-
 
 
 @login_required
@@ -331,11 +335,13 @@ def metrics_by_employee_api(request):
     qs = qs.filter(status="completed")
 
     start, end = request.GET.get("start"), request.GET.get("end")
-    if start: qs = qs.filter(week_start__gte=start)
-    if end:   qs = qs.filter(week_start__lte=end)
+    if start:
+        qs = qs.filter(week_start__gte=start)
+    if end:
+        qs = qs.filter(week_start__lte=end)
 
     data = (
-        qs.values("employee_id","employee__user__first_name","employee__user__last_name")
+        qs.values("employee_id", "employee__user__first_name", "employee__user__last_name")
           .annotate(
               avg_satisfaction=Avg("avg_customer_satisfaction_score"),
               avg_reliability=Avg("reliability_rating"),
@@ -352,7 +358,233 @@ def metrics_by_employee_api(request):
     return JsonResponse({
         "labels":       labels,
         "satisfaction": [float(x["avg_satisfaction"] or 0) for x in data],
-        "reliability":  [float(x["avg_reliability"] or 0)  for x in data],
-        "revenue":      [float(x["avg_revenue"] or 0)      for x in data],
-        "moves":        [int(x["total_moves"] or 0)        for x in data],
+        "reliability":  [float(x["avg_reliability"]  or 0) for x in data],
+        "revenue":      [float(x["avg_revenue"]      or 0) for x in data],
+        "moves":        [int(x["total_moves"]        or 0) for x in data],
+    })
+
+
+# --------------------------------------------------------------------
+# Senior‑management reviews of managers (monthly/quarterly/annual)
+# --------------------------------------------------------------------
+
+def _user_is_admin(profile: UserProfile) -> bool:
+    return (getattr(profile, "is_admin", False)
+            or profile.role == "admin"
+            or profile.user.is_staff
+            or profile.user.is_superuser)
+
+
+def _user_is_senior(profile: UserProfile) -> bool:
+    return (getattr(profile, "is_senior_management", False)
+            or profile.role in {"llc/owner", "vp", "ceo"})
+
+
+@login_required
+def regular_reviews(request):
+    """
+    Senior/admin (reviewers): show cycles with count of THEIR assignments.
+    Managers (subjects): show cycles with count of reviews ABOUT them.
+    """
+    profile = request.user.userprofile
+    is_reviewer = _user_is_admin(profile) or _user_is_senior(profile)
+
+    if is_reviewer:
+        cycles = (
+            ReviewCycle.objects.all()
+            .annotate(
+                my_items=Count(
+                    "manager_evaluations",
+                    filter=Q(manager_evaluations__reviewer=profile),
+                ),
+                my_pending=Count(
+                    "manager_evaluations",
+                    filter=Q(
+                        manager_evaluations__reviewer=profile,
+                        manager_evaluations__status="pending",
+                    ),
+                ),
+            )
+        )
+    else:
+        # Managers see cycles where they are the subject
+        cycles = (
+            ReviewCycle.objects.filter(manager_evaluations__subject_manager=profile)
+            .distinct()
+            .annotate(
+                my_items=Count(
+                    "manager_evaluations",
+                    filter=Q(manager_evaluations__subject_manager=profile),
+                ),
+                my_pending=Count(
+                    "manager_evaluations",
+                    filter=Q(
+                        manager_evaluations__subject_manager=profile,
+                        manager_evaluations__status="pending",
+                    ),
+                ),
+            )
+        )
+
+    return render(request, "evaluation/regular_reviews.html", {"cycles": cycles})
+
+
+@login_required
+def cycle_assignments(request, cycle_id: int):
+    """
+    Show assignments for a given cycle.
+    Senior/admin (reviewers): see their assigned manager reviews.
+    Managers: see reviews about them (read-only).
+    """
+    profile = request.user.userprofile
+    cycle = get_object_or_404(ReviewCycle, pk=cycle_id)
+
+    is_reviewer = _user_is_admin(profile) or _user_is_senior(profile)
+    is_manager = getattr(profile, "is_manager", False) or profile.role == "manager"
+
+    if is_reviewer:
+        assignments = (ManagerEvaluation.objects
+                       .filter(cycle=cycle, reviewer=profile)
+                       .select_related("subject_manager__user")
+                       .order_by("subject_manager__user__last_name"))
+    else:
+        assignments = (ManagerEvaluation.objects
+                       .filter(cycle=cycle, subject_manager=profile)
+                       .select_related("reviewer__user"))
+
+    return render(request, "evaluation/cycle_assignments.html", {
+        "cycle": cycle,
+        "assignments": assignments,
+        "is_reviewer": is_reviewer,
+        "is_manager": is_manager,
+    })
+
+
+# evaluation/views.py
+
+@login_required
+def evaluate_manager(request, evaluation_id: int):
+    """
+    Senior mgmt/admin fills out a manager evaluation.
+    After submission, default to read-only detail unless ?edit=1.
+    """
+    ev = get_object_or_404(ManagerEvaluation, pk=evaluation_id)
+    profile = request.user.userprofile
+
+    if not (_user_is_admin(profile) or _user_is_senior(profile)):
+        return redirect("evaluation:regular_reviews")
+    if ev.reviewer != profile:
+        return redirect("evaluation:regular_reviews")
+    if not ev.cycle.is_open and ev.status != "completed":
+        return redirect("evaluation:cycle_assignments", cycle_id=ev.cycle_id)
+
+    # If already completed and no ?edit=1, show read-only
+    if request.method == "GET" and ev.status == "completed" and request.GET.get("edit") != "1":
+        return render(request, "evaluation/manager_review_detail.html", {
+            "evaluation": ev,
+            "cycle": ev.cycle,
+            "subject": ev.subject_manager,
+            "can_edit": ev.cycle.is_open,  # allow edit button if cycle still open
+        })
+
+    if request.method == "POST":
+        form = ManagerEvaluationForm(request.POST, instance=ev, cycle=ev.cycle)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.status = "completed"
+            obj.submitted_at = now()
+            obj.save()
+            return redirect("evaluation:evaluate_manager", evaluation_id=obj.id)
+    else:
+        form = ManagerEvaluationForm(instance=ev, cycle=ev.cycle)
+
+    return render(request, "evaluation/evaluate_manager.html", {
+        "form": form,
+        "evaluation": ev,
+        "cycle": ev.cycle,
+        "subject": ev.subject_manager,
+    })
+
+
+@login_required
+def manager_review_detail(request, evaluation_id: int):
+    """
+    Explicit read-only detail route (in case you want to link to it elsewhere).
+    """
+    ev = get_object_or_404(ManagerEvaluation, pk=evaluation_id)
+    profile = request.user.userprofile
+
+    # Reviewer or subject manager can view
+    if not (
+        (_user_is_admin(profile) or _user_is_senior(profile)) and ev.reviewer == profile
+        or ev.subject_manager == profile
+    ):
+        return redirect("evaluation:regular_reviews")
+
+    return render(request, "evaluation/manager_review_detail.html", {
+        "evaluation": ev,
+        "cycle": ev.cycle,
+        "subject": ev.subject_manager,
+        "can_edit": (_user_is_admin(profile) or _user_is_senior(profile)) and ev.reviewer == profile and ev.cycle.is_open,
+    })
+
+
+
+@login_required
+def my_manager_reviews(request):
+    """
+    Managers see reviews they've received (completed only), compact list with pagination.
+    """
+    profile = request.user.userprofile
+    qs = (
+        ManagerEvaluation.objects
+        .filter(subject_manager=profile, status="completed")
+        .select_related("cycle", "reviewer__user")
+        .only(
+            "id", "overall_rating", "submitted_at", "subject_manager_id",
+            "cycle__cycle_type", "cycle__period_start", "cycle__period_end",
+            "reviewer__user__first_name", "reviewer__user__last_name", "reviewer__user__username",
+        )
+        .order_by("-cycle__period_start", "-submitted_at")
+    )
+
+    paginator = Paginator(qs, 10)  # 10 per page
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    return render(request, "evaluation/my_manager_reviews.html", {"page_obj": page_obj})
+
+@login_required
+def senior_pending_reviews(request):
+    """
+    Senior management dashboard of pending ManagerEvaluations they must complete,
+    with per-cycle progress.
+    """
+    profile = request.user.userprofile
+    if not (_user_is_senior(profile) or _user_is_admin(profile)):  # if admins shouldn't see it, drop _user_is_admin
+        return redirect("evaluation:regular_reviews")
+
+    # Per-cycle progress for THIS reviewer
+    cycles = (
+        ReviewCycle.objects
+        .filter(manager_evaluations__reviewer=profile)
+        .distinct()
+        .annotate(
+            total=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile)),
+            done=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile, manager_evaluations__status="completed")),
+            pending=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile, manager_evaluations__status="pending")),
+        )
+        .order_by("-period_start")
+    )
+
+    # Flat list of pending items to act on
+    pending_items = (
+        ManagerEvaluation.objects
+        .filter(reviewer=profile, status="pending")
+        .select_related("subject_manager__user", "cycle")
+        .order_by("-cycle__period_start", "subject_manager__user__last_name")
+    )
+
+    return render(request, "evaluation/senior_pending.html", {
+        "cycles": cycles,
+        "pending_items": pending_items,
     })
