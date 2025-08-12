@@ -7,6 +7,7 @@ from django.conf import settings
 from evaluation.models import Evaluation
 from authentication.models import UserProfile
 
+
 class Command(BaseCommand):
     help = (
         "Mondays: create weekly evaluations for all employees who report to a manager. "
