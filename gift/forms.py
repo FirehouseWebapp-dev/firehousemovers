@@ -75,6 +75,7 @@ class AwardCardForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         try:
             self.fields["employees"].choices = [
                 (user.id, str(user.user)) for user in UserProfile.objects.all()
@@ -82,6 +83,7 @@ class AwardCardForm(forms.ModelForm):
         except Exception:
             # Safeguard during initial migrations
             self.fields["employees"].choices = []
+
 
 class AwardForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -106,7 +108,7 @@ class AwardForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['card'].required = False
         self.fields['amount'].required = False
-        
+
     def clean_employee_photo(self):
         photo = self.cleaned_data.get("employee_photo")
         if photo and hasattr(photo, "content_type"):

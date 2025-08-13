@@ -1,6 +1,5 @@
 from django.db.models import Prefetch
 from django import forms
-from django import forms
 from authentication.models import UserProfile
 from .models import AvailabilityData, Crew, Dispatch, Order, Vehicle
 from django.db.models import Prefetch
@@ -216,6 +215,7 @@ class OrderForm(forms.ModelForm):
             "last_name_customer",
         ]
 
+
 class DispatchForm(forms.ModelForm):
     ipad = forms.ChoiceField(
         choices=[("iPad 1", "iPad 1"), ("iPad 2", "iPad 2"), ("None", "None")],
@@ -232,14 +232,16 @@ class DispatchForm(forms.ModelForm):
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
             }
+        ),
         label="Crew Leads",
     )
     drivers = forms.ModelChoiceField(
-       queryset=UserProfile.objects.filter(role="driver"),
+        queryset=UserProfile.objects.filter(role="driver"),
         widget=forms.Select(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
             }
+        ),
         label="Drivers",
     )
     truck_1 = forms.ChoiceField(
@@ -456,37 +458,44 @@ class DispatchForm(forms.ModelForm):
         ]
 
     def __init__(self, *args, **kwargs):
+
         check = kwargs.pop("completed_order_id", None)
-            # Get vehicles of type truck or trailer
+
+        # Get vehicles of type truck or trailer
         vehicles = Vehicle.objects.filter(vehicle_type__in=["truck", "trailer"])
-            # Get the latest availability data for each vehicle
+
+        # Get the latest availability data for each vehicle
         latest_dates = (
             AvailabilityData.objects.filter(vehicle__in=vehicles)
             .values("vehicle")
             .annotate(latest_date=Max("date_saved"))
         )
-            # Subquery to filter the latest record per vehicle with 'In Service' status
+
+        # Subquery to filter the latest record per vehicle with 'In Service' status
         latest_availability_data = AvailabilityData.objects.filter(
             vehicle__in=vehicles,
             date_saved__in=Subquery(latest_dates.values("latest_date")),
             status="In Service",
         )
-            # Prefetch the latest availability data only for vehicles with 'In Service' availability
+
+        # Prefetch the latest availability data only for vehicles with 'In Service' availability
         vehicles_with_availability = vehicles.prefetch_related(
             Prefetch(
                 "availabilities",
                 queryset=latest_availability_data,
                 to_attr="availability",
-            # Separate trucks and trailers, filtering only those with 'In Service' availability data
+            )
+        )
+
+        # Separate trucks and trailers, filtering only those with 'In Service' availability data
+        trucks = vehicles_with_availability.filter(vehicle_type="truck")
+        trailers = vehicles_with_availability.filter(vehicle_type="trailer")
+
         if check:
             truck_choices = [(truck.id, truck.number) for truck in trucks]
             trailer_choices = [(trailer.id, trailer.number) for trailer in trailers]
-            )
 
-            trucks = vehicles_with_availability.filter(vehicle_type="truck")
-            trailers = vehicles_with_availability.filter(vehicle_type="trailer")
-
-            else:
+        else:
             truck_choices = [(None, "None")] + [
                 (truck.id, truck.number) for truck in trucks if truck.availability
             ]
@@ -497,6 +506,7 @@ class DispatchForm(forms.ModelForm):
             ]
 
         super().__init__(*args, **kwargs)
+
         # Dynamically set choices for truck and trailer fields
         for i in range(1, 5):
             self.fields[f"truck_{i}"].choices = truck_choices
