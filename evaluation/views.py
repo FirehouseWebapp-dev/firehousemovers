@@ -11,6 +11,7 @@ from datetime import timedelta
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.http import JsonResponse, HttpResponseForbidden
+
 from authentication.models import UserProfile
 from .models import Evaluation
 from .forms import EvaluationForm
@@ -23,12 +24,14 @@ def evaluation_dashboard(request):
     query = request.GET.get("q", "")
     manager = request.user.userprofile
     today = now().date()
+
     evaluations = (
         Evaluation.objects
         .filter(manager=manager)
         .select_related("employee__user")
         .order_by("-week_start")
     )
+
     if query:
         evaluations = evaluations.filter(
             Q(employee__user__first_name__icontains=query) |
@@ -186,19 +189,18 @@ from authentication.models import UserProfile
 
 @login_required
 def analytics_dashboard(request):
-   profile    = request.user.userprofile
+    profile    = request.user.userprofile
     is_manager = profile.role == "manager"
     is_employee = profile.role != "manager"
     employees  = UserProfile.objects.filter(manager=profile) if is_manager else []
 
     cards = [
-       {"id":"stat-5stars",      "icon":"fas fa-star",          "label":"5★ Reviews",       "negative":False},
+        {"id":"stat-5stars",      "icon":"fas fa-star",          "label":"5★ Reviews",       "negative":False},
         {"id":"stat-satisfaction","icon":"fas fa-smile",        "label":"Avg Satisfaction", "negative":False},
         {"id":"stat-revenue",     "icon":"fas fa-dollar-sign",  "label":"Total Revenue",    "negative":False},
         {"id":"stat-moves",       "icon":"fas fa-truck-moving", "label":"Moves Completed",  "negative":False},
         {"id":"stat-negative",    "icon":"fas fa-frown",        "label":"Negative Reviews","negative":True},
     ]
-
     pies = [
         {"title":"Avg Satisfaction","id":"satisfactionPie"},
         {"title":"Avg Reliability", "id":"reliabilityPie"},
@@ -209,7 +211,7 @@ def analytics_dashboard(request):
     return render(request, "evaluation/analytics.html", {
         "is_manager": is_manager,
         "is_employee": is_employee,
-         "employees":  employees,
+        "employees":  employees,
         "cards":      cards,
         "pies":       pies,
     })
@@ -223,6 +225,7 @@ def team_totals_api(request):
         qs = Evaluation.objects.filter(manager=profile)
     else:
         qs = Evaluation.objects.filter(employee=profile)
+
     # optional date filters
     start, end = request.GET.get("start"), request.GET.get("end")
     if start:
@@ -301,6 +304,7 @@ def metrics_by_employee_api(request):
     profile = request.user.userprofile
     if profile.role != "manager":
         return HttpResponseForbidden()
+
     qs = Evaluation.objects.filter(manager=profile)
     start, end = request.GET.get("start"), request.GET.get("end")
     if start: qs = qs.filter(week_start__gte=start)

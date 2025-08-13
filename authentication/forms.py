@@ -268,6 +268,7 @@ class AddTeamMemberForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['user'].label_from_instance = lambda obj: obj.get_full_name() or obj.username
 
+
 class TeamMemberEditForm(forms.ModelForm):
     class Meta:
         model = UserProfile

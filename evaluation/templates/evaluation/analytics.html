@@ -1,8 +1,9 @@
 {% extends "evaluation/base.html" %}
 {% block title %}Evaluation Analytics{% endblock %}
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-8">
 
@@ -64,17 +65,16 @@
 
   {# ========== PIE CHARTS (managers only) ========== #}
   {% if is_manager %}
-      <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
-      <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {% for pie in pies %}
-        <div class="bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
-          <h3 class="text-lg font-bold text-gray-300 mb-2">{{ pie.title }}</h3>
-          <canvas id="{{ pie.id }}" class="w-full h-48"></canvas>
-        </div>
-        {% endfor %}
+    <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for pie in pies %}
+      <div class="bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
+       <h3 class="text-lg font-bold text-gray-300 mb-2">{{ pie.title }}</h3>
+       <canvas id="{{ pie.id }}" class="w-full h-48"></canvas>
       </div>
-    {% endif %}
+        {% endfor %}
+    </div>
+  {% endif %}
 </div>
 
 <script>
@@ -170,7 +170,7 @@
       });
 
     {% if is_manager %}
-    // pies (team breakdown) - only render if there are evaluations with meaningful data
+    // pies (team breakdown) 
     fetch("{% url 'evaluation:metrics_by_employee_api' %}?"+params)
       .then(r=>r.json()).then(d=>{
         const {labels, satisfaction, reliability, moves, revenue} = d;
@@ -186,6 +186,7 @@
             options:{plugins:{legend:{labels:{color:'#fff'}}}}
           });
         }
+
         renderPie('satisfactionPie', satisfaction);
         renderPie('reliabilityPie',  reliability);
         renderPie('movesPie',        moves);
