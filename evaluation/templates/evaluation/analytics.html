@@ -1,8 +1,8 @@
 {% extends "evaluation/base.html" %}
 {% block title %}Evaluation Analytics{% endblock %}
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
-
 {% block content %}
 <div class="max-w-5xl mx-auto space-y-8">
 
@@ -60,26 +60,23 @@
   {# ========== LINE CHART ========== #}
   <div class="bg-[#1a1a1a] p-6 rounded-lg shadow-lg">
     <canvas id="metricsChart" class="w-full h-64"></canvas>
-    <div id="metricsChart-nodata" class="text-gray-400 text-center py-16 hidden">Nothing to show</div>
   </div>
 
   {# ========== PIE CHARTS (managers only) ========== #}
   {% if is_manager %}
+      <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
       <h2 class="text-2xl font-semibold text-red-400">Team Breakdown</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {% for pie in pies %}
         <div class="bg-[#1a1a1a] p-4 rounded-lg shadow-lg">
           <h3 class="text-lg font-bold text-gray-300 mb-2">{{ pie.title }}</h3>
           <canvas id="{{ pie.id }}" class="w-full h-48"></canvas>
-          <div id="{{ pie.id }}-nodata" class="text-gray-400 text-center py-8 hidden">Nothing to show</div>
         </div>
         {% endfor %}
       </div>
-  {% endif %}
-
+    {% endif %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const LINE_COLORS = [
     {border:'#ef4444', bg:'rgba(239,68,68,0.3)'},    // satisfaction
@@ -132,19 +129,6 @@
     fetch("{% url 'evaluation:metrics_api' %}?"+params)
       .then(r=>r.json()).then(d=>{
         const ctx = document.getElementById("metricsChart").getContext("2d");
-        const noDataEl = document.getElementById("metricsChart-nodata");
-        const canvasEl = document.getElementById("metricsChart");
-        // Show the chart if there are labels, even if values are 0
-        const hasLineData = (d.labels && d.labels.length > 0);
-        if (!hasLineData) {
-          if (metricsChart) metricsChart.destroy();
-          canvasEl.classList.add('hidden');
-          noDataEl.classList.remove('hidden');
-          return;
-        } else {
-          canvasEl.classList.remove('hidden');
-          noDataEl.classList.add('hidden');
-        }
         if (metricsChart) metricsChart.destroy();
         metricsChart = new Chart(ctx, {
           type:'line',
@@ -176,7 +160,6 @@
           },
           options:{
             responsive:true,
-            maintainAspectRatio:false,
             scales:{
               x:{grid:{color:"#333"},ticks:{color:"#eee"}},
               y:{grid:{color:"#333"},ticks:{color:"#eee"}}
@@ -188,38 +171,26 @@
 
     {% if is_manager %}
     // pies (team breakdown) - only render if there are evaluations with meaningful data
-      fetch("{% url 'evaluation:metrics_by_employee_api' %}?"+params)
-        .then(r=>r.json()).then(d=>{
-          const {labels, satisfaction, reliability, moves, revenue} = d;
-          const arrs = { satisfaction, reliability, moves, revenue };
+    fetch("{% url 'evaluation:metrics_by_employee_api' %}?"+params)
+      .then(r=>r.json()).then(d=>{
+        const {labels, satisfaction, reliability, moves, revenue} = d;
+        const arrs = { satisfaction, reliability, moves, revenue };
 
-          function renderPie(id, dataArr) {
-            const c = document.getElementById(id);
-            const ph = document.getElementById(id+'-nodata');
-            if (!c) return;
-            const hasData = (labels && labels.length > 0) && (dataArr || []).some(v=>v>0);
-            if (!hasData) {
-              if (pieCharts[id]) { pieCharts[id].destroy(); delete pieCharts[id]; }
-              c.classList.add('hidden');
-              if (ph) ph.classList.remove('hidden');
-              return;
-            } else {
-              c.classList.remove('hidden');
-              if (ph) ph.classList.add('hidden');
-            }
-            if (pieCharts[id]) pieCharts[id].destroy();
-            pieCharts[id] = new Chart(c, {
-              type:'pie',
-              data:{ labels, datasets:[{ data:dataArr, backgroundColor:PIE_COLORS.slice(0,labels.length), borderColor:'#111', borderWidth:1 }]},
-              options:{plugins:{legend:{labels:{color:'#fff'}}}}
-            });
-          }
-
-          renderPie('satisfactionPie', satisfaction);
-          renderPie('reliabilityPie',  reliability);
-          renderPie('movesPie',        moves);
-          renderPie('revenuePie',      revenue);
-        });
+        function renderPie(id, dataArr) {
+          const c = document.getElementById(id);
+          if (!c) return;
+          if (pieCharts[id]) pieCharts[id].destroy();
+          pieCharts[id] = new Chart(c, {
+            type:'pie',
+            data:{ labels, datasets:[{ data:dataArr, backgroundColor:PIE_COLORS.slice(0,labels.length), borderColor:'#111', borderWidth:1 }]},
+            options:{plugins:{legend:{labels:{color:'#fff'}}}}
+          });
+        }
+        renderPie('satisfactionPie', satisfaction);
+        renderPie('reliabilityPie',  reliability);
+        renderPie('movesPie',        moves);
+        renderPie('revenuePie',      revenue);
+      });
     {% endif %}
   }
 

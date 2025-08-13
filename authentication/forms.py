@@ -6,7 +6,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from .models import UserProfile
-
 import re
 
 class SignUpForm(UserCreationForm):
@@ -240,10 +239,12 @@ class StyledPasswordChangeForm(PasswordChangeForm):
                 "class": "w-full bg-black border border-gray-600 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
             })
 
-
 class AddTeamMemberForm(forms.Form):
     user = forms.ModelChoiceField(
-        queryset=User.objects.none(),  # Will be set in __init__
+        queryset=User.objects.filter(
+            userprofile__isnull=False,
+            userprofile__manager__isnull=True
+        ),
         label="Select User",
         widget=forms.Select(attrs={
             "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
@@ -263,20 +264,8 @@ class AddTeamMemberForm(forms.Form):
         })
     )
 
-    def __init__(self, *args, current_user=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if current_user:
-            self.fields['user'].queryset = User.objects.filter(
-                is_active=True,  
-                userprofile__isnull=False,
-                userprofile__manager__isnull=True,  
-            ).exclude(
-                pk=current_user.pk  
-            ).exclude(
-                userprofile__role__in=['admin', 'manager']  
-            )
-
         self.fields['user'].label_from_instance = lambda obj: obj.get_full_name() or obj.username
 
 class TeamMemberEditForm(forms.ModelForm):

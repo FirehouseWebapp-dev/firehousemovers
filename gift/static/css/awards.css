@@ -146,12 +146,6 @@ body {
 .category-list-table {
   width: 80%;
   margin: auto;
-  overflow-x: auto;
-}
-.category-list-table table { table-layout: fixed; }
-.category-list-table th, .category-list-table td {
-  word-break: break-word;
-  overflow-wrap: anywhere;
 }
 .sidebar-link {
   display: block;
