@@ -330,6 +330,8 @@ def add_team_member(request):
     else:
         form = AddTeamMemberForm()
     return render(request, 'authentication/add_member.html', {'form': form})
+
+    
 from django.views.decorators.http import require_POST
 
 @login_required
