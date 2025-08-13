@@ -33,7 +33,7 @@ class report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     template_name = "report.html"
@@ -169,7 +169,7 @@ class station_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number):
@@ -225,7 +225,7 @@ class vehicle_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, vehicle):
@@ -281,7 +281,7 @@ class order_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, station_number, type):

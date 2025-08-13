@@ -34,7 +34,7 @@ class onsite_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request ,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -329,7 +329,7 @@ class inspection_report_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request, "403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1110,7 +1110,7 @@ class trailer_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -1150,7 +1150,7 @@ class truck_inspection_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request, "403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

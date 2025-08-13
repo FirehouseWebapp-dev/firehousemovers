@@ -1,0 +1,104 @@
+/* Load Montserrat from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+
+:root { 
+  --gray-900:#111827; 
+  --gray-800:#1f2937; 
+  --gray-700:#374151; 
+  --gray-100:#f3f4f6; 
+  --red:#ef4444; 
+  --red-600:#dc2626; 
+}
+
+body { 
+  font-family: 'Montserrat', sans-serif;
+  background: #000; 
+  color: var(--gray-100); 
+  display: grid; 
+  place-items: center; 
+  min-height: 58vh; 
+  text-align: center; 
+  padding: 10%;
+}
+
+.art { 
+  width: clamp(220px, 28vw, 320px); 
+  height: auto; 
+  margin: 0 auto 16px; 
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.6)); 
+}
+
+h1 { 
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700; 
+  font-size: clamp(2rem, 4vw, 3rem); 
+  margin: 0; 
+  letter-spacing: .5px; 
+  background: linear-gradient(180deg, #ffffff, #cbd5e1); 
+  -webkit-background-clip: text; 
+  background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  text-shadow: 0 2px 16px rgba(255,255,255,.06); 
+}
+
+p { 
+  font-family: 'Montserrat', sans-serif;
+  color: #cbd5e1; 
+}
+
+h1 + p { 
+  margin: 0px;
+}
+
+.actions { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: center; 
+  flex-wrap: wrap; 
+}
+
+a { 
+  font-family: 'Montserrat', sans-serif;
+  display: inline-block; 
+  padding: 12px 18px; 
+  background: var(--red); 
+  color: white; 
+  text-decoration: none; 
+  border-radius: 12px; 
+  border: 1px solid rgba(255,255,255,.08); 
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease; 
+  box-shadow: 0 6px 16px rgba(239,68,68,.25); 
+}
+
+a.secondary { 
+  background: transparent; 
+  color: var(--gray-100); 
+  border-color: var(--gray-700); 
+}
+
+a:hover { 
+  background: var(--red-600); 
+  transform: translateY(-1px); 
+  box-shadow: 0 10px 24px rgba(220,38,38,.35); 
+}
+
+/* Simple cartoon truck with siren and wheel animation */
+.wheel { 
+  transform-origin: 50% 50%; 
+  animation: spin 2s linear infinite; 
+}
+
+.siren { 
+  transform-origin: 50% 50%; 
+  animation: flash .8s ease-in-out infinite alternate; 
+  filter: drop-shadow(0 0 10px rgba(251,191,36,.6)); 
+}
+
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
+
+@keyframes flash { 
+  from { opacity:.35; } 
+  to { opacity:1; } 
+}

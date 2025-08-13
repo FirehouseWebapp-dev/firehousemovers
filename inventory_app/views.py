@@ -43,7 +43,7 @@ class Add_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -75,7 +75,7 @@ class Return_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -194,7 +194,7 @@ class Issue_uniform_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -238,7 +238,7 @@ class Employee_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -315,7 +315,7 @@ class inventory_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -418,7 +418,7 @@ class Reports_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request,"403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):

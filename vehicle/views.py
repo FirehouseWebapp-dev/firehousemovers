@@ -31,7 +31,8 @@ class vehicle_availability_view(View):
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request ,"403.html")
+
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -183,11 +184,10 @@ class JobLogisticsPage(View):
     permission_classes = [IsAuthenticated, IsManager]
 
     def dispatch(self, request, *args, **kwargs):
-        # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request, "403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
@@ -332,18 +332,16 @@ class availability_report(View):
     permission_classes = [IsAuthenticated, IsManager]
 
     def dispatch(self, request, *args, **kwargs):
-        # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request, "403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
         # Retrieve start and end dates from the GET request
         start_date_str = request.GET.get("start_date")
         end_date_str = request.GET.get("end_date")
-
         # Default to today if no date is provided
         if start_date_str and end_date_str:
             start_date = timezone.datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -508,11 +506,10 @@ class logistic_report(View):
     permission_classes = [IsAuthenticated, IsManager]
 
     def dispatch(self, request, *args, **kwargs):
-        # Manually check permissions before executing the view logic
         for permission in self.permission_classes:
             permission_instance = permission()
             if not permission_instance.has_permission(request, self):
-                return redirect("authentication:login")
+                return render(request, "403.html")
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
