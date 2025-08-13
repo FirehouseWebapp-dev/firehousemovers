@@ -12,6 +12,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.timezone import now
 from django.core.paginator import Paginator
+from django.contrib import messages
+from django.db import transaction
 
 from authentication.models import UserProfile
 from .forms import EvaluationForm, ManagerEvaluationForm
@@ -460,14 +462,9 @@ def cycle_assignments(request, cycle_id: int):
     })
 
 
-# evaluation/views.py
 
 @login_required
 def evaluate_manager(request, evaluation_id: int):
-    """
-    Senior mgmt/admin fills out a manager evaluation.
-    After submission, default to read-only detail unless ?edit=1.
-    """
     ev = get_object_or_404(ManagerEvaluation, pk=evaluation_id)
     profile = request.user.userprofile
 
@@ -475,6 +472,8 @@ def evaluate_manager(request, evaluation_id: int):
         return redirect("evaluation:regular_reviews")
     if ev.reviewer != profile:
         return redirect("evaluation:regular_reviews")
+
+    # If cycle closed and not already completed, block access
     if not ev.cycle.is_open and ev.status != "completed":
         return redirect("evaluation:cycle_assignments", cycle_id=ev.cycle_id)
 
@@ -487,13 +486,45 @@ def evaluate_manager(request, evaluation_id: int):
             "can_edit": ev.cycle.is_open,  # allow edit button if cycle still open
         })
 
+    # If POST, also block edits when cycle is closed
+    if request.method == "POST" and not ev.cycle.is_open:
+        return redirect("evaluation:cycle_assignments", cycle_id=ev.cycle_id)
+
     if request.method == "POST":
         form = ManagerEvaluationForm(request.POST, instance=ev, cycle=ev.cycle)
         if form.is_valid():
-            obj = form.save(commit=False)
-            obj.status = "completed"
-            obj.submitted_at = now()
-            obj.save()
+            with transaction.atomic():
+                obj = form.save(commit=False)
+                obj.status = "completed"
+                obj.submitted_at = now()
+                obj.save()
+
+                # Notify the subject manager
+                try:
+                    detail_url = f"{settings.BASE_URL}{reverse('evaluation:manager_review_detail', args=[obj.id])}"
+                    ctx = {
+                        "subject_name": obj.subject_manager.user.get_full_name() or obj.subject_manager.user.username,
+                        "reviewer_name": obj.reviewer.user.get_full_name() or obj.reviewer.user.username,
+                        "cycle": obj.cycle,
+                        "detail_url": detail_url,
+                    }
+                    txt = render_to_string("evaluation/email/manager_review_submitted.txt", ctx)
+                    html = render_to_string("evaluation/email/manager_review_submitted.html", ctx)
+                    to_addr = obj.subject_manager.user.email
+                    if to_addr:
+                        msg = EmailMultiAlternatives(
+                            subject=f"Your {obj.cycle.get_cycle_type_display()} review was submitted",
+                            body=txt,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            to=[to_addr],
+                        )
+                        msg.attach_alternative(html, "text/html")
+                        msg.send()
+                except Exception:
+                    # swallow email errors but keep the saved review
+                    pass
+
+            messages.success(request, "Review submitted.")
             return redirect("evaluation:evaluate_manager", evaluation_id=obj.id)
     else:
         form = ManagerEvaluationForm(instance=ev, cycle=ev.cycle)
@@ -504,6 +535,7 @@ def evaluate_manager(request, evaluation_id: int):
         "cycle": ev.cycle,
         "subject": ev.subject_manager,
     })
+
 
 
 @login_required

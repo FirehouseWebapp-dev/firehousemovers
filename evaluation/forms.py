@@ -61,11 +61,11 @@ class EvaluationForm(forms.ModelForm):
             visible.field.widget.attrs.setdefault('class', 'input-field')
 
 
-RATING_CHOICES = [("", "—"), (1, "★☆☆☆☆"), (2, "★★☆☆☆"), (3, "★★★☆☆"), (4, "★★★★☆"), (5, "★★★★★")]
-
 class ManagerEvaluationForm(forms.ModelForm):
     # Hidden int field we control via the star widget in the template
-    overall_rating = forms.IntegerField(required=False, min_value=1, max_value=5, widget=forms.HiddenInput())
+    overall_rating = forms.IntegerField(
+        required=False, min_value=1, max_value=5, widget=forms.HiddenInput()
+    )
 
     class Meta:
         model = ManagerEvaluation
@@ -94,18 +94,24 @@ class ManagerEvaluationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, cycle: ReviewCycle = None, **kwargs):
+        """
+        Optionally accepts `cycle` kwarg for controlling which fields
+        are visible/hidden. Falls back to instance.cycle if not provided.
+        """
         super().__init__(*args, **kwargs)
-        # Hide non‑relevant section based on cycle type
-        if not cycle:
-            cycle = getattr(self.instance, "cycle", None)
 
+        # If cycle not explicitly provided, use instance's cycle
+        if cycle is None and hasattr(self.instance, "cycle"):
+            cycle = self.instance.cycle
+
+        # Default: all cycle-specific fields optional
         for fld in ["regular_evaluations", "performance_summary", "annual_review"]:
-            self.fields[fld].required = False  # default to optional
+            self.fields[fld].required = False
 
+        # Apply cycle-specific visibility
         if cycle:
             t = cycle.cycle_type
             if t == ReviewCycle.CycleType.MONTHLY:
-                # show regular_evaluations; hide others
                 self.fields["performance_summary"].widget = forms.HiddenInput()
                 self.fields["annual_review"].widget = forms.HiddenInput()
             elif t == ReviewCycle.CycleType.QUARTERLY:
@@ -116,5 +122,8 @@ class ManagerEvaluationForm(forms.ModelForm):
                 self.fields["performance_summary"].widget = forms.HiddenInput()
 
     def clean_overall_rating(self):
+        """
+        Ensure overall_rating is None instead of 0/empty for easier DB handling.
+        """
         v = self.cleaned_data.get("overall_rating")
         return v or None
