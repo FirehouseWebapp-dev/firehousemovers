@@ -216,6 +216,7 @@ def analytics_dashboard(request):
         "pies":       pies,
     })
 
+
 @login_required
 def team_totals_api(request):
     profile = request.user.userprofile
