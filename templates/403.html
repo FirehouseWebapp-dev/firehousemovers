@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permission denied</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/error_pages.css' %}">
+
+</head>
+<body>
+  <img class="art" src="{% static 'images/error/error_truck_403.svg' %}" alt="Error 403 graphic" />
+  <h1>No entry to this loading zone! </h1>
+  <p>You’re trying to access a restricted area. </p>
+  <div class="actions">
+    <a href="/">Go to Home</a>
+    <a class="secondary" href="javascript:history.back()">Go Back</a>
+  </div>
+</body>
+</html>
+
+
+
+ 
