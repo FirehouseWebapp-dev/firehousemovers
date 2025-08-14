@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; line-height:1.5; color:#111;">
+    <h2 style="margin:0 0 12px;">Reminder: {{ cycle.get_cycle_type_display }} Reviews Due Soon</h2>
+    <p>Hello {{ reviewer_name }},</p>
+    <p>You still have <strong>{{ pending_count }}</strong> pending review{{ pending_count|pluralize }}.</p>
+    <p>Cycle period: <strong>{{ cycle.period_start }}</strong> → <strong>{{ cycle.period_end }}</strong></p>
+    <p style="margin:16px 0;">
+      <a href="{{ cycle_url }}" style="background:#dc2626; color:#fff; padding:10px 14px; border-radius:6px; text-decoration:none;">Complete my reviews</a>
+    </p>
+    <p>Thanks,<br>Firehouse</p>
+  </body>
+</html>

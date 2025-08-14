@@ -1,0 +1,122 @@
+{% extends "evaluation/base.html" %}
+{% block title %}Evaluate Manager{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold text-red-500 mb-6">
+  Evaluate: {{ subject.user.get_full_name|default:subject.user.username }}
+  <span class="text-gray-400 text-base ml-2">({{ cycle.get_cycle_type_display }})</span>
+</h1>
+
+<form method="post" class="space-y-6 max-w-3xl">
+  {% csrf_token %}
+
+  {# ---- Conditional section (exactly one shows) ---- #}
+  {% if form.regular_evaluations.is_hidden %}
+  {% else %}
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Regular Evaluations</label>
+      {{ form.regular_evaluations }}
+    </div>
+  {% endif %}
+
+  {% if form.performance_summary.is_hidden %}
+  {% else %}
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Quarterly/Monthly Performance Summary</label>
+      {{ form.performance_summary }}
+    </div>
+  {% endif %}
+
+  {% if form.annual_review.is_hidden %}
+  {% else %}
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Annual Performance Review</label>
+      {{ form.annual_review }}
+    </div>
+  {% endif %}
+
+  {# ---- Always included fields ---- #}
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Goals Achieved</label>
+      {{ form.goals_achieved }}
+    </div>
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Set Objectives</label>
+      {{ form.objectives_set }}
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Strengths</label>
+      {{ form.strengths }}
+    </div>
+    <div>
+      <label class="block mb-1 text-sm text-gray-300">Areas for Improvement</label>
+      {{ form.improvement_areas }}
+    </div>
+  </div>
+
+  <div>
+    <label class="block mb-2 text-sm text-gray-300">Overall Rating</label>
+    {{ form.overall_rating }} {# hidden input #}
+
+    <div id="star-rating" class="flex gap-2 items-center select-none">
+      {% for i in "12345" %}
+        {% with idx=forloop.counter %}
+        <button type="button"
+                data-value="{{ idx }}"
+                class="star-item text-2xl leading-none focus:outline-none">
+          <i class="fa-star fa-regular"></i>
+        </button>
+        {% endwith %}
+      {% endfor %}
+      <span id="star-hint" class="ml-2 text-sm text-gray-400"></span>
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Click a star (1–5). Red fills up to your choice.</p>
+  </div>
+
+  <div>
+    <label class="block mb-1 text-sm text-gray-300">Supervisor’s Comments & Observations</label>
+    {{ form.supervisors_comments }}
+  </div>
+
+  <div class="pt-2">
+    <button class="px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white">Save & Submit</button>
+    <a href="{% url 'evaluation:cycle_assignments' cycle.id %}" class="ml-2 text-gray-400 hover:text-white">Cancel</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  const container = document.getElementById('star-rating');
+  if (!container) return;
+  const hidden = document.getElementById('{{ form.overall_rating.auto_id }}');
+  const stars = Array.from(container.querySelectorAll('.star-item'));
+  const hint = document.getElementById('star-hint');
+
+  const setValue = (v) => {
+    hidden.value = v;
+    stars.forEach((btn, i) => {
+      const icon = btn.querySelector('i');
+      if (i < v) {
+        icon.classList.remove('fa-regular'); icon.classList.add('fa-solid', 'text-red-500');
+      } else {
+        icon.classList.remove('fa-solid', 'text-red-500'); icon.classList.add('fa-regular');
+      }
+    });
+    hint.textContent = v ? (v + "/5") : "";
+  };
+
+  stars.forEach(btn => {
+    btn.addEventListener('click', () => setValue(parseInt(btn.dataset.value, 10)));
+    btn.addEventListener('mouseenter', () => setValue(parseInt(btn.dataset.value, 10)));
+  });
+
+  // On load, show existing value (edit mode)
+  const initial = parseInt(hidden.value || "0", 10);
+  if (initial) setValue(initial);
+})();
+</script>
+{% endblock %}

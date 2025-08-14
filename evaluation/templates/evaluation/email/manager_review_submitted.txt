@@ -1,0 +1,11 @@
+Your Manager Review is Ready
+
+Hello {{ subject_name }},
+
+A {{ cycle.get_cycle_type_display }} review ({{ cycle.period_start }} → {{ cycle.period_end }})
+was submitted by {{ reviewer_name }}.
+
+View: {{ detail_url }}
+
+Thanks,
+Firehouse

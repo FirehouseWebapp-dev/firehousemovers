@@ -119,6 +119,10 @@ class Award(models.Model):
     date_saved = models.DateField(auto_now_add=True)
 
     def clean(self):
+        # Prevent awarding to self
+        if self.awarded_by_id and self.employees_id and self.awarded_by_id == self.employees_id:
+            raise ValidationError("You cannot award yourself.")
+
         if self.category and self.category.name == "gift_card":
             if not self.amount or not self.card:
                 raise ValidationError("Gift Card awards require both card and amount.")

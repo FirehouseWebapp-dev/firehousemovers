@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+  <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; line-height:1.5; color:#111;">
+    <h2 style="margin:0 0 12px;">Your Manager Review is Ready</h2>
+    <p>Hello {{ subject_name }},</p>
+    <p>
+      A {{ cycle.get_cycle_type_display }} review for the period
+      <strong>{{ cycle.period_start }}</strong> → <strong>{{ cycle.period_end }}</strong>
+      was submitted by <strong>{{ reviewer_name }}</strong>.
+    </p>
+    <p style="margin:16px 0;">
+      <a href="{{ detail_url }}" style="background:#dc2626; color:#fff; padding:10px 14px; border-radius:6px; text-decoration:none;">View review</a>
+    </p>
+    <p>Thanks,<br>Firehouse</p>
+  </body>
+</html>

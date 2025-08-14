@@ -1,7 +1,4 @@
-# evaluation/management/commands/create_weekly_evaluations.py
-
 from datetime import timedelta
-
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 from django.core.mail import send_mail
@@ -26,7 +23,7 @@ class Command(BaseCommand):
         this_sunday = this_monday + timedelta(days=6)
 
         # --- MONDAY: create evals ---
-        if weekday == 1:
+        if weekday == 0:
             self.stdout.write("🔨 Monday: creating weekly evaluations...")
             created_count = 0
 
