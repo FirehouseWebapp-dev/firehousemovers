@@ -83,7 +83,6 @@ class AwardCreateView(LoginRequiredMixin, ManagerOrAdminMixin, CreateView):
     form_class = AwardForm
     template_name = "awards/add_award.html"
     success_url = reverse_lazy("awards:dashboard")
-
     def form_valid(self, form):
         form.instance.awarded_by = UserProfile.objects.get(user=self.request.user)
         return super().form_valid(form)
@@ -134,6 +133,10 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def gift_card_view(request):
+    # Restrict to managers or admins; show 404 if unauthorized
+    if not is_manager_or_admin(request.user):
+        return render(request, "403.html")
+
     if request.method == "POST":
         form = GiftCardForm(request.POST)
         if form.is_valid():

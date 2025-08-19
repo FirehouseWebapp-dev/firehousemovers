@@ -1,0 +1,25 @@
+<svg class="art" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cartoon firehouse truck">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#ef4444"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .wheel { transform-origin: 50% 50%; animation: spin 2s linear infinite; }
+    .siren { transform-origin: 50% 50%; animation: flash .8s ease-in-out infinite alternate; filter: drop-shadow(0 0 10px rgba(251,191,36,.6)); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes flash { from { opacity:.35; } to { opacity:1; } }
+  </style>
+  <rect x="0" y="150" width="320" height="8" fill="#374151" opacity="0.7"/>
+  <rect x="70" y="95" rx="8" ry="8" width="160" height="50" fill="url(#g)" stroke="#991b1b"/>
+  <rect x="50" y="110" rx="8" ry="8" width="60" height="35" fill="#9ca3af" stroke="#6b7280"/>
+  <rect x="95" y="103" width="55" height="18" fill="#fca5a5" opacity=".3"/>
+  <rect x="58" y="115" width="28" height="16" rx="3" fill="#93c5fd" stroke="#60a5fa"/>
+  <rect class="siren" x="140" y="88" width="20" height="10" rx="2" fill="#fbbf24" stroke="#b45309"/>
+  <circle class="wheel" cx="95" cy="152" r="12" fill="#111827" stroke="#6b7280" stroke-width="4"/>
+  <circle class="wheel" cx="205" cy="152" r="12" fill="#111827" stroke="#6b7280" stroke-width="4"/>
+  <text x="150" y="128" text-anchor="middle" font-family="monospace" font-size="20" fill="#fff">400</text>
+</svg>
+
+
