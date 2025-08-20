@@ -84,7 +84,6 @@ class AwardCreateView(LoginRequiredMixin, ManagerOrAdminMixin, CreateView):
     template_name = "awards/add_award.html"
     success_url = reverse_lazy("awards:dashboard")
 
-
 # why kwargs or simple line, which one is better?
 
     def get_form_kwargs(self):
@@ -148,6 +147,10 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def gift_card_view(request):
+    # Restrict to managers or admins; show 404 if unauthorized
+    if not is_manager_or_admin(request.user):
+        return render(request, "403.html")
+
     if request.method == "POST":
         form = GiftCardForm(request.POST)
         if form.is_valid():
