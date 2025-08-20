@@ -318,19 +318,21 @@ def team_view(request):
 @user_passes_test(is_manager_or_admin)
 def add_team_member(request):
     if request.method == 'POST':
-        form = AddTeamMemberForm(request.POST)
+        form = AddTeamMemberForm(request.POST, current_user=request.user)
         if form.is_valid():
             team_member = form.cleaned_data['user']
             role = form.cleaned_data['role']
+
             profile = team_member.userprofile
             profile.manager = request.user.userprofile
             profile.role = role
             profile.save()
+
             return redirect('authentication:team')
     else:
-        form = AddTeamMemberForm()
-    return render(request, 'authentication/add_member.html', {'form': form})
+        form = AddTeamMemberForm(current_user=request.user)
 
+    return render(request, 'authentication/add_member.html', {'form': form})
 
 from django.views.decorators.http import require_POST
 

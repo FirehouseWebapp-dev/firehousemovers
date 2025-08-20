@@ -11,15 +11,19 @@ class BaseMaterialForm(forms.ModelForm):
         })
     )
     employee = forms.ModelChoiceField(
-        queryset=UserProfile.objects.all(),
+        queryset=UserProfile.objects.exclude(role="admin"),
         widget=forms.Select(attrs={
             "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
         })
     )
     
     # Material fields with common attributes
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if current_user:
+            self.fields['employee'].queryset = UserProfile.objects.exclude(user=current_user).exclude(role="admin")
+        else:
+            self.fields['employee'].queryset = UserProfile.objects.exclude(role="admin")
         for field_name in self.fields:
             if field_name not in ['job_id', 'trailer_number', 'employee', 'employee_signature']:
                 self.fields[field_name].widget.attrs.update({

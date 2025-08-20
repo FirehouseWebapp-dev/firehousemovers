@@ -83,6 +83,15 @@ class AwardCreateView(LoginRequiredMixin, ManagerOrAdminMixin, CreateView):
     form_class = AwardForm
     template_name = "awards/add_award.html"
     success_url = reverse_lazy("awards:dashboard")
+
+# why kwargs or simple line, which one is better?
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+       
+        kwargs["current_user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         form.instance.awarded_by = UserProfile.objects.get(user=self.request.user)
         return super().form_valid(form)
@@ -92,6 +101,11 @@ class AwardUpdateView(LoginRequiredMixin, ManagerOrAdminMixin, UpdateView):
     form_class = AwardForm
     template_name = "awards/edit_award.html"
     success_url = reverse_lazy("awards:dashboard")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["current_user"] = self.request.user
+        return kwargs
 
 class AwardDeleteView(LoginRequiredMixin, ManagerOrAdminMixin, DeleteView):
     model = Award
@@ -159,7 +173,7 @@ def gift_card_view(request):
 @login_required
 def award_card_view(request):
     if request.method == "POST":
-        form = AwardCardForm(request.POST)
+        form = AwardCardForm(request.POST, current_user=request.user)
         if form.is_valid():
             employees = form.cleaned_data["employees"]
             card = form.cleaned_data["card"]
@@ -190,7 +204,7 @@ def award_card_view(request):
         else:
             messages.error(request, form.errors)
     else:
-        form = AwardCardForm()
+        form = AwardCardForm(current_user=request.user)
     return render(request, "award_card.html", {"form": form})
 
 # ------------------------

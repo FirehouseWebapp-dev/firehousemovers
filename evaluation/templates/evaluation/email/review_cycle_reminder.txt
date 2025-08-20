@@ -1,0 +1,11 @@
+Reminder: {{ cycle.get_cycle_type_display }} reviews due soon
+
+Hello {{ reviewer_name }},
+
+You still have {{ pending_count }} pending review{{ pending_count|pluralize }}.
+Cycle period: {{ cycle.period_start }} → {{ cycle.period_end }}.
+
+Complete: {{ cycle_url }}
+
+Thanks,
+Firehouse

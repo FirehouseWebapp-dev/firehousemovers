@@ -1,0 +1,10 @@
+Hi {{ reviewer_name }},
+
+You have {{ new_count }} new {{ cycle.get_cycle_type_display }} manager review{{ new_count|pluralize }} to complete
+for the period {{ cycle.period_start }} to {{ cycle.period_end }}.
+
+Open your assignments:
+{{ list_url }}
+
+Thanks,
+Firehouse

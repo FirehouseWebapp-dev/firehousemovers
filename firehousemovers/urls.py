@@ -44,4 +44,4 @@ handler500 = error_views.server_error
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += [path("emails/", include('django_mail_viewer.urls'))]
+    urlpatterns += [path("emails/", include("django_mail_viewer.urls"))]

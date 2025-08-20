@@ -2,6 +2,7 @@ from django.shortcuts import redirect
 from django.utils.timezone import now
 from datetime import timedelta
 from evaluation.models import Evaluation
+from django.contrib import messages
 
 class EvaluationLockMiddleware:
     def __init__(self, get_response):
@@ -41,6 +42,10 @@ class EvaluationLockMiddleware:
                 not path.startswith("/evaluation/pending")
                 and not path.startswith("/evaluation/evaluate")
             ):
+                messages.warning (
+                    request,
+                    "You have pending evaluations to complete so you cannot access other pages."
+                )
                 return redirect("evaluation:pending")
 
         return self.get_response(request)

@@ -73,41 +73,78 @@ class AwardCardForm(forms.ModelForm):
             "reason",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.current_user = current_user
+        qs = UserProfile.objects.all()
 
-        try:
-            self.fields["employees"].choices = [
-                (user.id, str(user.user)) for user in UserProfile.objects.all()
-            ]
-        except Exception:
-            # Safeguard during initial migrations
-            self.fields["employees"].choices = []
+        if current_user is not None:
+            current_profile = UserProfile.objects.filter(user=current_user).first()
+            if current_profile:
+                qs = qs.exclude(pk=current_profile.pk)
+            else:
+                qs = qs.exclude(user=current_user)
+        self.fields["employees"].choices = [
+            (user.id, (user.user.get_full_name() or user.user.username)) for user in qs
+        ]
+
+    def clean(self):
+        cleaned = super().clean()
+        selected_ids = cleaned.get("employees") or []
+        if self.current_user is not None:
+            current_profile = UserProfile.objects.filter(user=self.current_user).first()
+            if current_profile:
+                if str(current_profile.pk) in [str(x) for x in selected_ids]:
+                    self.add_error("employees", "You cannot select yourself.")
+        return cleaned
 
 
 class AwardForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['card'].required = False
-        self.fields['amount'].required = False
-        self.fields['employees'].label_from_instance = lambda obj: obj.user.get_full_name() if hasattr(obj, 'user') else str(obj)
+    employees = forms.ModelChoiceField(
+        queryset=UserProfile.objects.none(),
+        required=True,
+        empty_label=None,
+        widget=forms.Select(attrs={"class": "w-full choices__inner text-white rounded-lg p-3"}),
+    )
 
     class Meta:
         model = Award
         fields = ['category', 'employees', 'card', 'amount', 'employee_photo', 'reason']
         widgets = {
             "category": forms.Select(attrs={"class": "w-full choices__inner text-white rounded-lg p-3 border border-gray-600"}),
-            "employees": forms.Select(attrs={"class": "w-full choices__inner text-white rounded-lg p-3"}),
             "card": forms.Select(attrs={"class": "w-full choices__inner text-white rounded-lg p-3"}),
             "amount": forms.NumberInput(attrs={"class": "w-full choices__inner text-white rounded-lg p-3"}),
             "reason": forms.Textarea(attrs={"class": "w-full choices__inner text-white rounded-lg p-3 border border-gray-600", "rows": 3}),
 
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.current_user = current_user
+        # print(current_user.user_profile.role)
+        # Field requirements
         self.fields['card'].required = False
         self.fields['amount'].required = False
+        # Nice employee labels and filtered queryset
+        self.fields['employees'].label_from_instance = (
+            lambda obj: (obj.user.get_full_name() or obj.user.username) if hasattr(obj, 'user') else str(obj)
+        )
+        qs = UserProfile.objects.all()
+        if current_user is not None:
+            current_profile = UserProfile.objects.filter(user=current_user).first()
+            if current_profile:
+                qs = qs.exclude(pk=current_profile.pk)
+            else:
+                qs = qs.exclude(user=current_user)
+        self.fields['employees'].queryset = qs
+
+    def clean_employees(self):
+        employee = self.cleaned_data.get('employees')
+        if self.current_user is not None and employee is not None:
+            current_profile = UserProfile.objects.filter(user=self.current_user).first()
+            if current_profile and employee.pk == current_profile.pk:
+                raise forms.ValidationError("You cannot select yourself.")
+        return employee
 
     def clean_employee_photo(self):
         photo = self.cleaned_data.get("employee_photo")

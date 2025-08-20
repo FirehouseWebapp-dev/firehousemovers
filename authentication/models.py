@@ -1,3 +1,4 @@
+# models.py
 from django.db import models
 from django.contrib.auth.models import User
 from cloudinary_storage.storage import MediaCloudinaryStorage
@@ -22,7 +23,17 @@ class UserProfile(models.Model):
         ("warehouse", "Warehouse"),
         ("mover", "Mover"),
         ("customers- per trevor", "Customers- Per Trevor"),
+        ("vp", "VP"),
+        ("ceo", "CEO"),
     ]
+
+    MANAGEMENT_ROLES = {"manager"}
+    SENIOR_MANAGEMENT_ROLES = {"llc/owner", "vp", "ceo"}
+    ADMIN_ROLES = {"admin"}
+    EMPLOYEE_ROLES = {
+        "llc/field", "sales", "field", "driver", "rwh",
+        "technician", "warehouse", "mover", "customers- per trevor"
+    }
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     manager = models.ForeignKey(
@@ -32,10 +43,8 @@ class UserProfile(models.Model):
         blank=True,
         related_name='team_members'
     )
-    # Role with dropdown choices
     role = models.CharField(max_length=50, choices=EMPLOYEE_CHOICES, default="driver")
 
-    # Cloudinary or local storage depending on DEBUG
     profile_picture = models.ImageField(
         upload_to='profile_pictures/',
         storage=image_storage,
@@ -43,7 +52,6 @@ class UserProfile(models.Model):
         null=True
     )
 
-    # Phone with validation
     phone_regex = RegexValidator(
         regex=r'^(?:\+1\s?)?(?:\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}$',
         message="Phone number must be entered in the format: '+1234567890'."
@@ -60,8 +68,36 @@ class UserProfile(models.Model):
     hobbies = models.TextField(blank=True, help_text="Optional: List hobbies comma-separated")
     favourite_quote = models.TextField(blank=True, help_text="Your favorite inspirational quote")
 
+    is_admin = models.BooleanField(default=False)
+    is_senior_management = models.BooleanField(default=False)
+    is_manager = models.BooleanField(default=False)
+    is_employee = models.BooleanField(default=True)
+
     def __str__(self):
         return self.user.get_full_name() or self.user.username
+
+    def save(self, *args, **kwargs):
+        """
+        Automatically update the stored boolean fields before saving.
+        """
+        # Admin check
+        self.is_admin = (self.role in self.ADMIN_ROLES) or self.user.is_staff or self.user.is_superuser
+
+        # Senior management check
+        self.is_senior_management = self.role in self.SENIOR_MANAGEMENT_ROLES
+
+        # Manager check (either role is 'manager' or has team members)
+        # Note: On initial save, self.pk may be None, so can't check team_members yet
+        self.is_manager = (self.role in self.MANAGEMENT_ROLES)
+
+        # Employee check
+        self.is_employee = (
+            not self.is_admin
+            and not self.is_senior_management
+            and self.role in self.EMPLOYEE_ROLES
+        )
+
+        super().save(*args, **kwargs)
 
     @property
     def tenure_days(self):

@@ -1,9 +1,9 @@
-from django.db.models import Prefetch
 from django import forms
+from django.db.models import Prefetch, Max, Subquery
+from django.db.utils import ProgrammingError, OperationalError
+
 from authentication.models import UserProfile
 from .models import AvailabilityData, Crew, Dispatch, Order, Vehicle
-from django.db.models import Prefetch
-from django.db.models import Max, Subquery
 
 
 class TruckAvailabilityForm(forms.ModelForm):
@@ -113,8 +113,10 @@ class OrderForm(forms.ModelForm):
         ),
         label="Moved Before",
     )
+
+    # Avoid DB at import time: start with none(), fill in __init__
     crew_name = forms.ModelChoiceField(
-        queryset=Crew.objects.all(),
+        queryset=Crew.objects.none(),
         widget=forms.Select(
             attrs={
                 "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
@@ -122,6 +124,7 @@ class OrderForm(forms.ModelForm):
         ),
         label="Crew Name",
     )
+
     referral_source = forms.ChoiceField(
         choices=[
             ("moved_before", "Moved Before"),
@@ -215,6 +218,13 @@ class OrderForm(forms.ModelForm):
             "last_name_customer",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.fields["crew_name"].queryset = Crew.objects.all().order_by("name")
+        except (ProgrammingError, OperationalError):
+            self.fields["crew_name"].queryset = Crew.objects.none()
+
 
 class DispatchForm(forms.ModelForm):
     ipad = forms.ChoiceField(
@@ -226,123 +236,50 @@ class DispatchForm(forms.ModelForm):
         ),
         label="iPad#",
     )
+
+    # Defer DB to __init__
     crew_leads = forms.ModelChoiceField(
-        queryset=Crew.objects.filter(role="leader"),
+        queryset=Crew.objects.none(),
         widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
-            }
+            attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
         ),
         label="Crew Leads",
     )
     drivers = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(role="driver"),
+        queryset=UserProfile.objects.none(),
         widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
-            }
+            attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
         ),
         label="Drivers",
     )
-    truck_1 = forms.ChoiceField(
-        required=False,
-        choices=[
-            (truck.id, truck.number)
-            for truck in Vehicle.objects.filter(vehicle_type="truck")
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Truck 1",
-    )
-    truck_2 = forms.ChoiceField(
-        required=False,
-        choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Truck 2",
-    )
-    truck_3 = forms.ChoiceField(
-        required=False,
-        choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Truck 3",
-    )
-    truck_4 = forms.ChoiceField(
-        required=False,
-        choices=[("Truck A", "Truck A"), ("Truck B", "Truck B"), ("None", "None")],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Truck 4",
-    )
-    trailer_1 = forms.ChoiceField(
-        required=False,
-        choices=[
-            ("Trailer A", "Trailer A"),
-            ("Trailer B", "Trailer B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Trailer 1",
-    )
-    trailer_2 = forms.ChoiceField(
-        required=False,
-        choices=[
-            ("Trailer A", "Trailer A"),
-            ("Trailer B", "Trailer B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Trailer 2",
-    )
-    trailer_3 = forms.ChoiceField(
-        required=False,
-        choices=[
-            ("Trailer A", "Trailer A"),
-            ("Trailer B", "Trailer B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Trailer 3",
-    )
-    trailer_4 = forms.ChoiceField(
-        required=False,
-        choices=[
-            ("Trailer A", "Trailer A"),
-            ("Trailer B", "Trailer B"),
-            ("None", "None"),
-        ],
-        widget=forms.Select(
-            attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full",
-            }
-        ),
-        label="Trailer 4",
-    )
+
+    # Avoid import-time queries: init with empty choices
+    truck_1 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Truck 1")
+    truck_2 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Truck 2")
+    truck_3 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Truck 3")
+    truck_4 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Truck 4")
+
+    trailer_1 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Trailer 1")
+    trailer_2 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Trailer 2")
+    trailer_3 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Trailer 3")
+    trailer_4 = forms.ChoiceField(required=False, choices=[], widget=forms.Select(
+        attrs={"class": "border border-gray-300 rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"}
+    ), label="Trailer 4")
+
     material = forms.ChoiceField(
         required=False,
         choices=[
@@ -458,56 +395,59 @@ class DispatchForm(forms.ModelForm):
         ]
 
     def __init__(self, *args, **kwargs):
-
-        check = kwargs.pop("completed_order_id", None)
-
-        # Get vehicles of type truck or trailer
-        vehicles = Vehicle.objects.filter(vehicle_type__in=["truck", "trailer"])
-
-        # Get the latest availability data for each vehicle
-        latest_dates = (
-            AvailabilityData.objects.filter(vehicle__in=vehicles)
-            .values("vehicle")
-            .annotate(latest_date=Max("date_saved"))
-        )
-
-        # Subquery to filter the latest record per vehicle with 'In Service' status
-        latest_availability_data = AvailabilityData.objects.filter(
-            vehicle__in=vehicles,
-            date_saved__in=Subquery(latest_dates.values("latest_date")),
-            status="In Service",
-        )
-
-        # Prefetch the latest availability data only for vehicles with 'In Service' availability
-        vehicles_with_availability = vehicles.prefetch_related(
-            Prefetch(
-                "availabilities",
-                queryset=latest_availability_data,
-                to_attr="availability",
-            )
-        )
-
-        # Separate trucks and trailers, filtering only those with 'In Service' availability data
-        trucks = vehicles_with_availability.filter(vehicle_type="truck")
-        trailers = vehicles_with_availability.filter(vehicle_type="trailer")
-
-        if check:
-            truck_choices = [(truck.id, truck.number) for truck in trucks]
-            trailer_choices = [(trailer.id, trailer.number) for trailer in trailers]
-
-        else:
-            truck_choices = [(None, "None")] + [
-                (truck.id, truck.number) for truck in trucks if truck.availability
-            ]
-            trailer_choices = [(None, "None")] + [
-                (trailer.id, trailer.number)
-                for trailer in trailers
-                if trailer.availability
-            ]
-
+        # custom flag from your code: if provided, we don't include the 'None' option
+        completed_order_id = kwargs.pop("completed_order_id", None)
         super().__init__(*args, **kwargs)
 
-        # Dynamically set choices for truck and trailer fields
+        # Defaults (safe during early migrations)
+        none_choice = [(None, "None")]
+        truck_choices = none_choice.copy()
+        trailer_choices = none_choice.copy()
+
+        try:
+            # fill driver/crew querysets
+            self.fields["crew_leads"].queryset = Crew.objects.filter(role="leader").order_by("name")
+            self.fields["drivers"].queryset    = UserProfile.objects.filter(role="driver").order_by("user__first_name", "user__last_name")
+
+            # Vehicles and availability logic
+            vehicles = Vehicle.objects.filter(vehicle_type__in=["truck", "trailer"])
+
+            # latest record per vehicle
+            latest_dates = (
+                AvailabilityData.objects.filter(vehicle__in=vehicles)
+                .values("vehicle")
+                .annotate(latest_date=Max("date_saved"))
+            )
+
+            latest_availability_data = AvailabilityData.objects.filter(
+                vehicle__in=vehicles,
+                date_saved__in=Subquery(latest_dates.values("latest_date")),
+                status="In Service",
+            )
+
+            vehicles_with_availability = vehicles.prefetch_related(
+                Prefetch(
+                    "availabilities",
+                    queryset=latest_availability_data,
+                    to_attr="availability",
+                )
+            )
+
+            trucks = vehicles_with_availability.filter(vehicle_type="truck")
+            trailers = vehicles_with_availability.filter(vehicle_type="trailer")
+
+            if completed_order_id:
+                truck_choices = [(truck.id, truck.number) for truck in trucks]
+                trailer_choices = [(trailer.id, trailer.number) for trailer in trailers]
+            else:
+                truck_choices = none_choice + [(t.id, t.number) for t in trucks if getattr(t, "availability", None)]
+                trailer_choices = none_choice + [(t.id, t.number) for t in trailers if getattr(t, "availability", None)]
+
+        except (ProgrammingError, OperationalError):
+            # DB/tables may not exist during initial migrate; leave defaults
+            pass
+
+        # Apply choices to all truck/trailer fields
         for i in range(1, 5):
             self.fields[f"truck_{i}"].choices = truck_choices
             self.fields[f"trailer_{i}"].choices = trailer_choices
