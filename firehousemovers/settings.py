@@ -3,6 +3,7 @@ import os
 import dj_database_url
 from django.contrib.messages import constants as messages
 import environ
+import json
 
 env = environ.Env()
 
@@ -60,8 +61,8 @@ INSTALLED_APPS = [
     "marketing",
     "widget_tweaks",
     "evaluation",
-    # third‑party
-    "anymail",  # keep defined here; we’ll switch backend per env below
+    # third-party
+    "anymail",  # Postmark via Anymail
 ]
 
 # -------------------------
@@ -77,7 +78,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "evaluation.middleware.EvaluationLockMiddleware",
-    "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware"
+    "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
 ]
 
 # -------------------------
@@ -151,8 +152,8 @@ MESSAGE_TAGS = {
     messages.DEBUG: "bg-gray-200 text-gray-800 border border-gray-400",
     messages.INFO: "bg-blue-100 text-blue-800 border border-blue-400",
     messages.SUCCESS: "bg-green-100 text-green-800 border border-green-400",
-    messages.WARNING: "bg-yellow-100 text-yellow-800 border border-yellow-400",
-    messages.ERROR: "bg-red-100 text-red-800 border border-red-400",
+    messages.WARNING: "bg-yellow-100 text-yellow-800 border-yellow-400",
+    messages.ERROR: "bg-red-100 text-red-800 border-red-400",
 }
 
 # -------------------------
@@ -172,26 +173,52 @@ else:
     }
 
 # -------------------------
-# Email (Postmark in prod; viewer in local/staging)
+# Email (Local -> Staging Postmark, Staging -> Staging Postmark, Prod -> Prod Postmark)
 # -------------------------
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="aqsakhalidrandom@gmail.com")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="support@firehousemovers.com")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-if APP_ENV in ("local", "staging"):
-    # Show all emails at /mail/
-    EMAIL_BACKEND = 'django_mail_viewer.backends.locmem.EmailBackend'
-    INSTALLED_APPS += ["django_mail_viewer"]
-    EMAIL_SUBJECT_PREFIX = f"[{APP_ENV.upper()}] "
-else:
-    # Production → Postmark via Anymail
-    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
-    ANYMAIL = {
-        "POSTMARK_SERVER_TOKEN": os.getenv("POSTMARK_SERVER_TOKEN"),
-        "POSTMARK_MESSAGE_STREAM": os.getenv("POSTMARK_MESSAGE_STREAM", "outbound"),
-    }
-    EMAIL_SUBJECT_PREFIX = ""
+# Add a prefix everywhere except production
+EMAIL_SUBJECT_PREFIX = f"[{APP_ENV.upper()}] " if APP_ENV != "production" else ""
 
-# helpful if you ever fall back to SMTP (unused with Postmark backend)
+# Toggle: use Postmark's Sandbox token for staging/local (logs only, no delivery)
+USE_POSTMARK_SANDBOX = os.getenv("USE_POSTMARK_SANDBOX", "False") == "True"
+
+# Optional app-side QA whitelist for staging/local
+# Example .env: STAGING_ALLOWED_RECIPIENTS='["qa@company.com","dev@company.com"]'
+try:
+    STAGING_ALLOWED_RECIPIENTS = set(json.loads(os.getenv("STAGING_ALLOWED_RECIPIENTS", "[]")))
+except Exception:
+    STAGING_ALLOWED_RECIPIENTS = set()
+
+# Resolve Postmark credentials per env
+if APP_ENV == "production":
+    POSTMARK_TOKEN = os.getenv("POSTMARK_PRODUCTION_SERVER_TOKEN", "")
+    POSTMARK_STREAM = os.getenv("POSTMARK_PRODUCTION_MESSAGE_STREAM", "outbound")
+else:
+    # local and staging both point to staging server (or sandbox)
+    if USE_POSTMARK_SANDBOX:
+        POSTMARK_TOKEN = "POSTMARK_API_TEST"  # Postmark sandbox -> no delivery, logs visible
+    else:
+        POSTMARK_TOKEN = os.getenv("POSTMARK_STAGING_SERVER_TOKEN", "")
+    POSTMARK_STREAM = os.getenv("POSTMARK_STAGING_MESSAGE_STREAM", "outbound-staging")
+
+ANYMAIL = {
+    "POSTMARK_SERVER_TOKEN": POSTMARK_TOKEN,
+    "WEBHOOK_SECRET": os.getenv("POSTMARK_WEBHOOK_SECRET", ""),  # if you enable signed webhooks
+    "SEND_DEFAULTS": {
+        "tags": [f"env:{APP_ENV}"],               # easy filtering in Activity
+        "metadata": {"app_env": APP_ENV},
+        "track_opens": True,
+        "track_clicks": True,
+        "esp_extra": {"MessageStream": POSTMARK_STREAM},
+    },
+}
+
+# We want local/staging/prod all to use Postmark (local goes to staging server)
+EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+
+# (SMTP fallbacks unused w/ Postmark, harmless to keep)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
