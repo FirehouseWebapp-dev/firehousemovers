@@ -1,13 +1,57 @@
 <!doctype html>
 <html>
-  <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; line-height:1.5; color:#111;">
-    <h2 style="margin:0 0 12px;">Reminder: {{ cycle.get_cycle_type_display }} Reviews Due Soon</h2>
-    <p>Hello {{ reviewer_name }},</p>
-    <p>You still have <strong>{{ pending_count }}</strong> pending review{{ pending_count|pluralize }}.</p>
-    <p>Cycle period: <strong>{{ cycle.period_start }}</strong> → <strong>{{ cycle.period_end }}</strong></p>
-    <p style="margin:16px 0;">
-      <a href="{{ cycle_url }}" style="background:#dc2626; color:#fff; padding:10px 14px; border-radius:6px; text-decoration:none;">Complete my reviews</a>
-    </p>
-    <p>Thanks,<br>Firehouse</p>
+  <body style="margin:0; padding:0; background:#f6f7f9; font-family:Arial, Helvetica, sans-serif; color:#111;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f9; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:12px; padding:28px;">
+            <tr>
+              <td>
+                <h1 style="margin:0 0 12px; font-size:28px; line-height:1.2;">
+                  Reminder: {{ cycle.get_cycle_type_display }} Reviews Due Soon
+                </h1>
+
+                <p style="margin:0 0 12px; font-size:16px;">
+                  Hello {{ reviewer_name }},
+                </p>
+
+                <p style="margin:0 0 12px; font-size:16px;">
+                  You still have <strong>{{ pending_count }}</strong> pending {{ pending_count|pluralize:"review,reviews" }}.
+                </p>
+
+                <p style="margin:0 0 16px; font-size:15px; color:#444;">
+                  Cycle period: <strong>{{ cycle.period_start|date:"M j, Y" }} → {{ cycle.period_end|date:"M j, Y" }}</strong><br/>
+                  Deadline: <strong>{{ deadline|date:"M j, Y" }}</strong>
+                </p>
+
+                <!-- Bulletproof button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 20px;">
+                  <tr>
+                    <td bgcolor="#dc2626" style="border-radius:10px;">
+                      <a href="{{ list_url }}" target="_blank"
+                         style="display:inline-block; padding:12px 20px; font-weight:700; text-decoration:none; color:#ffffff;">
+                        Complete my reviews
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:4px 0 0; font-size:13px; color:#666;">
+                  If the button doesn’t work, copy and paste this link:<br/>
+                  <a href="{{ list_url }}" style="color:#dc2626; word-break:break-all;">{{ list_url }}</a>
+                </p>
+
+                <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+
+                <p style="margin:0; font-size:12px; color:#777;">
+                  You’re receiving this because you’re assigned as a senior reviewer for this cycle.
+                  Need help? Reply to this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

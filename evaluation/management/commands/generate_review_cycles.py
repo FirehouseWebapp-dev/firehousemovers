@@ -40,6 +40,7 @@ class Command(BaseCommand):
         " • 15th: create Monthly cycle + assignments for that month.\n"
         " • Mar/Jun/Sep/Dec 15th: create Quarterly cycle + assignments for that quarter.\n"
         " • Dec 1st: create Annual cycle + assignments for the current year.\n"
+        "Also sends reminder emails 2 days before cycle period_end to seniors with pending items.\n"
         "Assignments are senior reviewers -> their direct-report managers only."
     )
 
@@ -85,15 +86,16 @@ class Command(BaseCommand):
                     created_count += 1
             return created_count
 
-        # triggers
+        # --- Creation triggers -------------------------------------------------
         is_15th = (today.day == 15)
         is_quarter_end_month = today.month in (3, 6, 9, 12)
         is_dec_1 = (today.month == 12 and today.day == 1)
 
         plans = []
-        if True:
-            m_start, m_end = month_bounds(today)
-            plans.append(("monthly", m_start, m_end))
+        # Always keep monthly up to date (so you can run daily without waiting for 15th)
+        m_start, m_end = month_bounds(today)
+        plans.append(("monthly", m_start, m_end))
+
         if is_15th and is_quarter_end_month:
             q_start, q_end = quarter_bounds(today)
             plans.append(("quarterly", q_start, q_end))
@@ -102,10 +104,9 @@ class Command(BaseCommand):
             plans.append(("annual", y_start, y_end))
 
         if not plans:
-            self.stdout.write("Nothing to do today.")
-            return
+            self.stdout.write("Nothing to do today (no cycles to create).")
 
-        # For each cycle, create assignments per reviewer and email anyone who got NEW items
+        # Create assignments + notify reviewers who just got NEW items
         for cycle_type, start, end in plans:
             total_new_for_cycle = 0
             for reviewer in seniors:
@@ -113,7 +114,6 @@ class Command(BaseCommand):
                 total_new_for_cycle += new_count
 
                 if new_count and reviewer.user.email:
-                    # Email the reviewer about their new assignments
                     cycle = ReviewCycle.objects.get(cycle_type=cycle_type, period_start=start, period_end=end)
                     list_url = f"{settings.BASE_URL}{reverse('evaluation:cycle_assignments', args=[cycle.id])}"
                     ctx = {
@@ -137,8 +137,88 @@ class Command(BaseCommand):
                 did_anything = True
                 log_lines.append(f"Assignments created for {cycle_type}: {total_new_for_cycle}")
 
+        # --- Reminder block: 2 days before deadline ---------------------------
+        reminder_target = today + timedelta(days=2)
+        # Recommended (prevents spamming all cycles):
+        # cycles_due_soon = ReviewCycle.objects.filter(period_end=reminder_target)
+        cycles_due_soon = ReviewCycle.objects.all()
+
+        total_reminders_sent = 0  # <-- ADDED
+
+        for cycle in cycles_due_soon:
+            sent_for_cycle = 0           # <-- ADDED
+            recipients_for_cycle = []    # <-- ADDED
+
+            # Aggregate pending counts per reviewer for this cycle
+            pending_q = (
+                ManagerEvaluation.objects.filter(
+                    cycle=cycle,
+                    status__in=["pending"]  # add "in_progress" if you want to nudge those too
+                ).values("reviewer").annotate(pending_count=models.Count("id"))
+            )
+            reviewers_with_pending = pending_q.count()  # <-- ADDED (safe vs truthiness)
+
+            for row in pending_q:
+                try:
+                    reviewer = UserProfile.objects.get(pk=row["reviewer"])
+                except UserProfile.DoesNotExist:
+                    continue
+                if not reviewer.user.email:
+                    continue
+
+                pending_count = row["pending_count"]
+                if pending_count <= 0:
+                    continue
+
+                list_url = f"{settings.BASE_URL}{reverse('evaluation:cycle_assignments', args=[cycle.id])}"
+                ctx = {
+                    "reviewer_name": reviewer.user.get_full_name() or reviewer.user.username,
+                    "cycle": cycle,
+                    "pending_count": pending_count,
+                    "deadline": cycle.period_end,
+                    "list_url": list_url,
+                }
+                txt = render_to_string("evaluation/email/review_cycle_reminder.txt", ctx)
+                html = render_to_string("evaluation/email/review_cycle_reminder.html", ctx)
+                msg = EmailMultiAlternatives(
+                    subject=f"Reminder: {pending_count} {cycle.get_cycle_type_display()} review(s) due by {cycle.period_end:%b %d}",
+                    body=txt,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[reviewer.user.email],
+                )
+                msg.attach_alternative(html, "text/html")
+                msg.send()
+
+                did_anything = True
+                sent_for_cycle += 1                 # <-- ADDED
+                total_reminders_sent += 1           # <-- ADDED
+                recipients_for_cycle.append(reviewer.user.email)
+
+            # Debug/logging ---------------------------------------------
+            if sent_for_cycle:
+                log_lines.append(
+                    f"Sent {sent_for_cycle} reminder email(s) for "
+                    f"{cycle.get_cycle_type_display()} ({cycle.period_start} → {cycle.period_end}). "
+                    f"Recipients: {', '.join(recipients_for_cycle)}"
+                )
+            elif reviewers_with_pending:
+                log_lines.append(
+                    f"{reviewers_with_pending} reviewer(s) had pending items for "
+                    f"{cycle.get_cycle_type_display()} ({cycle.period_start} → {cycle.period_end}), "
+                    f"but 0 emails were sent (likely missing email addresses)."
+                )
+            else:
+                log_lines.append(
+                    f"No pending items to remind for {cycle.get_cycle_type_display()} "
+                    f"({cycle.period_start} → {cycle.period_end})."
+                )
+
+        # Final summary line
+        log_lines.append(f"Total reminder emails sent today: {total_reminders_sent}")  # <-- ADDED
+
+
         if not did_anything:
-            log_lines.append("No new cycles or assignments created.")
+            log_lines.append("No new cycles/assignments created and no reminders to send today.")
 
         for line in log_lines:
             self.stdout.write(line)
