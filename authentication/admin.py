@@ -1,6 +1,30 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import UserProfile
+from .models import Department
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ("title", "description", "manager")
+    filter_horizontal = ("roles",)
+
+    def has_module_permission(self, request):
+        """Show Department section only for senior management/admins."""
+        if request.user.is_superuser:
+            return True
+        try:
+            return request.user.userprofile.is_senior_management
+        except UserProfile.DoesNotExist:
+            return False
+
+    def has_add_permission(self, request):
+        return self.has_module_permission(request)
+
+    def has_change_permission(self, request, obj=None):
+        return self.has_module_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        return self.has_module_permission(request)
 
 
 @admin.register(UserProfile)
@@ -11,6 +35,7 @@ class UserProfileAdmin(admin.ModelAdmin):
         "manager_display",
         "phone_number",
         "start_date",
+        "department",
         # new: quick flags overview
         "is_admin",
         "is_senior_management",
@@ -36,6 +61,7 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = (
         "role",
         "start_date",
+        "department",
         # new: filter by flags
         "is_admin",
         "is_senior_management",
@@ -49,7 +75,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("User Info", {
-            "fields": ("user", "role", "manager")
+            "fields": ("user", "role", "department", "manager")
         }),
         ("Role Flags (manual override if needed)", {
             "fields": (

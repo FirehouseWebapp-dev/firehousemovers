@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from .models import UserProfile
+from .models import UserProfile, Department
 
 import re
 
@@ -297,3 +297,47 @@ class TeamMemberEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['role'].label = "Assign Role"
         self.fields['start_date'].label = "Set Start Date"
+
+
+class DepartmentForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ["title", "description", "manager", "roles"]
+        widgets = {
+            "title": forms.TextInput(attrs={
+                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
+                "placeholder": "Enter department title"
+            }),
+            "description": forms.Textarea(attrs={
+                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
+                "rows": 3,
+                "placeholder": "Enter department description"
+            }),
+            "manager": forms.Select(attrs={
+                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
+            }),
+            "roles": forms.SelectMultiple(attrs={
+                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
+                "style": "display: none;"
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Only allow users with "manager" role or above to be selected as department managers
+        self.fields["manager"].queryset = UserProfile.objects.filter(
+            role__in=["manager", "admin", "vp", "ceo"]
+        )
+
+        # Exclude managers already managing another department
+        self.fields["manager"].queryset = self.fields["manager"].queryset.filter(
+            managed_department__isnull=True
+        )
+
+        # Roles field: allow all employees & managers
+        self.fields["roles"].queryset = UserProfile.objects.filter(
+            role__in=[r for r, _ in UserProfile.EMPLOYEE_CHOICES]
+        )
+
+        
