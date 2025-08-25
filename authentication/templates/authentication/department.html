@@ -1,0 +1,177 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+
+{% block content %}
+<div class="p-10 text-white">
+  <div class="p-10 text-white">
+
+    {% if messages %}
+      <div class="mb-4">
+        {% for message in messages %}
+          <div class="px-4 py-2 rounded mb-2
+                      {% if message.tags == 'success' %}bg-green-600 text-white
+                      {% elif message.tags == 'error' %}bg-red-600 text-white
+                      {% else %}bg-gray-600 text-white{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  
+  
+  <h1 class="text-3xl font-bold text-red-500 mb-8">List of Departments</h1>
+
+  <!-- Add Department button only for Admins & Senior Management -->
+  {% if request.user.is_superuser or request.user.userprofile.is_senior_management %}
+    <a href="{% url 'authentication:add_department' %}" class="bg-red-500 hover:bg-red-700 px-5 py-2.5 rounded-md text-white font-semibold mb-4 inline-block">
+      + Add Department
+    </a>
+  {% endif %}
+
+  {% if departments %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% for department in departments %}
+    <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col min-h-[240px] hover:scale-[1.02] transition relative overflow-visible">
+
+      <!-- Manager/Employee Indicator Badge -->
+      {% if request.user.userprofile == department.manager %}
+        <span class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">
+          You manage this department
+        </span>
+      {% elif request.user.userprofile in department.roles.all %}
+        <span class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">
+          You belong to this department
+        </span>
+      {% endif %}
+
+      <!-- Department Name -->
+      <h2 class="text-2xl font-bold text-red-500 mb-4 truncate">
+        {{ department.title|capfirst }}
+      </h2>
+
+      <!-- Eye Icon / Modal Trigger -->
+        <div class="absolute top-3 right-3">
+          <img 
+            src="{% static 'authentication/images/icon/eye.svg' %}" 
+            alt="View Details" 
+            class="h-6 w-6 text-gray-400 hover:text-white cursor-pointer"
+            onclick='openInfoModal(
+              "{{ department.title|escapejs }}",
+              "{{ department.description|default:"No description"|escapejs }}",
+              {
+                name: "{% if department.manager %}{{ department.manager.user.get_full_name|title|escapejs }}{% else %}Not Assigned{% endif %}",
+                link: "{% if department.manager %}{% url "authentication:view_profile" department.manager.user.id %}{% else %}#{% endif %}"
+              },
+              [
+                {% for role in department.roles.all %}
+                  {
+                    name: "{{ role.user.get_full_name|default:role.user.username|escapejs }}",
+                    link: "{% url 'authentication:view_profile' role.user.id %}"
+                  }{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  {}
+                {% endfor %}
+              ]
+            )'
+          />
+        </div>
+        
+
+
+      <!-- Manager Section -->
+      <div class="mb-4">
+        <h3 class="text-sm font-bold text-white mb-1">Manager</h3>
+        <p class="text-gray-400 truncate">
+          {% if department.manager %}
+            <a href="{% url 'authentication:view_profile' department.manager.user.id %}" 
+               class="hover:underline transition-colors">
+              {{ department.manager.user.get_full_name|default:department.manager.user.username|title }}
+            </a>
+          {% else %}
+            <span class="italic">Not Assigned</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Employees Section -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-white mb-1">Employees</h3>
+        <p class="text-gray-400">{{ department.roles.count }}</p>
+      </div>
+
+      <!-- Action Buttons only for Admins & Senior Management -->
+      {% if request.user.is_superuser or request.user.userprofile.is_senior_management %}
+      <div class="flex justify-end gap-4 mt-auto">
+        <a href="{% url 'authentication:edit_department' department.id %}" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">
+          Edit
+        </a>
+        <button type="button" class="text-sm bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold"
+          onclick="openModal('{{ department.id }}', '{{ department.title }}')">
+          Remove
+        </button>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="text-gray-400 italic mt-4">No departments added yet.</p>
+  {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="removeModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-[#1e1e1e] p-6 rounded-2xl shadow-lg">
+    <h2 class="text-xl font-semibold mb-4 text-white">Confirm Deletion</h2>
+    <p id="modalMessage" class="mb-6 text-white"></p>
+    <form id="removeForm" method="POST">
+      {% csrf_token %}
+      <div class="flex justify-end gap-4">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-800 text-white font-semibold rounded hover:bg-gray-700">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Department Info Modal -->
+<div id="infoModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-[#1e1e1e] p-6 rounded-2xl shadow-lg w-96 max-h-[80vh] overflow-y-auto border border-gray-700">
+    <!-- Title -->
+    <h2 id="infoTitle" class="text-2xl font-bold mb-4 text-red-500 truncate"></h2>
+
+    <!-- Description -->
+    <div class="mb-4">
+      <p class="text-white font-semibold mb-1">Description:</p>
+      <p id="infoDescription" class="text-gray-400 break-words"></p>
+    </div>
+
+    <!-- Manager -->
+    <div class="mb-4">
+      <p class="text-white font-semibold mb-1">Manager:</p>
+      <p id="infoManager" class="text-gray-400 break-words"></p>
+    </div>
+
+    <!-- Employees -->
+    <div class="mb-4">
+      <p class="text-white font-semibold mb-1">Employees:</p>
+      <ul id="infoEmployees" class="ml-6 list-disc marker:text-white break-words max-h-40 overflow-y-auto">
+      </ul>
+    </div>
+
+    <!-- Close Button -->
+    <div class="flex justify-end mt-6">
+      <button onclick="closeInfoModal()" class="px-4 py-2 bg-red-500 hover:bg-red-700 text-white rounded font-semibold">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'authentication/js/department_modal.js' %}"></script> 
+
+{% endblock %}

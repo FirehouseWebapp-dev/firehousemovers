@@ -1,0 +1,79 @@
+{% extends 'authentication/base_profile.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="min-h-screen bg-black text-white py-10 px-4 sm:px-8 md:px-16">
+  <div class="max-w-3xl mx-auto bg-[#1e1e1e] p-8 rounded-xl shadow-xl border border-gray-700">
+    <h2 class="text-3xl font-extrabold text-red-500 mb-8 text-center">Add Department</h2>
+
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Department Title -->
+      <div>
+        <label for="id_title" class="block text-sm font-semibold text-gray-300 mb-1">Department Name</label>
+        <div class="custom-input-wrapper">
+          {{ form.title|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label for="id_description" class="block text-sm font-semibold text-gray-300 mb-1">Description</label>
+        <div class="custom-input-wrapper">
+          {{ form.description|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}
+        </div>
+      </div>
+
+      <!-- Manager -->
+      <div>
+        <label for="id_manager" class="block text-sm font-semibold text-gray-300 mb-1">Manager</label>
+        <div class="custom-input-wrapper">
+          {{ form.manager|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}
+        </div>
+      </div>
+
+      <!-- Employee multiselect -->
+      <div>
+        <label for="id_roles" class="block text-sm font-semibold text-gray-300 mb-1">Employees</label>
+        <select id="id_roles" name="roles" multiple>
+          {% for role in form.fields.roles.queryset %}
+          <option value="{{ role.id }}"
+            {% if role in department.roles.all %}selected{% endif %}>
+            {{ role.user.get_full_name|default:role.user.username }}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Select one or more employees for this department.</p>
+      </div>
+
+
+
+      <!-- Submit -->
+      <div class="pt-6 text-center">
+        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">
+          Save Department
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center mt-6">
+      <a href="{% url 'authentication:department' %}" class="text-sm text-gray-400 hover:text-white underline">
+        ← Back to Department List
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Choices.js (must load first) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+<!-- Your overrides MUST come after Choices.js -->
+<link rel="stylesheet" href="{% static 'authentication/css/add_department.css' %}">
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="{% static 'authentication/js/add_department.js' %}"></script>
+{% endblock %}

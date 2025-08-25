@@ -9,6 +9,11 @@ from .views import (
   CustomPasswordChangeView,
   team_view, add_team_member, 
   remove_team_member, edit_team_member,
+  department_view,
+  add_department,
+  edit_department,
+  remove_department,
+   
 )
 
 app_name = "authentication"
@@ -56,4 +61,9 @@ urlpatterns = [
     path("reset/done/", auth_views.PasswordResetCompleteView.as_view(
         template_name="authentication/password_reset_complete.html"
     ), name="password_reset_complete"),
+    path("department/", department_view, name="department"),
+    path("department/add/", add_department, name="add_department"),
+    path("department/edit/<int:pk>/", edit_department, name="edit_department"),
+    path("department/remove/<int:pk>/", remove_department, name="remove_department"),
+    
 ]

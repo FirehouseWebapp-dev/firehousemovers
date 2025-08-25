@@ -3,9 +3,9 @@ from django.contrib.auth import login
 from django.views.generic import FormView
 from django.contrib import messages
 from django.views import View
-from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm
+from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm, DepartmentForm
 from django.db.models import Q
-from .models import UserProfile, User
+from .models import UserProfile, User, Department
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login as auth_login
@@ -373,4 +373,120 @@ def edit_team_member(request, user_id):
     return render(request, "authentication/edit_team_member.html", {
         "form": form,
         "team_member": user_profile
+    })
+   
+def department_view(request):
+    departments = Department.objects.all()
+    return render(request, "authentication/department.html", {"departments": departments})
+
+def can_manage_departments(user):
+    if hasattr(user, "userprofile"):
+        return (
+            user.is_superuser or 
+            user.userprofile.role in ["ceo", "vp", "llc/owner", "admin"]
+        )
+    return False
+
+@login_required
+@user_passes_test(can_manage_departments)
+def add_department(request):
+    if request.method == "POST":
+        form = DepartmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("authentication:department")  
+    else:
+        form = DepartmentForm()
+        assigned_managers = Department.objects.exclude(manager=None).values_list('manager_id', flat=True)
+        
+        # Only users whose UserProfile.role='manager', exclude assigned managers and logged-in user
+        form.fields['manager'].queryset = User.objects.filter(
+            userprofile__role='manager'
+        ).exclude(
+            id__in=assigned_managers
+        ).exclude(
+            id=request.user.id
+        )
+        # Employees dropdown
+        assigned_users = Department.objects.exclude(roles=None).values_list('roles', flat=True)
+        form.fields['roles'].queryset = UserProfile.objects.exclude(
+            Q(is_admin=True) |
+            Q(is_manager=True) |
+            Q(is_senior_management=True) |
+            Q(id=request.user.userprofile.id) |
+            Q(id__in=assigned_users)
+        )
+    return render(request, "authentication/add_department.html", {"form": form})
+
+@login_required
+@user_passes_test(can_manage_departments)
+def edit_department(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    
+    # IDs of managers assigned to other departments
+    assigned_managers = Department.objects.exclude(manager=None).exclude(pk=department.pk).values_list('manager_id', flat=True)
+    
+    if request.method == "POST":
+        form = DepartmentForm(request.POST, instance=department)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Department "{department.title}" updated successfully!')
+            return redirect("authentication:department")  # flash will appear here
+        else:
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = DepartmentForm(instance=department)
+        
+        # Manager queryset: allow current manager, exclude others
+        form.fields['manager'].queryset = UserProfile.objects.filter(
+            role='manager'
+        ).exclude(
+            id__in=assigned_managers
+        ) | UserProfile.objects.filter(id=department.manager_id)  # include current manager
+
+        # Roles queryset: exclude admin/manager/senior management, but include current department employees
+        assigned_users = Department.objects.exclude(roles=None).exclude(pk=department.pk).values_list('roles', flat=True)
+        form.fields['roles'].queryset = UserProfile.objects.exclude(
+            Q(is_admin=True) |
+            Q(is_manager=True) |
+            Q(is_senior_management=True) |
+            Q(id=request.user.userprofile.id) |
+            Q(id__in=assigned_users)
+        ) | UserProfile.objects.filter(id__in=department.roles.all())  # include current department employees
+    
+    return render(request, "authentication/edit_department.html", {
+        "form": form,
+        "department": department,
+        "assigned_managers": assigned_managers
+    })
+
+@login_required
+@user_passes_test(can_manage_departments)
+def remove_department(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    if request.method == "POST":  
+        department.delete()
+        messages.success(request, f"Department '{department.title}' removed successfully.")
+        return redirect("authentication:department")  # Flash appears here
+    return redirect("authentication:department")  # fallback for GET
+
+@login_required
+def view_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    profile = get_object_or_404(UserProfile, user=profile_user)
+
+    # Get team mates (same manager)
+    if profile.manager:
+        teammates = UserProfile.objects.filter(manager=profile.manager).exclude(user=profile_user)
+    else:
+        teammates = []
+
+    # Get team members (users where this profile is their manager)
+    team_members = UserProfile.objects.filter(manager=profile)
+
+    return render(request, "authentication/view_profile.html", {
+        "profile_user": profile_user,
+        "profile": profile,
+        "team_members": team_members,
+        "teammates": teammates,
     })
