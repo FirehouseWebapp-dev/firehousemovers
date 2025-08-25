@@ -73,11 +73,21 @@
     <section class="text-center mt-10">
         <div class="flex flex-wrap justify-start w-full gap-x-4">
             <!-- Uniform Inventory System -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'inventory' %}">
-                    <img src="{% static 'images/uniform.jpg' %}" alt="Truck" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Uniform Inventory System</p>
+            <div class="relative w-[calc(25%-1rem)] ml-2 overflow-hidden group aspect-square">
+                <img
+                    src="{% static 'images/uniform.jpg' %}"
+                    alt="Uniforms"
+                    class="absolute inset-0 w-full h-full object-cover object-cover object-[5%_70%] transition-transform duration-500 group-hover:scale-105 "
+                    loading="lazy" decoding="async"
+                />
+
+                <a href="{% url 'inventory' %}" class="absolute inset-0">
+                    <span class="sr-only">Uniform Inventory System</span>
                 </a>
+
+                <div class="absolute inset-0 grid place-content-center bg-black/50 opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none">
+                    <p class="text-white">Uniform Inventory System</p>
+                </div>
             </div>
 
             <!-- Gift Cards -->
