@@ -77,6 +77,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "evaluation.middleware.EvaluationLockMiddleware",
+    "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware"
 ]
 
 # -------------------------

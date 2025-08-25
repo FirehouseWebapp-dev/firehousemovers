@@ -3,6 +3,18 @@
 {% block title %}Pending Reviews{% endblock %}
 
 {% block content %}
+
+{# Flash messages block #}
+{% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+      <div class="bg-gray-800 border-l-4 border-gray-700 text-red-500 p-4" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <h1 class="text-3xl font-bold text-red-500 mb-6">Pending Reviews</h1>
 
 {# Per-cycle progress #}

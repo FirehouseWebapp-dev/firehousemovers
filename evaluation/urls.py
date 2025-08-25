@@ -19,6 +19,5 @@ urlpatterns = [
     path("reviews/evaluate/<int:evaluation_id>/", views.evaluate_manager, name="evaluate_manager"),
     path("reviews/my/", views.my_manager_reviews, name="my_manager_reviews"),
     path("reviews/detail/<int:evaluation_id>/", views.manager_review_detail, name="manager_review_detail"),
-    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),
-
+    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),  
 ]
