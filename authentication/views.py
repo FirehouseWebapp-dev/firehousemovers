@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.views import View
 from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm
 from django.db.models import Q
-from .models import UserProfile, User
+from .models import UserProfile, User, Goal
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login as auth_login
@@ -21,9 +21,20 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import ProfileUpdateForm, TeamMemberEditForm
+from .forms import ProfileUpdateForm, TeamMemberEditForm, GoalForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.views.generic import ListView, CreateView, DetailView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.forms import modelformset_factory
+from django.db import transaction
+from django.utils import timezone
+from django.http import HttpResponseForbidden
+from django.views.decorators.http import require_POST
+
+# Define the formset for Goal model
+GoalFormSet = modelformset_factory(Goal, form=GoalForm, extra=1, can_delete=True)
 
 # Helper function for permission
 def is_manager_or_admin(user):
@@ -374,3 +385,167 @@ def edit_team_member(request, user_id):
         "form": form,
         "team_member": user_profile
     })
+
+@login_required
+def goals_management_view(request):
+    """Main goals management page - lists all employees with goals"""
+    user_profile = request.user.userprofile
+
+    if user_profile.is_senior_management:
+        employees = UserProfile.objects.filter(is_employee=True).order_by('user__first_name', 'user__last_name')
+    elif user_profile.is_manager:
+        employees = UserProfile.objects.filter(manager=user_profile).order_by('user__first_name', 'user__last_name')
+    else:
+        employees = UserProfile.objects.filter(id=user_profile.id)
+
+    for employee in employees:
+        employee.goal_count = Goal.objects.filter(assigned_to=employee).count()
+        employee.has_goals = employee.goal_count > 0
+
+    context = {
+        'employees': employees,
+        'can_add_goals': user_profile.is_senior_management or user_profile.is_manager,
+        'has_team_members': employees.exists() if user_profile.is_manager else True,
+    }
+
+    return render(request, 'authentication/goals_management.html', context)
+
+@login_required
+@require_POST
+def toggle_goal_completion_view(request, goal_id):
+    goal = get_object_or_404(Goal, id=goal_id)
+    user_profile = request.user.userprofile
+
+    # Permission check: Only assigned user, manager, or senior management can toggle completion
+    if not (user_profile.is_senior_management or user_profile.is_manager or goal.assigned_to == user_profile):
+        return JsonResponse({'success': False, 'error': 'You don\'t have permission to modify this goal.'}, status=403)
+
+    try:
+        goal.is_completed = not goal.is_completed
+        goal.save()
+        return JsonResponse({'success': True, 'is_completed': goal.is_completed})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+@login_required
+def add_goals_view(request, employee_id):
+    """Add goals for a specific employee"""
+    user_profile = request.user.userprofile
+    employee = get_object_or_404(UserProfile, id=employee_id)
+
+    # Check permissions
+    if user_profile.is_senior_management:
+        pass  # Senior management can add goals for any employee
+    elif user_profile.is_manager:
+        if employee.manager != user_profile:
+            raise PermissionDenied("You can only add goals for your direct team members.")
+    else:
+        raise PermissionDenied("You don't have permission to add goals.")
+
+    # Check if employee already has 10 goals
+    existing_goals_count = Goal.objects.filter(assigned_to=employee).count()
+    if existing_goals_count >= 10:
+        messages.error(request, f"{employee} already has the maximum of 10 goals.")
+        return redirect('authentication:goals_management')
+
+    remaining_goals = 10 - existing_goals_count
+
+    if request.method == 'POST':
+        formset = GoalFormSet(request.POST, queryset=Goal.objects.none())
+        if formset.is_valid():
+            with transaction.atomic():
+                for form in formset:
+                    if form.cleaned_data and not form.cleaned_data.get('DELETE'):
+                        goal = form.save(commit=False)
+                        goal.assigned_to = employee
+                        goal.created_by = user_profile
+                        goal.department = employee.department
+                        goal.save()
+            messages.success(request, f"Goals added successfully for {employee}.")
+            return redirect('authentication:goals_management')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        formset = GoalFormSet(queryset=Goal.objects.none())
+
+    context = {
+        'employee': employee,
+        'existing_goals_count': existing_goals_count,
+        'remaining_goals': remaining_goals,
+        'formset': formset,
+    }
+
+    return render(request, 'authentication/add_goals.html', context)
+
+
+@login_required
+def view_goals_view(request, employee_id):
+    """View goals for a specific employee"""
+    user_profile = request.user.userprofile
+    employee = get_object_or_404(UserProfile, id=employee_id)
+
+    if not (user_profile.is_senior_management or user_profile.is_manager) and user_profile.id != employee.id:
+        raise PermissionDenied("You can only view your own goals.")
+
+    goals = Goal.objects.filter(assigned_to=employee)
+
+    # Apply goal type filter
+    selected_goal_type = request.GET.get('goal_type')
+    if selected_goal_type and selected_goal_type != 'all':
+        goals = goals.filter(goal_type=selected_goal_type)
+
+    goals = goals.order_by('is_completed', '-created_at') # Order by completion status then creation date
+
+    context = {
+        'employee': employee,
+        'goals': goals,
+        'can_edit': user_profile.is_senior_management or user_profile.is_manager,
+        'selected_goal_type': selected_goal_type,
+    }
+
+    return render(request, 'authentication/view_goals.html', context)
+
+
+@login_required
+def edit_goal_view(request, goal_id):
+    """Edit a specific goal"""
+    user_profile = request.user.userprofile
+    goal = get_object_or_404(Goal, id=goal_id)
+
+    if not (user_profile.is_senior_management or user_profile.is_manager):
+        raise PermissionDenied("You don't have permission to edit goals.")
+
+    if request.method == 'POST':
+        form = GoalForm(request.POST, instance=goal)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Goal updated successfully.")
+            return redirect('authentication:view_goals', employee_id=goal.assigned_to.id)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = GoalForm(instance=goal)
+
+    context = {
+        'goal': goal,
+        'form': form,
+    }
+
+    return render(request, 'authentication/edit_goal.html', context)
+
+@login_required
+def remove_goal_view(request, goal_id):
+    """Remove a specific goal"""
+    goal = get_object_or_404(Goal, id=goal_id)
+    user_profile = request.user.userprofile
+
+    # Only senior management or the creator can delete
+    if not (user_profile.is_senior_management or goal.created_by == user_profile):
+        raise PermissionDenied("You don't have permission to remove this goal.")
+
+    if request.method == 'POST':
+        goal.delete()
+        messages.success(request, "Goal removed successfully.")
+        return redirect('authentication:goals_management')
+
+    return redirect('authentication:goals_management')  # Fallback

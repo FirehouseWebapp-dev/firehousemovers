@@ -9,6 +9,13 @@ from .views import (
   CustomPasswordChangeView,
   team_view, add_team_member, 
   remove_team_member, edit_team_member,
+  goals_management_view,
+  add_goals_view,
+  view_goals_view,
+  edit_goal_view,
+  remove_goal_view,
+  toggle_goal_completion_view,
+   
 )
 
 app_name = "authentication"
@@ -56,4 +63,13 @@ urlpatterns = [
     path("reset/done/", auth_views.PasswordResetCompleteView.as_view(
         template_name="authentication/password_reset_complete.html"
     ), name="password_reset_complete"),
+
+    # Goals Management URLs
+    path("goals/", goals_management_view, name="goals_management"),
+    path("goals/add/<int:employee_id>/", add_goals_view, name="add_goals"),
+    path("goals/view/<int:employee_id>/", view_goals_view, name="view_goals"),
+    path("goals/edit/<int:goal_id>/", edit_goal_view, name="edit_goal"),
+    path("goals/remove/<int:goal_id>/", remove_goal_view, name="remove_goal"),
+    path("goals/toggle-completion/<int:goal_id>/", toggle_goal_completion_view, name="toggle_goal_completion"),
+    
 ]
