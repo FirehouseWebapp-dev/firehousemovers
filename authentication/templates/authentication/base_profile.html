@@ -38,6 +38,17 @@
             </a>
           {% endif %}
         {% endif %}
+
+        {% if request.user.is_active and not request.user.is_superuser %}
+        <a href="{% url 'authentication:department' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/department/' %}bg-red-500{% endif %}">
+          <i class="fas fa-building mr-2"></i> Department
+        </a>
+        {% endif %}
+
+        <!-- Goals Management - Available to all authenticated users -->
+        <a href="{% url 'authentication:goals_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
+          <i class="fas fa-bullseye mr-2"></i> Goals Management
+        </a>
       </nav>
     </aside>
 

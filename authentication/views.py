@@ -21,7 +21,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import ProfileUpdateForm, TeamMemberEditForm
+from .forms import ProfileUpdateForm, TeamMemberEditForm, GoalForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
