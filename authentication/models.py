@@ -23,12 +23,6 @@ class Department(models.Model):
         related_name="managed_department"
     )
 
-    roles = models.ManyToManyField(
-        "authentication.UserProfile",
-        related_name="department_roles",
-        blank=True
-    )
-
 
     def __str__(self):
         return self.title

@@ -6,12 +6,13 @@ from .models import Department
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ("title", "description", "manager")
-    filter_horizontal = ("roles",)
 
     def has_module_permission(self, request):
         """Show Department section only for senior management/admins."""
         if request.user.is_superuser:
             return True
+        if not request.user.is_authenticated:
+            return False
         try:
             return request.user.userprofile.is_senior_management
         except UserProfile.DoesNotExist:
@@ -33,8 +34,6 @@ class UserProfileAdmin(admin.ModelAdmin):
         "user",
         "role",
         "manager_display",
-        "phone_number",
-        "start_date",
         "department",
         # new: quick flags overview
         "is_admin",
@@ -56,11 +55,9 @@ class UserProfileAdmin(admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
         "role",
-        "phone_number",
     )
     list_filter = (
         "role",
-        "start_date",
         "department",
         # new: filter by flags
         "is_admin",
@@ -69,7 +66,6 @@ class UserProfileAdmin(admin.ModelAdmin):
         "is_employee",
     )
     autocomplete_fields = ["user", "manager"]
-    ordering = ("-start_date",)
     list_select_related = ("user", "manager")
     readonly_fields = ("profile_picture_preview",)
 

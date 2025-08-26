@@ -32,19 +32,15 @@
         {{ form.manager }}
       </div>
 
-      <!-- Employees Multi-Select -->
+      <!-- Employee Multi-Select -->
       <div>
-        <label for="id_roles" class="block text-sm font-semibold text-gray-300 mb-1">Employees</label>
-        <select id="id_roles" name="roles" multiple>
-          {% for role in form.fields.roles.queryset %}
-          <option value="{{ role.id }}"
-            {% if role in department.roles.all %}selected{% endif %}>
-            {{ role.user.get_full_name|default:role.user.username }}
-          </option>
-          {% endfor %}
-        </select>
+        <label for="id_employees" class="block text-sm font-semibold text-gray-300 mb-1">Employees</label>
+        <div class="custom-input-wrapper">
+          {{ current_department_employees }}
+        </div>
         <p class="text-xs text-gray-500 mt-1">Select one or more employees for this department.</p>
       </div>
+
 
       <!-- Submit -->
       <div class="pt-6 text-center">
@@ -68,7 +64,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 
 <!-- Your overrides MUST come after Choices.js -->
-<link rel="stylesheet" href="{% static 'authentication/css/edit_department.css' %}">
+<link rel="stylesheet" href="{% static 'authentication/css/department.css' %}">
 
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script src="{% static 'authentication/js/edit_department.js' %}"></script>

@@ -36,12 +36,12 @@
 
       <!-- Employee multiselect -->
       <div>
-        <label for="id_roles" class="block text-sm font-semibold text-gray-300 mb-1">Employees</label>
-        <select id="id_roles" name="roles" multiple>
-          {% for role in form.fields.roles.queryset %}
-          <option value="{{ role.id }}"
-            {% if role in department.roles.all %}selected{% endif %}>
-            {{ role.user.get_full_name|default:role.user.username }}
+        <label for="id_employees" class="block text-sm font-semibold text-gray-300 mb-1">Employees</label>
+        <select id="id_employees" name="employees" multiple>
+          {% for employee in form.fields.employees.queryset %}
+          <option value="{{ employee.id }}"
+            {% if role in department.employee.all %}selected{% endif %}>
+            {{ role.user.get_full_name|default:employee.user.username }}
           </option>
           {% endfor %}
         </select>
@@ -72,7 +72,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 
 <!-- Your overrides MUST come after Choices.js -->
-<link rel="stylesheet" href="{% static 'authentication/css/add_department.css' %}">
+<link rel="stylesheet" href="{% static 'authentication/css/department.css' %}">
 
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script src="{% static 'authentication/js/add_department.js' %}"></script>

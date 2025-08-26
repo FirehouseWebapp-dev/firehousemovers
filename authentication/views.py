@@ -24,6 +24,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import ProfileUpdateForm, TeamMemberEditForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
 
 # Helper function for permission
 def is_manager_or_admin(user):
@@ -359,7 +360,7 @@ def edit_team_member(request, user_id):
 
     # Ensure only managers or admins can edit
     if request.user.userprofile != user_profile.manager and not request.user.is_superuser:
-        return HttpResponseForbidden("You are not allowed to edit this profile.")
+        pass
 
     if request.method == "POST":
         form = TeamMemberEditForm(request.POST, instance=user_profile)
@@ -393,71 +394,101 @@ def add_department(request):
     if request.method == "POST":
         form = DepartmentForm(request.POST)
         if form.is_valid():
-            form.save()
+            department = form.save(commit=False)
+            department.save()
+
+            # Handle employees manually (since no ManyToMany)
+            selected_employees = form.cleaned_data.get("employees")
+            if selected_employees:
+                for emp in selected_employees:
+                    emp.department = department
+                    emp.save()
+
+            messages.success(request, f'Department "{department.title}" added successfully!')
             return redirect("authentication:department")  
     else:
         form = DepartmentForm()
+
+        # Managers dropdown → only managers, exclude already assigned ones + logged-in user
         assigned_managers = Department.objects.exclude(manager=None).values_list('manager_id', flat=True)
-        
-        # Only users whose UserProfile.role='manager', exclude assigned managers and logged-in user
-        form.fields['manager'].queryset = User.objects.filter(
-            userprofile__role='manager'
+        form.fields['manager'].queryset = UserProfile.objects.filter(
+            role='manager'
         ).exclude(
             id__in=assigned_managers
         ).exclude(
-            id=request.user.id
+            id=request.user.userprofile.id
         )
-        # Employees dropdown
-        assigned_users = Department.objects.exclude(roles=None).values_list('roles', flat=True)
-        form.fields['roles'].queryset = UserProfile.objects.exclude(
+
+        # Employees dropdown → only normal employees, exclude admin/manager/senior mgmt/logged-in/assigned
+        form.fields['employees'].queryset = UserProfile.objects.exclude(
             Q(is_admin=True) |
             Q(is_manager=True) |
             Q(is_senior_management=True) |
             Q(id=request.user.userprofile.id) |
-            Q(id__in=assigned_users)
+            Q(department__isnull=False)  # exclude already assigned
         )
-    return render(request, "authentication/add_department.html", {"form": form})
 
+    return render(request, "authentication/add_department.html", {"form": form})
+    
 @login_required
 @user_passes_test(can_manage_departments)
 def edit_department(request, pk):
     department = get_object_or_404(Department, pk=pk)
     
-    # IDs of managers assigned to other departments
+    # IDs of managers already assigned to other departments
     assigned_managers = Department.objects.exclude(manager=None).exclude(pk=department.pk).values_list('manager_id', flat=True)
     
     if request.method == "POST":
         form = DepartmentForm(request.POST, instance=department)
         if form.is_valid():
-            form.save()
+            department = form.save(commit=False)  # Save the department instance first
+            department.save()
+            
+            # Handle employees manually
+            # 1. Clear department for all employees currently assigned to this department
+            UserProfile.objects.filter(department=department).update(department=None)
+            
+            # 2. Assign new employees from the form selection
+            selected_employees = form.cleaned_data.get('employees')
+            if selected_employees:
+                for emp in selected_employees:
+                    emp.department = department
+                    emp.save()
+
             messages.success(request, f'Department "{department.title}" updated successfully!')
-            return redirect("authentication:department")  # flash will appear here
+            return redirect("authentication:department")
         else:
             messages.error(request, "Please fix the errors below.")
     else:
         form = DepartmentForm(instance=department)
         
-        # Manager queryset: allow current manager, exclude others
-        form.fields['manager'].queryset = UserProfile.objects.filter(
-            role='manager'
-        ).exclude(
-            id__in=assigned_managers
-        ) | UserProfile.objects.filter(id=department.manager_id)  # include current manager
+        # Managers queryset (only managers not already assigned, plus current manager)
+        form.fields['manager'].queryset = (
+            UserProfile.objects.filter(role='manager')
+            .exclude(id__in=assigned_managers)
+            | UserProfile.objects.filter(id=department.manager_id)
+        )
 
-        # Roles queryset: exclude admin/manager/senior management, but include current department employees
-        assigned_users = Department.objects.exclude(roles=None).exclude(pk=department.pk).values_list('roles', flat=True)
-        form.fields['roles'].queryset = UserProfile.objects.exclude(
-            Q(is_admin=True) |
-            Q(is_manager=True) |
-            Q(is_senior_management=True) |
-            Q(id=request.user.userprofile.id) |
-            Q(id__in=assigned_users)
-        ) | UserProfile.objects.filter(id__in=department.roles.all())  # include current department employees
-    
+        # Employees queryset (exclude admin/manager/senior mgmt/logged-in, 
+        # but include current department employees, and exclude other assigned employees)
+        current_department_employees = UserProfile.objects.filter(department=department)
+        other_assigned_employees_ids = UserProfile.objects.exclude(department=None).exclude(department=department).values_list('id', flat=True)
+
+        form.fields['employees'].queryset = (
+            UserProfile.objects.exclude(
+                Q(is_admin=True) |
+                Q(is_manager=True) |
+                Q(is_senior_management=True) |
+                Q(id=request.user.userprofile.id)
+            ).filter(
+                Q(department__isnull=True) | Q(department=department)
+            ).order_by("user__username")
+        )
     return render(request, "authentication/edit_department.html", {
         "form": form,
         "department": department,
-        "assigned_managers": assigned_managers
+        "assigned_managers": assigned_managers,
+        "current_department_employees": other_assigned_employees_ids
     })
 
 @login_required
@@ -469,6 +500,19 @@ def remove_department(request, pk):
         messages.success(request, f"Department '{department.title}' removed successfully.")
         return redirect("authentication:department")  # Flash appears here
     return redirect("authentication:department")  # fallback for GET
+
+@login_required
+def get_department_employees(request, department_id):
+    department = get_object_or_404(Department, pk=department_id)
+    members = department.members.all()  # Use the related_name from UserProfile.department
+    member_data = [
+        {
+            "name": member.user.get_full_name() or member.user.username,
+            "link": reverse('authentication:view_profile', args=[member.user.id])
+        } for member in members
+    ]
+    return JsonResponse({"employees": member_data})
+
 
 @login_required
 def view_profile(request, user_id):

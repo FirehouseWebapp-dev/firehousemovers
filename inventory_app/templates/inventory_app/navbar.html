@@ -113,7 +113,7 @@
             <!-- Profile Picture Link -->
             <a href="{% url 'authentication:profile' %}" class="flex items-center bg-white/10 px-3 py-1 rounded-full shadow-md hover:bg-white/20 transition">
                 <div class="w-10 h-10 rounded-full overflow-hidden">
-                    {% if request.user.userprofile.profile_picture %}
+                    {% if request.user.is_authenticated and request.user.userprofile.profile_picture %}
                     <img src="{{ request.user.userprofile.profile_picture.url }}" alt="Profile" class="w-full h-full object-cover">
                     {% else %}
                     <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
@@ -121,7 +121,9 @@
                 </div>
                 <div class="ml-3 text-left leading-tight">
                     <p class="text-sm font-semibold text-white">{{ request.user.first_name|capfirst }}</p>
+                    {% if request.user.is_authenticated %}
                     <p class="text-xs text-gray-300">{{ request.user.userprofile.role|default:"" }}</p>
+                    {% endif %}
                 </div>
             </a>
 

@@ -20,7 +20,7 @@ window.closeModal = function() {
     document.getElementById("removeModal").classList.add("hidden");
 };
 
-window.openInfoModal = function(title, description, manager, employees) {
+window.openInfoModal = function(departmentId, title, description, managerName, managerLink) {
     const infoTitle = document.getElementById('infoTitle');
     const infoDescription = document.getElementById('infoDescription');
     const infoManager = document.getElementById('infoManager');
@@ -31,10 +31,10 @@ window.openInfoModal = function(title, description, manager, employees) {
 
     // Manager
     infoManager.innerHTML = '';
-    if (manager && manager.name) {
+    if (managerName && managerName !== 'Not Assigned') {
         const a = document.createElement('a');
-        a.href = manager.link || '#';
-        a.textContent = capitalizeName(manager.name);
+        a.href = managerLink || '#';
+        a.textContent = capitalizeName(managerName);
         a.classList.add('hover:underline','text-gray-400');
         infoManager.appendChild(a);
     } else {
@@ -42,24 +42,37 @@ window.openInfoModal = function(title, description, manager, employees) {
         infoManager.classList.add('text-gray-400');
     }
 
-    // Employees
-    employeesList.innerHTML = '';
-    if (employees && employees.length) {
-        employees.forEach(emp => {
-            const li = document.createElement('li'); //bullet
-            li.classList.add('list-disc', 'marker:text-white', 'ml-4');
-            if (emp.name) {
-                const a = document.createElement('a'); //clickable
-                a.href = emp.link || '#';
-                a.textContent = capitalizeName(emp.name);
-                a.classList.add('hover:underline','text-gray-400');
-                li.appendChild(a);
+    // Employees - Fetch dynamically
+    employeesList.innerHTML = '<li>Loading employees...</li>'; // Loading state
+    fetch(`/department/${departmentId}/employees/`)
+        .then(response => response.json())
+        .then(data => {
+            debugger;
+            const employees = data.employees;
+            employeesList.innerHTML = ''; // Clear loading state
+            if (data && data.length) {
+                data.forEach(emp => {
+                    const li = document.createElement('li'); //bullet
+                    li.classList.add('list-disc', 'marker:text-white', 'ml-4');
+                    if (emp.name) {
+                        const a = document.createElement('a'); //clickable
+                        a.href = emp.link || '#';
+                        a.textContent = capitalizeName(emp.name);
+                        a.classList.add('hover:underline','text-gray-400');
+                        li.appendChild(a);
+                    } else {
+                        li.textContent = 'Unknown';
+                    }
+                    employeesList.appendChild(li);
+                });
             } else {
-                li.textContent = 'Unknown';
+                employeesList.textContent = 'No employees assigned.';
             }
-            employeesList.appendChild(li);
+        })
+        .catch(error => {
+            // console.error('Error fetching employees:', error);
+            employeesList.textContent = 'Failed to load employees.';
         });
-    }
 
     document.getElementById('infoModal').classList.remove('hidden');
 };

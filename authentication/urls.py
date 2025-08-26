@@ -13,7 +13,7 @@ from .views import (
   add_department,
   edit_department,
   remove_department,
-   
+  get_department_employees, # Renamed view
 )
 
 app_name = "authentication"
@@ -65,5 +65,5 @@ urlpatterns = [
     path("department/add/", add_department, name="add_department"),
     path("department/edit/<int:pk>/", edit_department, name="edit_department"),
     path("department/remove/<int:pk>/", remove_department, name="remove_department"),
-    
+    path("department/<int:department_id>/employees/", get_department_employees, name="get_department_employees"),
 ]

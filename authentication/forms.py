@@ -300,9 +300,15 @@ class TeamMemberEditForm(forms.ModelForm):
 
 
 class DepartmentForm(forms.ModelForm):
+    employees = forms.ModelMultipleChoiceField(
+        queryset=UserProfile.objects.select_related("user").order_by("user__username"),
+        required=False,
+    )
+
+
     class Meta:
         model = Department
-        fields = ["title", "description", "manager", "roles"]
+        fields = ["title", "description", "manager"]
         widgets = {
             "title": forms.TextInput(attrs={
                 "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
@@ -316,28 +322,28 @@ class DepartmentForm(forms.ModelForm):
             "manager": forms.Select(attrs={
                 "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
             }),
-            "roles": forms.SelectMultiple(attrs={
-                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
-                "style": "display: none;"
-            }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields['employees'].label_from_instance = (
+            lambda obj: obj.user.get_full_name() or obj.user.username
+        )
+
+        if self.instance.pk:
+            # Pre-fill employees who belong to this department
+            self.fields['employees'].initial = UserProfile.objects.filter(department=self.instance)
+
+
         # Only allow users with "manager" role or above to be selected as department managers
-        self.fields["manager"].queryset = UserProfile.objects.filter(
+        potential_managers = UserProfile.objects.filter(
             role__in=["manager", "admin", "vp", "ceo"]
         )
 
-        # Exclude managers already managing another department
-        self.fields["manager"].queryset = self.fields["manager"].queryset.filter(
-            managed_department__isnull=True
-        )
+        # Exclude managers already managing another department, UNLESS it's the current department's manager
+        excluded_managers = UserProfile.objects.filter(managed_department__isnull=False).exclude(id=self.instance.manager_id if self.instance else None)
+        self.fields["manager"].queryset = potential_managers.exclude(id__in=excluded_managers)
 
-        # Roles field: allow all employees & managers
-        self.fields["roles"].queryset = UserProfile.objects.filter(
-            role__in=[r for r, _ in UserProfile.EMPLOYEE_CHOICES]
-        )
-
-        
+    
+    
