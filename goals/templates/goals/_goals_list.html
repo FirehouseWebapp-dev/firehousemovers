@@ -1,0 +1,61 @@
+{% if goals %}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for goal in goals %}
+    <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg {% if goal.is_completed %}opacity-60 line-through{% endif %}" id="goal-{{ goal.id }}">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h3 class="text-xl font-bold text-red-500 mb-2">{{ goal.title }}</h3>
+          <div class="flex gap-2">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-600 text-white">
+              {{ goal.get_goal_type_display }}
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          {% if can_edit %}
+          <a href="{% url 'goals:edit_goal' goal.id %}" class="text-blue-500 hover:text-blue-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="mb-4">
+        <h4 class="text-sm font-bold text-white mb-2">Description</h4>
+        <p class="text-gray-400 line-clamp-3">{{ goal.description|truncatechars:100 }}</p>
+      </div>
+      {% if goal.notes %}
+      <div class="mb-4">
+        <h4 class="text-sm font-bold text-white mb-2">Action Plans</h4>
+        <p class="text-gray-400 line-clamp-3">{{ goal.notes|truncatechars:100 }}</p>
+      </div>
+      {% endif %}
+      <div class="mt-4 pt-4 border-t border-gray-600 text-xs text-gray-400 flex justify-between items-center">
+        <div>
+          <div>Created by: {{ goal.created_by.user.get_full_name|default:goal.created_by.user.username }}</div>
+          <div>Created: {{ goal.created_at|date:"M d, Y" }}</div>
+          {% if goal.updated_at != goal.created_at %}
+            <div>Updated: {{ goal.updated_at|date:"M d, Y" }}</div>
+          {% endif %}
+        </div>
+        {% if can_edit %}
+        <div class="ml-auto">
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="h-5 w-5 text-green-600 accent-green-600 rounded focus:ring-green-500 goal-completion-checkbox" data-goal-id="{{ goal.id }}" {% if goal.is_completed %}checked{% endif %}>
+            <span class="ml-2 text-gray-300 font-medium">Completed</span>
+          </label>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center py-12">
+    <div class="text-gray-400 text-lg mb-4">No goals assigned to {{ employee.user.get_full_name|default:employee.user.username }} yet.</div>
+    {% if can_edit %}
+      <a href="{% url 'goals:add_goals' employee.id %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold">Add First Goal</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+

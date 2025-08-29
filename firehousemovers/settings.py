@@ -61,8 +61,10 @@ INSTALLED_APPS = [
     "marketing",
     "widget_tweaks",
     "evaluation",
+    "goals",
     # third-party
-    "anymail",  # Postmark via Anymail
+    "anymail", # Postmark via Anymail
+    "django_mail_viewer",
 ]
 
 # -------------------------
@@ -79,7 +81,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "evaluation.middleware.EvaluationLockMiddleware",
     "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
+
 ]
+
+INTERNAL_IPS = ["127.0.0.1"]
 
 # -------------------------
 # Templates
@@ -216,7 +221,12 @@ ANYMAIL = {
 }
 
 # We want local/staging/prod all to use Postmark (local goes to staging server)
-EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+if os.getenv("DJANGO_ENV") == "production":
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+else:
+    EMAIL_BACKEND = "django_mail_viewer.backends.locmem.EmailBackend"
+
+
 
 # (SMTP fallbacks unused w/ Postmark, harmless to keep)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")

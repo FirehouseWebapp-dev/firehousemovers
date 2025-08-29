@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError
 from .models import UserProfile, Department
 from django.db.models import Q
 
-import re
 
 class SignUpForm(UserCreationForm):
     first_name = forms.CharField(

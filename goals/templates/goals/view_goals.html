@@ -1,0 +1,232 @@
+{% extends "goals/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="p-10 text-white">
+  <div class="p-10 text-white">
+
+    {% if messages %}
+      <div class="mb-4">
+        {% for message in messages %}
+          <div class="px-4 py-2 rounded mb-2
+                      {% if message.tags == 'success' %}bg-green-600 text-white
+                      {% elif message.tags == 'error' %}bg-red-600 text-white
+                      {% else %}bg-gray-600 text-white{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="mb-6">
+      <a href="{% url 'goals:goal_management' %}" class="text-red-500 hover:text-red-400 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Goals Management
+      </a>
+    </div>
+  
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-red-500 mb-2">
+          Goals for {{ employee.user.get_full_name|default:employee.user.username|title }}
+        </h1>
+        <p class="text-gray-400">
+          {{ goals.count }} goal{{ goals.count|pluralize }} assigned
+        </p>
+      </div>
+    
+      <!-- Calendly button -->
+      <button id="openCalendly"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+        onclick="Calendly.initPopupWidget({ url: 'https://calendly.com/firehousemovers-support/1-1-goals-and-improvements' }); return false;">
+        📅 Schedule Meeting
+      </button>
+      <button id="closeCalendly"
+        class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg shadow">
+        X
+      </button>
+    </div>
+    
+    
+  <!-- Donut charts row (no cards) -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-start">
+    <div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Completed</h3>
+      <div class="w-full inline-block" style="max-width: 260px; height: 160px;">
+        <canvas id="chartCompleted" style="width:100%; height:160px;" height="160" data-value="{{ chart_completion_completed }}" data-total="{{ chart_total }}"></canvas>
+      </div>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Pending</h3>
+      <div class="w-full inline-block" style="max-width: 260px; height: 160px;">
+        <canvas id="chartPending" style="width:100%; height:160px;" height="160" data-value="{{ chart_completion_pending }}" data-total="{{ chart_total }}"></canvas>
+      </div>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Short-Term</h3>
+      <div class="w-full inline-block" style="max-width: 260px; height: 160px;">
+        <canvas id="chartShort" style="width:100%; height:160px;" height="160" data-value="{{ chart_type_short }}" data-total="{{ chart_total }}"></canvas>
+      </div>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold mb-2 text-sm">Long-Term</h3>
+      <div class="w-full inline-block" style="max-width: 260px; height: 160px;">
+        <canvas id="chartLong" style="width:100%; height:160px;" height="160" data-value="{{ chart_type_long }}" data-total="{{ chart_total }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+    <!-- CSRF token for AJAX requests -->
+    <input type="hidden" id="csrf-token" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <!-- Goal Filter -->
+    <div class="flex items-center gap-4">
+      <label for="goal-type-filter" class="text-white font-semibold">Filter by Goal Type:</label>
+      <select id="goal-type-filter" name="goal_type" data-employee-id="{{ employee.id }}"
+              class="bg-gray-700 border border-gray-600 rounded-md text-white py-2 px-3 focus:outline-none focus:border-red-500">
+        <option value="all" {% if not selected_goal_type %}selected{% endif %}>All Goals</option>
+        <option value="short_term" {% if selected_goal_type == 'short_term' %}selected{% endif %}>Short-Term</option>
+        <option value="long_term" {% if selected_goal_type == 'long_term' %}selected{% endif %}>Long-Term</option>
+      </select>
+    </div>
+
+    <!-- Completion Filter -->
+    <div class="flex items-center gap-4">
+      <label for="completion-filter" class="text-white font-semibold">Filter by Completion:</label>
+      <select id="completion-filter" class="bg-gray-700 border border-gray-600 rounded-md text-white py-2 px-3 focus:outline-none focus:border-red-500" data-employee-id="{{ employee.id }}">
+        <option value="all" {% if not selected_completion_status %}selected{% endif %}>All Goals</option>
+        <option value="completed" {% if selected_completion_status == 'completed' %}selected{% endif %}>Completed Goals</option>
+        <option value="pending" {% if selected_completion_status == 'pending' %}selected{% endif %}>Pending Goals</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="goals-list-container">
+    {% include 'goals/_goals_list.html' %}
+
+  </div>
+  
+</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Calendly widget -->
+<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+<!-- Calendly badge widget end -->
+<script src="{% static 'goals/js/view_goals_dynamic.js' %}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    function renderSingleDonut(canvasId, value, total, color, labelText){
+      const el = document.getElementById(canvasId);
+      if (!el) return;
+      const count = parseInt(value || '0', 10);
+      let denom = parseInt(total || '0', 10);
+      if (!Number.isFinite(denom) || denom < 1) denom = 1; // ensure visible base ring
+      const remain = Math.max(denom - count, 0);
+      return new Chart(el, {
+        type: 'doughnut',
+        data: {
+          labels: ['Value', 'Rest'],
+          datasets: [{ data: [count, remain], backgroundColor: [color, '#374151'], borderWidth: 0, cutout: '80%' }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { color: '#e5e7eb', boxWidth: 10, boxHeight: 10, padding: 8, font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    const completedEl = document.getElementById('chartCompleted');
+    const pendingEl = document.getElementById('chartPending');
+    const shortEl = document.getElementById('chartShort');
+    const longEl = document.getElementById('chartLong');
+
+    const completedChart = renderSingleDonut('chartCompleted', completedEl?.dataset.value, completedEl?.dataset.total, '#22c55e', 'Completed');
+    const pendingChart = renderSingleDonut('chartPending', pendingEl?.dataset.value, pendingEl?.dataset.total, '#ef4444', 'Pending');
+    const shortChart = renderSingleDonut('chartShort', shortEl?.dataset.value, shortEl?.dataset.total, '#3b82f6', 'Short-Term');
+    const longChart = renderSingleDonut('chartLong', longEl?.dataset.value, longEl?.dataset.total, '#f59e0b', 'Long-Term');
+
+    // Expose simple runtime updater for completion charts
+    window.GoalsCharts = {
+      completed: completedChart,
+      pending: pendingChart,
+      short: shortChart,
+      long: longChart,
+      updateAll: function(counts){
+        try {
+          const total = Math.max(parseInt(counts.total || '0', 10), 1);
+          const sets = [
+            { chart: this.completed, val: parseInt(counts.completed || '0', 10), color: '#22c55e' },
+            { chart: this.pending, val: parseInt(counts.pending || '0', 10), color: '#ef4444' },
+            { chart: this.short, val: parseInt(counts.short_term || '0', 10), color: '#3b82f6' },
+            { chart: this.long, val: parseInt(counts.long_term || '0', 10), color: '#f59e0b' },
+          ];
+          sets.forEach(s => {
+            if (!s.chart) return;
+            s.chart.data.datasets[0].data = [Math.max(0, s.val), Math.max(0, total - s.val)];
+            s.chart.update('none');
+          });
+        } catch (e) {}
+      }
+    };
+  });
+  </script>
+  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+  <script>
+ const openBtn = document.getElementById('openCalendly');
+const modal = document.getElementById('calendlyModal');
+const calendlyDiv = document.getElementById('calendlyInline');
+
+if (openBtn) {
+  openBtn.addEventListener('click', function() {
+    // Send email via AJAX
+    fetch("/send-schedule-email/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"), 
+      },
+    });
+
+    // Open Calendly modal
+    modal.classList.remove('hidden');
+    Calendly.initInlineWidget({
+      url: 'https://calendly.com/firehousemovers-support/1-1-goals-and-improvements',
+      parentElement: calendlyDiv,
+      prefill: {},
+      utm: {}
+    });
+  });
+}
+
+// Utility function to get CSRF token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+</script>
+
+{% endblock %}

@@ -38,9 +38,7 @@
             </a>
           {% endif %}
         {% endif %}
-
-        <!-- Goals Management - Available to all authenticated users -->
-        <a href="{% url 'authentication:goals_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
+        <a href="{% url 'goals:goal_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
           <i class="fas fa-bullseye mr-2"></i> Goals Management
         </a>
       </nav>

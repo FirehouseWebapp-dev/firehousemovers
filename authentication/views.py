@@ -21,7 +21,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import ProfileUpdateForm, TeamMemberEditForm, GoalForm
+from .forms import ProfileUpdateForm, TeamMemberEditForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
@@ -235,7 +235,6 @@ def check_email_availability(request):
     return JsonResponse(data)
 
 
-
 @login_required
 def profile_view(request):
     user = request.user
@@ -263,9 +262,6 @@ def profile_view(request):
         "team_members": team_members,
         "teammates": teammates,
     })
-
-
-
 
 
 @login_required
@@ -297,7 +293,6 @@ class CustomPasswordChangeView(PasswordChangeView):
     form_class = StyledPasswordChangeForm
     template_name = 'authentication/change_password.html'
     success_url = '/profile/'
-
 
 
 @login_required
@@ -342,6 +337,7 @@ def add_team_member(request):
         form = AddTeamMemberForm(current_user=request.user)
 
     return render(request, 'authentication/add_member.html', {'form': form})
+
 
 from django.views.decorators.http import require_POST
 

@@ -33,6 +33,8 @@ urlpatterns = [
     path("marketing/", include("marketing.urls", namespace="marketing")),
     path("awards/", include("gift.urls", namespace="awards")),
     path('evaluation/', include('evaluation.urls')),
+    path("goals/", include("goals.urls", namespace="goals")), # Include goals routes
+    path("mail/", include ("django_mail_viewer.urls")),
 
 ]
 
