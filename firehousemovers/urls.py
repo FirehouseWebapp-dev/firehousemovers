@@ -34,8 +34,6 @@ urlpatterns = [
     path("awards/", include("gift.urls", namespace="awards")),
     path('evaluation/', include('evaluation.urls')),
     path("goals/", include("goals.urls", namespace="goals")), # Include goals routes
-    path("mail/", include ("django_mail_viewer.urls")),
-
 ]
 
 # Error handlers
@@ -46,4 +44,4 @@ handler500 = error_views.server_error
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += [path("emails/", include("django_mail_viewer.urls"))]
+    urlpatterns += [path("mail/", include("django_mail_viewer.urls"))]

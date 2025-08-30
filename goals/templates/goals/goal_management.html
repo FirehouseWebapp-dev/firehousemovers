@@ -3,7 +3,6 @@
 
 {% block content %}
 <div class="p-10 text-white">
-  <div class="p-10 text-white">
 
     {% if messages %}
       <div class="mb-4">
@@ -25,12 +24,11 @@
     <label for="role" class="text-white font-semibold">Filter by Role:</label>
     <select id="role" name="role" class="bg-gray-700 border border-gray-600 rounded-md text-white py-2 px-3 focus:outline-none focus:border-red-500">
       <option value="all" {% if not role_filter or role_filter == 'all' %}selected{% endif %}>All Roles</option>
-      {% with employees|first as sample %}
-        {% for value,label in sample.EMPLOYEE_CHOICES %}
-          <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      {% endwith %}
+      {% for value,label in EMPLOYEE_CHOICES %}
+        <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
     </select>
+    
     {% if user.userprofile.is_senior_management %}
     <label for="scope" class="text-white font-semibold ml-4">Scope:</label>
     <select id="scope" name="scope" class="bg-gray-700 border border-gray-600 rounded-md text-white py-2 px-3 focus:outline-none focus:border-red-500">
@@ -43,26 +41,25 @@
   {% endif %}
 
   {% if can_add_goals %}
-  <!-- Manager/Senior view: cards per employee with actions -->
   {% if employees %}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
     {% for employee in employees %}
-    <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col min-h-[240px] hover:scale-[1.02] transition relative overflow-visible">
+    <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col justify-between min-h-[250px] hover:scale-[1.02] transition relative overflow-visible">
 
       <!-- Goal Count Badge -->
       <div class="absolute top-3 right-3">
         <span class="bg-red-500 text-white text-xs px-3 py-1 rounded-full">
-          {{ employee.goal_count }}/10 Goals
+          {{ employee.goal_count|default:0 }}/10 Goals
         </span>
       </div>
 
       <!-- Employee Name -->
-      <h2 class="text-2xl font-bold text-red-500 mb-4 truncate">
+      <h2 class="text-2xl font-bold text-red-500 mb-2 truncate">
         {{ employee.user.get_full_name|default:employee.user.username|title }}
       </h2>
 
+      <!-- Employee Role -->
       {% if can_add_goals %}
-      <!-- Employee Role (visible only for those who can add goals) -->
       <div class="mb-4">
         <h3 class="text-sm font-bold text-white mb-1">Role</h3>
         <p class="text-gray-400">{{ employee.get_role_display }}</p>
@@ -70,9 +67,9 @@
       {% endif %}
 
       <!-- Action Buttons -->
-      <div class="mt-auto flex gap-2 justify-center">
+      <div class="mt-auto flex flex-col sm:flex-row gap-2 justify-center">
         <a href="{% url 'goals:view_goals' employee.id %}" 
-           class="bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
+           class="flex-1 bg-gray-600 hover:bg-gray-700 px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -80,38 +77,38 @@
           View Goals
         </a>
 
-        {% if employee.goal_count < 10 %}
-          <a href="{% url 'goals:add_goals' employee.id %}" 
-             class="bg-red-500 hover:bg-red-700 px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Add Goal
-          </a>
+        {% if employee.goal_count|default:0 < 10 %}
+        <a href="{% url 'goals:add_goals' employee.id %}" 
+           class="flex-1 bg-red-500 hover:bg-red-700 px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Goal
+        </a>
         {% else %}
-          <button disabled 
-                  class="bg-gray-400 px-3 py-1.5 rounded text-gray-700 text-sm font-semibold cursor-not-allowed inline-flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Max Goals
-          </button>
+        <button disabled 
+                class="flex-1 bg-gray-400 px-3 py-1.5 rounded text-gray-700 text-sm font-semibold cursor-not-allowed inline-flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Max Goals
+        </button>
         {% endif %}
       </div>
 
       <!-- Goal Status Indicator -->
       {% if employee.has_goals %}
-        <div class="mt-3 text-center">
-          <span class="text-green-400 text-sm">
-            ✓ Has {{ employee.goal_count }} goal{{ employee.goal_count|pluralize }}
-          </span>
-        </div>
+      <div class="mt-3 text-center">
+        <span class="text-green-400 text-sm">
+          ✓ Has {{ employee.goal_count|default:0 }} goal{{ employee.goal_count|pluralize }}
+        </span>
+      </div>
       {% else %}
-        <div class="mt-3 text-center">
-          <span class="text-gray-400 text-sm">
-            No goals assigned
-          </span>
-        </div>
+      <div class="mt-3 text-center">
+        <span class="text-gray-400 text-sm">
+          No goals assigned
+        </span>
+      </div>
       {% endif %}
 
     </div>
@@ -143,10 +140,17 @@
     <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col min-h-[180px] hover:scale-[1.02] transition">
       <h3 class="text-xl font-bold text-red-500 mb-2">{{ goal.title }}</h3>
       <div class="text-gray-300 text-sm mb-2">{{ goal.get_goal_type_display }}</div>
-      <p class="text-gray-400 mb-4">{{ goal.description|default:"No description"|truncatechars:120 }}</p>
-      <div class="mt-auto flex items-center justify-between text-xs text-gray-400">
-        <span>Due: {{ goal.due_date|date:"M d, Y"|default:"N/A" }}</span>
-        <span>{% if goal.is_completed %}Completed{% else %}Pending{% endif %}</span>
+      
+      <div class="mt-auto flex items-center justify-between text-xs">
+        <!-- Due Date -->
+        <span class="text-white font-bold">
+          Due: {{ goal.due_date|date:"M d, Y"|default:"N/A" }}
+        </span>
+      
+        <!-- Status -->
+        <span class="{% if goal.is_completed %}text-green-500{% else %}text-yellow-500{% endif %} font-bold">
+          {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
+        </span>
       </div>
       <div class="mt-4">
         <button type="button" class="view-goal-btn bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-md text-white text-sm"
@@ -169,22 +173,36 @@
   {% endif %}
 
   <!-- View Goal Modal -->
-  <div id="viewGoalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-[#2a2a2a] p-8 rounded-2xl shadow-lg w-full max-w-xl relative">
-      <button type="button" id="closeViewGoalModal" class="absolute top-4 right-4 text-gray-400 hover:text-red-500">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-      <h3 id="modalGoalTitle" class="text-2xl font-bold text-red-500 mb-4">Goal Title</h3>
-      <div class="space-y-4 text-gray-300">
-        <div>
-          <div class="text-sm font-semibold text-white mb-1">Description</div>
-          <p id="modalGoalDescription" class="text-gray-300">—</p>
-        </div>
-        <div>
-          <div class="text-sm font-semibold text-white mb-1">Notes</div>
-          <p id="modalGoalNotes" class="text-gray-300">—</p>
-        </div>
-        <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 pt-4 border-t border-gray-600">
+<div id="viewGoalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-[#2a2a2a] p-8 rounded-2xl shadow-lg w-full max-w-xl relative max-h-[80vh] overflow-hidden">
+    
+    <!-- Close Button -->
+    <button type="button" id="closeViewGoalModal" class="absolute top-4 right-4 text-gray-400 hover:text-red-500">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <!-- Title -->
+    <h3 id="modalGoalTitle" class="text-2xl font-bold text-red-500 mb-4">Goal Title</h3>
+
+    <div class="space-y-4 text-gray-300">
+
+      <!-- Description (scrollable) -->
+      <div class="max-h-40 overflow-y-auto">
+        <div class="text-sm font-semibold text-white mb-1">Description</div>
+        <p id="modalGoalDescription" class="text-gray-300 whitespace-pre-wrap break-words">—</p>
+      </div>
+
+      <!-- Notes (scrollable) -->
+      <div class="max-h-32 overflow-y-auto">
+        <div class="text-sm font-semibold text-white mb-1">Notes</div>
+        <p id="modalGoalNotes" class="text-gray-300 whitespace-pre-wrap break-words">—</p>
+      </div>
+
+      <!-- Meta Info -->
+      <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 pt-4 border-t border-gray-600">
+        <div class="col-span-2 grid grid-cols-2 gap-4">
           <div>
             <div class="font-semibold text-white">Created By</div>
             <div id="modalGoalCreatedBy">—</div>
@@ -193,16 +211,17 @@
             <div class="font-semibold text-white">Created At</div>
             <div id="modalGoalCreatedAt">—</div>
           </div>
-          <div class="col-span-2">
+          <div>
             <div class="font-semibold text-white">Last Updated</div>
             <div id="modalGoalUpdatedAt">—</div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
-
 </div>
+
 </div>
 {% endblock %}
 

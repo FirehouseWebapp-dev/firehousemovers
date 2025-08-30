@@ -121,68 +121,82 @@
 <script src="{% static 'goals/js/view_goals_dynamic.js' %}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function(){
-    function renderSingleDonut(canvasId, value, total, color, labelText){
-      const el = document.getElementById(canvasId);
-      if (!el) return;
-      const count = parseInt(value || '0', 10);
-      let denom = parseInt(total || '0', 10);
-      if (!Number.isFinite(denom) || denom < 1) denom = 1; // ensure visible base ring
-      const remain = Math.max(denom - count, 0);
-      return new Chart(el, {
-        type: 'doughnut',
-        data: {
-          labels: ['Value', 'Rest'],
-          datasets: [{ data: [count, remain], backgroundColor: [color, '#374151'], borderWidth: 0, cutout: '80%' }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: { color: '#e5e7eb', boxWidth: 10, boxHeight: 10, padding: 8, font: { size: 11 } }
-            }
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded. Charts will not render.');
+    return;
+  }
+
+  function renderSingleDonut(canvasId, value, total, color, labelText) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const count = parseInt(value || '0', 10);
+    let denom = parseInt(total || '0', 10);
+    if (!Number.isFinite(denom) || denom < 1) denom = 1; // ensure visible base ring
+    const remain = Math.max(denom - count, 0);
+
+    return new Chart(el, {
+      type: 'doughnut',
+      data: {
+        labels: ['Value', 'Rest'],
+        datasets: [{
+          data: [count, remain],
+          backgroundColor: [color, '#374151'],
+          borderWidth: 0,
+          cutout: '80%'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { color: '#e5e7eb', boxWidth: 10, boxHeight: 10, padding: 8, font: { size: 11 } }
           }
         }
-      });
-    }
-
-    const completedEl = document.getElementById('chartCompleted');
-    const pendingEl = document.getElementById('chartPending');
-    const shortEl = document.getElementById('chartShort');
-    const longEl = document.getElementById('chartLong');
-
-    const completedChart = renderSingleDonut('chartCompleted', completedEl?.dataset.value, completedEl?.dataset.total, '#22c55e', 'Completed');
-    const pendingChart = renderSingleDonut('chartPending', pendingEl?.dataset.value, pendingEl?.dataset.total, '#ef4444', 'Pending');
-    const shortChart = renderSingleDonut('chartShort', shortEl?.dataset.value, shortEl?.dataset.total, '#3b82f6', 'Short-Term');
-    const longChart = renderSingleDonut('chartLong', longEl?.dataset.value, longEl?.dataset.total, '#f59e0b', 'Long-Term');
-
-    // Expose simple runtime updater for completion charts
-    window.GoalsCharts = {
-      completed: completedChart,
-      pending: pendingChart,
-      short: shortChart,
-      long: longChart,
-      updateAll: function(counts){
-        try {
-          const total = Math.max(parseInt(counts.total || '0', 10), 1);
-          const sets = [
-            { chart: this.completed, val: parseInt(counts.completed || '0', 10), color: '#22c55e' },
-            { chart: this.pending, val: parseInt(counts.pending || '0', 10), color: '#ef4444' },
-            { chart: this.short, val: parseInt(counts.short_term || '0', 10), color: '#3b82f6' },
-            { chart: this.long, val: parseInt(counts.long_term || '0', 10), color: '#f59e0b' },
-          ];
-          sets.forEach(s => {
-            if (!s.chart) return;
-            s.chart.data.datasets[0].data = [Math.max(0, s.val), Math.max(0, total - s.val)];
-            s.chart.update('none');
-          });
-        } catch (e) {}
       }
-    };
-  });
+    });
+  }
+
+  const completedEl = document.getElementById('chartCompleted');
+  const pendingEl = document.getElementById('chartPending');
+  const shortEl = document.getElementById('chartShort');
+  const longEl = document.getElementById('chartLong');
+
+  const completedChart = renderSingleDonut('chartCompleted', completedEl?.dataset.value, completedEl?.dataset.total, '#22c55e', 'Completed');
+  const pendingChart = renderSingleDonut('chartPending', pendingEl?.dataset.value, pendingEl?.dataset.total, '#ef4444', 'Pending');
+  const shortChart = renderSingleDonut('chartShort', shortEl?.dataset.value, shortEl?.dataset.total, '#3b82f6', 'Short-Term');
+  const longChart = renderSingleDonut('chartLong', longEl?.dataset.value, longEl?.dataset.total, '#f59e0b', 'Long-Term');
+
+  // Expose simple runtime updater for completion charts
+  window.GoalsCharts = {
+    completed: completedChart,
+    pending: pendingChart,
+    short: shortChart,
+    long: longChart,
+    updateAll: function(counts) {
+      try {
+        const total = Math.max(parseInt(counts.total || '0', 10), 1);
+        const sets = [
+          { chart: this.completed, val: parseInt(counts.completed || '0', 10), color: '#22c55e' },
+          { chart: this.pending, val: parseInt(counts.pending || '0', 10), color: '#ef4444' },
+          { chart: this.short, val: parseInt(counts.short_term || '0', 10), color: '#3b82f6' },
+          { chart: this.long, val: parseInt(counts.long_term || '0', 10), color: '#f59e0b' },
+        ];
+        sets.forEach(s => {
+          if (!s.chart) return;
+          s.chart.data.datasets[0].data = [Math.max(0, s.val), Math.max(0, total - s.val)];
+          s.chart.update('none');
+        });
+      } catch (e) {
+        console.error('Error updating charts', e);
+      }
+    }
+  };
+});
+
   </script>
   <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
   <script>

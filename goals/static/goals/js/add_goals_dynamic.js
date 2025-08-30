@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmRemoveGoalBtn = document.getElementById('confirmRemoveGoal');
     const cancelRemoveGoalBtn = document.getElementById('cancelRemoveGoal');
     const currentGoalCountSpan = document.getElementById('current-goal-count');
+    
 
     let initialExistingGoals = parseInt(currentGoalCountSpan.textContent);
     // Count how many goal form cards are currently rendered (from the formset)

@@ -26,6 +26,14 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
+        <a href="{% url 'authentication:profile' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/profile/' %}bg-red-500{% endif %}"><i class="fas fa-user mr-2"></i> My Profile</a>
+        <a href="{% url 'awards:my_awards' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/my-awards/' %}bg-red-500{% endif %}"><i class="fas fa-trophy mr-2"></i> Current Awards</a>
+
+        {% if request.user.is_superuser or request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+          <a href="{% url 'authentication:team' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/team/' %}bg-red-500{% endif %}">
+            <i class="fas fa-users mr-2"></i> Team
+          </a>
+        {% endif %}
         <!-- Goals Management - Available to all authenticated users -->
         <a href="{% url 'goals:goal_management' %}" 
            class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">

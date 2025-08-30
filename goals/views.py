@@ -14,34 +14,42 @@ from django.db import transaction
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Count
 # Define the formset for Goal model
 GoalFormSet = modelformset_factory(Goal, form=GoalForm, extra=1, can_delete=True)
 
 
 @login_required
 def goals_management(request):
-    """Main goals management page - lists all employees with goals"""
     user_profile = request.user.userprofile
 
+    # Base queryset
     if user_profile.is_senior_management:
         scope = request.GET.get("scope", "all")
-        if scope == 'team':
-            employees = UserProfile.objects.filter(manager=user_profile).order_by('user__first_name', 'user__last_name')
+        if scope == "team":
+            # Only managers that this senior management manages
+            employees = UserProfile.objects.filter(manager=user_profile, is_manager=True)
         else:
-            employees = UserProfile.objects.filter(is_employee=True).order_by('user__first_name', 'user__last_name')
+            # All employees (except senior management themselves maybe)
+            employees = UserProfile.objects.filter(is_employee=True)
     elif user_profile.is_manager:
-        employees = UserProfile.objects.filter(manager=user_profile).order_by('user__first_name', 'user__last_name')
+        employees = UserProfile.objects.filter(manager=user_profile)
     else:
         employees = UserProfile.objects.filter(id=user_profile.id)
 
-    for employee in employees:
-        employee.goal_count = Goal.objects.filter(assigned_to=employee).count()
-        employee.has_goals = employee.goal_count > 0
-    
+    # Apply role filter
+    role_filter = request.GET.get("role", "all")
+    if role_filter != "all" and (user_profile.is_senior_management or user_profile.is_manager):
+        employees = employees.filter(role=role_filter)
+
+    # Annotate goal counts and has_goals
+    employees = employees.annotate(goal_count=Count('goals'))
+    for e in employees:
+        e.has_goals = e.goal_count > 0
+
+    # Handle goals for view-only users
     filter_type = request.GET.get("filter", "all")
-    role_filter = request.GET.get("role")
     scope = request.GET.get("scope", "all") if user_profile.is_senior_management else None
-    # For view-only users, restrict goals to their own. For managers/seniors, show all.
     if user_profile.is_senior_management or user_profile.is_manager:
         goals = Goal.objects.all()
     else:
@@ -52,11 +60,6 @@ def goals_management(request):
     elif filter_type == "incomplete":
         goals = goals.filter(is_completed=False)
 
-    # Apply role filter for managers/senior only
-    if (user_profile.is_senior_management or user_profile.is_manager) and role_filter and role_filter != 'all':
-        employees = employees.filter(role=role_filter)
-
-
     context = {
         'employees': employees,
         'can_add_goals': user_profile.is_senior_management or user_profile.is_manager,
@@ -65,6 +68,7 @@ def goals_management(request):
         'filter_type': filter_type,
         'role_filter': role_filter,
         'scope': scope,
+        'EMPLOYEE_CHOICES': UserProfile.EMPLOYEE_CHOICES,
     }
 
     return render(request, 'goals/goal_management.html', context)
@@ -101,9 +105,12 @@ def add_goals(request, employee_id):
     user_profile = request.user.userprofile
     employee = get_object_or_404(UserProfile, id=employee_id)
 
-    # Check permissions
+     #Permission logic
     if user_profile.is_senior_management:
-        pass  # Senior management can add goals for any employee
+        if employee.is_manager and employee.manager != user_profile:
+            # If employee is a manager, senior management can only add goals for managers they manage
+            raise PermissionDenied("You can only add goals for managers you manage.")
+        # Else: allowed for all other roles
     elif user_profile.is_manager:
         if employee.manager != user_profile:
             raise PermissionDenied("You can only add goals for your direct team members.")
@@ -134,8 +141,8 @@ def add_goals(request, employee_id):
                     send_mail(
                         subject="New Goal(s) Created. Check out.",
                         message=f"{len(created_goals)} new goal(s) have been created for {employee.user.get_full_name()}.",
-                        from_email="noreply@example.com",   # dummy sender
-                        recipient_list=["test@example.com"], # dummy recipient
+                        from_email="firehousemovers@outlook.com",   # dummy sender
+                        recipient_list=["employee@firehousemovers.com"], # dummy recipient
                         fail_silently=False,
                     )
             messages.success(request, f"Goals added successfully for {employee}.")
@@ -150,6 +157,7 @@ def add_goals(request, employee_id):
         'existing_goals_count': existing_goals_count,
         'remaining_goals': remaining_goals,
         'formset': formset,
+        
     }
 
     return render(request, 'goals/add_goals.html', context)
@@ -264,8 +272,8 @@ def send_schedule_email(request):
             send_mail(
                 subject="New Meeting Scheduled",
                 message="A user clicked Schedule Meeting on the website.",
-                from_email="noreply@example.com",
-                recipient_list= ["test@example.com"],# change this
+                from_email="firehousemovers@outlook.com",
+                recipient_list= ["employee@firehousemovers.com"],# change this
                 fail_silently=False,
             )
             return JsonResponse({"status": "success"})

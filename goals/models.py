@@ -1,6 +1,7 @@
 from django.db import models
 from authentication.models import UserProfile
-
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 class Goal(models.Model):
     GOAL_TYPE_CHOICES = [
@@ -20,9 +21,19 @@ class Goal(models.Model):
     notes = models.TextField(blank=True, null =True, help_text="Any notes or updates on the goal")
     goal_type = models.CharField(max_length=20, choices=GOAL_TYPE_CHOICES, default="short_term")
 
+
+    def save(self, *args, **kwargs):
+        # call full_clean() so clean() always runs
+
+        # completion timestamp logic
+        if self.is_completed and self.completed_at is None:
+            self.completed_at = timezone.now()
+        elif not self.is_completed:
+            self.completed_at = None
+
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.title
-
     class Meta:
         verbose_name = "Goal"
         verbose_name_plural = "Goals"

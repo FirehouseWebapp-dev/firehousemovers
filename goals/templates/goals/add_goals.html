@@ -64,6 +64,10 @@
               <label for="{{ form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
               {{ form.notes }}
             </div>
+            <div>
+              <label for="{{ form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
+              {{ form.due_date }}
+            </div>
             {% if form.instance.pk %}
               {{ form.id }}
             {% endif %}

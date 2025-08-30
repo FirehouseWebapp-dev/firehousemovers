@@ -58,9 +58,15 @@
         <label for="id_notes" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
         {{ form.notes }}
       </div>
+
+      <div>
+        <label for="{{ form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
+        {{ form.due_date }}
+      </div>
+      
       
       <!-- Action Buttons -->
-      <div class="flex gap-4">
+      <div class="flex gap-4 mt-6">
         <button type="submit" 
                 class="bg-red-500 hover:bg-red-700 px-8 py-3 rounded-md text-white font-semibold transition-colors">
           Update Goal
