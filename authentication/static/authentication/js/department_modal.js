@@ -1,11 +1,8 @@
-
-// Helper to capitalize names
 function capitalizeName(fullName) {
     if (!fullName) return '';
     return fullName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-// Make functions global
 window.openModal = function(departmentId, departmentName) {
     const modal = document.getElementById("removeModal");
     const form = document.getElementById("removeForm");
@@ -27,9 +24,8 @@ window.openInfoModal = function(departmentId, title, description, managerName, m
     const employeesList = document.getElementById('infoEmployees');
 
     infoTitle.textContent = title;
-    infoDescription.textContent = description;
+    infoDescription.textContent = description || '';
 
-    // Manager
     infoManager.innerHTML = '';
     if (managerName && managerName !== 'Not Assigned') {
         const a = document.createElement('a');
@@ -42,20 +38,18 @@ window.openInfoModal = function(departmentId, title, description, managerName, m
         infoManager.classList.add('text-gray-400');
     }
 
-    // Employees - Fetch dynamically
-    employeesList.innerHTML = '<li>Loading employees...</li>'; // Loading state
+    employeesList.innerHTML = '<li>Loading employees...</li>';
     fetch(`/department/${departmentId}/employees/`)
         .then(response => response.json())
         .then(data => {
-            debugger;
-            const employees = data.employees;
-            employeesList.innerHTML = ''; // Clear loading state
-            if (data && data.length) {
-                data.forEach(emp => {
-                    const li = document.createElement('li'); //bullet
+            const employees = data && data.employees ? data.employees : [];
+            employeesList.innerHTML = '';
+            if (employees.length) {
+                employees.forEach(emp => {
+                    const li = document.createElement('li');
                     li.classList.add('list-disc', 'marker:text-white', 'ml-4');
                     if (emp.name) {
-                        const a = document.createElement('a'); //clickable
+                        const a = document.createElement('a');
                         a.href = emp.link || '#';
                         a.textContent = capitalizeName(emp.name);
                         a.classList.add('hover:underline','text-gray-400');
@@ -69,8 +63,7 @@ window.openInfoModal = function(departmentId, title, description, managerName, m
                 employeesList.textContent = 'No employees assigned.';
             }
         })
-        .catch(error => {
-            // console.error('Error fetching employees:', error);
+        .catch(() => {
             employeesList.textContent = 'Failed to load employees.';
         });
 

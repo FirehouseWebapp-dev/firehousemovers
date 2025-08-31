@@ -6,6 +6,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from .models import UserProfile, Department
+from django.db.models import Q
 
 import re
 
@@ -298,13 +299,14 @@ class TeamMemberEditForm(forms.ModelForm):
         self.fields['role'].label = "Assign Role"
         self.fields['start_date'].label = "Set Start Date"
 
+User = get_user_model()
+
 
 class DepartmentForm(forms.ModelForm):
     employees = forms.ModelMultipleChoiceField(
         queryset=UserProfile.objects.select_related("user").order_by("user__username"),
         required=False,
     )
-
 
     class Meta:
         model = Department
@@ -331,19 +333,35 @@ class DepartmentForm(forms.ModelForm):
             lambda obj: obj.user.get_full_name() or obj.user.username
         )
 
-        if self.instance.pk:
-            # Pre-fill employees who belong to this department
+        if self.instance and self.instance.pk:
             self.fields['employees'].initial = UserProfile.objects.filter(department=self.instance)
 
+        base_manager_qs = UserProfile.objects.filter(role="manager")
 
-        # Only allow users with "manager" role or above to be selected as department managers
-        potential_managers = UserProfile.objects.filter(
-            role__in=["manager", "admin", "vp", "ceo"]
+        if self.instance and self.instance.pk and self.instance.manager_id:
+            excluded = UserProfile.objects.filter(managed_department__isnull=False).exclude(id=self.instance.manager_id)
+        else:
+            excluded = UserProfile.objects.filter(managed_department__isnull=False)
+
+        self.fields["manager"].queryset = base_manager_qs.exclude(id__in=excluded)
+
+        self.fields['employees'].queryset = (
+            UserProfile.objects.exclude(
+                Q(is_admin=True) |
+                Q(is_manager=True) |
+                Q(is_senior_management=True)
+            ).filter(
+                Q(department__isnull=True) |
+                Q(department=self.instance if self.instance.pk else None)
+            ).select_related("user").order_by("user__username")
         )
 
-        # Exclude managers already managing another department, UNLESS it's the current department's manager
-        excluded_managers = UserProfile.objects.filter(managed_department__isnull=False).exclude(id=self.instance.manager_id if self.instance else None)
-        self.fields["manager"].queryset = potential_managers.exclude(id__in=excluded_managers)
+    def clean(self):
+        cleaned = super().clean()
+        manager = cleaned.get("manager")
+        employees = cleaned.get("employees") or []
 
-    
-    
+        if manager and manager in employees:
+            raise ValidationError("The selected manager cannot also be listed as an employee of the same department.")
+
+        return cleaned
