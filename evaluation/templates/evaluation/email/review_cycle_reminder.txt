@@ -1,11 +1,13 @@
-Reminder: {{ cycle.get_cycle_type_display }} reviews due soon
+Reminder: {{ cycle.get_cycle_type_display }} Reviews Due Soon
 
 Hello {{ reviewer_name }},
 
-You still have {{ pending_count }} pending review{{ pending_count|pluralize }}.
-Cycle period: {{ cycle.period_start }} → {{ cycle.period_end }}.
+You still have {{ pending_count }} pending {{ pending_count|pluralize:"review,reviews" }}.
 
-Complete: {{ cycle_url }}
+Cycle period: {{ cycle.period_start|date:"M j, Y" }} -> {{ cycle.period_end|date:"M j, Y" }}
+Deadline: {{ deadline|date:"M j, Y" }}
 
-Thanks,
-Firehouse
+Complete your reviews:
+{{ list_url }}
+
+You’re receiving this because you’re assigned as a senior reviewer for this cycle. Reply if you need help.
