@@ -9,6 +9,25 @@ from django.conf import settings
 
 image_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorage()
 
+# Department model
+class Department(models.Model):
+    title = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    # Each department has one manager
+    manager = models.OneToOneField(
+        "UserProfile",  
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_department"
+    )
+
+
+    def __str__(self):
+        return self.title
+
+
 class UserProfile(models.Model):
     EMPLOYEE_CHOICES = [
         ("llc/field", "LLC/Field"),
@@ -44,7 +63,13 @@ class UserProfile(models.Model):
         related_name='team_members'
     )
     role = models.CharField(max_length=50, choices=EMPLOYEE_CHOICES, default="driver")
-
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="members"
+    )
     profile_picture = models.ImageField(
         upload_to='profile_pictures/',
         storage=image_storage,

@@ -3,9 +3,9 @@ from django.contrib.auth import login
 from django.views.generic import FormView
 from django.contrib import messages
 from django.views import View
-from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm
+from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm, DepartmentForm
 from django.db.models import Q
-from .models import UserProfile, User
+from .models import UserProfile, User, Department
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login as auth_login
@@ -24,12 +24,21 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .forms import ProfileUpdateForm, TeamMemberEditForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
+from django.db import transaction
 
 # Helper function for permission
 def is_manager_or_admin(user):
-    if not hasattr(user, "userprofile"):
-        return False
-    return user.userprofile.role in ["manager", "admin"]
+    return hasattr(user, "userprofile") and (
+        user.is_superuser or user.userprofile.is_manager or user.userprofile.is_admin or user.userprofile.is_senior_management
+    )
+
+
+def can_manage_departments(user):
+    # Keep this consistent with DepartmentForm manager queryset (manager role only)
+    if hasattr(user, "userprofile"):
+        return user.is_superuser or user.userprofile.role in ["ceo", "vp", "llc/owner", "admin", "manager"]
+    return False
 
 
 class SignUpView(View):
@@ -351,11 +360,9 @@ def remove_team_member(request, user_id):
         messages.success(request, f"{member_profile.user.get_full_name()} was removed from your team.")
         return redirect("authentication:team")
 
-
 @login_required
-@user_passes_test(is_manager_or_admin)
 def edit_team_member(request, user_id):
-    user_profile = get_object_or_404(UserProfile, user__id=user_id)
+    user_profile = get_object_or_404(UserProfile, user_id=user_id)
 
     # Ensure only managers or admins can edit
     if request.user.userprofile != user_profile.manager and not request.user.is_superuser:
@@ -365,7 +372,7 @@ def edit_team_member(request, user_id):
         form = TeamMemberEditForm(request.POST, instance=user_profile)
         if form.is_valid():
             form.save()
-            messages.success(request, "Team member profile updated successfully.")
+            messages.success(request, "Team member updated.")
             return redirect("authentication:team")
     else:
         form = TeamMemberEditForm(instance=user_profile)
@@ -373,4 +380,114 @@ def edit_team_member(request, user_id):
     return render(request, "authentication/edit_team_member.html", {
         "form": form,
         "team_member": user_profile
+    })
+   
+@login_required
+def department_view(request):
+    departments = (
+        Department.objects
+        .select_related('manager__user')
+        .prefetch_related('members__user')
+        .order_by('title')
+    )
+    return render(request, "authentication/department.html", {"departments": departments})
+
+@login_required
+@user_passes_test(can_manage_departments)
+@transaction.atomic
+def add_department(request):
+    if request.method == "POST":
+        form = DepartmentForm(request.POST)
+        if form.is_valid():
+            department = form.save()  # includes title/description/manager
+
+            # Assign employees
+            selected_employees = form.cleaned_data.get("employees") or []
+            UserProfile.objects.filter(id__in=[e.id for e in selected_employees]).update(department=department)
+
+            messages.success(request, f'Department "{department.title}" added successfully!')
+            return redirect("authentication:department")
+        else:
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = DepartmentForm()
+
+    return render(request, "authentication/add_department.html", {"form": form})
+    
+@login_required
+@user_passes_test(can_manage_departments)
+@transaction.atomic
+def edit_department(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+
+    if request.method == "POST":
+        form = DepartmentForm(request.POST, instance=department)
+        if form.is_valid():
+            department = form.save()
+
+            # Clear current employees of this dept
+            UserProfile.objects.filter(department=department).update(department=None)
+
+            # Re-assign selected employees
+            selected_employees = form.cleaned_data.get('employees') or []
+            UserProfile.objects.filter(id__in=[e.id for e in selected_employees]).update(department=department)
+
+            messages.success(request, f'Department "{department.title}" updated successfully!')
+            return redirect("authentication:department")
+        else:
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = DepartmentForm(instance=department)
+
+    return render(request, "authentication/edit_department.html", {
+        "form": form,
+        "department": department,
+    })
+
+@login_required
+@user_passes_test(can_manage_departments)
+@transaction.atomic
+def remove_department(request, pk):
+    department = get_object_or_404(Department, pk=pk)
+    if request.method == "POST":
+        # Unassign members before delete to avoid dangling FKs
+        UserProfile.objects.filter(department=department).update(department=None)
+        department.delete()
+        messages.success(request, f"Department '{department.title}' removed successfully.")
+        return redirect("authentication:department")
+    return redirect("authentication:department")
+
+@login_required
+def get_department_employees(request, department_id):
+    department = get_object_or_404(Department, pk=department_id)
+    members = department.members.select_related("user").all()
+    member_data = [
+        {
+            "name": (m.user.get_full_name() or m.user.username),
+            "link": reverse('authentication:view_profile', args=[m.user.id])
+        }
+        for m in members
+    ]
+    return JsonResponse({"employees": member_data})
+
+
+@login_required
+def view_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    profile = get_object_or_404(UserProfile, user=profile_user)
+
+    # Get team mates (same manager)
+    if profile.manager:
+        teammates = UserProfile.objects.filter(manager=profile.manager).exclude(user=profile_user)
+    else:
+        teammates = []
+
+    # Get team members (users where this profile is their manager)
+    team_members = UserProfile.objects.filter(manager=profile)
+
+    return render(request, "authentication/view_profile.html", {
+        "profile_user": profile_user,
+        "profile": profile,
+        "team_members": team_members,
+        "teammates": teammates,
     })
