@@ -10,5 +10,6 @@ urlpatterns = [
     path('edit/<int:goal_id>/', views.edit_goal, name='edit_goal'),
     path('remove/<int:goal_id>/', views.remove_goal, name='remove_goal'),
     path('toggle-completion/<int:goal_id>/', views.toggle_goal_completion, name='toggle_goal_completion'),
+    path('my_goals/', views.my_goals, name='my_goals'),
     path("send-schedule-email/", views.send_schedule_email, name="send_schedule_email"),
 ]

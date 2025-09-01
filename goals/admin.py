@@ -129,9 +129,9 @@ class GoalAdmin(admin.ModelAdmin):
         # For created_by → only managers with team OR senior management OR admins
         if db_field.name == "created_by":
             kwargs["queryset"] = UserProfile.objects.filter(
-                Q(is_manager=True, team_members__isnull=False) |  # Managers who have a team
-                Q(is_senior_management=True) |                     # Senior management
-                Q(is_admin=True)                                   # Admins
+                Q(is_manager=True) |                    # All managers
+                Q(is_senior_management=True) |           # Senior management
+                Q(is_admin=True)                         # Admins
             ).distinct()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -140,8 +140,12 @@ class GoalAdmin(admin.ModelAdmin):
         """
         Prevent assigning a goal to yourself.
         """
-        if obj.assigned_to and request.user.userprofile and obj.assigned_to == request.user.userprofile:
-            raise ValidationError("You cannot assign a goal to yourself.")
+        try:
+            if obj.assigned_to and request.user.userprofile and obj.assigned_to == request.user.userprofile:
+                raise ValidationError("You cannot assign a goal to yourself.")
+        except UserProfile.DoesNotExist:
+            # Superuser or user without UserProfile - skip the validation
+            pass
 
         super().save_model(request, obj, form, change)
 

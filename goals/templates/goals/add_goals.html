@@ -3,8 +3,8 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="p-10 text-white">
-  <div class="p-10 text-white">
+<div class="pt-4 px-10 pb-10 text-white">
+  <div class="pt-4 px-10 pb-10 text-white">
 
     {% if messages %}
       <div class="mb-4">
@@ -30,7 +30,7 @@
     </div>
   
   <h1 class="text-3xl font-bold text-red-500 mb-2">Add Goals for {{ employee.user.get_full_name|default:employee.user.username|title }}</h1>
-  <p class="text-gray-400 mb-8">Current goals: <span id="current-goal-count">{{ existing_goals_count }}</span>/10</p>
+  <p class="text-gray-400 mb-8">Current goals: <span id="current-goal-count" data-initial-count="{{ existing_goals_count }}">{{ existing_goals_count }}</span>/10</p>
 
   <form method="post" id="goalsForm">
     {% csrf_token %}
@@ -71,11 +71,45 @@
             {% if form.instance.pk %}
               {{ form.id }}
             {% endif %}
+            <div style="display: none;">{{ form.DELETE }}</div>
           </div>
         </div>
       {% endfor %}
     </div>
-
+    <!-- Hidden empty form template for cloning -->
+  <div id="empty-form" class="hidden">
+    <div class="goal-form-card bg-[#2a2a2a] p-6 rounded-2xl shadow-lg mb-6 relative">
+      <button type="button" class="remove-form-btn absolute top-4 right-4 text-gray-400 hover:text-red-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    <div class="grid grid-cols-1 gap-6 mb-6">
+      <div>
+        <label for="{{ formset.empty_form.goal_type.id_for_label }}" class="block text-white font-semibold mb-2">Goal Type</label>
+        {{ formset.empty_form.goal_type }}
+      </div>
+      <div>
+        <label for="{{ formset.empty_form.title.id_for_label }}" class="block text-white font-semibold mb-2">Goal Title</label>
+        {{ formset.empty_form.title }}
+      </div>
+      <div>
+        <label for="{{ formset.empty_form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
+        {{ formset.empty_form.description }}
+      </div>
+      <div>
+        <label for="{{ formset.empty_form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
+        {{ formset.empty_form.notes }}
+      </div>
+      <div>
+        <label for="{{ formset.empty_form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
+        {{ formset.empty_form.due_date }}
+      </div>
+      {{ formset.empty_form.id }}
+      <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
+    </div>
+  </div>
+</div>
     <button type="button" id="add-another-goal" class="bg-blue-500 hover:bg-blue-700 px-6 py-3 rounded-md text-white font-semibold transition-colors mb-6">
       Add Another Goal
     </button>
@@ -111,9 +145,9 @@
 {% block extra_js %}
 <script src="{% static 'goals/js/add_goals_dynamic.js' %}"></script>
 {% endblock %}
-
 {% block extra_js_end %}
 <script>
   // Inline script for initial setup if needed
 </script>
 {% endblock %}
+

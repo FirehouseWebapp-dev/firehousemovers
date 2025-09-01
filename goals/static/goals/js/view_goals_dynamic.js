@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.addEventListener("change", function () {
                 const goalId = this.dataset.goalId;
                 const isCompleted = this.checked;
-                const goalCard = document.getElementById(`goal-${goalId}`);
+                const goalCard = document.getElementById(`goal-${goalId }`);
+                
+                // Remove line-through immediately when checkbox is clicked
+                goalCard.classList.remove("line-through");
 
                 fetch(`/goals/toggle-completion/${goalId}/`, {
                     method: "POST",
@@ -26,9 +29,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success) {
                         if (data.is_completed) {
-                            goalCard.classList.add("opacity-60", "line-through");
+                            goalCard.classList.add("opacity-60");
+                            // Hide edit and delete buttons
+                            const editButton = goalCard.querySelector('a[href*="edit_goal"]');
+                            const deleteButton = goalCard.querySelector('.delete-goal-btn');
+                            if (editButton) {
+                                editButton.classList.add('hidden'); // Add hidden class
+                            }
+                            if (deleteButton) {
+                                deleteButton.classList.add('hidden'); // Add hidden class
+                            }
                         } else {
-                            goalCard.classList.remove("opacity-60", "line-through");
+                            goalCard.classList.remove("opacity-60");
+                            // Show edit and delete buttons
+                            const editButton = goalCard.querySelector('a[href*="edit_goal"]');
+                            const deleteButton = goalCard.querySelector('.delete-goal-btn');
+                            if (editButton && editButton.dataset.canEdit === 'true') {
+                                editButton.classList.remove('hidden'); // Remove hidden class
+                            }
+                            if (deleteButton && deleteButton.dataset.canDelete === 'true') {
+                                deleteButton.classList.remove('hidden'); // Remove hidden class
+                            }
                         }
 
                         // Refresh counts/charts
@@ -40,12 +61,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         alert("Error updating goal completion: " + data.error);
                         checkbox.checked = !isCompleted; // revert
+                        // Keep line-through removed even if server update fails
+                        goalCard.classList.remove("line-through");
                     }
                 })
                 .catch(err => {
                     console.error("Error:", err);
                     alert("An error occurred while updating goal completion.");
                     checkbox.checked = !isCompleted;
+                    // Keep line-through removed even if there's an error
+                    goalCard.classList.remove("line-through");
                 });
             });
         });
@@ -93,4 +118,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial bind
     bindCompletionCheckboxes();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('viewGoalModal');
+  if (!modal) return;
+
+  const titleEl = document.getElementById('modalGoalTitle');
+  const descEl = document.getElementById('modalGoalDescription');
+  const notesEl = document.getElementById('modalGoalNotes');
+  const createdByEl = document.getElementById('modalGoalCreatedBy');
+  const createdAtEl = document.getElementById('modalGoalCreatedAt');
+  const updatedAtEl = document.getElementById('modalGoalUpdatedAt');
+  const closeBtn = document.getElementById('closeViewGoalModal');
+
+  function openModal() {
+    modal.classList.remove('hidden');
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+  }
+
+  document.body.addEventListener('click', function(e) {
+    const btn = e.target.closest('.view-goal-btn');
+    if (btn) {
+      titleEl.textContent = btn.dataset.goalTitle || 'Goal';
+      descEl.textContent = btn.dataset.goalDescription || '—';
+      notesEl.textContent = btn.dataset.goalNotes || '—';
+      createdByEl.textContent = btn.dataset.goalCreatedBy || '—';
+      createdAtEl.textContent = btn.dataset.goalCreatedAt || '—';
+      updatedAtEl.textContent = btn.dataset.goalUpdatedAt || '—';
+      openModal();
+    }
+  });
+
+  closeBtn && closeBtn.addEventListener('click', closeModal);
+
+  // Close when clicking outside the modal content
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeModal();
+  });
+
+  // Escape key to close
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
 });

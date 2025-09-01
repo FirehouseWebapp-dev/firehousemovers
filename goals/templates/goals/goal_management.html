@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="p-10 text-white">
+<div class="pt-4 px-10 pb-10 text-white">
 
     {% if messages %}
       <div class="mb-4">
@@ -129,102 +129,308 @@
       <a href="{% url 'authentication:team' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold">
         Manage Team
       </a>
+    {% elif can_add_goals and user.userprofile.is_manager %}
+      <a href="{% url 'goals:my_goals' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold">
+        View My Goals
+      </a>
     {% endif %}
   </div>
   {% endif %}
   {% else %}
-  <!-- View-only user: show one card per goal with goal title -->
-  {% if goals %}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {% for goal in goals %}
-    <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg flex flex-col min-h-[180px] hover:scale-[1.02] transition">
-      <h3 class="text-xl font-bold text-red-500 mb-2">{{ goal.title }}</h3>
-      <div class="text-gray-300 text-sm mb-2">{{ goal.get_goal_type_display }}</div>
+  <!-- For regular employees, show their goals in card format -->
+  {% if not can_add_goals %}
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold text-red-500 mb-4">My Goals</h2>
       
-      <div class="mt-auto flex items-center justify-between text-xs">
-        <!-- Due Date -->
-        <span class="text-white font-bold">
-          Due: {{ goal.due_date|date:"M d, Y"|default:"N/A" }}
-        </span>
-      
-        <!-- Status -->
-        <span class="{% if goal.is_completed %}text-green-500{% else %}text-yellow-500{% endif %} font-bold">
-          {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
-        </span>
-      </div>
-      <div class="mt-4">
-        <button type="button" class="view-goal-btn bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-md text-white text-sm"
-                data-goal-title="{{ goal.title|escapejs }}"
-                data-goal-description="{{ goal.description|default:'No description'|escapejs }}"
-                data-goal-notes="{{ goal.notes|default:'No notes'|escapejs }}"
-                data-goal-created-by="{{ goal.created_by.user.get_full_name|default:goal.created_by.user.username|escapejs }}"
-                data-goal-created-at="{{ goal.created_at|date:'M d, Y' }}"
-                data-goal-updated-at="{{ goal.updated_at|date:'M d, Y' }}"
-        >
-          View Goal
-        </button>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="text-center py-12 text-gray-400">No goals assigned to you yet.</div>
-  {% endif %}
-  {% endif %}
-
-  <!-- View Goal Modal -->
-<div id="viewGoalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-[#2a2a2a] p-8 rounded-2xl shadow-lg w-full max-w-xl relative max-h-[80vh] overflow-hidden">
-    
-    <!-- Close Button -->
-    <button type="button" id="closeViewGoalModal" class="absolute top-4 right-4 text-gray-400 hover:text-red-500">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
-    </button>
-
-    <!-- Title -->
-    <h3 id="modalGoalTitle" class="text-2xl font-bold text-red-500 mb-4">Goal Title</h3>
-
-    <div class="space-y-4 text-gray-300">
-
-      <!-- Description (scrollable) -->
-      <div class="max-h-40 overflow-y-auto">
-        <div class="text-sm font-semibold text-white mb-1">Description</div>
-        <p id="modalGoalDescription" class="text-gray-300 whitespace-pre-wrap break-words">—</p>
-      </div>
-
-      <!-- Notes (scrollable) -->
-      <div class="max-h-32 overflow-y-auto">
-        <div class="text-sm font-semibold text-white mb-1">Notes</div>
-        <p id="modalGoalNotes" class="text-gray-300 whitespace-pre-wrap break-words">—</p>
-      </div>
-
-      <!-- Meta Info -->
-      <div class="grid grid-cols-2 gap-4 text-sm text-gray-400 pt-4 border-t border-gray-600">
-        <div class="col-span-2 grid grid-cols-2 gap-4">
-          <div>
-            <div class="font-semibold text-white">Created By</div>
-            <div id="modalGoalCreatedBy">—</div>
-          </div>
-          <div>
-            <div class="font-semibold text-white">Created At</div>
-            <div id="modalGoalCreatedAt">—</div>
-          </div>
-          <div>
-            <div class="font-semibold text-white">Last Updated</div>
-            <div id="modalGoalUpdatedAt">—</div>
-          </div>
+      <!-- Filters - Simple dropdowns -->
+      <form method="get" class="flex gap-6 mb-6 items-center" id="filterFormMyGoals">
+        <div class="flex items-center gap-2">
+          <span class="text-white text-sm">Goal Type:</span>
+          <select name="goal_type" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterFormMyGoals').submit();">
+            <option value="all" {% if goal_type_filter == 'all' or not goal_type_filter %}selected{% endif %}>All Goals</option>
+            <option value="short_term" {% if goal_type_filter == 'short_term' %}selected{% endif %}>Short-Term</option>
+            <option value="long_term" {% if goal_type_filter == 'long_term' %}selected{% endif %}>Long-Term</option>
+          </select>
         </div>
-      </div>
 
+        <div class="flex items-center gap-2">
+          <span class="text-white text-sm">Goal Status:</span>
+          <select name="filter" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterFormMyGoals').submit();">
+            <option value="all" {% if filter_type == 'all' or not filter_type %}selected{% endif %}>All Status</option>
+            <option value="incomplete" {% if filter_type == 'incomplete' %}selected{% endif %}>Pending</option>
+            <option value="completed" {% if filter_type == 'completed' %}selected{% endif %}>Completed</option>
+          </select>
+        </div>
+      </form>
+      
+      <!-- Progress Bar Section -->
+      {% if goals %}
+        <div class="bg-[#1a1a1a] rounded-lg p-6 mb-6">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-semibold text-white">Goal Progress</h3>
+            <span class="text-sm text-gray-400" id="progress-text">0%</span>
+          </div>
+          <div class="w-full h-4 bg-gray-600 rounded-full">
+            <div id="progress-bar" class="h-4 bg-red-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <div class="mt-2 text-sm text-gray-400" id="progress-stats">Calculating...</div>
+        </div>
+      {% endif %}
+      {% if goals %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {% for goal in goals %}
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition cursor-pointer {% if goal.is_completed %}opacity-60{% endif %}" 
+               onclick="openGoalModal({{ goal.id }})">
+            <!-- Goal Title -->
+            <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
+            
+            <!-- Goal Type and Status -->
+            <div class="flex gap-2 mb-4">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-600 text-white">
+                {{ goal.get_goal_type_display }}
+              </span>
+              <span class="px-3 py-1 rounded-full text-xs font-semibold {% if goal.is_completed %}bg-green-600{% else %}bg-yellow-600{% endif %} text-white">
+                {% if goal.is_completed %}Completed{% else %}Pending{% endif %}
+              </span>
+            </div>
+            
+            <!-- Due Date -->
+            <div class="mt-auto">
+              {% if goal.due_date %}
+                <div class="text-sm text-white font-bold">
+                  Due: {{ goal.due_date|date:"M d, Y" }}
+                </div>
+              {% else %}
+                <div class="text-sm text-gray-500">No due date set</div>
+              {% endif %}
+            </div>
+            
+            <!-- View Details Button -->
+            <div class="mt-4 pt-4 border-t border-gray-600">
+              <button class="text-blue-400 hover:text-blue-300 text-sm font-semibold">
+                View Details →
+              </button>
+            </div>
+          </div>
+          
+          <!-- Hidden data for modal (JSON) -->
+          <script type="application/json" id="goal-data-{{ goal.id }}">
+            {
+              "id": {{ goal.id }},
+              "title": "{{ goal.title|escapejs }}",
+              "description": "{{ goal.description|escapejs }}",
+              "notes": "{{ goal.notes|default_if_none:""|escapejs }}",
+              "goal_type": "{{ goal.get_goal_type_display }}",
+              "is_completed": {{ goal.is_completed|yesno:"true,false" }},
+              "created_by": "{{ goal.created_by.user.get_full_name|default:goal.created_by.user.username|escapejs }}",
+              "created_at": "{{ goal.created_at|date:"M d, Y" }}",
+              "updated_at": "{{ goal.updated_at|date:"M d, Y" }}",
+              "due_date": "{% if goal.due_date %}{{ goal.due_date|date:"M d, Y" }}{% endif %}",
+              "completed_at": "{% if goal.completed_at %}{{ goal.completed_at|date:"M d, Y" }}{% endif %}"
+            }
+          </script>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-12 text-gray-400">No goals assigned to you yet.</div>
+      {% endif %}
     </div>
-  </div>
-</div>
+  {% else %}
+    <div class="text-center py-12 text-gray-400">No goals assigned to you yet.</div>
+  {% endif %}
+  {% endif %}
 
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'goals/js/goal_management.js' %}"></script>
+<!-- Goal Details Modal -->
+<div id="goalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-[#2a2a2a] rounded-2xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-start p-6 border-b border-gray-600">
+      <div>
+        <h3 id="modalTitle" class="text-2xl font-bold text-red-500 mb-2"></h3>
+        <div class="flex gap-2">
+          <span id="modalGoalType" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-600 text-white"></span>
+          <span id="modalStatus" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
+        </div>
+      </div>
+      <button onclick="closeGoalModal()" class="text-gray-400 hover:text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Modal Body -->
+    <div class="p-6 space-y-6">
+      <!-- Description Section -->
+      <div>
+        <h4 class="text-lg font-bold text-white mb-3">Description</h4>
+        <p id="modalDescription" class="text-gray-300 leading-relaxed"></p>
+      </div>
+      
+      <!-- Action Plans Section -->
+      <div id="modalNotesSection" class="hidden">
+        <h4 class="text-lg font-bold text-white mb-3">Action Plans For Improvement</h4>
+        <p id="modalNotes" class="text-gray-300 leading-relaxed"></p>
+      </div>
+      
+      <!-- Goal Details -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="text-sm font-bold text-white mb-2">Created By</h4>
+          <p id="modalCreatedBy" class="text-gray-400"></p>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-white mb-2">Created Date</h4>
+          <p id="modalCreatedAt" class="text-gray-400"></p>
+        </div>
+        <div id="modalDueDateSection">
+          <h4 class="text-sm font-bold text-white mb-2">Due Date</h4>
+          <p id="modalDueDate" class="text-gray-400"></p>
+        </div>
+        <div id="modalCompletedSection" class="hidden">
+          <h4 class="text-sm font-bold text-white mb-2">Completed Date</h4>
+          <p id="modalCompletedAt" class="text-gray-400"></p>
+        </div>
+      </div>
+      
+      <!-- Last Updated -->
+      <div class="pt-4 border-t border-gray-600">
+        <div class="text-sm text-gray-500">
+          Last updated: <span id="modalUpdatedAt"></span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="flex justify-end p-6 border-t border-gray-600">
+      <button onclick="closeGoalModal()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Calculate and display progress on page load
+document.addEventListener('DOMContentLoaded', function() {
+  calculateProgress();
+});
+
+function calculateProgress() {
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const progressStats = document.getElementById('progress-stats');
+  
+  if (!progressBar || !progressText || !progressStats) return;
+  
+  // Count total and completed goals from the cards
+  const goalCards = document.querySelectorAll('[onclick^="openGoalModal"]');
+  const totalGoals = goalCards.length;
+  let completedGoals = 0;
+  
+  goalCards.forEach(card => {
+    if (card.classList.contains('opacity-60')) {
+      completedGoals++;
+    }
+  });
+  
+  // Calculate percentage
+  const percentage = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+  
+  // Update progress bar
+  progressBar.style.width = percentage + '%';
+  
+  // Update text
+  progressText.textContent = percentage + '%';
+  progressStats.textContent = `${completedGoals} of ${totalGoals} goals completed`;
+}
+
+function openGoalModal(goalId) {
+  const goalData = JSON.parse(document.getElementById(`goal-data-${goalId}`).textContent);
+  const modal = document.getElementById('goalModal');
+  
+  // Helper function to capitalize first letter
+  function capitalizeFirstLetter(str) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Populate modal content
+  document.getElementById('modalTitle').textContent = capitalizeFirstLetter(goalData.title);
+  document.getElementById('modalGoalType').textContent = goalData.goal_type;
+  document.getElementById('modalDescription').textContent = capitalizeFirstLetter(goalData.description) || 'No description provided.';
+  document.getElementById('modalCreatedBy').textContent = goalData.created_by;
+  document.getElementById('modalCreatedAt').textContent = goalData.created_at;
+  document.getElementById('modalUpdatedAt').textContent = goalData.updated_at;
+  
+  // Status badge
+  const statusElement = document.getElementById('modalStatus');
+  if (goalData.is_completed) {
+    statusElement.textContent = 'Completed';
+    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-600 text-white';
+  } else {
+    statusElement.textContent = 'Pending';
+    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-yellow-600 text-white';
+  }
+  
+  // Notes section
+  const notesSection = document.getElementById('modalNotesSection');
+  const notesElement = document.getElementById('modalNotes');
+  if (goalData.notes && goalData.notes.trim()) {
+    notesElement.textContent = capitalizeFirstLetter(goalData.notes);
+    notesSection.classList.remove('hidden');
+  } else {
+    notesSection.classList.add('hidden');
+  }
+  
+  // Due date
+  const dueDateSection = document.getElementById('modalDueDateSection');
+  const dueDateElement = document.getElementById('modalDueDate');
+  if (goalData.due_date) {
+    dueDateElement.textContent = goalData.due_date;
+    dueDateSection.style.display = 'block';
+  } else {
+    dueDateElement.textContent = 'No due date set';
+    dueDateSection.style.display = 'block';
+  }
+  
+  // Completed date
+  const completedSection = document.getElementById('modalCompletedSection');
+  const completedElement = document.getElementById('modalCompletedAt');
+  if (goalData.is_completed && goalData.completed_at) {
+    completedElement.textContent = goalData.completed_at;
+    completedSection.classList.remove('hidden');
+  } else {
+    completedSection.classList.add('hidden');
+  }
+  
+  // Show modal
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGoalModal() {
+  const modal = document.getElementById('goalModal');
+  modal.classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.getElementById('goalModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeGoalModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeGoalModal();
+  }
+});
+</script>
 {% endblock %}

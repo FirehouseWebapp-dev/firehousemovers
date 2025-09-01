@@ -63,8 +63,6 @@ INSTALLED_APPS = [
     "evaluation",
     "goals",
     # third-party
-    "anymail", # Postmark via Anymail
-    "django_mail_viewer",
 ]
 
 # -------------------------
@@ -219,11 +217,25 @@ ANYMAIL = {
     },
 }
 
-# We want local/staging/prod all to use Postmark (local goes to staging server)
-if os.getenv("DJANGO_ENV") == "production":
-    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
-else:
+# -------------------------
+# Email configuration (local vs production)
+# -------------------------
+if DEBUG:
+    # Development: Use Django mail viewer for local email testing
+    INSTALLED_APPS += ["django_mail_viewer"]
     EMAIL_BACKEND = "django_mail_viewer.backends.locmem.EmailBackend"
+    DJANGO_MAIL_VIEWER = {
+        "OPTIONS": {
+            "EMAIL_HOST": "localhost",
+            "EMAIL_PORT": 1025,
+            "EMAIL_USE_TLS": False,
+            "EMAIL_USE_SSL": False,
+        }
+    }
+else:
+    # Production: Use Postmark via Anymail
+    INSTALLED_APPS += ["anymail"]
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
 
 
 

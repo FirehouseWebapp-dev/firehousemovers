@@ -6,85 +6,92 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmRemoveGoalBtn = document.getElementById('confirmRemoveGoal');
     const cancelRemoveGoalBtn = document.getElementById('cancelRemoveGoal');
     const currentGoalCountSpan = document.getElementById('current-goal-count');
-    
+    const emptyFormDiv = document.getElementById('empty-form'); // hidden template
 
-    let initialExistingGoals = parseInt(currentGoalCountSpan.textContent);
-    // Count how many goal form cards are currently rendered (from the formset)
-    let renderedFormsCount = formContainer.querySelectorAll('.goal-form-card').length;
-    let formIdx = renderedFormsCount; // Start index at the number of rendered forms
-    let currentDisplayedGoals = initialExistingGoals; // Displayed counter reflects existing + newly added (unsaved) goals
+    // Initialize formIdx based on the total forms reported by Django management form
+    let formIdx = parseInt(totalForms.value);
+    // Get the initial count of existing goals from the Django template
+    let existingGoalsCount = parseInt(currentGoalCountSpan.textContent);
+    let newGoalsCount = formContainer.querySelectorAll('.goal-form-card').length; // This will track all new goals forms on the page, including the default empty one
     let formToRemove = null;
-
-    // Ensure the management form's TOTAL_FORMS matches the number of rendered forms
-    totalForms.value = renderedFormsCount;
-
-    // Function to update the displayed goal count
+    // Update displayed goal count and disable add button if max reached
     function updateDisplayedGoalCount() {
-        currentGoalCountSpan.textContent = `${currentDisplayedGoals}`;
+        // Total count is existing goals from DB + newly added forms
+        const totalCount = existingGoalsCount + newGoalsCount;
+        currentGoalCountSpan.textContent = totalCount;
+
+        if (totalCount >= 10) {
+            addAnotherGoalBtn.disabled = true;
+            addAnotherGoalBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            addAnotherGoalBtn.textContent = 'Maximum Goals Reached (10)';
+        } else {
+            addAnotherGoalBtn.disabled = false;
+            addAnotherGoalBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            addAnotherGoalBtn.textContent = 'Add Another Goal';
+        }
     }
 
-    // Function to update form indices
+    // Update form indices for Django
     function updateFormIndices() {
-        Array.from(formContainer.children).forEach((card, index) => {
-            card.querySelectorAll('input, select, textarea').forEach(element => {
+        // Only consider visible (not deleted) forms for re-indexing
+        const visibleForms = Array.from(formContainer.querySelectorAll('.goal-form-card')).filter(card => card.style.display !== 'none');
+        visibleForms.forEach((card, index) => {
+            card.querySelectorAll('input, select, textarea, input[type="hidden"]').forEach(element => {
                 if (element.id) element.id = element.id.replace(/form-\d+/, `form-${index}`);
                 if (element.name) element.name = element.name.replace(/form-\d+/, `form-${index}`);
             });
-            // Update labels
             card.querySelectorAll('label').forEach(label => {
                 if (label.htmlFor) label.htmlFor = label.htmlFor.replace(/form-\d+/, `form-${index}`);
             });
         });
+        // Update TOTAL_FORMS to reflect the number of currently visible forms
+        totalForms.value = visibleForms.length;
     }
 
-    // Initial display update
     updateDisplayedGoalCount();
+    updateFormIndices();
+    
+    // Ensure the initial form has proper indices
+    const initialForms = formContainer.querySelectorAll('.goal-form-card');
+    if (initialForms.length > 0) {
+        initialForms.forEach((card, index) => {
+            card.querySelectorAll('input, select, textarea, input[type="hidden"]').forEach(element => {
+                if (element.name && element.name.includes('__prefix__')) {
+                    element.name = element.name.replace(/__prefix__/g, index);
+                }
+                if (element.id && element.id.includes('__prefix__')) {
+                    element.id = element.id.replace(/__prefix__/g, index);
+                }
+            });
+            card.querySelectorAll('label').forEach(label => {
+                if (label.htmlFor && label.htmlFor.includes('__prefix__')) {
+                    label.htmlFor = label.htmlFor.replace(/__prefix__/g, index);
+                }
+            });
+        });
+    }
 
-    // Function to add a new form
+    //  Add another goal
     addAnotherGoalBtn.addEventListener('click', function() {
-        if (currentDisplayedGoals >= 10) {
-            alert('You can only add a maximum of 10 goals.');
+        // Check against the sum of existing and newly added goals
+        if (existingGoalsCount + newGoalsCount >= 10) {
+            alert('You can only have a maximum of 10 goals.');
             return;
         }
 
-        const newFormHtml = `
-            <div class="goal-form-card bg-[#2a2a2a] p-6 rounded-2xl shadow-lg mb-6 relative">
-                <button type="button" class="remove-form-btn absolute top-4 right-4 text-gray-400 hover:text-red-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-                <div class="grid grid-cols-1 gap-6 mb-6">
-                    <div>
-                        <label for="id_form-${formIdx}-goal_type" class="block text-white font-semibold mb-2">Goal Type</label>
-                        <select name="form-${formIdx}-goal_type" id="id_form-${formIdx}-goal_type" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500">
-                            <option value="">Select goal type</option>
-                            <option value="short_term">Short-Term</option>
-                            <option value="long_term">Long-Term</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="id_form-${formIdx}-title" class="block text-white font-semibold mb-2">Goal Title</label>
-                        <input type="text" name="form-${formIdx}-title" id="id_form-${formIdx}-title" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-red-500" placeholder="Goal title">
-                    </div>
-                    <div>
-                        <label for="id_form-${formIdx}-description" class="block text-white font-semibold mb-2">Goal Description</label>
-                        <textarea name="form-${formIdx}-description" id="id_form-${formIdx}-description" rows="3" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-red-500 resize-none" placeholder="Detailed description of the goal"></textarea>
-                    </div>
-                    <div>
-                        <label for="id_form-${formIdx}-notes" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
-                        <textarea name="form-${formIdx}-notes" id="id_form-${formIdx}-notes" rows="3" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-red-500 resize-none" placeholder="Additional notes or comments"></textarea>
-                    </div>
-                    <input type="hidden" name="form-${formIdx}-DELETE" id="id_form-${formIdx}-DELETE" value="off">
-                </div>
-            </div>
-        `;
+        const newFormHtml = emptyFormDiv.innerHTML.replace(/__prefix__/g, formIdx);
         formContainer.insertAdjacentHTML('beforeend', newFormHtml);
-        formIdx++;
-        totalForms.value = formContainer.querySelectorAll('.goal-form-card').length;
-        currentDisplayedGoals++;
+        
+        // Update the total forms count for Django
+        totalForms.value = parseInt(totalForms.value) + 1;
+
+        formIdx++; // Increment formIdx for the next new form
+        newGoalsCount++; // Only increment newGoalsCount for forms added via button
+        updateFormIndices();
         updateDisplayedGoalCount();
     });
 
-    // Event delegation for removing forms
+    //Handle clicks on remove buttons (delegated)
     formContainer.addEventListener('click', function(event) {
         if (event.target.closest('.remove-form-btn')) {
             formToRemove = event.target.closest('.goal-form-card');
@@ -92,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (event.target.closest('.remove-goal-btn')) {
             formToRemove = event.target.closest('.goal-form-card');
             const goalId = event.target.closest('.remove-goal-btn').dataset.goalId;
-            confirmRemoveGoalBtn.dataset.goalId = goalId; // Store goal ID for confirmation
+            confirmRemoveGoalBtn.dataset.goalId = goalId;
             removeGoalModal.classList.remove('hidden');
         }
     });
@@ -100,12 +107,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Confirm removal
     confirmRemoveGoalBtn.addEventListener('click', function() {
         if (formToRemove) {
-            const goalId = confirmRemoveGoalBtn.dataset.goalId;
-            // For add page, we only remove unsaved forms from DOM
-            formToRemove.remove();
-            formIdx--;
-            totalForms.value = formContainer.querySelectorAll('.goal-form-card').length;
-            currentDisplayedGoals--;
+            const deleteInput = formToRemove.querySelector('input[name$="-DELETE"]');
+            const idInput = formToRemove.querySelector('input[name$="-id"]');
+
+            // If there's no ID input or it's empty, it's a newly added form
+            if (!idInput || !idInput.value) {
+                formToRemove.remove();
+                newGoalsCount--; // Decrement new goal count
+                formIdx--; // Also decrement formIdx if a new form is removed
+            } else { // This case should ideally not happen on this page if existing goals are not rendered
+                // However, for robustness, if an existing goal form were to be here and removed
+                // we would mark it for deletion and decrement existingGoalsCount.
+                deleteInput.value = "on";
+                formToRemove.style.display = "none";
+                // existingGoalsCount--; // This would be done if we were displaying existing goals.
+            }
             updateFormIndices();
             updateDisplayedGoalCount();
             removeGoalModal.classList.add('hidden');
@@ -120,7 +136,9 @@ document.addEventListener('DOMContentLoaded', function() {
         formToRemove = null;
         confirmRemoveGoalBtn.removeAttribute('data-goal-id');
     });
+});
 
-    // Initial setup for existing forms
-    updateFormIndices();
+// Handle form submission - simplified version
+document.getElementById('goalsForm').addEventListener('submit', function(e) {
+    // Just let the form submit normally, Django will handle validation
 });

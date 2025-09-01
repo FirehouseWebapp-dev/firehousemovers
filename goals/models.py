@@ -10,12 +10,12 @@ class Goal(models.Model):
     ]
 
     title = models.CharField(max_length=200, help_text="Goal title")
-    description = models.TextField(blank=True, help_text="Detailed description of the goal")
+    description = models.TextField(blank=False, help_text="Detailed description of the goal")
     assigned_to = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='goals')
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='created_goals')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    due_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True, help_text="Due date for the goal")
     completed_at = models.DateField(null=True, blank=True)
     is_completed = models.BooleanField(default=False)
     notes = models.TextField(blank=True, null =True, help_text="Any notes or updates on the goal")
@@ -27,7 +27,7 @@ class Goal(models.Model):
 
         # completion timestamp logic
         if self.is_completed and self.completed_at is None:
-            self.completed_at = timezone.now()
+            self.completed_at = timezone.now().date()
         elif not self.is_completed:
             self.completed_at = None
 

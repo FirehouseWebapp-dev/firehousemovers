@@ -9,44 +9,50 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-    }
+    body { font-family: 'Montserrat', sans-serif; }
   </style>
-
-  {% block extra_js %}{% endblock %}
+  {% block extra_js %}
+  {% endblock %}
 </head>
 <body class="bg-black text-white min-h-screen">
+
+  <!-- Navbar included on all pages -->
   {% include "inventory_app/navbar.html" %}
 
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
-        <a href="{% url 'authentication:profile' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/profile/' %}bg-red-500{% endif %}"><i class="fas fa-user mr-2"></i> My Profile</a>
-        <a href="{% url 'awards:my_awards' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/my-awards/' %}bg-red-500{% endif %}"><i class="fas fa-trophy mr-2"></i> Current Awards</a>
+        <a href="{% url 'authentication:profile' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/profile/' %}bg-red-500{% endif %}">
+          <i class="fas fa-user mr-2"></i> My Profile
+        </a>
+        <a href="{% url 'awards:my_awards' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/my-awards/' %}bg-red-500{% endif %}">
+          <i class="fas fa-trophy mr-2"></i> Current Awards
+        </a>
 
-        {% if request.user.is_superuser or request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
-          <a href="{% url 'authentication:team' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/team/' %}bg-red-500{% endif %}">
-            <i class="fas fa-users mr-2"></i> Team
-          </a>
+        {% if request.user.is_superuser or request.user.userprofile.role in "admin,manager" %}
+        <a href="{% url 'authentication:team' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/team/' %}bg-red-500{% endif %}">
+          <i class="fas fa-users mr-2"></i> Team
+        </a>
         {% endif %}
-        <!-- Goals Management - Available to all authenticated users -->
-        <a href="{% url 'goals:goal_management' %}" 
-           class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
+
+        <a href="{% url 'goals:goal_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'goal_management' or request.resolver_match.url_name == 'view_goals' or request.resolver_match.url_name == 'add_goals' or request.resolver_match.url_name == 'edit_goal' %}bg-red-500{% endif %}">
           <i class="fas fa-bullseye mr-2"></i> Goals Management
         </a>
+        {% if request.user.userprofile.is_manager %}
+        <a href="{% url 'goals:my_goals' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'my_goals' %}bg-red-500{% endif %}">
+          <i class="fas fa-bullseye mr-2"></i> My Goals
+        </a>
+        {% endif %}
       </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 px-6 py-10 bg-black">
-      {% block content %}
-      <!-- page-specific content goes here -->
-      {% endblock %}
+      {% block content %}{% endblock %}
     </main>
   </div>
 </body>
