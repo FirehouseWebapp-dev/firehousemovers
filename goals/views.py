@@ -23,31 +23,40 @@ GoalFormSet = modelformset_factory(Goal, form=GoalFormSetForm, extra=1, can_dele
 def goals_management(request):
     user_profile = request.user.userprofile
 
-    # Base queryset
-    if user_profile.is_senior_management:
+    # Base queryset - admins (by role) and senior management see all employees
+    if user_profile.is_senior_management or user_profile.role == "admin":
         scope = request.GET.get("scope", "all")
-        if scope == "team":
-            # Only managers that this senior management manages
-            employees = UserProfile.objects.filter(manager=user_profile, is_manager=True)
-        else:
-            # All employees (managers + regular employees, but exclude senior management and admins)
-            # PLUS managers that this senior management manages
+        if scope == "team" and user_profile.is_senior_management:
+            # My Team: show users assigned to this senior manager's team, excluding admins and other senior managers
             employees = UserProfile.objects.filter(
-                is_senior_management=False,
-                is_admin=False
-            ) | UserProfile.objects.filter(manager=user_profile, is_manager=True)
+                manager=user_profile
+            ).exclude(
+                role="admin"
+            ).exclude(
+                is_senior_management=True
+            )
+        else:
+            # All Employees: show everyone except other senior management and users with role 'admin'
+            # Use role check instead of is_admin boolean to avoid excluding managers who are staff
+            employees = UserProfile.objects.exclude(
+                is_senior_management=True
+            ).exclude(
+                role="admin"
+            )
 
     elif user_profile.is_manager:
+        # Managers only see their direct reports - STRICTLY ENFORCED
         employees = UserProfile.objects.filter(
-        manager=user_profile
-    ).exclude(is_senior_management=True).exclude(is_admin=True)
+            manager=user_profile  # Only users who have this manager assigned
+        )
 
     else:
+        # Regular employees can only see themselves
         employees = UserProfile.objects.filter(id=user_profile.id)
 
     # Apply role filter
     role_filter = request.GET.get("role", "all")
-    if role_filter != "all" and (user_profile.is_senior_management or user_profile.is_manager):
+    if role_filter != "all" and (user_profile.is_senior_management or user_profile.is_admin or user_profile.is_manager):
         employees = employees.filter(role=role_filter)
 
     # Annotate goal counts and has_goals
@@ -79,7 +88,7 @@ def goals_management(request):
 
     context = {
         'employees': employees,
-        'can_add_goals': user_profile.is_senior_management or user_profile.is_manager,
+        'can_add_goals': user_profile.is_senior_management or user_profile.is_manager or user_profile.role == "admin",
         'has_team_members': employees.exists() if user_profile.is_manager else True,
         'goals': goals,  
         'filter_type': filter_type,
@@ -123,17 +132,21 @@ def add_goals(request, employee_id):
     user_profile = request.user.userprofile
     employee = get_object_or_404(UserProfile, id=employee_id)
 
-     #Permission logic
-    if user_profile.is_senior_management:
-        if employee.is_manager and employee.manager != user_profile:
-            # If employee is a manager, senior management can only add goals for managers they manage
-            raise PermissionDenied("You can only add goals for managers you manage.")
-        # Else: allowed for all other roles
+    # Permission logic - STRICTLY ENFORCE WHO CAN ADD GOALS
+    if user_profile.role == "admin":
+        # Admins can add goals for everyone except other admins and senior management
+        if employee.role == "admin" or employee.is_senior_management:
+            raise PermissionDenied("Admins cannot add goals for other admins or senior management.")
+    elif user_profile.is_senior_management:
+        # Senior management can add goals for everyone except other admins and senior management
+        if employee.role == "admin" or employee.is_senior_management:
+            raise PermissionDenied("Senior management cannot add goals for other admins or senior management.")
     elif user_profile.is_manager:
+        # STRICT: Managers can ONLY add goals for their DIRECT team members
         if employee.manager != user_profile:
-            raise PermissionDenied("You can only add goals for your direct team members.")
+            raise PermissionDenied(f"You can only add goals for your direct team members. {employee.user.get_full_name()} is not your direct report.")
     else:
-        raise PermissionDenied("You don't have permission to add goals.")
+        raise PermissionDenied("Only managers, admins, and senior management can add goals.")
 
     # Check if employee already has 10 active goals
     existing_goals_count = Goal.objects.filter(assigned_to=employee, is_completed=False).count()
@@ -220,13 +233,13 @@ def view_goals(request, employee_id):
         goal_completion_percentage = round((completed_goals_for_employee / total_goals_for_employee) * 100)
 
     # Determine if progress bar should be shown instead of charts/Calendly
-    show_progress_bar = not (user_profile.is_senior_management or user_profile.is_admin)
+    show_progress_bar = not (user_profile.is_senior_management or user_profile.role == "admin")
 
     context = {
         'employee': employee,
         'goals': goals,
         'can_edit': user_profile.is_senior_management or user_profile.is_manager or user_profile.id == employee.id,
-        'can_delete_goal': user_profile.is_senior_management or user_profile.is_admin or user_profile.is_manager,
+        'can_delete_goal': user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager,
         'selected_goal_type': selected_goal_type,
         'selected_completion_status': selected_completion_status,
         'show_progress_bar': show_progress_bar,
@@ -363,8 +376,8 @@ def remove_goal(request, goal_id):
         messages.error(request, "Completed goals cannot be deleted.")
         return redirect('goals:view_goals', employee_id=goal.assigned_to.id)
 
-    # Only senior management, admins, or managers can delete
-    if not (user_profile.is_senior_management or user_profile.is_admin or user_profile.is_manager):
+    # Only senior management, admins (by role), or managers can delete
+    if not (user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager):
         raise PermissionDenied("You don't have permission to remove this goal.")
 
     if request.method == 'POST':

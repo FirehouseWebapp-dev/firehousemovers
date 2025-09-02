@@ -200,8 +200,8 @@ def evaluation_detail(request, evaluation_id):
 @login_required
 def analytics_dashboard(request):
     profile = request.user.userprofile
-    is_manager = profile.role == "manager" or profile.role == "admin"
-    is_employee = profile.role not in ["manager", "admin"]
+    is_manager = profile.role == "manager" or profile.role == "admin" or profile.is_senior_management
+    is_employee = profile.role not in ["manager", "admin"] and not profile.is_senior_management
 
     employees = (UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk)
                  if profile.role == "admin"
@@ -325,7 +325,7 @@ def metrics_api(request):
 @login_required
 def metrics_by_employee_api(request):
     profile = request.user.userprofile
-    if profile.role not in ["manager", "admin"]:
+    if profile.role not in ["manager", "admin"] and not profile.is_senior_management:
         return HttpResponseForbidden()
 
     if profile.role == "manager":

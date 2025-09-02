@@ -8,12 +8,14 @@
     {% if messages %}
       <div class="mb-4">
         {% for message in messages %}
+          {% if "team" not in message|lower %}
           <div class="px-4 py-2 rounded mb-2
                       {% if message.tags == 'success' %}bg-green-600 text-white
                       {% elif message.tags == 'error' %}bg-red-600 text-white
                       {% else %}bg-gray-600 text-white{% endif %}">
             {{ message }}
           </div>
+          {% endif %}
         {% endfor %}
       </div>
     {% endif %}
@@ -29,7 +31,7 @@
     </div>
   
   <h1 class="text-3xl font-bold text-red-500 mb-2">Edit Goal</h1>
-  <p class="text-gray-400 mb-8">Editing goal for {{ goal.assigned_to.user.get_full_name|default:goal.assigned_to.user.username|title }}</p>
+  <p class="text-gray-400 mb-8">Editing goal for {{ goal.assigned_to.user.get_full_name|default:goal.assigned_to.user.username|capfirst }}</p>
 
   <form method="post" class="max-w-2xl">
     {% csrf_token %}

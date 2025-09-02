@@ -7,17 +7,19 @@
     {% if messages %}
       <div class="mb-4">
         {% for message in messages %}
+          {% if "team" not in message|lower %}
           <div class="px-4 py-2 rounded mb-2
                       {% if message.tags == 'success' %}bg-green-600 text-white
                       {% elif message.tags == 'error' %}bg-red-600 text-white
                       {% else %}bg-gray-600 text-white{% endif %}">
             {{ message }}
           </div>
+          {% endif %}
         {% endfor %}
       </div>
     {% endif %}
   
-  <h1 class="text-3xl font-bold text-red-500 mb-6">Employee Goals Management</h1>
+  <h1 class="text-3xl font-bold text-red-500 mb-6">Employee Goals</h1>
 
   {% if can_add_goals %}
   <form method="get" class="mb-6 flex items-center gap-3 flex-wrap">
@@ -140,7 +142,6 @@
   <!-- For regular employees, show their goals in card format -->
   {% if not can_add_goals %}
     <div class="mb-6">
-      <h2 class="text-2xl font-bold text-red-500 mb-4">My Goals</h2>
       
       <!-- Filters - Simple dropdowns -->
       <form method="get" class="flex gap-6 mb-6 items-center" id="filterFormMyGoals">
@@ -179,8 +180,8 @@
       {% if goals %}
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {% for goal in goals %}
-          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition cursor-pointer {% if goal.is_completed %}opacity-60{% endif %}" 
-               onclick="openGoalModal({{ goal.id }})">
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %}" 
+               onclick="openGoalModal({{ goal.id }})" {% if goal.is_completed %}style="cursor: not-allowed !important;"{% endif %}>
             <!-- Goal Title -->
             <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
             
@@ -248,7 +249,7 @@
 <div id="goalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-[#2a2a2a] rounded-2xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
     <!-- Modal Header -->
-    <div class="flex justify-between items-start p-6 border-b border-gray-600">
+    <div class="p-6 border-b border-gray-600">
       <div>
         <h3 id="modalTitle" class="text-2xl font-bold text-red-500 mb-2"></h3>
         <div class="flex gap-2">
@@ -256,58 +257,53 @@
           <span id="modalStatus" class="px-3 py-1 rounded-full text-xs font-semibold text-white"></span>
         </div>
       </div>
-      <button onclick="closeGoalModal()" class="text-gray-400 hover:text-white">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
     </div>
     
     <!-- Modal Body -->
     <div class="p-6 space-y-6">
       <!-- Description Section -->
       <div>
-        <h4 class="text-lg font-bold text-white mb-3">Description</h4>
+        <h4 class="text-lg font-bold mb-3" style="color: #c33b3b;">Description</h4>
         <p id="modalDescription" class="text-gray-300 leading-relaxed"></p>
       </div>
       
       <!-- Action Plans Section -->
-      <div id="modalNotesSection" class="hidden">
-        <h4 class="text-lg font-bold text-white mb-3">Action Plans For Improvement</h4>
+      <div id="modalNotesSection">
+        <h4 class="text-lg font-bold mb-3" style="color: #c33b3b;">Action Plans For Improvement</h4>
         <p id="modalNotes" class="text-gray-300 leading-relaxed"></p>
       </div>
       
       <!-- Goal Details -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h4 class="text-sm font-bold text-white mb-2">Created By</h4>
+          <h4 class="text-sm font-bold mb-2" style="color: #c33b3b;">Created By</h4>
           <p id="modalCreatedBy" class="text-gray-400"></p>
         </div>
         <div>
-          <h4 class="text-sm font-bold text-white mb-2">Created Date</h4>
+          <h4 class="text-sm font-bold mb-2" style="color: #c33b3b;">Created Date</h4>
           <p id="modalCreatedAt" class="text-gray-400"></p>
         </div>
         <div id="modalDueDateSection">
-          <h4 class="text-sm font-bold text-white mb-2">Due Date</h4>
+          <h4 class="text-sm font-bold mb-2" style="color: #c33b3b;">Due Date</h4>
           <p id="modalDueDate" class="text-gray-400"></p>
         </div>
         <div id="modalCompletedSection" class="hidden">
-          <h4 class="text-sm font-bold text-white mb-2">Completed Date</h4>
+          <h4 class="text-sm font-bold mb-2" style="color: #c33b3b;">Completed Date</h4>
           <p id="modalCompletedAt" class="text-gray-400"></p>
         </div>
       </div>
-      
-      <!-- Last Updated -->
-      <div class="pt-4 border-t border-gray-600">
-        <div class="text-sm text-gray-500">
-          Last updated: <span id="modalUpdatedAt"></span>
-        </div>
+    </div>
+    
+    <!-- Last Updated -->
+    <div class="px-6 py-4 border-t border-gray-600">
+      <div class="text-sm text-gray-400">
+        Last updated: <span id="modalUpdatedAt"></span>
       </div>
     </div>
     
     <!-- Modal Footer -->
     <div class="flex justify-end p-6 border-t border-gray-600">
-      <button onclick="closeGoalModal()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
+      <button onclick="closeGoalModal()" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
         Close
       </button>
     </div>
@@ -359,11 +355,19 @@ function openGoalModal(goalId) {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
+  // Helper function to convert to title case
+  function toTitleCase(str) {
+    if (!str) return str;
+    return str.replace(/\w\S*/g, (txt) => 
+      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
+  }
+
   // Populate modal content
   document.getElementById('modalTitle').textContent = capitalizeFirstLetter(goalData.title);
   document.getElementById('modalGoalType').textContent = goalData.goal_type;
   document.getElementById('modalDescription').textContent = capitalizeFirstLetter(goalData.description) || 'No description provided.';
-  document.getElementById('modalCreatedBy').textContent = goalData.created_by;
+  document.getElementById('modalCreatedBy').textContent = toTitleCase(goalData.created_by);
   document.getElementById('modalCreatedAt').textContent = goalData.created_at;
   document.getElementById('modalUpdatedAt').textContent = goalData.updated_at;
   
@@ -382,9 +386,8 @@ function openGoalModal(goalId) {
   const notesElement = document.getElementById('modalNotes');
   if (goalData.notes && goalData.notes.trim()) {
     notesElement.textContent = capitalizeFirstLetter(goalData.notes);
-    notesSection.classList.remove('hidden');
   } else {
-    notesSection.classList.add('hidden');
+    notesElement.textContent = 'None';
   }
   
   // Due date

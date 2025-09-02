@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2 class="text-3xl font-extrabold text-center mb-6 text-red-500">Movers Hall of Fame</h2>
-{% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
+{% if request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" or request.user.userprofile.is_senior_management %}
   <div class="flex mb-6">
     <a href="{% url 'awards:hall_of_fame_add' %}" class="bg-red-500 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition">
       <i class="fas fa-plus"></i> Add New Entry
@@ -40,7 +40,7 @@
         {% endwith %}
         <p class="text-gray-300 mt-1">{{ entry.description }}</p>
       </div>
-      {% if request.user.is_authenticated and request.user.userprofile.role in "admin manager" %}
+      {% if request.user.is_authenticated and (request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" or request.user.userprofile.is_senior_management) %}
         <div class="absolute top-2 right-2 flex space-x-2">
           <a href="{% url 'awards:hall_of_fame_edit' entry.id %}"
             class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-bold transition">Edit</a>

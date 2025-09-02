@@ -9,70 +9,151 @@ document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = csrfTokenInput ? csrfTokenInput.value : getCookie("csrftoken");
 
         document.querySelectorAll(".goal-completion-checkbox").forEach(checkbox => {
+            // Disable checkboxes for already completed goals and hide edit/delete buttons
+            if (checkbox.checked) {
+                checkbox.disabled = true;
+                checkbox.classList.add('pointer-events-none', 'cursor-not-allowed', 'opacity-50');
+                
+                // Hide edit and delete buttons for already completed goals on page load
+                const goalId = checkbox.dataset.goalId;
+                const goalCard = document.getElementById(`goal-${goalId}`);
+                if (goalCard) {
+                    const editButton = goalCard.querySelector('a[data-can-edit="true"]');
+                    const deleteButton = goalCard.querySelector('.delete-goal-btn');
+                    if (editButton) {
+                        editButton.classList.add('hidden');
+                        editButton.style.display = 'none';
+                    }
+                    if (deleteButton) {
+                        deleteButton.classList.add('hidden');
+                        deleteButton.style.display = 'none';
+                    }
+                }
+                return;
+            }
+            
+            // Add pointer cursor for enabled checkboxes
+            checkbox.style.cursor = 'pointer';
+            
             checkbox.addEventListener("change", function () {
                 const goalId = this.dataset.goalId;
                 const isCompleted = this.checked;
                 const goalCard = document.getElementById(`goal-${goalId }`);
                 
-                // Remove line-through immediately when checkbox is clicked
-                goalCard.classList.remove("line-through");
-
-                fetch(`/goals/toggle-completion/${goalId}/`, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": csrfToken,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ is_completed: isCompleted }),
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        if (data.is_completed) {
-                            goalCard.classList.add("opacity-60");
-                            // Hide edit and delete buttons
-                            const editButton = goalCard.querySelector('a[href*="edit_goal"]');
-                            const deleteButton = goalCard.querySelector('.delete-goal-btn');
-                            if (editButton) {
-                                editButton.classList.add('hidden'); // Add hidden class
-                            }
-                            if (deleteButton) {
-                                deleteButton.classList.add('hidden'); // Add hidden class
-                            }
-                        } else {
-                            goalCard.classList.remove("opacity-60");
-                            // Show edit and delete buttons
-                            const editButton = goalCard.querySelector('a[href*="edit_goal"]');
-                            const deleteButton = goalCard.querySelector('.delete-goal-btn');
-                            if (editButton && editButton.dataset.canEdit === 'true') {
-                                editButton.classList.remove('hidden'); // Remove hidden class
-                            }
-                            if (deleteButton && deleteButton.dataset.canDelete === 'true') {
-                                deleteButton.classList.remove('hidden'); // Remove hidden class
-                            }
-                        }
-
-                        // Refresh counts/charts
-                        let countsUrl = new URL(window.location.origin + window.location.pathname);
-                        countsUrl.searchParams.set('fragment', 'counts');
-                        fetch(countsUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                            .then(res => res.json())
-                            .then(counts => { try { window.GoalsCharts && window.GoalsCharts.updateAll(counts); } catch(e){} });
-                    } else {
-                        alert("Error updating goal completion: " + data.error);
-                        checkbox.checked = !isCompleted; // revert
-                        // Keep line-through removed even if server update fails
-                        goalCard.classList.remove("line-through");
+                // Only allow marking as completed, not unchecking
+                if (isCompleted) {
+                    // Revert checkbox state temporarily
+                    this.checked = false;
+                    
+                    // Show confirmation modal
+                    const modal = document.getElementById('completionConfirmationModal');
+                    const confirmBtn = document.getElementById('confirmCompletionBtn');
+                    const cancelBtn = document.getElementById('cancelCompletionBtn');
+                    
+                    if (modal && confirmBtn && cancelBtn) {
+                        modal.classList.remove('hidden');
+                        
+                        // Handle confirmation
+                        const handleConfirm = () => {
+                            modal.classList.add('hidden');
+                            this.checked = true;
+                            processGoalCompletion(goalId, true, goalCard, this);
+                            confirmBtn.removeEventListener('click', handleConfirm);
+                            cancelBtn.removeEventListener('click', handleCancel);
+                        };
+                        
+                        // Handle cancellation
+                        const handleCancel = () => {
+                            modal.classList.add('hidden');
+                            this.checked = false;
+                            confirmBtn.removeEventListener('click', handleConfirm);
+                            cancelBtn.removeEventListener('click', handleCancel);
+                        };
+                        
+                        confirmBtn.addEventListener('click', handleConfirm);
+                        cancelBtn.addEventListener('click', handleCancel);
                     }
-                })
-                .catch(err => {
-                    console.error("Error:", err);
-                    alert("An error occurred while updating goal completion.");
-                    checkbox.checked = !isCompleted;
-                    // Keep line-through removed even if there's an error
-                    goalCard.classList.remove("line-through");
-                });
+                }
             });
+        });
+    }
+
+    // Separate function to handle the actual completion processing
+    function processGoalCompletion(goalId, isCompleted, goalCard, checkbox) {
+        const csrfTokenInput = document.getElementById('csrf-token');
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : getCookie("csrftoken");
+        
+        // Remove line-through immediately when checkbox is clicked
+        goalCard.classList.remove("line-through");
+
+        fetch(`/goals/toggle-completion/${goalId}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ is_completed: isCompleted }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (data.is_completed) {
+                    goalCard.classList.add("opacity-60");
+                    // Only disable the checkbox visually/interaction-wise
+                    checkbox.classList.add('cursor-not-allowed');
+                    checkbox.style.cursor = 'not-allowed';
+                    // Hide edit and delete buttons
+                    // Try multiple selectors to ensure we find the edit button
+                    const editButton = goalCard.querySelector('a[data-can-edit="true"]') || 
+                                     goalCard.querySelector('a[href*="edit_goal"]') ||
+                                     goalCard.querySelector('a[href*="/edit/"]');
+                    const deleteButton = goalCard.querySelector('.delete-goal-btn');
+                    
+                    console.log('Goal completed - hiding buttons for goal:', goalId);
+                    console.log('Edit button found:', editButton);
+                    console.log('Delete button found:', deleteButton);
+                    
+                    if (editButton) {
+                        editButton.classList.add('hidden'); // Add hidden class
+                        editButton.style.display = 'none'; // Ensure it's hidden
+                        editButton.style.visibility = 'hidden'; // Additional hiding
+                        console.log('Edit button hidden');
+                    } else {
+                        console.warn('Edit button not found for goal:', goalId);
+                    }
+                    
+                    if (deleteButton) {
+                        deleteButton.classList.add('hidden'); // Add hidden class
+                        deleteButton.style.display = 'none'; // Ensure it's hidden
+                        deleteButton.style.visibility = 'hidden'; // Additional hiding
+                        console.log('Delete button hidden');
+                    } else {
+                        console.warn('Delete button not found for goal:', goalId);
+                    }
+                    // Disable the checkbox so it cannot be unchecked
+                    checkbox.disabled = true;
+                    checkbox.classList.add('cursor-not-allowed', 'opacity-50');
+                }
+
+                // Refresh counts/charts
+                let countsUrl = new URL(window.location.origin + window.location.pathname);
+                countsUrl.searchParams.set('fragment', 'counts');
+                fetch(countsUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => res.json())
+                    .then(counts => { try { window.GoalsCharts && window.GoalsCharts.updateAll(counts); } catch(e){} });
+            } else {
+                alert("Error updating goal completion: " + data.error);
+                checkbox.checked = !isCompleted; // revert
+                // Keep line-through removed even if server update fails
+                goalCard.classList.remove("line-through");
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("An error occurred while updating goal completion.");
+            checkbox.checked = !isCompleted;
+            // Keep line-through removed even if there's an error
+            goalCard.classList.remove("line-through");
         });
     }
 

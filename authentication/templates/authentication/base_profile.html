@@ -39,8 +39,19 @@
           {% endif %}
         {% endif %}
         <a href="{% url 'goals:goal_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
-          <i class="fas fa-bullseye mr-2"></i> Goals Management
+          <i class="fas fa-bullseye mr-2"></i> 
+          {% if request.user.userprofile.is_senior_management or request.user.userprofile.is_manager %}
+            Goals Management
+          {% else %}
+            My Goals
+          {% endif %}
         </a>
+        
+        {% if request.user.userprofile.is_manager %}
+        <a href="{% url 'goals:my_goals' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'my_goals' %}bg-red-500{% endif %}">
+          <i class="fas fa-target mr-2"></i> My Goals
+        </a>
+        {% endif %}
       </nav>
     </aside>
 

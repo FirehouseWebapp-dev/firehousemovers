@@ -267,15 +267,37 @@ class AddTeamMemberForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         if current_user:
-            self.fields['user'].queryset = User.objects.filter(
-                is_active=True,  
-                userprofile__isnull=False,
-                userprofile__manager__isnull=True,  
-            ).exclude(
-                pk=current_user.pk  
-            ).exclude(
-                userprofile__role__in=['admin', 'manager']  
-            )
+            # Restrict user selection for senior management
+            if hasattr(current_user, 'userprofile') and current_user.userprofile.is_senior_management:
+                # Senior managers can only select managers who are not in other senior managers' teams
+                self.fields['user'].queryset = User.objects.filter(
+                    is_active=True,  
+                    userprofile__isnull=False,
+                    userprofile__role='manager'  # Only show managers
+                ).exclude(
+                    pk=current_user.pk  
+                ).exclude(
+                    userprofile__is_senior_management=True  # Don't show other senior managers
+                ).exclude(
+                    userprofile__manager__is_senior_management=True  # Exclude managers already reporting to senior managers
+                )
+                # Senior managers can only assign 'manager' role
+                self.fields['role'].choices = [("manager", "Manager")]
+            else:
+                # Regular managers and admins can select any eligible user
+                self.fields['user'].queryset = User.objects.filter(
+                    is_active=True,  
+                    userprofile__isnull=False,
+                    userprofile__manager__isnull=True,  
+                ).exclude(
+                    pk=current_user.pk  
+                ).exclude(
+                    userprofile__role__in=['admin', 'manager']  
+                ).exclude(
+                    userprofile__is_senior_management=True  
+                )
+                # Regular managers and admins can assign any role
+                self.fields['role'].choices = UserProfile.EMPLOYEE_CHOICES
 
         self.fields['user'].label_from_instance = lambda obj: obj.get_full_name() or obj.username
 
@@ -293,10 +315,18 @@ class TeamMemberEditForm(forms.ModelForm):
             }),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['role'].label = "Assign Role"
         self.fields['start_date'].label = "Set Start Date"
+        
+        # Restrict role choices for senior management
+        if current_user and hasattr(current_user, 'userprofile') and current_user.userprofile.is_senior_management:
+            # Senior managers can only assign 'manager' role
+            self.fields['role'].choices = [("manager", "Manager")]
+        else:
+            # Regular managers and admins can assign any role
+            self.fields['role'].choices = UserProfile.EMPLOYEE_CHOICES
 
 User = get_user_model()
 
