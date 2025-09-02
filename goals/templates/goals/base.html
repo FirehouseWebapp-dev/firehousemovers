@@ -39,6 +39,10 @@
         </a>
         {% endif %}
 
+        <a href="{% url 'authentication:department' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/department/' %}bg-red-500{% endif %}">
+          <i class="fas fa-building mr-2"></i> Department
+        </a>
+
         <a href="{% url 'goals:goal_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'goal_management' or request.resolver_match.url_name == 'view_goals' or request.resolver_match.url_name == 'add_goals' or request.resolver_match.url_name == 'edit_goal' %}bg-red-500{% endif %}">
           <i class="fas fa-bullseye mr-2"></i> 
           {% if request.user.userprofile.is_senior_management or request.user.userprofile.is_manager %}
