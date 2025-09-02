@@ -103,24 +103,38 @@ class UserProfile(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Automatically update the stored boolean fields before saving.
+        Automatically update boolean flags from role, but preserve manual admin
+        overrides done through the admin site or other forms.
         """
-        # Admin check
-        self.is_admin = (self.role in self.ADMIN_ROLES) or self.user.is_staff or self.user.is_superuser
+        # Fetch original instance to detect which flags were explicitly changed
+        original = None
+        if self.pk:
+            try:
+                original = UserProfile.objects.get(pk=self.pk)
+            except UserProfile.DoesNotExist:
+                original = None
 
-        # Senior management check
-        self.is_senior_management = self.role in self.SENIOR_MANAGEMENT_ROLES
-
-        # Manager check (either role is 'manager' or has team members)
-        # Note: On initial save, self.pk may be None, so can't check team_members yet
-        self.is_manager = (self.role in self.MANAGEMENT_ROLES)
-
-        # Employee check
-        self.is_employee = (
-            not self.is_admin
-            and not self.is_senior_management
+        computed_is_admin = (self.role in self.ADMIN_ROLES) or self.user.is_staff or self.user.is_superuser
+        computed_is_senior_management = self.role in self.SENIOR_MANAGEMENT_ROLES
+        computed_is_manager = (self.role in self.MANAGEMENT_ROLES)
+        computed_is_employee = (
+            not computed_is_admin
+            and not computed_is_senior_management
             and self.role in self.EMPLOYEE_ROLES
         )
+
+        # Only overwrite flags that were NOT explicitly changed by the caller
+        if original is None or self.is_admin == original.is_admin:
+            self.is_admin = computed_is_admin
+
+        if original is None or self.is_senior_management == original.is_senior_management:
+            self.is_senior_management = computed_is_senior_management
+
+        if original is None or self.is_manager == original.is_manager:
+            self.is_manager = computed_is_manager
+
+        if original is None or self.is_employee == original.is_employee:
+            self.is_employee = computed_is_employee
 
         super().save(*args, **kwargs)
 

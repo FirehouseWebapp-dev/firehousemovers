@@ -48,11 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
         totalForms.value = visibleForms.length;
     }
 
-    updateDisplayedGoalCount();
-    updateFormIndices();
-    
-    // Ensure the initial form has proper indices
+    // Fix initial form prefix issues first - this is critical!
     const initialForms = formContainer.querySelectorAll('.goal-form-card');
+    
     if (initialForms.length > 0) {
         initialForms.forEach((card, index) => {
             card.querySelectorAll('input, select, textarea, input[type="hidden"]').forEach(element => {
@@ -70,6 +68,22 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Also fix any remaining __prefix__ in the entire container
+    formContainer.querySelectorAll('*[name*="__prefix__"], *[id*="__prefix__"], *[for*="__prefix__"]').forEach(element => {
+        if (element.name && element.name.includes('__prefix__')) {
+            element.name = element.name.replace(/__prefix__/g, '0');
+        }
+        if (element.id && element.id.includes('__prefix__')) {
+            element.id = element.id.replace(/__prefix__/g, '0');
+        }
+        if (element.htmlFor && element.htmlFor.includes('__prefix__')) {
+            element.htmlFor = element.htmlFor.replace(/__prefix__/g, '0');
+        }
+    });
+    
+    updateDisplayedGoalCount();
+    updateFormIndices();
 
     //  Add another goal
     addAnotherGoalBtn.addEventListener('click', function() {
@@ -136,9 +150,33 @@ document.addEventListener('DOMContentLoaded', function() {
         formToRemove = null;
         confirmRemoveGoalBtn.removeAttribute('data-goal-id');
     });
-});
 
-// Handle form submission - simplified version
-document.getElementById('goalsForm').addEventListener('submit', function(e) {
-    // Just let the form submit normally, Django will handle validation
+    // Handle form submission with validation
+    document.getElementById('goalsForm').addEventListener('submit', function(e) {
+        // Check if at least one form has data
+        const formCards = formContainer.querySelectorAll('.goal-form-card:not([style*="display: none"])');
+        let hasValidForm = false;
+        
+        for (let card of formCards) {
+            const titleInput = card.querySelector('input[name$="-title"]');
+            const descriptionInput = card.querySelector('textarea[name$="-description"]');
+            
+            if (titleInput && titleInput.value.trim() && descriptionInput && descriptionInput.value.trim()) {
+                hasValidForm = true;
+                break;
+            }
+        }
+        
+        if (!hasValidForm) {
+            e.preventDefault();
+            alert('Please fill in at least one goal with both title and description.');
+            return false;
+        }
+        
+        // Update form indices one final time before submission
+        updateFormIndices();
+        
+        // Let the form submit normally
+        return true;
+    });
 });

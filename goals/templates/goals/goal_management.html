@@ -132,8 +132,8 @@
         Manage Team
       </a>
     {% elif can_add_goals and user.userprofile.is_manager %}
-      <a href="{% url 'goals:my_goals' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold">
-        View My Goals
+      <a href="{% url 'authentication:team' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold inline-flex items-center">
+        Manage Team
       </a>
     {% endif %}
   </div>
@@ -180,8 +180,8 @@
       {% if goals %}
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {% for goal in goals %}
-          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %}" 
-               onclick="openGoalModal({{ goal.id }})" {% if goal.is_completed %}style="cursor: not-allowed !important;"{% endif %}>
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %} goal-card" 
+               data-goal-id="{{ goal.id }}">
             <!-- Goal Title -->
             <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
             
@@ -314,6 +314,14 @@
 // Calculate and display progress on page load
 document.addEventListener('DOMContentLoaded', function() {
   calculateProgress();
+  // Enable card click to open modal (skip completed cards)
+  document.querySelectorAll('.goal-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      if (card.classList.contains('opacity-60')) return;
+      var gid = card.getAttribute('data-goal-id');
+      if (gid) openGoalModal(gid);
+    });
+  });
 });
 
 function calculateProgress() {
@@ -324,7 +332,7 @@ function calculateProgress() {
   if (!progressBar || !progressText || !progressStats) return;
   
   // Count total and completed goals from the cards
-  const goalCards = document.querySelectorAll('[onclick^="openGoalModal"]');
+  const goalCards = document.querySelectorAll('.goal-card');
   const totalGoals = goalCards.length;
   let completedGoals = 0;
   

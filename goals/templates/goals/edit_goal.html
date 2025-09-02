@@ -1,5 +1,6 @@
 {% extends "goals/base.html" %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="pt-4 px-10 pb-10 text-white">
@@ -46,13 +47,13 @@
       <!-- Goal Title -->
       <div class="mb-6">
         <label for="id_title" class="block text-white font-semibold mb-2">Goal Title</label>
-        {{ form.title }}
+        {{ form.title|attr:"required:required" }}
       </div>
       
       <!-- Goal Description -->
       <div class="mb-6">
         <label for="id_description" class="block text-white font-semibold mb-2">Goal Description</label>
-        {{ form.description }}
+        {{ form.description|attr:"required:required" }}
       </div>
       
       <!-- Action Plans For Improvement -->

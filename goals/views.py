@@ -5,6 +5,7 @@ from .models import Goal
 from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse
 import json # Import json
+import os
 from django.contrib.auth.decorators import login_required
 from .forms import GoalForm, GoalFormSetForm
 from django.shortcuts import render, get_object_or_404
@@ -166,19 +167,27 @@ def add_goals(request, employee_id):
                         goal = form.save(commit=False)
                         goal.assigned_to = employee
                         goal.created_by = user_profile
-
                         goal.save()
                         created_goals.append(goal)
-            if created_goals:
-                    send_mail(
-                        subject="New Goal(s) Created. Check out.",
-                        message=f"{len(created_goals)} new goal(s) have been created for {employee.user.get_full_name()}.",
-                        from_email="firehousemovers@outlook.com",   # dummy sender
-                        recipient_list=["employee@firehousemovers.com"], # dummy recipient
-                        fail_silently=False,
-                    )
-            messages.success(request, f"Goals added successfully for {employee}.")
-            return redirect('goals:goal_management')
+                # Send email notification
+                if created_goals:
+                    try:
+                        default_email = os.getenv("DEFAULT_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL)
+                        recipient_email = getattr(employee.user, "email", None) or default_email
+                        send_mail(
+                            subject="New Goal(s) Created. Check out.",
+                            message=f"{len(created_goals)} new goal(s) have been created for {employee.user.get_full_name()}.",
+                            from_email=default_email,
+                            recipient_list=[recipient_email],
+                            fail_silently=True,  # This prevents email errors from blocking form submission
+                        )
+                        print(f"Email notification sent successfully to {recipient_email}")
+                    except Exception as e:
+                        # Log the error but don't let it prevent goal creation
+                        print(f"Email sending failed: {e}")
+                        pass
+                messages.success(request, f"Goals added successfully for {employee}.")
+                return redirect('goals:goal_management')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
@@ -233,7 +242,7 @@ def view_goals(request, employee_id):
         goal_completion_percentage = round((completed_goals_for_employee / total_goals_for_employee) * 100)
 
     # Determine if progress bar should be shown instead of charts/Calendly
-    show_progress_bar = not (user_profile.is_senior_management or user_profile.role == "admin")
+    show_progress_bar = not (user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager)
 
     context = {
         'employee': employee,
@@ -337,6 +346,9 @@ def my_goals(request):
 
     goals = goals.order_by('is_completed', '-created_at') # Order by completion status then creation date
 
+    # Managers should see the progress bar in this view
+    show_progress_bar = user_profile.is_manager
+
     context = {
         'employee': employee,
         'goals': goals,
@@ -347,10 +359,21 @@ def my_goals(request):
         'total_goals': all_goals_for_employee.count(),
         'completed_goals': all_goals_for_employee.filter(is_completed=True).count(),
         'goal_completion_percentage': 0, # Placeholder
+        'show_progress_bar': show_progress_bar,
     }
     total_goals = context['total_goals']
     if total_goals > 0:
         context['goal_completion_percentage'] = round((context['completed_goals'] / total_goals) * 100)
+
+    # Provide chart values if charts are being shown in this view
+    if not show_progress_bar:
+        context.update({
+            'chart_total': all_goals_for_employee.count(),
+            'chart_completion_completed': all_goals_for_employee.filter(is_completed=True).count(),
+            'chart_completion_pending': all_goals_for_employee.filter(is_completed=False).count(),
+            'chart_type_short': all_goals_for_employee.filter(goal_type='short_term').count(),
+            'chart_type_long': all_goals_for_employee.filter(goal_type='long_term').count(),
+        })
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         fragment = request.GET.get('fragment')
@@ -390,16 +413,17 @@ def remove_goal(request, goal_id):
 @login_required
 @require_POST
 def send_schedule_email(request):
-    if request.method == "POST":
-        try:
-            send_mail(
-                subject="New Meeting Scheduled",
-                message="A user clicked Schedule Meeting on the website.",
-                from_email="firehousemovers@outlook.com",
-                recipient_list= ["employee@firehousemovers.com"],# change this
-                fail_silently=False,
-            )
-            return JsonResponse({"status": "success"})
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)})
-    return JsonResponse({"status": "invalid request"})
+    try:
+        default_email = os.getenv("DEFAULT_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL)
+        recipient_email = getattr(request.user, "email", None) or default_email
+        send_mail(
+            subject="New Meeting Scheduled",
+            message="A user clicked Schedule Meeting on the website.",
+            from_email=default_email,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)})
+

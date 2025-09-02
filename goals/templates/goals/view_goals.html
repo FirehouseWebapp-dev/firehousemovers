@@ -54,26 +54,9 @@
         goals.
       </p>
       <div class="w-full h-4 bg-gray-600 rounded mt-2">
-        <div
-          class="h-4 bg-red-500 rounded"
-          style="width: {{ goal_completion_percentage }}%"
-        ></div>
+        <div id="progress-bar" class="h-4 bg-red-500 rounded" data-progress="{{ goal_completion_percentage }}" style="width: 0%"></div>
       </div>
     </div>
-    {% elif user.userprofile.id == employee.id and user.userprofile.is_manager %}
-    <!-- Progress Bar for Managers viewing their own goals -->
-    {% if goals %}
-    <div class="bg-[#1a1a1a] rounded-lg p-6 mb-6">
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-semibold text-white">Goal Progress</h3>
-        <span class="text-sm text-gray-400" id="progress-text">{{ goal_completion_percentage }}%</span>
-      </div>
-      <div class="w-full h-4 bg-gray-600 rounded-full">
-        <div id="progress-bar" class="h-4 bg-red-500 rounded-full transition-all duration-300" style="width: {{ goal_completion_percentage }}%"></div>
-      </div>
-      <div class="mt-2 text-sm text-gray-400" id="progress-stats">{{ completed_goals }} of {{ total_goals }} goals completed</div>
-    </div>
-    {% endif %}
     {% else %}
     <!-- Donut charts row (no cards) -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-start">
@@ -135,8 +118,8 @@
       {% if goals %}
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {% for goal in goals %}
-          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %}" 
-               onclick="openGoalModal({{ goal.id }})" {% if goal.is_completed %}style="cursor: not-allowed !important;"{% endif %}>
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %} goal-card" 
+               data-goal-id="{{ goal.id }}">
             <!-- Goal Title -->
             <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
             
@@ -506,5 +489,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
   {% endif %}
+ 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Apply progress width if present
+  var bar = document.getElementById('progress-bar');
+  if (bar && bar.dataset.progress) {
+    bar.style.width = bar.dataset.progress + '%';
+  }
+
+  // Card click handler (avoid inline onclick)
+  document.querySelectorAll('.goal-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      if (card.classList.contains('opacity-60')) return;
+      var gid = card.getAttribute('data-goal-id');
+      if (gid) openGoalModal(gid);
+    });
+  });
+});
+</script>
   
 {% endblock %}

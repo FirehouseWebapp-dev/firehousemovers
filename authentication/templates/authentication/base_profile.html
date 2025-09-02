@@ -10,6 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="{% static 'goals/css/goals.css' %}">
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
@@ -36,18 +37,19 @@
               <i class="fas fa-building mr-2"></i> Department
             </a>
         {% endif %}
-        <a href="{% url 'goals:goal_management' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
-          <i class="fas fa-bullseye mr-2"></i> 
+        <a href="{% url 'goals:goal_management' %}" class="flex items-center w-full py-2 px-3 rounded hover:bg-red-500 {% if 'goals' in request.path %}bg-red-500{% endif %}">
           {% if request.user.userprofile.is_senior_management or request.user.userprofile.is_manager %}
+          <img src="{% static 'goals/img/goal_management_logo.svg' %}" alt="Goals Management" class="goals-logo goals-logo-invert" /> 
             Goals Management
           {% else %}
+          <img src="{% static 'goals/img/goal_logo.svg' %}" alt="My Goals" class="goals-logo goals-logo-invert" /> 
             My Goals
           {% endif %}
         </a>
         
         {% if request.user.userprofile.is_manager %}
-        <a href="{% url 'goals:my_goals' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'my_goals' %}bg-red-500{% endif %}">
-          <i class="fas fa-target mr-2"></i> My Goals
+        <a href="{% url 'goals:my_goals' %}" class="flex items-center w-full py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'my_goals' %}bg-red-500{% endif %}">
+          <img src="{% static 'goals/img/goal_logo.svg' %}" alt="My Goals" class="goals-logo goals-logo-invert" /> My Goals
         </a>
         {% endif %}
       </nav>
