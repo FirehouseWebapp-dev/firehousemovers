@@ -24,6 +24,7 @@ class Goal(models.Model):
 
     def save(self, *args, **kwargs):
         # call full_clean() so clean() always runs
+        self.full_clean()
 
         # completion timestamp logic
         if self.is_completed and self.completed_at is None:

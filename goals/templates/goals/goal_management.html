@@ -1,5 +1,6 @@
 {% extends "goals/base.html" %}
 {% load static %}
+{% load goals_tags %}
 
 {% block content %}
 <div class="pt-4 px-10 pb-10 text-white">
@@ -31,7 +32,7 @@
       {% endfor %}
     </select>
     
-    {% if user.userprofile.is_senior_management %}
+    {% if role.is_senior_management %}
     <label for="scope" class="text-white font-semibold ml-4">Scope:</label>
     <select id="scope" name="scope" class="bg-gray-700 border border-gray-600 rounded-md text-white py-2 px-3 focus:outline-none focus:border-red-500">
       <option value="all" {% if scope == 'all' %}selected{% endif %}>All Employees</option>
@@ -51,13 +52,13 @@
       <!-- Goal Count Badge -->
       <div class="absolute top-3 right-3">
         <span class="bg-red-500 text-white text-xs px-3 py-1 rounded-full">
-          {{ employee.goal_count|default:0 }}/10 Goals
+          {{ employee.goal_count_summary }}
         </span>
       </div>
 
       <!-- Employee Name -->
       <h2 class="text-2xl font-bold text-red-500 mb-2 truncate">
-        {{ employee.user.get_full_name|default:employee.user.username|title }}
+        {{ employee.display_name }}
       </h2>
 
       <!-- Employee Role -->
@@ -79,7 +80,7 @@
           View Goals
         </a>
 
-        {% if employee.goal_count|default:0 < 10 %}
+        {% if employee.can_add_more_goals %}
         <a href="{% url 'goals:add_goals' employee.id %}" 
            class="flex-1 bg-red-500 hover:bg-red-700 px-3 py-1.5 rounded text-white text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +103,7 @@
       {% if employee.has_goals %}
       <div class="mt-3 text-center">
         <span class="text-green-400 text-sm">
-          ✓ Has {{ employee.goal_count|default:0 }} goal{{ employee.goal_count|pluralize }}
+          {{ employee.goal_status_indicator }}
         </span>
       </div>
       {% else %}
@@ -119,19 +120,13 @@
   {% else %}
   <div class="text-center py-12">
     <div class="text-gray-400 text-lg mb-4">
-      {% if user.userprofile.is_manager and not has_team_members %}
-        You have no team members assigned to you. Please add some.
-      {% elif user.userprofile.is_senior_management %}
-        No employees with goals found. Add some team members or assign goals.
-      {% else %}
-        No goals assigned to you yet.
-      {% endif %}
+      {{ empty_state_message }}
     </div>
-    {% if can_add_goals and not user.userprofile.is_manager %}
+    {% if can_add_goals and not role.is_manager %}
       <a href="{% url 'authentication:team' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold">
         Manage Team
       </a>
-    {% elif can_add_goals and user.userprofile.is_manager %}
+    {% elif can_add_goals and role.is_manager %}
       <a href="{% url 'authentication:team' %}" class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold inline-flex items-center">
         Manage Team
       </a>
@@ -147,7 +142,7 @@
       <form method="get" class="flex gap-6 mb-6 items-center" id="filterFormMyGoals">
         <div class="flex items-center gap-2">
           <span class="text-white text-sm">Goal Type:</span>
-          <select name="goal_type" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterFormMyGoals').submit();">
+          <select name="goal_type" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" id="goalTypeSelectMyGoals">
             <option value="all" {% if goal_type_filter == 'all' or not goal_type_filter %}selected{% endif %}>All Goals</option>
             <option value="short_term" {% if goal_type_filter == 'short_term' %}selected{% endif %}>Short-Term</option>
             <option value="long_term" {% if goal_type_filter == 'long_term' %}selected{% endif %}>Long-Term</option>
@@ -156,7 +151,7 @@
 
         <div class="flex items-center gap-2">
           <span class="text-white text-sm">Goal Status:</span>
-          <select name="filter" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterFormMyGoals').submit();">
+          <select name="filter" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" id="filterSelectMyGoals">
             <option value="all" {% if filter_type == 'all' or not filter_type %}selected{% endif %}>All Status</option>
             <option value="incomplete" {% if filter_type == 'incomplete' %}selected{% endif %}>Pending</option>
             <option value="completed" {% if filter_type == 'completed' %}selected{% endif %}>Completed</option>
@@ -180,8 +175,8 @@
       {% if goals %}
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {% for goal in goals %}
-          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %} goal-card" 
-               data-goal-id="{{ goal.id }}">
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition cursor-pointer goal-card" 
+               data-goal-id="{{ goal.id }}" data-is-completed="{{ goal.is_completed|yesno:'true,false' }}">
             <!-- Goal Title -->
             <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
             
@@ -223,7 +218,7 @@
               "notes": "{{ goal.notes|default_if_none:""|escapejs }}",
               "goal_type": "{{ goal.get_goal_type_display }}",
               "is_completed": {{ goal.is_completed|yesno:"true,false" }},
-              "created_by": "{{ goal.created_by.user.get_full_name|default:goal.created_by.user.username|escapejs }}",
+              "created_by": "{{ goal.created_by|profile_display_name|escapejs }}",
               "created_at": "{{ goal.created_at|date:"M d, Y" }}",
               "updated_at": "{{ goal.updated_at|date:"M d, Y" }}",
               "due_date": "{% if goal.due_date %}{{ goal.due_date|date:"M d, Y" }}{% endif %}",
@@ -303,145 +298,13 @@
     
     <!-- Modal Footer -->
     <div class="flex justify-end p-6 border-t border-gray-600">
-      <button onclick="closeGoalModal()" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
+      <button id="closeGoalModalBtnMyGoals" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
         Close
       </button>
     </div>
   </div>
 </div>
 
-<script>
-// Calculate and display progress on page load
-document.addEventListener('DOMContentLoaded', function() {
-  calculateProgress();
-  // Enable card click to open modal (skip completed cards)
-  document.querySelectorAll('.goal-card').forEach(function(card) {
-    card.addEventListener('click', function() {
-      if (card.classList.contains('opacity-60')) return;
-      var gid = card.getAttribute('data-goal-id');
-      if (gid) openGoalModal(gid);
-    });
-  });
-});
-
-function calculateProgress() {
-  const progressBar = document.getElementById('progress-bar');
-  const progressText = document.getElementById('progress-text');
-  const progressStats = document.getElementById('progress-stats');
-  
-  if (!progressBar || !progressText || !progressStats) return;
-  
-  // Count total and completed goals from the cards
-  const goalCards = document.querySelectorAll('.goal-card');
-  const totalGoals = goalCards.length;
-  let completedGoals = 0;
-  
-  goalCards.forEach(card => {
-    if (card.classList.contains('opacity-60')) {
-      completedGoals++;
-    }
-  });
-  
-  // Calculate percentage
-  const percentage = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
-  
-  // Update progress bar
-  progressBar.style.width = percentage + '%';
-  
-  // Update text
-  progressText.textContent = percentage + '%';
-  progressStats.textContent = `${completedGoals} of ${totalGoals} goals completed`;
-}
-
-function openGoalModal(goalId) {
-  const goalData = JSON.parse(document.getElementById(`goal-data-${goalId}`).textContent);
-  const modal = document.getElementById('goalModal');
-  
-  // Helper function to capitalize first letter
-  function capitalizeFirstLetter(str) {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  // Helper function to convert to title case
-  function toTitleCase(str) {
-    if (!str) return str;
-    return str.replace(/\w\S*/g, (txt) => 
-      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-    );
-  }
-
-  // Populate modal content
-  document.getElementById('modalTitle').textContent = capitalizeFirstLetter(goalData.title);
-  document.getElementById('modalGoalType').textContent = goalData.goal_type;
-  document.getElementById('modalDescription').textContent = capitalizeFirstLetter(goalData.description) || 'No description provided.';
-  document.getElementById('modalCreatedBy').textContent = toTitleCase(goalData.created_by);
-  document.getElementById('modalCreatedAt').textContent = goalData.created_at;
-  document.getElementById('modalUpdatedAt').textContent = goalData.updated_at;
-  
-  // Status badge
-  const statusElement = document.getElementById('modalStatus');
-  if (goalData.is_completed) {
-    statusElement.textContent = 'Completed';
-    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-600 text-white';
-  } else {
-    statusElement.textContent = 'Pending';
-    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-yellow-600 text-white';
-  }
-  
-  // Notes section
-  const notesSection = document.getElementById('modalNotesSection');
-  const notesElement = document.getElementById('modalNotes');
-  if (goalData.notes && goalData.notes.trim()) {
-    notesElement.textContent = capitalizeFirstLetter(goalData.notes);
-  } else {
-    notesElement.textContent = 'None';
-  }
-  
-  // Due date
-  const dueDateSection = document.getElementById('modalDueDateSection');
-  const dueDateElement = document.getElementById('modalDueDate');
-  if (goalData.due_date) {
-    dueDateElement.textContent = goalData.due_date;
-    dueDateSection.style.display = 'block';
-  } else {
-    dueDateElement.textContent = 'No due date set';
-    dueDateSection.style.display = 'block';
-  }
-  
-  // Completed date
-  const completedSection = document.getElementById('modalCompletedSection');
-  const completedElement = document.getElementById('modalCompletedAt');
-  if (goalData.is_completed && goalData.completed_at) {
-    completedElement.textContent = goalData.completed_at;
-    completedSection.classList.remove('hidden');
-  } else {
-    completedSection.classList.add('hidden');
-  }
-  
-  // Show modal
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeGoalModal() {
-  const modal = document.getElementById('goalModal');
-  modal.classList.add('hidden');
-  document.body.style.overflow = 'auto';
-}
-
-// Close modal when clicking outside
-document.getElementById('goalModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeGoalModal();
-  }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeGoalModal();
-  }
-});
-</script>
+<script src="{% static 'goals/js/goals_shared.js' %}" defer></script>
+<script src="{% static 'goals/js/goal_management.js' %}" defer></script>
 {% endblock %}

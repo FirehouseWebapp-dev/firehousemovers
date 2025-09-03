@@ -8,16 +8,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentGoalCountSpan = document.getElementById('current-goal-count');
     const emptyFormDiv = document.getElementById('empty-form'); // hidden template
 
-    // Initialize formIdx based on the total forms reported by Django management form
-    let formIdx = parseInt(totalForms.value);
+    // Early exit if critical elements are missing
+    if (!formContainer || !addAnotherGoalBtn || !totalForms || !currentGoalCountSpan || !emptyFormDiv) {
+        // Critical DOM elements not found - cannot initialize dynamic forms
+        return;
+    }
+
     // Get the initial count of existing goals from the Django template
     let existingGoalsCount = parseInt(currentGoalCountSpan.textContent);
-    let newGoalsCount = formContainer.querySelectorAll('.goal-form-card').length; // This will track all new goals forms on the page, including the default empty one
     let formToRemove = null;
+    // Get current form count from DOM (single source of truth)
+    function getCurrentFormCount() {
+        const allCards = formContainer.querySelectorAll('.goal-form-card');
+        const visibleCards = Array.from(allCards).filter(card => card.style.display !== 'none');
+        return visibleCards.length;
+    }
+
     // Update displayed goal count and disable add button if max reached
     function updateDisplayedGoalCount() {
-        // Total count is existing goals from DB + newly added forms
-        const totalCount = existingGoalsCount + newGoalsCount;
+        const currentForms = getCurrentFormCount();
+        const totalCount = existingGoalsCount + currentForms;
         currentGoalCountSpan.textContent = totalCount;
 
         if (totalCount >= 10) {
@@ -31,9 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Update form indices for Django
+    // Update form indices for Django (single source of truth)
     function updateFormIndices() {
-        // Only consider visible (not deleted) forms for re-indexing
         const visibleForms = Array.from(formContainer.querySelectorAll('.goal-form-card')).filter(card => card.style.display !== 'none');
         visibleForms.forEach((card, index) => {
             card.querySelectorAll('input, select, textarea, input[type="hidden"]').forEach(element => {
@@ -44,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (label.htmlFor) label.htmlFor = label.htmlFor.replace(/form-\d+/, `form-${index}`);
             });
         });
-        // Update TOTAL_FORMS to reflect the number of currently visible forms
+        // Update TOTAL_FORMS to reflect the number of currently visible forms (single source of truth)
         totalForms.value = visibleForms.length;
     }
 
@@ -87,20 +96,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //  Add another goal
     addAnotherGoalBtn.addEventListener('click', function() {
-        // Check against the sum of existing and newly added goals
-        if (existingGoalsCount + newGoalsCount >= 10) {
+        // Check against the sum of existing and current forms
+        const currentForms = getCurrentFormCount();
+        if (existingGoalsCount + currentForms >= 10) {
+            // Show user-friendly error message
             alert('You can only have a maximum of 10 goals.');
             return;
         }
 
-        const newFormHtml = emptyFormDiv.innerHTML.replace(/__prefix__/g, formIdx);
+        // Use current form count as the next index (single source of truth)
+        const nextFormIndex = currentForms;
+        const newFormHtml = emptyFormDiv.innerHTML.replace(/__prefix__/g, nextFormIndex);
         formContainer.insertAdjacentHTML('beforeend', newFormHtml);
         
-        // Update the total forms count for Django
-        totalForms.value = parseInt(totalForms.value) + 1;
-
-        formIdx++; // Increment formIdx for the next new form
-        newGoalsCount++; // Only increment newGoalsCount for forms added via button
+        // Update indices and counts - DOM is now the single source of truth
         updateFormIndices();
         updateDisplayedGoalCount();
     });
@@ -127,15 +136,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // If there's no ID input or it's empty, it's a newly added form
             if (!idInput || !idInput.value) {
                 formToRemove.remove();
-                newGoalsCount--; // Decrement new goal count
-                formIdx--; // Also decrement formIdx if a new form is removed
-            } else { // This case should ideally not happen on this page if existing goals are not rendered
-                // However, for robustness, if an existing goal form were to be here and removed
-                // we would mark it for deletion and decrement existingGoalsCount.
+            } else {
+                // Existing goal form - mark for deletion
                 deleteInput.value = "on";
                 formToRemove.style.display = "none";
-                // existingGoalsCount--; // This would be done if we were displaying existing goals.
             }
+            
+            // Update everything - DOM count is single source of truth
             updateFormIndices();
             updateDisplayedGoalCount();
             removeGoalModal.classList.add('hidden');
@@ -169,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!hasValidForm) {
             e.preventDefault();
+            // Show validation error to user
             alert('Please fill in at least one goal with both title and description.');
             return false;
         }

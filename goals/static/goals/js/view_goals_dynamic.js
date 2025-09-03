@@ -1,12 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle filter form submissions (from view_goals.js)
+    var goalTypeSelect = document.getElementById('goalTypeSelect');
+    var completionStatusSelect = document.getElementById('completionStatusSelect');
+    var filterForm = document.getElementById('filterForm');
+    var closeGoalModalBtn = document.getElementById('closeGoalModalBtn');
+
+    if (goalTypeSelect && filterForm) {
+        goalTypeSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+
+    if (completionStatusSelect && filterForm) {
+        completionStatusSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+
+    // Handle close modal button click (from view_goals.js)
+    if (closeGoalModalBtn && window.GoalsUI && window.GoalsUI.closeGoalModal) {
+        closeGoalModalBtn.addEventListener('click', function() {
+            window.GoalsUI.closeGoalModal();
+        });
+    }
+
+    // Original dynamic functionality
     const goalTypeFilter = document.getElementById('goal-type-filter');
     const completionFilter = document.getElementById('completion-filter');
     const employeeId = goalTypeFilter ? goalTypeFilter.dataset.employeeId : (completionFilter ? completionFilter.dataset.employeeId : null);
 
     // Function to bind checkbox events
     function bindCompletionCheckboxes() {
-        const csrfTokenInput = document.getElementById('csrf-token');
-        const csrfToken = csrfTokenInput ? csrfTokenInput.value : getCookie("csrftoken");
+        const csrfToken = window.GoalsUI && window.GoalsUI.getCSRFToken ? window.GoalsUI.getCSRFToken() : getCSRFToken();
 
         document.querySelectorAll(".goal-completion-checkbox").forEach(checkbox => {
             // Disable checkboxes for already completed goals and hide edit/delete buttons
@@ -80,8 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Separate function to handle the actual completion processing
     function processGoalCompletion(goalId, isCompleted, goalCard, checkbox) {
-        const csrfTokenInput = document.getElementById('csrf-token');
-        const csrfToken = csrfTokenInput ? csrfTokenInput.value : getCookie("csrftoken");
+        const csrfToken = window.GoalsUI && window.GoalsUI.getCSRFToken ? window.GoalsUI.getCSRFToken() : getCSRFToken();
         
         // Remove line-through immediately when checkbox is clicked
         goalCard.classList.remove("line-through");
@@ -109,26 +133,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                      goalCard.querySelector('a[href*="/edit/"]');
                     const deleteButton = goalCard.querySelector('.delete-goal-btn');
                     
-                    console.log('Goal completed - hiding buttons for goal:', goalId);
-                    console.log('Edit button found:', editButton);
-                    console.log('Delete button found:', deleteButton);
+                    // Hide edit/delete buttons for completed goals
                     
                     if (editButton) {
                         editButton.classList.add('hidden'); // Add hidden class
                         editButton.style.display = 'none'; // Ensure it's hidden
                         editButton.style.visibility = 'hidden'; // Additional hiding
-                        console.log('Edit button hidden');
-                    } else {
-                        console.warn('Edit button not found for goal:', goalId);
                     }
                     
                     if (deleteButton) {
                         deleteButton.classList.add('hidden'); // Add hidden class
                         deleteButton.style.display = 'none'; // Ensure it's hidden
                         deleteButton.style.visibility = 'hidden'; // Additional hiding
-                        console.log('Delete button hidden');
-                    } else {
-                        console.warn('Delete button not found for goal:', goalId);
                     }
                     // Disable the checkbox so it cannot be unchecked
                     checkbox.disabled = true;
@@ -142,14 +158,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(res => res.json())
                     .then(counts => { try { window.GoalsCharts && window.GoalsCharts.updateAll(counts); } catch(e){} });
             } else {
-                alert("Error updating goal completion: " + data.error);
+                // Show user-friendly error message
+                const errorMsg = data.error || "Unknown error occurred";
+                // Could use a toast notification system here instead
+                alert("Error updating goal completion: " + errorMsg);
                 checkbox.checked = !isCompleted; // revert
                 // Keep line-through removed even if server update fails
                 goalCard.classList.remove("line-through");
             }
         })
         .catch(err => {
-            console.error("Error:", err);
+            // Network or parsing error - log to browser console for debugging
             alert("An error occurred while updating goal completion.");
             checkbox.checked = !isCompleted;
             // Keep line-through removed even if there's an error
@@ -181,7 +200,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (goalTypeFilter) goalTypeFilter.addEventListener('change', updateListAjax);
     if (completionFilter) completionFilter.addEventListener('change', updateListAjax);
 
-    // CSRF helper
+    // CSRF helper - prioritizes meta tag over cookies
+    function getCSRFToken() {
+        // 1. Try meta tag first (preferred method)
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag && metaTag.content) {
+            return metaTag.content;
+        }
+        
+        // 2. Try hidden input as fallback
+        const inputTag = document.getElementById('csrf-token');
+        if (inputTag && inputTag.value) {
+            return inputTag.value;
+        }
+        
+        // 3. Finally try cookie (legacy fallback)
+        return getCookie('csrftoken');
+    }
+    
+    // Cookie helper (used as last resort)
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
@@ -207,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const titleEl = document.getElementById('modalGoalTitle');
   const descEl = document.getElementById('modalGoalDescription');
-  const notesEl = document.getElementById('modalGoalNotes');
+  const notesEl = document.getElementById('modalNotes');
   const createdByEl = document.getElementById('modalGoalCreatedBy');
   const createdAtEl = document.getElementById('modalGoalCreatedAt');
   const updatedAtEl = document.getElementById('modalGoalUpdatedAt');

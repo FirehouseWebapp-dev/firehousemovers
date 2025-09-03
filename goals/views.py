@@ -6,13 +6,27 @@ from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse
 import json # Import json
 import os
+import logging
 from django.contrib.auth.decorators import login_required
+
+# Configure logger for goals app
+logger = logging.getLogger(__name__)
+
+
 from .forms import GoalForm, GoalFormSetForm
 from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.forms import modelformset_factory
 from django.db import transaction
 from django.views.decorators.http import require_POST
+from .utils.permissions import (
+    role_checker, get_user_profile_safe, require_management, 
+    require_manager_or_above, ajax_require_management
+)
+from .utils.helpers import (
+    get_display_name, get_user_profile_display_name, get_goal_counts_summary, 
+    can_add_more_goals, get_goal_status_indicator, get_empty_state_message
+)
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Count, Q
@@ -22,14 +36,18 @@ GoalFormSet = modelformset_factory(Goal, form=GoalFormSetForm, extra=1, can_dele
 
 @login_required
 def goals_management(request):
-    user_profile = request.user.userprofile
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
+    
+    checker = role_checker(request.user)
 
-    # Base queryset - admins (by role) and senior management see all employees
-    if user_profile.is_senior_management or user_profile.role == "admin":
+    # Base queryset based on user role
+    if checker.is_admin_or_senior():
         scope = request.GET.get("scope", "all")
-        if scope == "team" and user_profile.is_senior_management:
+        if scope == "team" and checker.is_senior_management():
             # My Team: show users assigned to this senior manager's team, excluding admins and other senior managers
-            employees = UserProfile.objects.filter(
+            employees = UserProfile.objects.select_related('user', 'department', 'manager__user').filter(
                 manager=user_profile
             ).exclude(
                 role="admin"
@@ -38,45 +56,50 @@ def goals_management(request):
             )
         else:
             # All Employees: show everyone except other senior management and users with role 'admin'
-            # Use role check instead of is_admin boolean to avoid excluding managers who are staff
-            employees = UserProfile.objects.exclude(
+            employees = UserProfile.objects.select_related('user', 'department', 'manager__user').exclude(
                 is_senior_management=True
             ).exclude(
                 role="admin"
             )
 
-    elif user_profile.is_manager:
+    elif checker.is_manager():
         # Managers only see their direct reports - STRICTLY ENFORCED
-        employees = UserProfile.objects.filter(
+        employees = UserProfile.objects.select_related('user', 'department', 'manager__user').filter(
             manager=user_profile  # Only users who have this manager assigned
         )
 
     else:
         # Regular employees can only see themselves
-        employees = UserProfile.objects.filter(id=user_profile.id)
+        employees = UserProfile.objects.select_related('user', 'department', 'manager__user').filter(id=user_profile.id)
 
     # Apply role filter
     role_filter = request.GET.get("role", "all")
-    if role_filter != "all" and (user_profile.is_senior_management or user_profile.is_admin or user_profile.is_manager):
+    if role_filter != "all" and checker.is_management():
         employees = employees.filter(role=role_filter)
 
-    # Annotate goal counts and has_goals
-    # Only count active (non-completed) goals for the limit
-    employees = employees.annotate(
-        goal_count=Count('goals', filter=Q(goals__is_completed=False)),
-        total_goal_count=Count('goals')
+    # Optimize database queries and annotate goal counts
+    # Only count active (non-completed) goals for the limit and has_goals check
+    employees = employees.select_related('user', 'department', 'manager__user').annotate(
+        goal_count=Count('goals', filter=Q(goals__is_completed=False))
+        # total_goal_count=Count('goals')  # Removed - not used anywhere
     )
+    
+    # Add computed attributes using helper functions
     for e in employees:
-        e.has_goals = e.goal_count > 0
+        e.has_goals = e.goal_count > 0  # Based on active goals only
+        e.display_name = get_user_profile_display_name(e)
+        e.goal_count_summary = get_goal_counts_summary(e.goal_count)
+        e.can_add_more_goals = can_add_more_goals(e.goal_count)
+        e.goal_status_indicator = get_goal_status_indicator(e.goal_count)
 
     # Handle goals for view-only users
     filter_type = request.GET.get("filter", "all")
     goal_type_filter = request.GET.get("goal_type", "all")
-    scope = request.GET.get("scope", "all") if user_profile.is_senior_management else None
-    if user_profile.is_senior_management or user_profile.is_manager:
-        goals = Goal.objects.all()
+    scope = request.GET.get("scope", "all") if checker.is_senior_management() else None
+    if checker.is_manager_or_above():
+        goals = Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user').all()
     else:
-        goals = Goal.objects.filter(assigned_to=user_profile)
+        goals = Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user').filter(assigned_to=user_profile)
 
     if filter_type == "completed":
         goals = goals.filter(is_completed=True)
@@ -89,7 +112,7 @@ def goals_management(request):
 
     context = {
         'employees': employees,
-        'can_add_goals': user_profile.is_senior_management or user_profile.is_manager or user_profile.role == "admin",
+        'can_add_goals': checker.can_manage_goals(),
         'has_team_members': employees.exists() if user_profile.is_manager else True,
         'goals': goals,  
         'filter_type': filter_type,
@@ -97,6 +120,13 @@ def goals_management(request):
         'role_filter': role_filter,
         'scope': scope,
         'EMPLOYEE_CHOICES': UserProfile.EMPLOYEE_CHOICES,
+        # Clean context flags
+        'is_manager': checker.is_manager(),
+        'is_senior_manager': checker.is_senior_management(),
+        'is_admin': checker.is_admin(),
+        'is_management': checker.is_management(),
+        'current_user_display_name': get_user_profile_display_name(user_profile),
+        'empty_state_message': get_empty_state_message(checker, employees.exists() if user_profile.is_manager else True),
     }
 
     return render(request, 'goals/goal_management.html', context)
@@ -104,11 +134,14 @@ def goals_management(request):
 @login_required
 @require_POST
 def toggle_goal_completion(request, goal_id):
-    goal = get_object_or_404(Goal, id=goal_id)
-    user_profile = request.user.userprofile
+    goal = get_object_or_404(Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user'), id=goal_id)
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        return JsonResponse({'success': False, 'error': 'User profile not found.'}, status=403)
 
-    # Permission check: Only assigned user, manager, or senior management can toggle completion
-    if not (user_profile.is_senior_management or user_profile.is_manager or goal.assigned_to == user_profile):
+    # Permission check using new utility
+    checker = role_checker(request.user)
+    if not checker.can_toggle_goal_completion(goal):
         return JsonResponse({'success': False, 'error': 'You don\'t have permission to modify this goal.'}, status=403)
 
     try:
@@ -128,26 +161,21 @@ def toggle_goal_completion(request, goal_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 @login_required
+@require_management
 def add_goals(request, employee_id):
     """Add goals for a specific employee"""
-    user_profile = request.user.userprofile
-    employee = get_object_or_404(UserProfile, id=employee_id)
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
+    employee = get_object_or_404(UserProfile.objects.select_related('user', 'manager__user'), id=employee_id)
 
-    # Permission logic - STRICTLY ENFORCE WHO CAN ADD GOALS
-    if user_profile.role == "admin":
-        # Admins can add goals for everyone except other admins and senior management
+    # Permission check using new utility
+    checker = role_checker(request.user)
+    if not checker.can_add_goals_for(employee):
         if employee.role == "admin" or employee.is_senior_management:
-            raise PermissionDenied("Admins cannot add goals for other admins or senior management.")
-    elif user_profile.is_senior_management:
-        # Senior management can add goals for everyone except other admins and senior management
-        if employee.role == "admin" or employee.is_senior_management:
-            raise PermissionDenied("Senior management cannot add goals for other admins or senior management.")
-    elif user_profile.is_manager:
-        # STRICT: Managers can ONLY add goals for their DIRECT team members
-        if employee.manager != user_profile:
+            raise PermissionDenied("Cannot add goals for admins or senior management.")
+        else:
             raise PermissionDenied(f"You can only add goals for your direct team members. {employee.user.get_full_name()} is not your direct report.")
-    else:
-        raise PermissionDenied("Only managers, admins, and senior management can add goals.")
 
     # Check if employee already has 10 active goals
     existing_goals_count = Goal.objects.filter(assigned_to=employee, is_completed=False).count()
@@ -181,10 +209,10 @@ def add_goals(request, employee_id):
                             recipient_list=[recipient_email],
                             fail_silently=True,  # This prevents email errors from blocking form submission
                         )
-                        print(f"Email notification sent successfully to {recipient_email}")
+                        logger.info(f"Email notification sent successfully to {recipient_email}")
                     except Exception as e:
                         # Log the error but don't let it prevent goal creation
-                        print(f"Email sending failed: {e}")
+                        logger.error(f"Email sending failed: {e}")
                         pass
                 messages.success(request, f"Goals added successfully for {employee}.")
                 return redirect('goals:goal_management')
@@ -198,7 +226,11 @@ def add_goals(request, employee_id):
         'existing_goals_count': existing_goals_count,
         'remaining_goals': remaining_goals,
         'formset': formset,
-        
+        # Clean context flags  
+        'employee_display_name': get_user_profile_display_name(employee),
+        'current_user_display_name': get_user_profile_display_name(user_profile),
+        'is_manager': checker.is_manager(),
+        'is_senior_manager': checker.is_senior_management(),
     }
 
     return render(request, 'goals/add_goals.html', context)
@@ -207,15 +239,18 @@ def add_goals(request, employee_id):
 @login_required
 def view_goals(request, employee_id):
     """View goals for a specific employee"""
-    user_profile = request.user.userprofile
-    employee = get_object_or_404(UserProfile, id=employee_id)
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
+    employee = get_object_or_404(UserProfile.objects.select_related('user', 'manager__user'), id=employee_id)
 
     # Permission check: users can view their own goals, managers/senior management can view anyone's
-    if not (user_profile.is_senior_management or user_profile.is_manager) and user_profile.id != employee.id:
+    checker = role_checker(request.user)
+    if not checker.is_manager_or_above() and user_profile.id != employee.id:
         raise PermissionDenied("You can only view your own goals.")
 
     # Full set for charts (unfiltered)
-    all_goals_for_employee = Goal.objects.filter(assigned_to=employee)
+    all_goals_for_employee = Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user').filter(assigned_to=employee)
     # List view (filterable)
     goals = all_goals_for_employee
 
@@ -234,24 +269,40 @@ def view_goals(request, employee_id):
 
     goals = goals.order_by('is_completed', '-created_at') # Order by completion status then creation date
 
-    # Calculate progress bar data
-    total_goals_for_employee = all_goals_for_employee.count()
-    completed_goals_for_employee = all_goals_for_employee.filter(is_completed=True).count()
+    # Calculate all goal stats using aggregate (single query)
+    goal_stats = all_goals_for_employee.aggregate(
+        total_goals=Count('id'),
+        completed_goals=Count('id', filter=Q(is_completed=True)),
+        pending_goals=Count('id', filter=Q(is_completed=False)),
+        short_term_goals=Count('id', filter=Q(goal_type='short_term')),
+        long_term_goals=Count('id', filter=Q(goal_type='long_term'))
+    )
+    total_goals_for_employee = goal_stats['total_goals']
+    completed_goals_for_employee = goal_stats['completed_goals']
     goal_completion_percentage = 0
     if total_goals_for_employee > 0:
         goal_completion_percentage = round((completed_goals_for_employee / total_goals_for_employee) * 100)
 
     # Determine if progress bar should be shown instead of charts/Calendly
-    show_progress_bar = not (user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager)
+    show_progress_bar = not checker.is_management()
+
+    # Create a mock goal for permission checking (we need the assigned_to field)
+    mock_goal = type('MockGoal', (), {'assigned_to': employee})()
 
     context = {
         'employee': employee,
         'goals': goals,
-        'can_edit': user_profile.is_senior_management or user_profile.is_manager or user_profile.id == employee.id,
-        'can_delete_goal': user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager,
+        'can_edit': checker.can_edit_goal(mock_goal),
+        'can_delete_goal': checker.can_delete_goal(mock_goal),
         'selected_goal_type': selected_goal_type,
         'selected_completion_status': selected_completion_status,
         'show_progress_bar': show_progress_bar,
+        # Clean context flags
+        'employee_display_name': get_user_profile_display_name(employee),
+        'is_manager': checker.is_manager(),
+        'is_senior_manager': checker.is_senior_management(),
+        'is_self': user_profile.id == employee.id,
+        'current_user_display_name': get_user_profile_display_name(user_profile),
     }
 
     if show_progress_bar:
@@ -261,12 +312,13 @@ def view_goals(request, employee_id):
             'goal_completion_percentage': goal_completion_percentage,
         })
     else:
+        # Use already calculated stats from the single aggregate query
         context.update({
             'chart_total': total_goals_for_employee,
             'chart_completion_completed': completed_goals_for_employee,
-            'chart_completion_pending': all_goals_for_employee.filter(is_completed=False).count(),
-            'chart_type_short': all_goals_for_employee.filter(goal_type='short_term').count(),
-            'chart_type_long': all_goals_for_employee.filter(goal_type='long_term').count(),
+            'chart_completion_pending': goal_stats['pending_goals'],
+            'chart_type_short': goal_stats['short_term_goals'],
+            'chart_type_long': goal_stats['long_term_goals'],
         })
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -287,15 +339,19 @@ def view_goals(request, employee_id):
 @login_required
 def edit_goal(request, goal_id):
     """Edit a specific goal"""
-    user_profile = request.user.userprofile
-    goal = get_object_or_404(Goal, id=goal_id)
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
+    goal = get_object_or_404(Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user'), id=goal_id)
 
     if goal.is_completed: # New check for completed goals
         messages.error(request, "Completed goals cannot be edited.")
         return redirect('goals:view_goals', employee_id=goal.assigned_to.id)
 
-    if not (user_profile.is_senior_management or user_profile.is_manager):
-        raise PermissionDenied("You don't have permission to edit goals.")
+    # Permission check using new utility
+    checker = role_checker(request.user)
+    if not checker.can_edit_goal(goal):
+        raise PermissionDenied("You don't have permission to edit this goal.")
 
     if request.method == 'POST':
         form = GoalForm(request.POST, instance=goal)
@@ -316,18 +372,18 @@ def edit_goal(request, goal_id):
     return render(request, 'goals/edit_goal.html', context)
 
 @login_required
+@require_manager_or_above
 def my_goals(request):
     """View goals assigned to the current manager/admin/senior management"""
-    user_profile = request.user.userprofile
-
-    if not (user_profile.is_senior_management or user_profile.is_manager):
-        raise PermissionDenied("You don't have permission to view this page.")
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
 
     # This view is for the logged-in manager/admin/senior management to view their own goals
     employee = user_profile  # The employee whose goals are being viewed is the current user
 
     # Full set for charts (unfiltered)
-    all_goals_for_employee = Goal.objects.filter(assigned_to=employee)
+    all_goals_for_employee = Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user').filter(assigned_to=employee)
     # List view (filterable)
     goals = all_goals_for_employee
 
@@ -347,7 +403,22 @@ def my_goals(request):
     goals = goals.order_by('is_completed', '-created_at') # Order by completion status then creation date
 
     # Managers should see the progress bar in this view
-    show_progress_bar = user_profile.is_manager
+    checker = role_checker(request.user)
+    show_progress_bar = checker.is_manager()
+
+    # Get all goal stats in single aggregate query
+    goal_stats = all_goals_for_employee.aggregate(
+        total_goals=Count('id'),
+        completed_goals=Count('id', filter=Q(is_completed=True)),
+        pending_goals=Count('id', filter=Q(is_completed=False)),
+        short_term_goals=Count('id', filter=Q(goal_type='short_term')),
+        long_term_goals=Count('id', filter=Q(goal_type='long_term'))
+    )
+    total_goals = goal_stats['total_goals']
+    completed_goals = goal_stats['completed_goals']
+    goal_completion_percentage = 0
+    if total_goals > 0:
+        goal_completion_percentage = round((completed_goals / total_goals) * 100)
 
     context = {
         'employee': employee,
@@ -356,23 +427,26 @@ def my_goals(request):
         'can_delete_goal': False,
         'selected_goal_type': selected_goal_type,
         'selected_completion_status': selected_completion_status,
-        'total_goals': all_goals_for_employee.count(),
-        'completed_goals': all_goals_for_employee.filter(is_completed=True).count(),
-        'goal_completion_percentage': 0, # Placeholder
+        'total_goals': total_goals,
+        'completed_goals': completed_goals,
+        'goal_completion_percentage': goal_completion_percentage,
         'show_progress_bar': show_progress_bar,
+        # Clean context flags
+        'employee_display_name': get_user_profile_display_name(employee),
+        'current_user_display_name': get_user_profile_display_name(employee),  # Same as employee since it's my_goals
+        'is_manager': True,  # This view is only for managers
+        'is_self': True,     # Always viewing own goals
     }
-    total_goals = context['total_goals']
-    if total_goals > 0:
-        context['goal_completion_percentage'] = round((context['completed_goals'] / total_goals) * 100)
 
     # Provide chart values if charts are being shown in this view
     if not show_progress_bar:
+        # Use already calculated stats from the single aggregate query
         context.update({
-            'chart_total': all_goals_for_employee.count(),
-            'chart_completion_completed': all_goals_for_employee.filter(is_completed=True).count(),
-            'chart_completion_pending': all_goals_for_employee.filter(is_completed=False).count(),
-            'chart_type_short': all_goals_for_employee.filter(goal_type='short_term').count(),
-            'chart_type_long': all_goals_for_employee.filter(goal_type='long_term').count(),
+            'chart_total': total_goals,
+            'chart_completion_completed': completed_goals,
+            'chart_completion_pending': goal_stats['pending_goals'],
+            'chart_type_short': goal_stats['short_term_goals'],
+            'chart_type_long': goal_stats['long_term_goals'],
         })
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -392,15 +466,18 @@ def my_goals(request):
 @login_required
 def remove_goal(request, goal_id):
     """Remove a specific goal"""
-    goal = get_object_or_404(Goal, id=goal_id)
-    user_profile = request.user.userprofile
+    goal = get_object_or_404(Goal.objects.select_related('assigned_to__user', 'assigned_to__manager', 'created_by__user'), id=goal_id)
+    user_profile = get_user_profile_safe(request.user)
+    if not user_profile:
+        raise PermissionDenied("User profile not found for current user.")
 
     if goal.is_completed: # New check for completed goals
         messages.error(request, "Completed goals cannot be deleted.")
         return redirect('goals:view_goals', employee_id=goal.assigned_to.id)
 
-    # Only senior management, admins (by role), or managers can delete
-    if not (user_profile.is_senior_management or user_profile.role == "admin" or user_profile.is_manager):
+    # Permission check using new utility
+    checker = role_checker(request.user)
+    if not checker.can_delete_goal(goal):
         raise PermissionDenied("You don't have permission to remove this goal.")
 
     if request.method == 'POST':

@@ -1,3 +1,4 @@
+{% load goals_tags %}
 {% if goals %}
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     {% for goal in goals %}
@@ -34,7 +35,7 @@
       </div>
       <div class="mt-4 pt-4 border-t border-gray-600 text-xs text-gray-400 flex justify-between items-center">
         <div>
-          <div>Created by: {{ goal.created_by.user.get_full_name|default:goal.created_by.user.username }}</div>
+          <div>Created by: {{ goal.created_by|profile_display_name }}</div>
           <div>Created: {{ goal.created_at|date:"M d, Y" }}</div>
           {% if goal.updated_at != goal.created_at %}
             <div>Updated: {{ goal.updated_at|date:"M d, Y" }}</div>

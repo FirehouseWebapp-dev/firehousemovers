@@ -34,7 +34,7 @@
           <i class="fas fa-trophy mr-2"></i> Current Awards
         </a>
 
-        {% if request.user.is_superuser or request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" or request.user.userprofile.is_senior_management %}
+        {% if request.user.is_superuser or role.is_management %}
         <a href="{% url 'authentication:team' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/team/' %}bg-red-500{% endif %}">
           <i class="fas fa-users mr-2"></i> Team
         </a>
@@ -45,7 +45,7 @@
         </a>
 
         <a href="{% url 'goals:goal_management' %}" class="flex items-center w-full py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'goal_management' or request.resolver_match.url_name == 'view_goals' or request.resolver_match.url_name == 'add_goals' or request.resolver_match.url_name == 'edit_goal' %}bg-red-500{% endif %}">
-          {% if request.user.userprofile.is_senior_management or request.user.userprofile.is_manager %}
+          {% if role.is_manager_or_above %}
           <img src="{% static 'goals/img/goal_management_logo.svg' %}" alt="Goals Management" class="goals-logo goals-logo-invert" />
             Goals Management
           {% else %}
@@ -54,7 +54,7 @@
           {% endif %}
         </a>
         
-        {% if request.user.userprofile.is_manager %}
+        {% if role.is_manager %}
         <a href="{% url 'goals:my_goals' %}" class="flex items-center w-full py-2 px-3 rounded hover:bg-red-500 {% if request.resolver_match.url_name == 'my_goals' %}bg-red-500{% endif %}">
           <img src="{% static 'goals/img/goal_logo.svg' %}" alt="My Goals" class="goals-logo goals-logo-invert" /> My Goals
         </a>

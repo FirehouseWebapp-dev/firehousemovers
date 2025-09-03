@@ -1,5 +1,6 @@
 {% extends "goals/base.html" %}
 {% load static %}
+{% load goals_tags %}
 {% load widget_tweaks %}
 
 {% block content %}
@@ -31,7 +32,7 @@
       </a>
     </div>
   
-  <h1 class="text-3xl font-bold text-red-500 mb-2">Add Goals for {{ employee.user.get_full_name|default:employee.user.username|capfirst }}</h1>
+  <h1 class="text-3xl font-bold text-red-500 mb-2">Add Goals for {{ employee_display_name }}</h1>
   <p class="text-gray-400 mb-8">Current goals: <span id="current-goal-count" data-initial-count="{{ existing_goals_count }}">{{ existing_goals_count }}</span>/10</p>
 
   <form method="post" id="goalsForm" action="{% url 'goals:add_goals' employee.id %}">
@@ -109,29 +110,30 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
-    <div class="grid grid-cols-1 gap-6 mb-6">
-      <div>
-        <label for="{{ formset.empty_form.goal_type.id_for_label }}" class="block text-white font-semibold mb-2">Goal Type</label>
-        {{ formset.empty_form.goal_type }}
+      <div class="grid grid-cols-1 gap-6 mb-6">
+        <div>
+          <label for="{{ formset.empty_form.goal_type.id_for_label }}" class="block text-white font-semibold mb-2">Goal Type</label>
+          {{ formset.empty_form.goal_type }}
+        </div>
+        <div>
+          <label for="{{ formset.empty_form.title.id_for_label }}" class="block text-white font-semibold mb-2">Goal Title</label>
+          {{ formset.empty_form.title|attr:"required:required" }}
+        </div>
+        <div>
+          <label for="{{ formset.empty_form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
+          {{ formset.empty_form.description|attr:"required:required" }}
+        </div>
+        <div>
+          <label for="{{ formset.empty_form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
+          {{ formset.empty_form.notes }}
+        </div>
+        <div>
+          <label for="{{ formset.empty_form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
+          {{ formset.empty_form.due_date }}
+        </div>
+        {{ formset.empty_form.id }}
+        <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
       </div>
-      <div>
-        <label for="{{ formset.empty_form.title.id_for_label }}" class="block text-white font-semibold mb-2">Goal Title</label>
-        {{ formset.empty_form.title|attr:"required:required" }}
-      </div>
-      <div>
-        <label for="{{ formset.empty_form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
-        {{ formset.empty_form.description|attr:"required:required" }}
-      </div>
-      <div>
-        <label for="{{ formset.empty_form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
-        {{ formset.empty_form.notes }}
-      </div>
-      <div>
-        <label for="{{ formset.empty_form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
-        {{ formset.empty_form.due_date }}
-      </div>
-      {{ formset.empty_form.id }}
-      <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
     </div>
   </div>
 

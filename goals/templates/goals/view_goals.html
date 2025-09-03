@@ -1,5 +1,6 @@
 {% extends "goals/base.html" %}
 {% load static %}
+{% load goals_tags %}
 
 {% block content %}
 <div class="pt-4 px-10 pb-10 text-white">
@@ -33,7 +34,7 @@
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-3xl font-bold text-red-500 mb-2">
-          Goals for {{ employee.user.get_full_name|default:employee.user.username|capfirst }}
+          Goals for {{ employee_display_name }}
         </h1>
         <p class="text-gray-400">
           {{ goals.count }} goal{{ goals.count|pluralize }} assigned
@@ -54,7 +55,7 @@
         goals.
       </p>
       <div class="w-full h-4 bg-gray-600 rounded mt-2">
-        <div id="progress-bar" class="h-4 bg-red-500 rounded" data-progress="{{ goal_completion_percentage }}" style="width: 0%"></div>
+        <div id="progress-bar" class="h-4 bg-red-500 rounded" data-progress="{{ goal_completion_percentage }}" style="width: {{ goal_completion_percentage }}%"></div>
       </div>
     </div>
     {% else %}
@@ -91,7 +92,7 @@
     <form method="get" class="flex gap-6 mb-6 items-center" id="filterForm">
       <div class="flex items-center gap-2">
         <span class="text-white text-sm">Goal Type:</span>
-        <select name="goal_type" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterForm').submit();">
+        <select name="goal_type" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" id="goalTypeSelect">
           <option value="all" {% if selected_goal_type == 'all' or not selected_goal_type %}selected{% endif %}>All Goals</option>
           <option value="short_term" {% if selected_goal_type == 'short_term' %}selected{% endif %}>Short-Term</option>
           <option value="long_term" {% if selected_goal_type == 'long_term' %}selected{% endif %}>Long-Term</option>
@@ -100,7 +101,7 @@
 
       <div class="flex items-center gap-2">
         <span class="text-white text-sm">Goal Status:</span>
-        <select name="completion_status" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" onchange="document.getElementById('filterForm').submit();">
+        <select name="completion_status" class="px-4 py-2 bg-[#3a3a3a] border border-gray-600 rounded-md text-white focus:outline-none focus:border-red-500" id="completionStatusSelect">
           <option value="all" {% if selected_completion_status == 'all' or not selected_completion_status %}selected{% endif %}>All Status</option>
           <option value="pending" {% if selected_completion_status == 'pending' %}selected{% endif %}>Pending</option>
           <option value="completed" {% if selected_completion_status == 'completed' %}selected{% endif %}>Completed</option>
@@ -113,13 +114,13 @@
 
   <div id="goals-list-container">
     <!-- Check if user is viewing their own goals (my_goals view) -->
-    {% if user.userprofile.id == employee.id and user.userprofile.is_manager %}
+    {% if is_self and is_manager %}
       <!-- Simplified card layout for managers viewing their own goals -->
       {% if goals %}
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {% for goal in goals %}
-          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition {% if goal.is_completed %}cursor-not-allowed opacity-60{% else %}cursor-pointer{% endif %} goal-card" 
-               data-goal-id="{{ goal.id }}">
+          <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg hover:scale-[1.02] transition cursor-pointer goal-card" 
+               data-goal-id="{{ goal.id }}" data-is-completed="{{ goal.is_completed|yesno:'true,false' }}">
             <!-- Goal Title -->
             <h3 class="text-xl font-bold text-red-500 mb-4 line-clamp-2">{{ goal.title|title }}</h3>
             
@@ -161,7 +162,7 @@
               "notes": "{{ goal.notes|default_if_none:""|escapejs }}",
               "goal_type": "{{ goal.get_goal_type_display }}",
               "is_completed": {{ goal.is_completed|yesno:"true,false" }},
-              "created_by": "{{ goal.created_by.user.get_full_name|default:goal.created_by.user.username|escapejs }}",
+              "created_by": "{{ goal.created_by|profile_display_name|escapejs }}",
               "created_at": "{{ goal.created_at|date:"M d, Y" }}",
               "updated_at": "{{ goal.updated_at|date:"M d, Y" }}",
               "due_date": "{% if goal.due_date %}{{ goal.due_date|date:"M d, Y" }}{% endif %}",
@@ -206,51 +207,7 @@
   <input type="hidden" name="goal_id" id="deleteGoalId">
 </form>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
-  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-  const deleteGoalForm = document.getElementById('deleteGoalForm');
-  const deleteGoalIdInput = document.getElementById('deleteGoalId');
-  const goalsListContainer = document.getElementById('goals-list-container');
-
-  goalsListContainer.addEventListener('click', function(event) {
-    const deleteButton = event.target.closest('.delete-goal-btn');
-    console.log('Delete button clicked:', deleteButton);
-    if (deleteButton) {
-      const goalCard = deleteButton.closest('.goal-card-item'); // Find the parent goal card using the new class
-      console.log('Goal card found:', goalCard, 'Classes:', goalCard ? goalCard.classList : 'N/A');
-      if (goalCard && goalCard.classList.contains('opacity-60')) {
-        console.log('Goal is completed, not showing modal.');
-        return;
-      }
-      console.log('Goal is incomplete, proceeding to show modal.');
-      const goalId = deleteButton.dataset.goalId;
-      deleteGoalIdInput.value = goalId;
-      deleteGoalForm.action = `{% url 'goals:remove_goal' 0 %}`.replace('/0/', `/${goalId}/`);
-      console.log('Delete Goal ID:', goalId);
-      console.log('Delete Form Action:', deleteGoalForm.action);
-      console.log('Modal element before showing:', deleteConfirmationModal, 'Classes:', deleteConfirmationModal.classList);
-      deleteConfirmationModal.classList.remove('hidden');
-      console.log('Modal element after showing:', deleteConfirmationModal, 'Classes:', deleteConfirmationModal.classList);
-    }
-  });
-
-  if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener('click', function() {
-      deleteGoalForm.submit();
-    });
-  }
-
-  if (cancelDeleteBtn) {
-    cancelDeleteBtn.addEventListener('click', function() {
-      deleteConfirmationModal.classList.add('hidden');
-      deleteGoalIdInput.value = ''; // Clear the ID
-    });
-  }
-});
-</script>
+<script src="{% static 'goals/js/delete_goal.js' %}" defer></script>
 
 <!-- Goal Details Modal (for managers viewing their own goals) -->
 <div id="goalModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -310,203 +267,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     <!-- Modal Footer -->
     <div class="flex justify-end p-6 border-t border-gray-600">
-      <button onclick="closeGoalModal()" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
+      <button id="closeGoalModalBtn" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-white font-semibold transition-colors">
         Close
       </button>
     </div>
   </div>
 </div>
 
-<script>
-function openGoalModal(goalId) {
-  const goalData = JSON.parse(document.getElementById(`goal-data-${goalId}`).textContent);
-  const modal = document.getElementById('goalModal');
-  
-  // Helper function to capitalize first letter
-  function capitalizeFirstLetter(str) {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  // Helper function to convert to title case
-  function toTitleCase(str) {
-    if (!str) return str;
-    return str.replace(/\w\S*/g, (txt) => 
-      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-    );
-  }
-
-  // Populate modal content
-  document.getElementById('modalTitle').textContent = toTitleCase(goalData.title);
-  document.getElementById('modalGoalType').textContent = goalData.goal_type;
-  document.getElementById('modalDescription').textContent = capitalizeFirstLetter(goalData.description) || 'No description provided.';
-  document.getElementById('modalCreatedBy').textContent = toTitleCase(goalData.created_by);
-  document.getElementById('modalCreatedAt').textContent = goalData.created_at;
-  document.getElementById('modalUpdatedAt').textContent = goalData.updated_at;
-  
-  // Status badge
-  const statusElement = document.getElementById('modalStatus');
-  if (goalData.is_completed) {
-    statusElement.textContent = 'Completed';
-    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-600 text-white';
-  } else {
-    statusElement.textContent = 'Pending';
-    statusElement.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-yellow-600 text-white';
-  }
-  
-  // Notes section
-  const notesSection = document.getElementById('modalNotesSection');
-  const notesElement = document.getElementById('modalNotes');
-  if (goalData.notes && goalData.notes.trim()) {
-    notesElement.textContent = capitalizeFirstLetter(goalData.notes);
-  } else {
-    notesElement.textContent = 'None';
-  }
-  
-  // Due date
-  const dueDateSection = document.getElementById('modalDueDateSection');
-  const dueDateElement = document.getElementById('modalDueDate');
-  if (goalData.due_date) {
-    dueDateElement.textContent = goalData.due_date;
-    dueDateSection.style.display = 'block';
-  } else {
-    dueDateElement.textContent = 'No due date set';
-    dueDateSection.style.display = 'block';
-  }
-  
-  // Completed date
-  const completedSection = document.getElementById('modalCompletedSection');
-  const completedElement = document.getElementById('modalCompletedAt');
-  if (goalData.is_completed && goalData.completed_at) {
-    completedElement.textContent = goalData.completed_at;
-    completedSection.classList.remove('hidden');
-  } else {
-    completedSection.classList.add('hidden');
-  }
-  
-  // Show modal
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeGoalModal() {
-  const modal = document.getElementById('goalModal');
-  modal.classList.add('hidden');
-  document.body.style.overflow = 'auto';
-}
-
-// Close modal when clicking outside
-document.getElementById('goalModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeGoalModal();
-  }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeGoalModal();
-  }
-});
-</script>
+<!--JS FILES-->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 <script src="{% static 'goals/js/view_goals_dynamic.js' %}" defer></script>
   {% if not show_progress_bar %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof Chart === 'undefined') {
-    console.warn('Chart.js not loaded. Charts will not render.');
-    return;
-  }
-
-  function renderSingleDonut(canvasId, value, total, color, labelText) {
-    const el = document.getElementById(canvasId);
-    if (!el) return;
-    const count = parseInt(value || '0', 10);
-    let denom = parseInt(total || '0', 10);
-    if (!Number.isFinite(denom) || denom < 1) denom = 1; // ensure visible base ring
-    const remain = Math.max(denom - count, 0);
-
-    return new Chart(el, {
-      type: 'doughnut',
-      data: {
-        labels: [],
-        datasets: [{
-          data: [count, remain],
-          backgroundColor: [color, '#374151'],
-          borderWidth: 0,
-          cutout: '80%'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        }
-      }
-    });
-  }
-
-  const completedEl = document.getElementById('chartCompleted');
-  const pendingEl = document.getElementById('chartPending');
-  const shortEl = document.getElementById('chartShort');
-  const longEl = document.getElementById('chartLong');
-
-  const completedChart = renderSingleDonut('chartCompleted', completedEl?.dataset.value, completedEl?.dataset.total, '#22c55e', 'Completed');
-  const pendingChart = renderSingleDonut('chartPending', pendingEl?.dataset.value, pendingEl?.dataset.total, '#ef4444', 'Pending');
-  const shortChart = renderSingleDonut('chartShort', shortEl?.dataset.value, shortEl?.dataset.total, '#3b82f6', 'Short-Term');
-  const longChart = renderSingleDonut('chartLong', longEl?.dataset.value, longEl?.dataset.total, '#f59e0b', 'Long-Term');
-
-  // Expose simple runtime updater for completion charts
-  window.GoalsCharts = {
-    completed: completedChart,
-    pending: pendingChart,
-    short: shortChart,
-    long: longChart,
-    updateAll: function(counts) {
-      try {
-        const total = Math.max(parseInt(counts.total || '0', 10), 1);
-        const sets = [
-          { chart: this.completed, val: parseInt(counts.completed || '0', 10), color: '#22c55e' },
-          { chart: this.pending, val: parseInt(counts.pending || '0', 10), color: '#ef4444' },
-          { chart: this.short, val: parseInt(counts.short_term || '0', 10), color: '#3b82f6' },
-          { chart: this.long, val: parseInt(counts.long_term || '0', 10), color: '#f59e0b' },
-        ];
-        sets.forEach(s => {
-          if (!s.chart) return;
-          s.chart.data.datasets[0].data = [Math.max(0, s.val), Math.max(0, total - s.val)];
-          s.chart.update('none');
-        });
-      } catch (e) {
-        console.error('Error updating charts', e);
-      }
-    }
-  };
-});
-</script>
+<script src="{% static 'goals/js/goals_charts.js' %}" defer></script>
   {% endif %}
  
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Apply progress width if present
-  var bar = document.getElementById('progress-bar');
-  if (bar && bar.dataset.progress) {
-    bar.style.width = bar.dataset.progress + '%';
-  }
-
-  // Card click handler (avoid inline onclick)
-  document.querySelectorAll('.goal-card').forEach(function(card) {
-    card.addEventListener('click', function() {
-      if (card.classList.contains('opacity-60')) return;
-      var gid = card.getAttribute('data-goal-id');
-      if (gid) openGoalModal(gid);
-    });
-  });
-});
-</script>
+<script src="{% static 'goals/js/goals_shared.js' %}" defer></script>
   
 {% endblock %}

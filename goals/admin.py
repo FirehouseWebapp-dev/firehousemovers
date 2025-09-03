@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db.models import Q 
 from django.contrib.auth import get_user_model
+from .utils.permissions import role_checker, get_user_profile_safe
 
 User = get_user_model()
 
@@ -58,6 +59,19 @@ class GoalAdmin(admin.ModelAdmin):
         }),
     )
     
+    def _can_manage_goals(self, request):
+        """
+        Helper method to check if user can manage goals (add/change/delete).
+        Centralizes the permission logic to avoid duplication.
+        """
+        if request.user.is_superuser:
+            return True
+        if not request.user.is_authenticated:
+            return False
+        
+        checker = role_checker(request.user)
+        return checker.is_manager_or_above()
+    
     def has_module_permission(self, request):
         return request.user.is_authenticated
     
@@ -65,70 +79,56 @@ class GoalAdmin(admin.ModelAdmin):
         return request.user.is_authenticated
     
     def has_add_permission(self, request):
-        if request.user.is_superuser:
-            return True
-        if not request.user.is_authenticated:
-            return False
-        try:
-            user_profile = request.user.userprofile
-            return user_profile.is_senior_management or user_profile.is_manager
-        except UserProfile.DoesNotExist:
-            return False
+        return self._can_manage_goals(request)
     
     def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        if not request.user.is_authenticated:
-            return False
-        try:
-            user_profile = request.user.userprofile
-            return user_profile.is_senior_management or user_profile.is_manager
-        except UserProfile.DoesNotExist:
-            return False
+        return self._can_manage_goals(request)
     
     def has_delete_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        if not request.user.is_authenticated:
-            return False
-        try:
-            user_profile = request.user.userprofile
-            return user_profile.is_senior_management or user_profile.is_manager
-        except UserProfile.DoesNotExist:
-            return False
+        return self._can_manage_goals(request)
     
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        # Optimize queryset with select_related to prevent N+1 queries
+        qs = super().get_queryset(request).select_related(
+            'assigned_to__user', 
+            'assigned_to__manager', 
+            'created_by__user'
+        )
+        
         if request.user.is_superuser:
             return qs
         if not request.user.is_authenticated:
             return qs.none()
-        try:
-            user_profile = request.user.userprofile
-            if user_profile.is_senior_management or user_profile.is_manager:
-                return qs
-            else:
-                return qs.filter(assigned_to=user_profile)
-        except UserProfile.DoesNotExist:
+        
+        user_profile = get_user_profile_safe(request.user)
+        if not user_profile:
             return qs.none()
+            
+        checker = role_checker(request.user)
+        if checker.is_manager_or_above():
+            return qs
+        else:
+            # Regular employees only see their own goals
+            return qs.filter(assigned_to=user_profile)
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
-        Custom dropdown filters for admin site:
+        Custom dropdown filters for admin site with optimized queries:
         - assigned_to: exclude logged-in user
         - created_by: only managers / senior management (with team) + admins
         """
-        try:
-            current_profile = request.user.userprofile
-        except UserProfile.DoesNotExist:
-            current_profile = None
-        # For assigned_to → exclude logged-in user
-        if db_field.name == "assigned_to" and current_profile:
-            kwargs["queryset"] = UserProfile.objects.exclude(id=current_profile.id)
+        current_profile = get_user_profile_safe(request.user)
+        
+        # For assigned_to → exclude logged-in user and optimize with select_related
+        if db_field.name == "assigned_to":
+            queryset = UserProfile.objects.select_related('user', 'department')
+            if current_profile:
+                queryset = queryset.exclude(id=current_profile.id)
+            kwargs["queryset"] = queryset
 
         # For created_by → only managers with team OR senior management OR admins
         if db_field.name == "created_by":
-            kwargs["queryset"] = UserProfile.objects.filter(
+            kwargs["queryset"] = UserProfile.objects.select_related('user', 'department').filter(
                 Q(is_manager=True) |                    # All managers
                 Q(is_senior_management=True) |           # Senior management
                 Q(is_admin=True)                         # Admins
@@ -140,12 +140,9 @@ class GoalAdmin(admin.ModelAdmin):
         """
         Prevent assigning a goal to yourself.
         """
-        try:
-            if obj.assigned_to and request.user.userprofile and obj.assigned_to == request.user.userprofile:
-                raise ValidationError("You cannot assign a goal to yourself.")
-        except UserProfile.DoesNotExist:
-            # Superuser or user without UserProfile - skip the validation
-            pass
+        current_profile = get_user_profile_safe(request.user)
+        if obj.assigned_to and current_profile and obj.assigned_to == current_profile:
+            raise ValidationError("You cannot assign a goal to yourself.")
 
         super().save_model(request, obj, form, change)
 

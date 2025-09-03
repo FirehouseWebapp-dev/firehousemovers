@@ -1,10 +1,37 @@
 document.addEventListener('DOMContentLoaded', function() {
   const modal = document.getElementById('viewGoalModal');
+  
+  // Handle filter form submissions for My Goals section
+  var goalTypeSelectMyGoals = document.getElementById('goalTypeSelectMyGoals');
+  var filterSelectMyGoals = document.getElementById('filterSelectMyGoals');
+  var filterFormMyGoals = document.getElementById('filterFormMyGoals');
+  var closeGoalModalBtnMyGoals = document.getElementById('closeGoalModalBtnMyGoals');
+
+  if (goalTypeSelectMyGoals && filterFormMyGoals) {
+    goalTypeSelectMyGoals.addEventListener('change', function() {
+      filterFormMyGoals.submit();
+    });
+  }
+
+  if (filterSelectMyGoals && filterFormMyGoals) {
+    filterSelectMyGoals.addEventListener('change', function() {
+      filterFormMyGoals.submit();
+    });
+  }
+
+  // Handle close modal button click for My Goals
+  if (closeGoalModalBtnMyGoals && window.GoalsUI && window.GoalsUI.closeGoalModal) {
+    closeGoalModalBtnMyGoals.addEventListener('click', function() {
+      window.GoalsUI.closeGoalModal();
+    });
+  }
+
+  // Original modal logic (if it exists)
   if (!modal) return;
 
   const titleEl = document.getElementById('modalGoalTitle');
   const descEl = document.getElementById('modalGoalDescription');
-  const notesEl = document.getElementById('modalGoalNotes');
+  const notesEl = document.getElementById('modalNotes');
   const createdByEl = document.getElementById('modalGoalCreatedBy');
   const createdAtEl = document.getElementById('modalGoalCreatedAt');
   const updatedAtEl = document.getElementById('modalGoalUpdatedAt');
@@ -34,9 +61,11 @@ document.addEventListener('DOMContentLoaded', function() {
   closeBtn && closeBtn.addEventListener('click', closeModal);
 
   // Close when clicking outside the modal content
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) closeModal();
-  });
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeModal();
+    });
+  }
 
   // Escape key to close
   document.addEventListener('keydown', function(e) {
