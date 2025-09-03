@@ -139,6 +139,7 @@ class RoleChecker:
     def can_toggle_goal_completion(self, goal):
         """
         Check if user can toggle goal completion status.
+        Users cannot complete their own goals - only managers can complete their team's goals.
         
         Args:
             goal: Goal instance
@@ -149,9 +150,9 @@ class RoleChecker:
         if not self.user_profile:
             return False
             
-        # Can toggle own goals
+        # Users cannot toggle their own goals
         if goal.assigned_to == self.user_profile:
-            return True
+            return False
             
         # Managers can toggle for their team
         if self.is_manager() and goal.assigned_to.manager_id == self.user_profile.id:

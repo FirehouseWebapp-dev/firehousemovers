@@ -67,6 +67,7 @@
             <div>
               <label for="{{ form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
               {{ form.description|attr:"required:required" }}
+              <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
             </div>
             <div>
               <label for="{{ form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
@@ -122,6 +123,7 @@
         <div>
           <label for="{{ formset.empty_form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
           {{ formset.empty_form.description|attr:"required:required" }}
+          <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
         </div>
         <div>
           <label for="{{ formset.empty_form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
@@ -153,6 +155,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'goals/js/description_validator.js' %}"></script>
 <script src="{% static 'goals/js/add_goals_dynamic.js' %}"></script>
 {% endblock %}
 {% block extra_js_end %}

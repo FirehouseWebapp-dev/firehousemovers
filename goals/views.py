@@ -13,9 +13,9 @@ from django.contrib.auth.decorators import login_required
 logger = logging.getLogger(__name__)
 
 
-from .forms import GoalForm, GoalFormSetForm
+from .forms import GoalForm, GoalFormSetForm, GoalEditForm
 from django.shortcuts import render, get_object_or_404
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms import modelformset_factory
 from django.db import transaction
 from django.views.decorators.http import require_POST
@@ -152,11 +152,23 @@ def toggle_goal_completion(request, goal_id):
         if is_completed is None:
             return JsonResponse({'success': False, 'error': 'Invalid request data: is_completed is missing.'}, status=400)
 
-        goal.is_completed = is_completed
-        goal.save()
-        return JsonResponse({'success': True, 'is_completed': goal.is_completed})
+        # Security: Only allow marking goals as completed, not uncompleting them
+        if is_completed is True and not goal.is_completed:
+            try:
+                goal.is_completed = True
+                goal.save()
+                return JsonResponse({'success': True, 'is_completed': goal.is_completed})
+            except ValidationError as e:
+                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        elif is_completed is False:
+            return JsonResponse({'success': False, 'error': 'Cannot uncomplete a goal. Goals can only be marked as completed.'}, status=400)
+        else:
+            # Goal is already completed
+            return JsonResponse({'success': True, 'is_completed': goal.is_completed})
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON in request body.'}, status=400)
+    except ValidationError as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
@@ -294,6 +306,7 @@ def view_goals(request, employee_id):
         'goals': goals,
         'can_edit': checker.can_edit_goal(mock_goal),
         'can_delete_goal': checker.can_delete_goal(mock_goal),
+        'can_toggle_completion': checker.can_toggle_goal_completion(mock_goal),
         'selected_goal_type': selected_goal_type,
         'selected_completion_status': selected_completion_status,
         'show_progress_bar': show_progress_bar,
@@ -354,7 +367,7 @@ def edit_goal(request, goal_id):
         raise PermissionDenied("You don't have permission to edit this goal.")
 
     if request.method == 'POST':
-        form = GoalForm(request.POST, instance=goal)
+        form = GoalEditForm(request.POST, instance=goal)
         if form.is_valid():
             form.save()
             messages.success(request, "Goal updated successfully.")
@@ -362,7 +375,7 @@ def edit_goal(request, goal_id):
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = GoalForm(instance=goal)
+        form = GoalEditForm(instance=goal)
 
     context = {
         'goal': goal,
@@ -374,7 +387,7 @@ def edit_goal(request, goal_id):
 @login_required
 @require_manager_or_above
 def my_goals(request):
-    """View goals assigned to the current manager/admin/senior management"""
+    """View total goals assigned till this date to the current manager/admin/senior management"""
     user_profile = get_user_profile_safe(request.user)
     if not user_profile:
         raise PermissionDenied("User profile not found for current user.")
@@ -425,6 +438,7 @@ def my_goals(request):
         'goals': goals,
         'can_edit': False,
         'can_delete_goal': False,
+        'can_toggle_completion': False,  # Managers cannot complete their own goals
         'selected_goal_type': selected_goal_type,
         'selected_completion_status': selected_completion_status,
         'total_goals': total_goals,

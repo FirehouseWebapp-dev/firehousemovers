@@ -40,8 +40,13 @@
           {% if goal.updated_at != goal.created_at %}
             <div>Updated: {{ goal.updated_at|date:"M d, Y" }}</div>
           {% endif %}
+          {% if goal.due_date %}
+            <div>Due: {{ goal.due_date|date:"M d, Y" }}</div>
+          {% else %}
+            <div>Due: No due date set</div>
+          {% endif %}
         </div>
-        {% if can_edit %}
+        {% if can_toggle_completion %}
         <div class="ml-auto">
           <label class="inline-flex items-center {% if goal.is_completed %}cursor-not-allowed{% else %}cursor-pointer{% endif %}" {% if goal.is_completed %}style="cursor: not-allowed !important;"{% endif %}>
             <input type="checkbox" class="h-5 w-5 text-green-600 accent-green-600 rounded focus:ring-green-500 goal-completion-checkbox" data-goal-id="{{ goal.id }}" {% if goal.is_completed %}checked disabled{% endif %} {% if goal.is_completed %}style="cursor: not-allowed !important;"{% endif %}>

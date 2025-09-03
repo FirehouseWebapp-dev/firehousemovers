@@ -54,6 +54,7 @@
       <div class="mb-6">
         <label for="id_description" class="block text-white font-semibold mb-2">Goal Description</label>
         {{ form.description|attr:"required:required" }}
+        <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
       </div>
       
       <!-- Action Plans For Improvement -->
@@ -84,4 +85,8 @@
 
 </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'goals/js/description_validator.js' %}"></script>
 {% endblock %}

@@ -8,16 +8,16 @@ from datetime import datetime, date
 
 def validate_future_date(value):
     """
-    Validate that a date is in the future.
+    Validate that a date is today or in the future (not in the past).
     
     Args:
         value: Date value to validate
         
     Raises:
-        ValidationError: If date is not in the future
+        ValidationError: If date is in the past
     """
-    if value and value <= timezone.now().date():
-        raise ValidationError("Due date must be in the future.")
+    if value and value < timezone.now().date():
+        raise ValidationError("You cannot choose due date from the past")
 
 
 def validate_goal_title_length(value):
