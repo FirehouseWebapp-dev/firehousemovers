@@ -27,7 +27,7 @@ class PhotoUploadView(View):
     def get(self, request):
         photos = MarketingPhoto.objects.order_by("-uploaded_at")
         can_delete = request.user.is_staff
-        if hasattr(request.user, "userprofile") and request.user.userprofile.role == "manager":
+        if hasattr(request.user, "userprofile") and (request.user.userprofile.role == "manager" or request.user.userprofile.is_senior_management):
             can_delete = True
         return render(request, "marketing/photos.html", {
             "photos": photos,

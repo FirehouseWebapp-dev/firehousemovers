@@ -235,7 +235,6 @@ def check_email_availability(request):
     return JsonResponse(data)
 
 
-
 @login_required
 def profile_view(request):
     user = request.user
@@ -263,9 +262,6 @@ def profile_view(request):
         "team_members": team_members,
         "teammates": teammates,
     })
-
-
-
 
 
 @login_required
@@ -299,7 +295,6 @@ class CustomPasswordChangeView(PasswordChangeView):
     success_url = '/profile/'
 
 
-
 @login_required
 @user_passes_test(is_manager_or_admin)
 def team_view(request):
@@ -308,9 +303,10 @@ def team_view(request):
 
     selected_role = request.GET.get("role")
 
-    if user_profile.role in ["manager", "admin"]:
+    if user_profile.role in ["manager", "admin"] or user_profile.is_senior_management:
         team_members = UserProfile.objects.filter(manager=user_profile)
-        if selected_role:
+        # Only apply role filter if not senior management
+        if selected_role and not user_profile.is_senior_management:
             team_members = team_members.filter(role=selected_role)
     else:
         team_members = []
@@ -320,7 +316,8 @@ def team_view(request):
     return render(request, "authentication/team_view.html", {
         "team_members": team_members,
         "roles": roles,
-        "selected_role": selected_role
+        "selected_role": selected_role,
+        "is_senior_management": user_profile.is_senior_management,
     })
 
 @login_required
@@ -342,6 +339,7 @@ def add_team_member(request):
         form = AddTeamMemberForm(current_user=request.user)
 
     return render(request, 'authentication/add_member.html', {'form': form})
+
 
 from django.views.decorators.http import require_POST
 
@@ -369,13 +367,13 @@ def edit_team_member(request, user_id):
         return HttpResponseForbidden("You are not allowed to edit this profile.")
 
     if request.method == "POST":
-        form = TeamMemberEditForm(request.POST, instance=user_profile)
+        form = TeamMemberEditForm(request.POST, instance=user_profile, current_user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Team member updated.")
             return redirect("authentication:team")
     else:
-        form = TeamMemberEditForm(instance=user_profile)
+        form = TeamMemberEditForm(instance=user_profile, current_user=request.user)
 
     return render(request, "authentication/edit_team_member.html", {
         "form": form,

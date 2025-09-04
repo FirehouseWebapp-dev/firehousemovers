@@ -7,6 +7,7 @@
 
   <a href="{% url 'authentication:add_team_member' %}" class="bg-red-500 hover:bg-red-700 px-5 py-2.5 rounded-md text-white font-semibold mb-4 inline-block">+ Add Member</a>
 
+  {% if not is_senior_management %}
   <!-- Filter Form -->
   <form method="get" class="mb-6 flex gap-2 items-center">
     <select name="role" class="px-4 py-2 rounded bg-[#2a2a2a] text-white border border-gray-600">
@@ -17,6 +18,7 @@
     </select>
     <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-5 py-2 rounded font-semibold">Filter</button>
   </form>
+  {% endif %}
 
   {% if team_members %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

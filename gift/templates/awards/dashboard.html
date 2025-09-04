@@ -98,13 +98,14 @@
             </div>
           {% endif %}
 
-          {% if request.user.userprofile.role in "admin manager" %}
-            <div class="mt-4 flex justify-center space-x-4">
+          {% if request.user.is_authenticated %}
+            {% if request.user.userprofile.is_senior_management or request.user.userprofile.role == "admin" or request.user.userprofile.role == "manager" %}
               <a href="{% url 'awards:edit_award' award.id %}" 
                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition">Edit</a>
               <button type="button" onclick="openModal('deleteModal-{{ award.id }}')" 
                 class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">Delete</button>
             </div>
+            {% endif %}
           {% endif %}
         </div>
       </div>

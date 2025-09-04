@@ -14,8 +14,11 @@ class IsManager(permissions.BasePermission):
         if request.user.is_superuser:
             return True
 
-        role = getattr(getattr(request.user, "userprofile", None), "role", None)
-        return role in ["manager", "admin"]
+        userprofile = getattr(request.user, "userprofile", None)
+        if not userprofile:
+            return False
+        role = getattr(userprofile, "role", None)
+        return role in ["manager", "admin"] or userprofile.is_senior_management
 
 
 from functools import wraps
@@ -27,7 +30,7 @@ def manager_or_admin_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
-        if not hasattr(request.user, "userprofile") or request.user.userprofile.role not in ["manager", "admin"]:
+        if not hasattr(request.user, "userprofile") or (request.user.userprofile.role not in ["manager", "admin"] and not request.user.userprofile.is_senior_management):
             messages.error(request, "You do not have permission to perform this action.")
             return redirect("awards:dashboard")
         return view_func(request, *args, **kwargs)

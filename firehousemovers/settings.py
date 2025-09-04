@@ -61,8 +61,8 @@ INSTALLED_APPS = [
     "marketing",
     "widget_tweaks",
     "evaluation",
+    "goals",
     # third-party
-    "anymail",  # Postmark via Anymail
 ]
 
 # -------------------------
@@ -79,7 +79,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "evaluation.middleware.EvaluationLockMiddleware",
     "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
+
 ]
+
 
 # -------------------------
 # Templates
@@ -98,6 +100,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "inventory_app.context_processors.low_stock_processor",
+                "goals.utils.permissions.role_context",
             ],
         },
     },
@@ -215,8 +218,35 @@ ANYMAIL = {
     },
 }
 
-# We want local/staging/prod all to use Postmark (local goes to staging server)
-EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+# -------------------------
+# Email configuration (local vs production)
+# -------------------------
+if DEBUG:
+    # Development: Choose your preferred email backend
+    
+    # Option 1: Django Mail Viewer (captures emails for viewing at /mail/)
+    INSTALLED_APPS += ["django_mail_viewer"]
+    EMAIL_BACKEND = "django_mail_viewer.backends.locmem.EmailBackend"
+    DJANGO_MAIL_VIEWER = {
+        "OPTIONS": {
+            "EMAIL_HOST": "localhost",
+            "EMAIL_PORT": 1025,
+            "EMAIL_USE_TLS": False,
+            "EMAIL_USE_SSL": False,
+        }
+    }
+    
+    # Option 2: Console Backend (uncomment to print emails to terminal)
+    # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    
+    # Option 3: SMTP Backend (uncomment to send real emails via Gmail/SMTP)
+    # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    # Production: Use Postmark via Anymail
+    INSTALLED_APPS += ["anymail"]
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+
+
 
 # (SMTP fallbacks unused w/ Postmark, harmless to keep)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")

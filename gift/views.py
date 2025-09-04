@@ -18,7 +18,7 @@ import re
 def is_manager_or_admin(user):
     if not hasattr(user, "userprofile"):
         return False
-    return user.userprofile.role in ["manager", "admin"]
+    return user.userprofile.role in ["manager", "admin"] or user.userprofile.is_senior_management
 
 # ------------------------
 # Dashboard

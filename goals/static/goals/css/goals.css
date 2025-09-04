@@ -1,0 +1,20 @@
+.goals-logo {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.125em;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.goals-logo-lg {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.125em;
+}
+
+.goals-logo-invert {
+  /* Ensure black SVGs render as white to match sidebar icons */
+  filter: invert(1) brightness(100%);
+}
+
