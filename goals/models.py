@@ -48,12 +48,14 @@ class Goal(models.Model):
         if hasattr(self, '_original_is_completed') and self._original_is_completed and not self.is_completed:
             raise ValidationError("Completed goals cannot be marked as incomplete.")
 
-        # For new goals, this validation is handled in the view after assigned_to is set
+        # Validate max active goals for both new and existing goals
         if (not self.is_completed and 
-            self.pk and  # Only for existing goals being updated
             hasattr(self, 'assigned_to') and self.assigned_to):
-            exclude_id = self.pk
-            validate_max_active_goals(self.assigned_to, exclude_goal_id=exclude_id)
+            if self.pk:  # Existing goal being updated
+                exclude_id = self.pk
+                validate_max_active_goals(self.assigned_to, exclude_goal_id=exclude_id)
+            else:  # New goal being created
+                validate_max_active_goals(self.assigned_to)
 
     def save(self, *args, **kwargs):
         # call full_clean() so clean() always runs

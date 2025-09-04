@@ -63,11 +63,24 @@
             <div>
               <label for="{{ form.title.id_for_label }}" class="block text-white font-semibold mb-2">Goal Title</label>
               {{ form.title|attr:"required:required" }}
+              {% if form.title.errors %}
+                <div class="text-sm text-red-400 mt-1">
+                  {% for error in form.title.errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             <div>
               <label for="{{ form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
               {{ form.description|attr:"required:required" }}
-              <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
+              {% if form.description.errors %}
+                <div class="text-sm text-red-400 mt-1">
+                  {% for error in form.description.errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             <div>
               <label for="{{ form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
@@ -76,6 +89,13 @@
             <div>
               <label for="{{ form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
               {{ form.due_date }}
+              {% if form.due_date.errors %}
+                <div class="text-sm text-red-400 mt-1">
+                  {% for error in form.due_date.errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             {% if form.instance.pk %}
               {{ form.id }}
@@ -119,11 +139,24 @@
         <div>
           <label for="{{ formset.empty_form.title.id_for_label }}" class="block text-white font-semibold mb-2">Goal Title</label>
           {{ formset.empty_form.title|attr:"required:required" }}
+          {% if formset.empty_form.title.errors %}
+            <div class="text-sm text-red-400 mt-1">
+              {% for error in formset.empty_form.title.errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
         <div>
           <label for="{{ formset.empty_form.description.id_for_label }}" class="block text-white font-semibold mb-2">Goal Description</label>
           {{ formset.empty_form.description|attr:"required:required" }}
-          <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
+          {% if formset.empty_form.description.errors %}
+            <div class="text-sm text-red-400 mt-1">
+              {% for error in formset.empty_form.description.errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
         <div>
           <label for="{{ formset.empty_form.notes.id_for_label }}" class="block text-white font-semibold mb-2">Action Plans For Improvement</label>
@@ -132,6 +165,13 @@
         <div>
           <label for="{{ formset.empty_form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
           {{ formset.empty_form.due_date }}
+          {% if formset.empty_form.due_date.errors %}
+            <div class="text-sm text-red-400 mt-1">
+              {% for error in formset.empty_form.due_date.errors %}
+                <div>{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
         {{ formset.empty_form.id }}
         <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
@@ -155,7 +195,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'goals/js/description_validator.js' %}"></script>
+<script src="{% static 'goals/js/submit_control.js' %}"></script>
 <script src="{% static 'goals/js/add_goals_dynamic.js' %}"></script>
 {% endblock %}
 {% block extra_js_end %}

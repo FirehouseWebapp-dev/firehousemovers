@@ -37,6 +37,12 @@
   <form method="post" class="max-w-2xl">
     {% csrf_token %}
     
+    {% if form.non_field_errors %}
+      <div class="px-4 py-2 rounded mb-4 bg-red-600 text-white">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+    
     <div class="bg-[#2a2a2a] p-6 rounded-2xl shadow-lg">
       <!-- Goal Type -->
       <div class="mb-6">
@@ -48,13 +54,26 @@
       <div class="mb-6">
         <label for="id_title" class="block text-white font-semibold mb-2">Goal Title</label>
         {{ form.title|attr:"required:required" }}
+        {% if form.title.errors %}
+          <div class="text-sm text-red-400 mt-1">
+            {% for error in form.title.errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
       
       <!-- Goal Description -->
       <div class="mb-6">
         <label for="id_description" class="block text-white font-semibold mb-2">Goal Description</label>
         {{ form.description|attr:"required:required" }}
-        <div class="description-validation-message text-sm text-red-400 mt-1" style="display: none;"></div>
+        {% if form.description.errors %}
+          <div class="text-sm text-red-400 mt-1">
+            {% for error in form.description.errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
       
       <!-- Action Plans For Improvement -->
@@ -66,6 +85,13 @@
       <div>
         <label for="{{ form.due_date.id_for_label }}" class="block text-white font-semibold mb-2">Due Date</label>
         {{ form.due_date }}
+        {% if form.due_date.errors %}
+          <div class="text-sm text-red-400 mt-1">
+            {% for error in form.due_date.errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
       
       
@@ -88,5 +114,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'goals/js/description_validator.js' %}"></script>
+<script src="{% static 'goals/js/submit_control.js' %}"></script>
 {% endblock %}

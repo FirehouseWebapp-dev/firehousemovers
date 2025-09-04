@@ -30,9 +30,13 @@ def validate_goal_title_length(value):
     Raises:
         ValidationError: If title is too short or too long
     """
-    if len(value.strip()) < 3:
+    if not value:  # Handle None, empty string, etc.
+        return  # Let required field validation handle empty values
+    
+    trimmed_value = value.strip()
+    if len(trimmed_value) < 3:
         raise ValidationError("Goal title must be at least 3 characters long.")
-    if len(value.strip()) > 200:
+    if len(trimmed_value) > 200:
         raise ValidationError("Goal title cannot exceed 200 characters.")
 
 
@@ -46,9 +50,13 @@ def validate_goal_description_length(value):
     Raises:
         ValidationError: If description is too short or too long
     """
-    if len(value.strip()) < 10:
+    if not value:  # Handle None, empty string, etc.
+        return  # Let required field validation handle empty values
+    
+    trimmed_value = value.strip()
+    if len(trimmed_value) < 10:
         raise ValidationError("Goal description must be at least 10 characters long.")
-    if len(value.strip()) > 1000:
+    if len(trimmed_value) > 1000:
         raise ValidationError("Goal description cannot exceed 1000 characters.")
 
 
