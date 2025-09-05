@@ -176,7 +176,7 @@ else:
     }
 
 # -------------------------
-# Email - Postmark for all environments
+# Email (Local -> Django Mail Viewer, Production -> Postmark)
 # -------------------------
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="support@firehousemovers.com")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
@@ -219,10 +219,24 @@ ANYMAIL = {
 }
 
 # -------------------------
-# Email configuration - Postmark for all environments
+# Email configuration (local vs production)
 # -------------------------
-INSTALLED_APPS += ["anymail"]
-EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
+if DEBUG:
+    # Development: Django Mail Viewer for local testing
+    INSTALLED_APPS += ["django_mail_viewer"]
+    EMAIL_BACKEND = "django_mail_viewer.backends.locmem.EmailBackend"
+    DJANGO_MAIL_VIEWER = {
+        "OPTIONS": {
+            "EMAIL_HOST": "localhost",
+            "EMAIL_PORT": 1025,
+            "EMAIL_USE_TLS": False,
+            "EMAIL_USE_SSL": False,
+        }
+    }
+else:
+    # Production: Use Postmark via Anymail
+    INSTALLED_APPS += ["anymail"]
+    EMAIL_BACKEND = "anymail.backends.postmark.EmailBackend"
 
 
 
