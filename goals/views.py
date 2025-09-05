@@ -8,6 +8,7 @@ import json # Import json
 import os
 import logging
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 
 # Configure logger for goals app
 logger = logging.getLogger(__name__)
@@ -30,6 +31,8 @@ from .utils.helpers import (
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Count, Q
+from django.urls import reverse
+from django.contrib.sites.shortcuts import get_current_site
 # Define the formset for Goal model
 GoalFormSet = modelformset_factory(Goal, form=GoalFormSetForm, extra=1, can_delete=True)
 
@@ -213,18 +216,60 @@ def add_goals(request, employee_id):
                 if created_goals:
                     try:
                         default_email = os.getenv("DEFAULT_FROM_EMAIL", settings.DEFAULT_FROM_EMAIL)
-                        recipient_email = getattr(employee.user, "email", None) or default_email
-                        send_mail(
-                            subject="New Goal(s) Created. Check out.",
-                            message=f"{len(created_goals)} new goal(s) have been created for {employee.user.get_full_name()}.",
-                            from_email=default_email,
-                            recipient_list=[recipient_email],
-                            fail_silently=True,  # This prevents email errors from blocking form submission
-                        )
-                        logger.info(f"Email notification sent successfully to {recipient_email}")
+                        # )
+                        recipient_email = getattr(employee.user, "email", None)
+                        
+                        # Only send email if employee has an email address
+                        if recipient_email:
+                            
+                            employee_full_name = employee.user.get_full_name() or employee.user.username
+                            manager_name = user_profile.user.get_full_name() or user_profile.user.username
+                            
+                            # Get the URL for the employee's goals
+                            try:
+                                goals_url = request.build_absolute_uri(reverse('goals:view_goals', args=[employee.id]))
+                            except Exception as e:
+                                logger.error(f"Failed to generate goals URL for employee {employee.user.username}: {e}")
+                                goals_url = "Please contact your manager for goal details."
+                            
+                            # Handle singular vs plural for goals and subject
+                            goal_text = "goal" if len(created_goals) == 1 else "goals"
+                            subject_text = "Your latest goal has arrived." if len(created_goals) == 1 else "Your latest goals have arrived."
+                            
+                            # Render HTML email template
+                            html_message = render_to_string('goals/email/goal_notification.html', {
+                                'employee_full_name': employee_full_name,
+                                'manager_name': manager_name,
+                                'goal_text': goal_text,
+                                'goals_url': goals_url,
+                                'created_goals_count': len(created_goals),
+                            })
+                            
+                            # Plain text fallback (for email clients that don't support HTML)
+                            text_message = f"""Dear {employee_full_name},
+
+Your manager {manager_name} has added a new {goal_text} for you. Please take a look at them. Reach out to them in case of any query.
+
+Follow this link to see your goals:
+{goals_url}
+
+Regards,
+Team Firehouse."""
+                            
+                            send_mail(
+                                subject=subject_text,
+                                message=text_message,
+                                html_message=html_message,
+                                from_email=default_email,
+                                recipient_list=[recipient_email],
+                                fail_silently=True,  # This prevents email errors from blocking form submission
+                            )
+                            logger.info(f"Email notification sent successfully to {recipient_email} for employee {employee.user.username} with {len(created_goals)} goal(s)")
+                        else:
+                            logger.warning(f"No email address found for employee {employee.user.username}, skipping email notification")
                     except Exception as e:
                         # Log the error but don't let it prevent goal creation
-                        logger.error(f"Email sending failed: {e}")
+                        logger.error(f"Email sending failed for employee {employee.user.username}: {e}")
                         pass
                 messages.success(request, f"Goals added successfully for {employee}.")
                 return redirect('goals:goal_management')
