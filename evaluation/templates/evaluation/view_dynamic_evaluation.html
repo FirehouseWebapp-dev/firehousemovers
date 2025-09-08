@@ -43,19 +43,30 @@
             {% if answer %}
               {% if question.qtype == "stars" or question.qtype == "rating" or question.qtype == "emoji" %}
                 <div class="flex items-center">
-                  <span class="text-2xl mr-3">
-                    {% if question.qtype == "stars" %}
-                      ⭐
-                    {% elif question.qtype == "emoji" %}
+                  {% if question.qtype == "stars" %}
+                    {# Show filled stars up to the rating - matching dashboard 1 styling #}
+                    <div class="flex gap-2 mr-3">
+                      {% for i in "12345" %}
+                        <svg
+                          class="star w-6 h-6 {% if forloop.counter <= answer.int_value %}text-red-500{% else %}text-gray-500{% endif %} fill-current"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+                        </svg>
+                      {% endfor %}
+                    </div>
+                  {% elif question.qtype == "emoji" %}
+                    <span class="text-2xl mr-3">
                       {% if answer.int_value == 1 %}😡
                       {% elif answer.int_value == 2 %}😕
                       {% elif answer.int_value == 3 %}😐
                       {% elif answer.int_value == 4 %}🙂
                       {% elif answer.int_value == 5 %}😍
                       {% endif %}
-                    {% endif %}
-                  </span>
-                  <span class="text-white font-semibold">{{ answer.int_value }}</span>
+                    </span>
+                  {% else %}
+                    <span class="text-2xl mr-3">{{ answer.int_value }}</span>
+                  {% endif %}
                 </div>
               {% elif question.qtype == "bool" %}
                 <span class="text-white font-semibold">
@@ -79,12 +90,12 @@
     {% endfor %}
   </div>
 
-  <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700 mt-8">
-    <a href="{% url 'evaluation:dashboard2' %}" class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+  <div class="flex-end mt-8">
+    <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary btn-large">
       Back to Dashboard
     </a>
     {% if evaluation.status == "completed" and today <= evaluation.week_end %}
-      <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+      <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" class="btn btn-primary btn-large">
         Edit Evaluation
       </a>
     {% endif %}

@@ -2,48 +2,93 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction, IntegrityError
-from django.db.models import Prefetch, Max
-from django.core.exceptions import ValidationError
+from django.db.models import Max
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
 
-from authentication.models import UserProfile
+from authentication.models import UserProfile, Department
 from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
 from django.utils.timezone import now
 
 def _can_manage(user):
+    """Check if user can manage evaluation forms globally (superusers and senior management only)."""
     if not user.is_authenticated:
         return False
     p = getattr(user, "userprofile", None)
     return (
         user.is_superuser
-        or (p and (p.is_senior_management or p.role in {"admin", "vp", "ceo"}))
+        or (p and p.role in {"admin", "vp", "ceo"})
     )
 
+def _can_manage_department(user, department):
+    """Check if user can manage evaluation forms for a specific department."""
+    if not user.is_authenticated:
+        return False
+    p = getattr(user, "userprofile", None)
+    if not p:
+        return False
+    
+    # Superusers and global admins can manage any department
+    if user.is_superuser or p.role in {"admin", "vp", "ceo"}:
+        return True
+    
+    # Department managers can only manage their own department
+    if p.role == "manager" and p.managed_department == department:
+        return True
+    
+    return False
+
 @login_required
-@user_passes_test(_can_manage)
 def evalform_list(request):
-    dept = request.GET.get("department")
-    forms = EvalForm.objects.select_related("department").order_by("-created_at")
-    if dept and dept != "all":
-        forms = forms.filter(department_id=dept)
+    """List evaluation forms with department-specific permissions."""
+    profile = request.user.userprofile
+    
+    # Get forms based on user permissions
+    if _can_manage(request.user):
+        # Global admins can see all forms
+        forms = EvalForm.objects.select_related("department").order_by("-created_at")
+        dept = request.GET.get("department")
+        if dept and dept != "all":
+            forms = forms.filter(department_id=dept)
+    else:
+        # Department managers can only see their own department's forms
+        if profile.role == "manager" and profile.managed_department:
+            forms = EvalForm.objects.filter(
+                department=profile.managed_department
+            ).select_related("department").order_by("-created_at")
+        else:
+            # No permission to view any forms
+            forms = EvalForm.objects.none()
+    
     return render(request, "evaluation/forms/list.html", {"forms": forms})
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_create(request):
+    """Create evaluation form with department-specific permissions."""
+    profile = request.user.userprofile
+    
+    # Check if user can create forms
+    if not (_can_manage(request.user) or (profile.role == "manager" and profile.managed_department)):
+        messages.error(request, "You don't have permission to create evaluation forms.")
+        return redirect("evaluation:evalform_list")
+    
     if request.method == "POST":
         form = EvalFormForm(request.POST)
         if form.is_valid():
+            # Check department permissions
+            department = form.cleaned_data["department"]
+            if not _can_manage_department(request.user, department):
+                messages.error(request, "You don't have permission to create forms for this department.")
+                return render(request, "evaluation/forms/create.html", {"form": form})
+            
             try:
                 with transaction.atomic():
                     # Deactivate any existing active forms of the same evaluation type for this department
                     EvalForm.objects.filter(
-                        department=form.cleaned_data["department"], 
+                        department=department, 
                         name=form.cleaned_data["name"],
                         is_active=True
                     ).update(is_active=False)
@@ -64,26 +109,47 @@ def evalform_create(request):
                 return render(request, "evaluation/forms/create.html", {"form": form})
     else:
         form = EvalFormForm()
+        # Restrict department choices for non-global admins
+        if not _can_manage(request.user) and profile.role == "manager" and profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
+            form.fields['department'].initial = profile.managed_department
+    
     return render(request, "evaluation/forms/create.html", {"form": form})
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_edit(request, pk):
+    """Edit evaluation form with department-specific permissions."""
     obj = get_object_or_404(EvalForm, pk=pk)
+    profile = request.user.userprofile
+    
+    # Check if user can edit this form
+    if not _can_manage_department(request.user, obj.department):
+        messages.error(request, "You don't have permission to edit this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     if request.method == "POST":
         form = EvalFormForm(request.POST, instance=obj)
         if form.is_valid():
+            # Check department permissions for the new department
+            department = form.cleaned_data["department"]
+            if not _can_manage_department(request.user, department):
+                messages.error(request, "You don't have permission to move this form to that department.")
+                return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
+            
             try:
                 with transaction.atomic():
-                    # Deactivate any existing active forms of the same evaluation type for this department
-                    EvalForm.objects.filter(
-                        department=form.cleaned_data["department"], 
-                        name=form.cleaned_data["name"],
-                        is_active=True
-                    ).exclude(pk=obj.pk).update(is_active=False)
-                    # Save the form with is_active=True
+                    # Only deactivate other forms if this form is currently active
+                    # and we're changing to a different department/type combination
+                    if obj.is_active:
+                        EvalForm.objects.filter(
+                            department=department, 
+                            name=form.cleaned_data["name"],
+                            is_active=True
+                        ).exclude(pk=obj.pk).update(is_active=False)
+                    
+                    # Save the form preserving the existing is_active status
                     form_obj = form.save(commit=False)
-                    form_obj.is_active = True
+                    # Don't change is_active status - preserve existing value
                     form_obj.save()
                 messages.success(request, "Form updated.")
                 return redirect("evaluation:evalform_detail", pk=obj.id)
@@ -98,28 +164,50 @@ def evalform_edit(request, pk):
                 return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
     else:
         form = EvalFormForm(instance=obj)
+        # Restrict department choices for non-global admins
+        if not _can_manage(request.user) and profile.role == "manager" and profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
+    
     return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_detail(request, pk):
+    """View evaluation form details with department-specific permissions."""
     obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    # Check if user can view this form
+    if not _can_manage_department(request.user, obj.department):
+        messages.error(request, "You don't have permission to view this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     qs = obj.questions.prefetch_related("choices").order_by('order')
     return render(request, "evaluation/forms/detail.html", {"form_obj": obj, "questions": qs})
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_preview(request, pk):
+    """Preview evaluation form with department-specific permissions."""
     obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    # Check if user can view this form
+    if not _can_manage_department(request.user, obj.department):
+        messages.error(request, "You don't have permission to preview this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     form = PreviewEvalForm(eval_form=obj)
     return render(request, "evaluation/forms/preview.html", {"form_obj": obj, "preview_form": form})
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_activate(request, pk):
+    """Activate/deactivate evaluation form with department-specific permissions."""
     if request.method != "POST":
         return redirect("evaluation:evalform_detail", pk=pk)
+    
     obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, obj.department):
+        messages.error(request, "You don't have permission to activate/deactivate this evaluation form.")
+        return redirect("evaluation:evalform_list")
     
     # Check if the form has any questions
     question_count = obj.questions.count()
@@ -148,12 +236,17 @@ def evalform_activate(request, pk):
     return redirect("evaluation:evalform_list")
 
 @login_required
-@user_passes_test(_can_manage)
 def evalform_delete(request, pk):
+    """Delete evaluation form with department-specific permissions."""
     if request.method != "POST":
         return redirect("evaluation:evalform_list")
     
     obj = get_object_or_404(EvalForm, pk=pk)
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, obj.department):
+        messages.error(request, "You don't have permission to delete this evaluation form.")
+        return redirect("evaluation:evalform_list")
     
     # Prevent deletion of active forms
     if obj.is_active:
@@ -161,16 +254,31 @@ def evalform_delete(request, pk):
         return redirect("evaluation:evalform_list")
     
     form_name = obj.name
-    obj.delete()
     
-    messages.success(request, f"Form '{form_name}' has been deleted successfully.")
+    try:
+        with transaction.atomic():
+            # Delete all questions first (which will cascade to choices)
+            obj.questions.all().delete()
+            # Then delete the form
+            obj.delete()
+        
+        messages.success(request, f"Form '{form_name}' has been deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"Cannot delete '{form_name}' - it has associated evaluations. Please delete the evaluations first.")
+    
     return redirect("evaluation:evalform_list")
 
 # ------- Questions -------
 @login_required
-@user_passes_test(_can_manage)
 def question_add(request, form_id):
+    """Add question to evaluation form with department-specific permissions."""
     ef = get_object_or_404(EvalForm, pk=form_id)
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, ef.department):
+        messages.error(request, "You don't have permission to add questions to this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     if request.method == "POST":
         qf = QuestionForm(request.POST)
         if qf.is_valid():
@@ -187,9 +295,15 @@ def question_add(request, form_id):
     return render(request, "evaluation/forms/question_add.html", {"form": qf, "form_obj": ef})
 
 @login_required
-@user_passes_test(_can_manage)
 def question_edit(request, question_id):
+    """Edit question with department-specific permissions."""
     q = get_object_or_404(Question, pk=question_id)
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, q.form.department):
+        messages.error(request, "You don't have permission to edit questions in this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     if request.method == "POST":
         qf = QuestionForm(request.POST, instance=q)
         if qf.is_valid():
@@ -201,9 +315,15 @@ def question_edit(request, question_id):
     return render(request, "evaluation/forms/question_edit.html", {"form": qf, "question": q})
 
 @login_required
-@user_passes_test(_can_manage)
 def choice_add(request, question_id):
+    """Add choice to question with department-specific permissions."""
     q = get_object_or_404(Question, pk=question_id)
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, q.form.department):
+        messages.error(request, "You don't have permission to add choices to questions in this evaluation form.")
+        return redirect("evaluation:evalform_list")
+    
     if request.method == "POST":
         cf = QuestionChoiceForm(request.POST)
         if cf.is_valid():
@@ -218,12 +338,16 @@ def choice_add(request, question_id):
 
 
 @login_required
-@user_passes_test(_can_manage)
 @require_http_methods(["POST"])
 def update_question_order(request, pk):
-    """Update the order of questions via AJAX"""
+    """Update the order of questions via AJAX with department-specific permissions."""
     try:
         form_obj = get_object_or_404(EvalForm, pk=pk)
+        
+        # Check if user can manage this form
+        if not _can_manage_department(request.user, form_obj.department):
+            return JsonResponse({'success': False, 'error': 'Permission denied'})
+        
         data = json.loads(request.body)
         question_orders = data.get('question_orders', [])
         
@@ -244,11 +368,15 @@ def update_question_order(request, pk):
 
 
 @login_required
-@user_passes_test(_can_manage)
 def question_delete(request, question_id):
-    """Delete a question"""
+    """Delete a question with department-specific permissions."""
     question = get_object_or_404(Question, id=question_id)
     form_obj = question.form
+    
+    # Check if user can manage this form
+    if not _can_manage_department(request.user, form_obj.department):
+        messages.error(request, "You don't have permission to delete questions from this evaluation form.")
+        return redirect("evaluation:evalform_list")
     
     if request.method == "POST":
         question.delete()
@@ -330,10 +458,6 @@ def evaluate_dynamic_employee(request, evaluation_id):
                 return redirect("evaluation:dashboard2")
     else:
         form = DynamicEvaluationForm(instance=evaluation)
-        
-        # Show info message if evaluation is already completed
-        if evaluation.status == "completed":
-            messages.info(request, f"This evaluation was completed on {evaluation.submitted_at.strftime('%B %d, %Y at %I:%M %p')}.")
 
     return render(request, "evaluation/evaluate_dynamic_employee.html", {
         "form": form,

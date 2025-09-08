@@ -202,13 +202,17 @@ class Command(BaseCommand):
             if only_manager_email:
                 managers_qs = managers_qs.filter(user__email__iexact=only_manager_email)
 
-            managers = managers_qs.filter(team_members__isnull=False).distinct()
+            # Use prefetch_related to avoid N+1 queries - load all team members in one go
+            managers = managers_qs.filter(team_members__isnull=False).distinct().prefetch_related(
+                'team_members__user', 'team_members__department'
+            )
 
             created_count = 0
             skipped_count = 0
             
             for mgr in managers:
-                team = UserProfile.objects.filter(manager=mgr).distinct()
+                # Now we can access team_members without additional queries
+                team = mgr.team_members.all()
                 for emp in team:
                     dept = emp.department
                     if not dept:

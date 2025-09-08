@@ -4,16 +4,6 @@
 
 {% block content %}
 
-{# Flash messages block #}
-{% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-      <div class="bg-gray-800 border-l-4 border-gray-700 text-red-500 p-4" role="alert">
-        {{ message }}
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
 
 <h1 class="text-3xl font-bold text-red-500 mb-6">Pending Reviews</h1>
 
@@ -30,8 +20,8 @@
         </div>
       </div>
 
-      <div class="w-full bg-gray-800 rounded h-3">
-        <div class="bg-red-600 h-3 rounded" style="width: {{ c.done|pct:c.total }}%"></div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ c.done|pct:c.total }}%"></div>
       </div>
       <div class="text-gray-400 text-xs mt-1">{{ c.done|pct:c.total }}%</div>
     </div>

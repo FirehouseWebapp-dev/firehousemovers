@@ -55,7 +55,7 @@ class DynamicEvaluationForm(forms.Form):
 
             if q.qtype == Question.QType.STARS:
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
-                field = forms.ChoiceField(choices=choices, required=q.required, widget=StarRadioSelect)
+                field = forms.ChoiceField(choices=choices, required=q.required, widget=forms.HiddenInput)
                 if q.id in existing and existing[q.id].int_value is not None:
                     initial = str(existing[q.id].int_value)
 
@@ -173,7 +173,7 @@ class PreviewEvalForm(forms.Form):
 
             if q.qtype == Question.QType.STARS:
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
-                field = forms.ChoiceField(choices=choices, required=False, widget=StarRadioSelect)
+                field = forms.ChoiceField(choices=choices, required=False, widget=forms.HiddenInput)
 
             elif q.qtype == Question.QType.RATING:
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
@@ -210,9 +210,7 @@ class PreviewEvalForm(forms.Form):
 
 
 # ---------- WIDGET TEMPLATES ----------
-class StarRadioSelect(forms.RadioSelect):
-    template_name = "evaluation/widgets/star_radio.html"
-    option_template_name = "evaluation/widgets/star_option.html"
+# StarRadioSelect removed - using HiddenInput for star fields now
 
 class EmojiRadioSelect(forms.RadioSelect):
     template_name = "evaluation/widgets/emoji_radio.html"

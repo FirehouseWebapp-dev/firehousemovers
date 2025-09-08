@@ -1,5 +1,6 @@
 {% extends "evaluation/base.html" %}
 {% load form_tags %}
+{% load static %}
 
 {% block title %}
   Evaluate {{ employee.user.get_full_name }}
@@ -36,7 +37,7 @@
 
     {# Non-field errors #}
     {% if form.non_field_errors %}
-      <div class="bg-red-100 text-red-700 border border-red-400 p-3 rounded mb-4">
+      <div class="form-error">
         {% for err in form.non_field_errors %}
           <p>{{ err }}</p>
         {% endfor %}
@@ -62,43 +63,27 @@
 
         {# Handle different field types #}
         {% if field.field.widget.input_type == "radio" %}
-          {# Radio buttons (stars, emoji, rating) #}
-          <div class="flex gap-4 mb-2">
+          {# Use the widget's template for proper rendering #}
+          {{ field }}
+
+        {% elif field.field.widget.input_type == "hidden" and field.field.choices %}
+          {# Hidden input fields with choices (star ratings) #}
+          <div class="flex gap-2 mb-2">
             {% for choice in field.field.choices %}
-              <label class="relative cursor-pointer">
-                <input
-                  type="radio"
-                  name="{{ field.name }}"
-                  value="{{ choice.0 }}"
-                  class="sr-only peer"
-                  {% if field.value|stringformat:"s" == choice.0|stringformat:"s" %}
-                    checked
-                  {% endif %}
-                >
-                <div
-                  class="w-14 h-14 flex items-center justify-center text-4xl rounded-full
-                         bg-[#2a2a2a] hover:bg-gray-600 text-white
-                         peer-checked:ring-4 peer-checked:ring-red-500
-                         peer-checked:bg-red-800/30 peer-checked:text-red-400
-                         transition-all duration-200"
-                  title="{{ choice.1 }}"
-                >
-                  {% if "star" in field.field.widget.template_name %}
-                    ⭐
-                  {% elif "emoji" in field.field.widget.template_name %}
-                    {% if choice.0 == "1" %}😡
-                    {% elif choice.0 == "2" %}😕
-                    {% elif choice.0 == "3" %}😐
-                    {% elif choice.0 == "4" %}🙂
-                    {% elif choice.0 == "5" %}😍
-                    {% else %}{{ choice.0 }}{% endif %}
-                  {% else %}
-                    {{ choice.0 }}
-                  {% endif %}
-                </div>
-              </label>
+              {# Clickable SVG Star - matching dashboard styling #}
+              <svg
+                class="star w-6 h-6 text-gray-500 fill-current transition-colors cursor-pointer hover:text-red-400"
+                data-field="{{ field.name }}"
+                data-value="{{ choice.0 }}"
+                viewBox="0 0 20 20"
+              >
+                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
+              </svg>
             {% endfor %}
           </div>
+          
+          {# Hidden input to store the selected value #}
+          <input type="hidden" name="{{ field.name }}" value="{{ field.value|default:'' }}" id="{{ field.name }}_value">
 
         {% elif field.field.widget.input_type == "checkbox" %}
           {# Boolean Yes/No radio buttons #}
@@ -209,11 +194,11 @@
 
     {# Submit button #}
     <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700">
-      <a href="{% url 'evaluation:dashboard2' %}" class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+      <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary btn-large">
         Cancel
       </a>
       {% if can_submit %}
-        <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+        <button type="submit" class="btn btn-primary btn-large">
           {% if evaluation.status == "completed" %}
             Update Evaluation
           {% else %}
@@ -224,4 +209,8 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/dynamic_evaluation.js' %}"></script>
 {% endblock %}

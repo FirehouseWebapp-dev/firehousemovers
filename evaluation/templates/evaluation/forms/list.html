@@ -9,25 +9,6 @@
 <div class="p-6 text-white">
   {% csrf_token %}
   
-  <!-- Flash Messages -->
-  {% if messages %}
-    {% for message in messages %}
-      <div class="flash-message flash-{{ message.tags }}">
-        <div class="flash-icon">
-          {% if message.tags == 'error' %}
-            <i class="fa-solid fa-exclamation-triangle"></i>
-          {% elif message.tags == 'success' %}
-            <i class="fa-solid fa-check-circle"></i>
-          {% else %}
-            <i class="fa-solid fa-info-circle"></i>
-          {% endif %}
-        </div>
-        <div class="flash-content">
-          {{ message }}
-        </div>
-      </div>
-    {% endfor %}
-  {% endif %}
   
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-red-500">Reviewprints</h1>
