@@ -41,6 +41,15 @@
         </p>
       </div>
 
+      <!-- Calendly Button -->
+      <div>
+        <button onclick="Calendly.initPopupWidget({url: 'https://calendly.com/firehousemovers-support'});" 
+                class="bg-red-500 hover:bg-red-700 px-6 py-3 rounded-md text-white font-semibold transition-colors inline-flex items-center gap-2">
+          <i class="fas fa-calendar-alt"></i>
+          Schedule Meeting
+        </button>
+      </div>
+
     </div>
 
 
@@ -189,6 +198,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Calendly Script -->
+<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+
 <!-- Delete Confirmation Modal -->
 <div id="deleteConfirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
   <div class="bg-[#2a2a2a] p-8 rounded-2xl shadow-lg w-full max-w-md text-center">
