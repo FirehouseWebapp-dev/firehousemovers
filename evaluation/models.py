@@ -1,5 +1,6 @@
 from django.db import models
 from authentication.models import UserProfile
+from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation, Answer
 
 class Evaluation(models.Model):
     STATUS_CHOICES = [

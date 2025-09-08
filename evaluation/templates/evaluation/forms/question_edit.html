@@ -1,0 +1,11 @@
+{% extends "evaluation/base.html" %}
+{% block content %}
+<div class="p-6 text-white max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-red-500 mb-6">Edit Question</h1>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-semibold">Update</button>
+  </form>
+</div>
+{% endblock %}

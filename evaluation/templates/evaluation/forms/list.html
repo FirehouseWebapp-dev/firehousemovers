@@ -1,0 +1,55 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="p-6 text-white">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-red-500">Reviewprints</h1>
+    <a href="{% url 'evaluation:evalform_create' %}" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-semibold">+ New Form</a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for f in forms %}
+      <div class="bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
+        <div class="p-5">
+          <div class="flex items-start justify-between">
+            <h2 class="text-lg font-semibold">{{ f.name }}</h2>
+            {% if f.is_active %}
+              <span class="inline-flex items-center text-green-400 text-xs font-semibold">● Active</span>
+            {% else %}
+              <span class="inline-flex items-center text-gray-400 text-xs">● Inactive</span>
+            {% endif %}
+          </div>
+          <p class="text-sm text-gray-400 mt-1">{{ f.department.title }}</p>
+          {% if f.description %}<p class="text-sm text-gray-400 mt-2">{{ f.description }}</p>{% endif %}
+        </div>
+
+        <div class="grid grid-cols-2 border-t border-gray-800">
+          <a href="{% url 'evaluation:evalform_activate' f.id %}" onclick="event.preventDefault(); this.nextElementSibling.submit();" class="text-center py-3 font-semibold text-green-300 hover:bg-green-900/30">Activate</a>
+          <form method="post" action="{% url 'evaluation:evalform_activate' f.id %}" class="hidden">{% csrf_token %}</form>
+
+          <a href="{% url 'evaluation:evalform_preview' f.id %}" class="text-center py-3 font-semibold text-blue-300 hover:bg-blue-900/30 border-l border-gray-800">Preview</a>
+        </div>
+
+        <div class="flex items-center justify-between px-5 py-3 border-t border-gray-800">
+  <a href="{% url 'evaluation:evalform_detail' f.id %}" 
+     class="text-gray-300 hover:text-white flex items-center gap-2" 
+     title="Alter">
+    <i class="fas fa-sliders-h"></i>
+    <span class="sr-only">Alter</span>
+  </a>
+  <a href="{% url 'evaluation:evalform_edit' f.id %}" 
+     class="text-gray-300 hover:text-white flex items-center gap-2" 
+     title="Edit Meta">
+    <i class="fas fa-pen-to-square"></i>
+    <span class="sr-only">Edit Meta</span>
+  </a>
+</div>
+
+      </div>
+    {% empty %}
+      <p class="text-gray-400">No forms yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

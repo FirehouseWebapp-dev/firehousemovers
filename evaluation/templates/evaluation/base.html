@@ -12,8 +12,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <style>
+{% block extra_css %}
+<style>
     body { font-family: 'Montserrat', sans-serif; }
     .input-field {
       width: 100%;
@@ -27,7 +27,15 @@
       outline: none;
       box-shadow: 0 0 0 2px #dc2626;
     }
-  </style>
+    .fh-stars, .fh-emojis { display:flex; gap:.5rem; list-style:none; padding:0; margin:0; align-items:center; }
+    .fh-star input, .fh-emoji input { display:none; }
+    .fh-star label { font-size:1.6rem; cursor:pointer; opacity:.5; transition:opacity .15s, transform .05s; }
+    .fh-star input:checked + label, .fh-star label:hover { opacity:1; transform:scale(1.06); }
+    .fh-emoji label { font-size:1.6rem; cursor:pointer; filter:grayscale(40%); transition:filter .15s, transform .05s; }
+    .fh-emoji input:checked + label, .fh-emoji label:hover { filter:none; transform:scale(1.06); }
+</style>
+
+{% endblock %}
 </head>
 <body class="bg-black text-white min-h-screen">
   {% include "inventory_app/navbar.html" %}
@@ -61,7 +69,7 @@
       </a>
 
       {# --- Senior management --- #}
-      {% elif up.is_senior_management or role in "ceo vp llc/owner" %}
+      {% elif up.is_senior_management or role in "ceo vp llc/owner" or up.is_superuser %}
         {% url 'evaluation:regular_reviews' as rr_url %}
         {% url 'evaluation:senior_pending_reviews' as sr_pending_url %}
 
@@ -76,6 +84,12 @@
               {% if request.path == sr_pending_url %}bg-red-500{% endif %}">
           <i class="fas fa-hourglass-half mr-2"></i> Pending Reviews
         </a>
+        <a href="{% url 'evaluation:evalform_list' %}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path == sr_pending_url %}bg-red-500{% endif %}">
+          <i class="fas fa-hourglass-half mr-2"></i> Reviewprints
+        </a>
+
       {# --- Employees (default) --- #}
       {% else %}
       {% url 'evaluation:my_evaluations' as my_evals_url %}

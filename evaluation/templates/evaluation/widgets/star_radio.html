@@ -1,0 +1,8 @@
+<ul class="fh-stars" role="radiogroup">
+  {% for group, options, index in widget.optgroups %}
+    {% for option in options %}
+      {# use the option's own template_name #}
+      {% include option.template_name with widget=option %}
+    {% endfor %}
+  {% endfor %}
+</ul>

@@ -1,0 +1,93 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}Dynamic Evaluation{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-black text-white py-8 px-4 sm:px-8 md:px-12">
+  <div class="max-w-4xl mx-auto bg-[#1e1e1e] border border-gray-700 rounded-2xl shadow-xl">
+    <!-- Header -->
+    <div class="px-6 py-5 border-b border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-red-500">
+          {{ instance.department.title|default:"Department" }} • Weekly Evaluation
+        </h1>
+        <p class="text-gray-300 text-sm">
+          {{ week_start }} → {{ week_end }}
+        </p>
+      </div>
+      <div class="text-sm text-gray-300">
+        <div><span class="text-gray-400">Employee:</span>
+          {{ employee.user.get_full_name|default:employee.user.username }}</div>
+        <div><span class="text-gray-400">Manager:</span>
+          {{ instance.manager.user.get_full_name|default:instance.manager.user.username }}</div>
+        <div><span class="text-gray-400">Form:</span> {{ instance.form.name }}</div>
+      </div>
+    </div>
+
+    <!-- Status ribbon -->
+    <div class="px-6 pt-4">
+      {% if is_editable %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-600">
+          Open for submissions
+        </span>
+      {% else %}
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-600">
+          Closed (read-only)
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="px-6 py-6 space-y-6">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      {# Loop through dynamic questions #}
+      {% for field in form %}
+        <div class="bg-[#151515] border border-gray-700 rounded-xl p-4">
+          <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-red-400">*</span>{% endif %}
+          </label>
+
+          {# apply default styling to widgets #}
+          <div class="space-y-2">
+            {# Radio groups / checkboxes render their own inputs; others get input styling #}
+            {% if field.field.widget.input_type in "radio checkbox" or field|slice:":0" == "" %}
+              <div class="space-y-2">
+                {{ field }}
+              </div>
+            {% else %}
+              {{ field|add_class:"w-full px-3 py-2 rounded bg-[#1e1e1e] border border-gray-700 text-white focus:outline-none focus:border-red-500" }}
+            {% endif %}
+
+            {% if field.help_text %}
+              <p class="text-xs text-gray-400">{{ field.help_text|safe }}</p>
+            {% endif %}
+            {% if field.errors %}
+              <div class="text-xs text-red-400">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="pt-3 flex items-center justify-end gap-3 border-t border-gray-800">
+        <a href="{% url 'evaluation:dashboard' %}" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white">
+          Cancel
+        </a>
+        {% if is_editable %}
+          <button type="submit" class="px-5 py-2 rounded bg-red-600 hover:bg-red-700 text-white font-semibold">
+            Submit Evaluation
+          </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

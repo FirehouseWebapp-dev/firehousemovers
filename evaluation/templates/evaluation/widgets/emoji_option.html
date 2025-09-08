@@ -1,0 +1,18 @@
+{% with val=widget.value|stringformat:'i' %}
+<li class="fh-emoji">
+  <input type="radio"
+         id="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}"
+         name="{{ widget.name }}"
+         value="{{ widget.value }}"
+         {% if widget.selected %}checked{% endif %}
+         {% include "django/forms/widgets/attrs.html" %}>
+  <label for="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}">
+    {% if val == "1" %}😡
+    {% elif val == "2" %}😕
+    {% elif val == "3" %}😐
+    {% elif val == "4" %}🙂
+    {% else %}😄
+    {% endif %}
+  </label>
+</li>
+{% endwith %}

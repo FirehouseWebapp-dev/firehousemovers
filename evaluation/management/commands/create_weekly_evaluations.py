@@ -9,6 +9,8 @@ from anymail.exceptions import AnymailRequestsAPIError
 
 from evaluation.models import Evaluation
 from authentication.models import UserProfile
+from django.db import transaction
+from evaluation.models_dynamic import EvalForm, DynamicEvaluation, Answer, Question
 
 
 class Command(BaseCommand):
@@ -178,36 +180,70 @@ class Command(BaseCommand):
             for mgr in managers:
                 team = UserProfile.objects.filter(manager=mgr).distinct()
                 for emp in team:
-                    if dry:
-                        self.stdout.write(
-                            f"(dry-run) Would create evaluation for mgr={mgr.user.email} emp={emp.user.email} "
-                            f"week={this_monday}–{this_sunday}"
-                        )
-                        continue
+                    dept = emp.department
+                    if dept:
+                        active_form = EvalForm.objects.filter(department=dept, is_active=True).first()
+                    else:
+                        active_form = None
 
-                    ev, was_created = Evaluation.objects.get_or_create(
-                        manager=mgr,
-                        employee=emp,
-                        week_start=this_monday,
-                        week_end=this_sunday,
-                        defaults={
-                            "status": "pending",
-                            "avg_customer_satisfaction_score": 0,
-                            "five_star_reviews": 0,
-                            "negative_reviews": 0,
-                            "late_arrivals": 0,
-                            "absences": 0,
-                            "reliability_rating": 0,
-                            "avg_move_completion_time": timedelta(),  # 0:00:00
-                            "moves_within_schedule": 0,
-                            "avg_revenue_per_move": 0.0,
-                            "damage_claims": 0,
-                            "safety_incidents": 0,
-                            "consecutive_damage_free_moves": 0,
-                        },
-                    )
-                    if was_created:
-                        created_count += 1
+                    if active_form:
+                        if dry:
+                            self.stdout.write(
+                                f"(dry-run) Would create DYNAMIC evaluation for mgr={mgr.user.email} emp={emp.user.email} "
+                                f"dept={dept.title if dept else '-'} week={this_monday}–{this_sunday}"
+                            )
+                            continue
+
+                        with transaction.atomic():
+                            inst, created = DynamicEvaluation.objects.get_or_create(
+                                form=active_form,
+                                department=dept,
+                                manager=mgr,
+                                employee=emp,
+                                week_start=this_monday,
+                                week_end=this_sunday,
+                                defaults={"status": "pending"},
+                            )
+                            if created:
+                                # scaffold answers for faster rendering (optional)
+                                qids = list(active_form.questions.values_list("id", flat=True))
+                                Answer.objects.bulk_create(
+                                    [Answer(instance=inst, question_id=qid) for qid in qids],
+                                    ignore_conflicts=True,
+                                )
+                                created_count += 1
+                    else:
+                        # fallback to your existing legacy Evaluation creation
+                        if dry:
+                            self.stdout.write(
+                                f"(dry-run) Would create legacy evaluation for mgr={mgr.user.email} emp={emp.user.email} "
+                                f"week={this_monday}–{this_sunday}"
+                            )
+                            continue
+
+                        ev, was_created = Evaluation.objects.get_or_create(
+                            manager=mgr,
+                            employee=emp,
+                            week_start=this_monday,
+                            week_end=this_sunday,
+                            defaults={
+                                "status": "pending",
+                                "avg_customer_satisfaction_score": 0,
+                                "five_star_reviews": 0,
+                                "negative_reviews": 0,
+                                "late_arrivals": 0,
+                                "absences": 0,
+                                "reliability_rating": 0,
+                                "avg_move_completion_time": timedelta(),
+                                "moves_within_schedule": 0,
+                                "avg_revenue_per_move": 0.0,
+                                "damage_claims": 0,
+                                "safety_incidents": 0,
+                                "consecutive_damage_free_moves": 0,
+                            },
+                        )
+                        if was_created:
+                            created_count += 1
 
             if not dry:
                 self.stdout.write(

@@ -1,0 +1,112 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --bg:#000; --card:#1a1a1a; --card2:#1f1f1f; --line:#2b2b2b;
+    --ink:#fff; --muted:#b8b8b8; --blue:#2563eb; --danger:#ef4444;
+  }
+  body{ background:var(--bg); }
+  .sheet{ background:var(--card); border:1px solid var(--line); border-radius:14px; }
+  .pill{ display:inline-flex; align-items:center; gap:.4rem; padding:.2rem .6rem; font-size:.75rem; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card2); color:var(--muted); }
+  .toolbar .btn{ border-radius:10px; padding:.55rem .9rem; font-weight:800; border:1px solid var(--line); background:var(--card2); color:#e9efff; }
+  .toolbar .btn:hover{ background:#263248; }
+  .btn-accent{ background:var(--danger)!important; border-color:#7f1d1d; }
+  .q-item{ border:1px solid var(--line); background:var(--card2); border-radius:12px; padding:16px 18px; display:flex; align-items:center; gap:14px; transition: background .12s, border-color .12s; }
+  .q-item:hover{ background:#232323; border-color:#3a3a3a; }
+  .drag{ cursor:grab; color:var(--muted); }
+  .q-title{ font-weight:800; color:var(--ink); }
+  .q-sub{ color:var(--muted); font-size:.9rem; }
+  .q-actions a{ color:#93c5fd; font-weight:700; }
+  .q-actions a:hover{ color:#cfe0ff; text-decoration:underline; }
+  .floating-add{ position:fixed; right:28px; bottom:28px; background:var(--blue); color:#fff; border-radius:999px; padding:.9rem 1rem; box-shadow:0 10px 30px rgba(37,99,235,.35); display:flex; align-items:center; gap:.6rem; font-weight:800; }
+  .floating-add:hover{ filter:brightness(1.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4">
+
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <div class="text-3xl font-extrabold text-red-400">{{ form_obj.name }}</div>
+      <div class="text-lg text-gray-300">{{ form_obj.department.title }}</div>
+
+      <div class="mt-3 flex items-center gap-2">
+        {% if form_obj.is_active %}
+          <span class="pill"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Active</span>
+        {% else %}
+          <span class="pill"><span class="w-2 h-2 rounded-full bg-gray-400 inline-block"></span>Inactive</span>
+        {% endif %}
+        <span class="pill"><i class="fa-regular fa-note-sticky"></i> {{ questions|length }} questions</span>
+      </div>
+    </div>
+
+    <div class="toolbar flex items-center gap-3">
+      <a href="{% url 'evaluation:evalform_preview' form_obj.id %}" class="btn">
+        <i class="fa-regular fa-eye mr-2"></i> Preview
+      </a>
+      <form method="post" action="{% url 'evaluation:evalform_activate' form_obj.id %}">
+        {% csrf_token %}
+        <button class="btn btn-accent"><i class="fa-solid fa-bolt mr-2"></i>
+          {% if form_obj.is_active %}Re-activate{% else %}Make Active{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Quick tip -->
+  <div class="sheet p-4 mb-6">
+    <div class="text-sm text-gray-300">
+      <i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>
+      Drag the grip (<i class="fa-solid fa-grip-vertical text-gray-400"></i>) to reorder (visual only). Click <b>Edit</b> to change wording, type, or help text.
+    </div>
+  </div>
+
+  <!-- Questions list -->
+  <div id="q-list" class="space-y-3">
+    {% for q in questions %}
+      <div class="q-item">
+        <div class="drag"><i class="fa-solid fa-grip-vertical"></i></div>
+
+        <div class="text-xl text-gray-300 w-7 text-center">
+          {% if q.qtype == 'rating_5' %}<i class="fa-regular fa-star"></i>
+          {% elif q.qtype == 'rating_10' %}<i class="fa-regular fa-star-half-stroke"></i>
+          {% elif q.qtype == 'emoji_5' %}<i class="fa-regular fa-face-smile"></i>
+          {% elif q.qtype == 'long_text' %}<i class="fa-regular fa-comment-dots"></i>
+          {% elif q.qtype == 'number' %}<i class="fa-solid fa-hashtag"></i>
+          {% else %}<i class="fa-regular fa-square"></i>
+          {% endif %}
+        </div>
+
+        <div class="flex-1">
+          <div class="q-title">{{ q.text|capfirst }}</div>
+          <div class="q-sub">
+            {{ q.get_qtype_display }}
+            {% if q.help_text %} · {{ q.help_text }}{% endif %}
+          </div>
+        </div>
+
+        <div class="q-actions flex items-center gap-4">
+          <a href="{% url 'evaluation:question_edit' q.id %}">Edit</a>
+          {% if q.qtype == "select" %}
+            <a href="{% url 'evaluation:choice_add' q.id %}" class="text-gray-300 hover:text-white">
+              <i class="fa-regular fa-square-plus mr-1"></i> Choice
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="sheet p-6 text-gray-300">No questions yet. Click <b>+ Add Question</b> to get started.</div>
+    {% endfor %}
+  </div>
+
+  <!-- Floating Add -->
+  <a href="{% url 'evaluation:question_add' form_obj.id %}" class="floating-add">
+    <i class="fa-solid fa-plus"></i> Add Question
+  </a>
+
+</div>
+{% endblock %}
