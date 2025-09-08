@@ -21,3 +21,18 @@ urlpatterns = [
     path("reviews/detail/<int:evaluation_id>/", views.manager_review_detail, name="manager_review_detail"),
     path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),  
 ]
+
+from . import views_dynamic
+
+# Management UI
+urlpatterns += [
+    path("forms/", views_dynamic.evalform_list, name="evalform_list"),
+    path("forms/new/", views_dynamic.evalform_create, name="evalform_create"),
+    path("forms/<int:pk>/", views_dynamic.evalform_detail, name="evalform_detail"),
+    path("forms/<int:pk>/edit/", views_dynamic.evalform_edit, name="evalform_edit"),
+    path("forms/<int:pk>/preview/", views_dynamic.evalform_preview, name="evalform_preview"),
+    path("forms/<int:pk>/activate/", views_dynamic.evalform_activate, name="evalform_activate"),
+    path("forms/<int:form_id>/questions/add/", views_dynamic.question_add, name="question_add"),
+    path("forms/questions/<int:question_id>/edit/", views_dynamic.question_edit, name="question_edit"),
+    path("forms/questions/<int:question_id>/choices/add/", views_dynamic.choice_add, name="choice_add"),
+]

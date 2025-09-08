@@ -1,0 +1,106 @@
+from __future__ import annotations
+from django.db import models
+from authentication.models import UserProfile, Department
+
+
+class EvalForm(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="eval_forms")
+    name = models.CharField(max_length=120, default="Weekly Evaluation")
+    description = models.CharField(max_length=255, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # at most one active per department
+        constraints = [
+            models.UniqueConstraint(
+                fields=["department"],
+                condition=models.Q(is_active=True),
+                name="uq_evalform_one_active_per_dept",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
+
+
+class Question(models.Model):
+    class QType(models.TextChoices):
+        SECTION = "section", "Section header (no input)"   # ✅ NEW
+        STARS  = "stars",  "Star rating (1–5)"
+        EMOJI  = "emoji",  "Emoji satisfaction (1–5)"
+        RATING = "rating", "Plain rating (1–5 or 0–10)"
+        SHORT  = "short",  "Short text"
+        LONG   = "long",   "Long text"
+        NUMBER = "number", "Number"
+        BOOL   = "bool",   "Yes/No"
+        SELECT = "select", "Single select"
+
+    form = models.ForeignKey(EvalForm, on_delete=models.CASCADE, related_name="questions")
+    text = models.CharField(max_length=300)
+    help_text = models.CharField(max_length=300, blank=True, default="")
+    qtype = models.CharField(max_length=20, choices=QType.choices, default=QType.STARS)
+    required = models.BooleanField(default=True)
+
+    # For numeric scales
+    min_value = models.IntegerField(null=True, blank=True, default=1)
+    max_value = models.IntegerField(null=True, blank=True, default=5)
+
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self) -> str:
+        return f"[{self.qtype}] {self.text[:50]}"
+
+
+class QuestionChoice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
+    value = models.CharField(max_length=100)
+    label = models.CharField(max_length=120)
+
+    class Meta:
+        unique_together = [("question", "value")]
+        ordering = ["id"]
+
+    def __str__(self) -> str:
+        return f"{self.label}"
+
+
+class DynamicEvaluation(models.Model):
+    STATUS = (("pending", "Pending"), ("completed", "Completed"))
+
+    form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="instances")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_evaluations")
+    manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_mgr_evaluations")
+    employee = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_emp_evaluations")
+
+    week_start = models.DateField()
+    week_end   = models.DateField()
+
+    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("employee", "week_start", "week_end", "form")]
+        indexes = [
+            models.Index(fields=["week_start", "week_end", "employee_id"]),
+            models.Index(fields=["manager_id", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.employee} • {self.week_start}–{self.week_end} ({self.form})"
+
+
+class Answer(models.Model):
+    instance = models.ForeignKey(DynamicEvaluation, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
+
+    int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)
+    text_value  = models.TextField(null=True, blank=True)      # short/long
+    choice_value = models.CharField(max_length=100, null=True, blank=True)  # select
+
+    class Meta:
+        unique_together = [("instance", "question")]
