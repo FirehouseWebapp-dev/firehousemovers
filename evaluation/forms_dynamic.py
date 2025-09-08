@@ -79,7 +79,7 @@ class DynamicEvaluationForm(forms.Form):
             elif q.qtype == Question.QType.BOOL:
                 field = forms.BooleanField(required=False)
                 if q.id in existing and existing[q.id].int_value is not None:
-                    initial = bool(existing[q.id].int_value)
+                    initial = existing[q.id].int_value == 1
 
             elif q.qtype == Question.QType.SELECT:
                 choices = [(c.value, c.label) for c in q.choices.all()]
@@ -104,6 +104,60 @@ class DynamicEvaluationForm(forms.Form):
 
             self.fields[name] = field
             self.fields[name].label = q.text
+
+    def save(self) -> DynamicEvaluation:
+        """Save the form data to the DynamicEvaluation instance."""
+        inst = self.instance
+        cleaned = self.cleaned_data
+
+        q_by_id = {q.id: q for q in inst.form.questions.all()}
+        ans_by_qid = {a.question_id: a for a in inst.answers.all()}
+
+        new_answers, updates = [], []
+
+        for name, value in cleaned.items():
+            if not name.startswith("q_"):
+                continue
+            qid = int(name.split("_", 1)[1])
+            q = q_by_id[qid]
+
+            int_val = None
+            text_val = None
+            choice_val = None
+
+            if q.qtype in (Question.QType.STARS, Question.QType.RATING, Question.QType.EMOJI, Question.QType.NUMBER):
+                int_val = int(value) if value not in (None, "") else None
+            elif q.qtype == Question.QType.BOOL:
+                if value == "True":
+                    int_val = 1
+                elif value == "False":
+                    int_val = 0
+                else:
+                    int_val = 1 if value else 0
+            elif q.qtype == Question.QType.SELECT:
+                choice_val = value or None
+            elif q.qtype in (Question.QType.SHORT, Question.QType.LONG):
+                text_val = value or None
+
+            if qid in ans_by_qid:
+                a = ans_by_qid[qid]
+                a.int_value, a.text_value, a.choice_value = int_val, text_val, choice_val
+                updates.append(a)
+            else:
+                new_answers.append(Answer(
+                    instance=inst,
+                    question=q,
+                    int_value=int_val,
+                    text_value=text_val,
+                    choice_value=choice_val,
+                ))
+
+        if new_answers:
+            Answer.objects.bulk_create(new_answers, ignore_conflicts=True)
+        if updates:
+            Answer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
+
+        return inst
 
 class PreviewEvalForm(forms.Form):
     def __init__(self, *args, eval_form: EvalForm, **kwargs):

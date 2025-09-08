@@ -53,6 +53,11 @@
         <i class="fas fa-chart-line mr-2"></i> Dashboard
       </a>
 
+      {% url 'evaluation:dashboard2' as dash2_url %}
+      <a href="{{ dash2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == dash2_url %}bg-red-500{% endif %}">
+        <i class="fas fa-chart-bar mr-2"></i> Dashboard 2
+      </a>
+
       {% url 'evaluation:pending' as pending_url %}
       <a href="{{ pending_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_url %}bg-red-500{% endif %}">
         <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations

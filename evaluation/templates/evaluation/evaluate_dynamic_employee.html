@@ -1,0 +1,227 @@
+{% extends "evaluation/base.html" %}
+{% load form_tags %}
+
+{% block title %}
+  Evaluate {{ employee.user.get_full_name }}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-[#1a1a1a] rounded-lg shadow-lg text-white">
+  <h2 class="text-3xl font-extrabold text-red-500 mb-6">
+    {{ evaluation.form.name }} - {{ evaluation.department.title }}
+  </h2>
+
+  <p class="mb-6 text-gray-300">
+    <strong>Evaluating:</strong> {{ employee.user.get_full_name }}<br>
+    <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
+    <strong>Department:</strong> {{ evaluation.department.title }}<br>
+    <strong>Form:</strong> {{ evaluation.form.name }}
+  </p>
+
+
+  {# If they cannot submit, show a banner #}
+  {% if not can_submit %}
+    <div class="mb-6 text-yellow-400 font-semibold">
+      {% if evaluation.submitted_at %}
+        You've already submitted this on 
+        {{ evaluation.submitted_at|date:"M j, Y, P" }}.
+      {% else %}
+        This evaluation is from a previous week and cannot be edited.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-8">
+    {% csrf_token %}
+
+    {# Non-field errors #}
+    {% if form.non_field_errors %}
+      <div class="bg-red-100 text-red-700 border border-red-400 p-3 rounded mb-4">
+        {% for err in form.non_field_errors %}
+          <p>{{ err }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Disable entire fieldset when cannot submit #}
+    {% if not can_submit %}
+      <fieldset disabled class="opacity-60">
+    {% endif %}
+
+    {# Render dynamic form fields #}
+    {% for field in form %}
+      <div class="mb-6">
+        <label class="block mb-2 font-semibold text-white">
+          {{ field.label }}
+          {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+        
+        {% if field.help_text %}
+          <p class="text-sm text-gray-400 mb-2">{{ field.help_text }}</p>
+        {% endif %}
+
+        {# Handle different field types #}
+        {% if field.field.widget.input_type == "radio" %}
+          {# Radio buttons (stars, emoji, rating) #}
+          <div class="flex gap-4 mb-2">
+            {% for choice in field.field.choices %}
+              <label class="relative cursor-pointer">
+                <input
+                  type="radio"
+                  name="{{ field.name }}"
+                  value="{{ choice.0 }}"
+                  class="sr-only peer"
+                  {% if field.value|stringformat:"s" == choice.0|stringformat:"s" %}
+                    checked
+                  {% endif %}
+                >
+                <div
+                  class="w-14 h-14 flex items-center justify-center text-4xl rounded-full
+                         bg-[#2a2a2a] hover:bg-gray-600 text-white
+                         peer-checked:ring-4 peer-checked:ring-red-500
+                         peer-checked:bg-red-800/30 peer-checked:text-red-400
+                         transition-all duration-200"
+                  title="{{ choice.1 }}"
+                >
+                  {% if "star" in field.field.widget.template_name %}
+                    ⭐
+                  {% elif "emoji" in field.field.widget.template_name %}
+                    {% if choice.0 == "1" %}😡
+                    {% elif choice.0 == "2" %}😕
+                    {% elif choice.0 == "3" %}😐
+                    {% elif choice.0 == "4" %}🙂
+                    {% elif choice.0 == "5" %}😍
+                    {% else %}{{ choice.0 }}{% endif %}
+                  {% else %}
+                    {{ choice.0 }}
+                  {% endif %}
+                </div>
+              </label>
+            {% endfor %}
+          </div>
+
+        {% elif field.field.widget.input_type == "checkbox" %}
+          {# Boolean Yes/No radio buttons #}
+          <div class="flex gap-3">
+            <label class="relative cursor-pointer">
+              <input
+                type="radio"
+                name="{{ field.name }}"
+                value="True"
+                class="sr-only peer"
+                {% if field.value %}checked{% endif %}
+              >
+              <div
+                class="px-3 py-1.5 rounded border border-gray-600 text-center
+                       bg-[#2a2a2a] hover:bg-gray-600 text-white
+                       peer-checked:ring-1 peer-checked:ring-red-500
+                       peer-checked:bg-red-800/30 peer-checked:text-red-400
+                       peer-checked:border-red-500 transition-all duration-200"
+              >
+                <span class="text-xs font-medium">Yes</span>
+              </div>
+            </label>
+            
+            <label class="relative cursor-pointer">
+              <input
+                type="radio"
+                name="{{ field.name }}"
+                value="False"
+                class="sr-only peer"
+                {% if not field.value %}checked{% endif %}
+              >
+              <div
+                class="px-3 py-1.5 rounded border border-gray-600 text-center
+                       bg-[#2a2a2a] hover:bg-gray-600 text-white
+                       peer-checked:ring-1 peer-checked:ring-red-500
+                       peer-checked:bg-red-800/30 peer-checked:text-red-400
+                       peer-checked:border-red-500 transition-all duration-200"
+              >
+                <span class="text-xs font-medium">No</span>
+              </div>
+            </label>
+          </div>
+
+        {% elif field.field.widget.input_type == "number" %}
+          {# Number input #}
+          <input
+            type="number"
+            name="{{ field.name }}"
+            id="{{ field.id_for_label }}"
+            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            value="{{ field.value|default:'' }}"
+            {% if field.field.min_value %}min="{{ field.field.min_value }}"{% endif %}
+            {% if field.field.max_value %}max="{{ field.field.max_value }}"{% endif %}
+          >
+
+        {% elif field.field.widget.input_type == "select" %}
+          {# Select dropdown #}
+          <select
+            name="{{ field.name }}"
+            id="{{ field.id_for_label }}"
+            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
+          >
+            <option value="">Select an option...</option>
+            {% for choice in field.field.choices %}
+              <option value="{{ choice.0 }}" {% if field.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                {{ choice.1 }}
+              </option>
+            {% endfor %}
+          </select>
+
+        {% elif field.field.widget.input_type == "textarea" or field.field.widget.template_name == "django/forms/widgets/textarea.html" %}
+          {# Textarea (long text) #}
+          <textarea
+            name="{{ field.name }}"
+            id="{{ field.id_for_label }}"
+            rows="4"
+            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            placeholder="Enter your response..."
+          >{{ field.value|default:'' }}</textarea>
+
+        {% else %}
+          {# Text input (short text) #}
+          <input
+            type="text"
+            name="{{ field.name }}"
+            id="{{ field.id_for_label }}"
+            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
+            value="{{ field.value|default:'' }}"
+            placeholder="Enter your response..."
+          >
+        {% endif %}
+
+        {# Field errors #}
+        {% if field.errors %}
+          <div class="mt-1 text-red-500 text-sm">
+            {% for error in field.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    {# Close fieldset if disabled #}
+    {% if not can_submit %}
+      </fieldset>
+    {% endif %}
+
+    {# Submit button #}
+    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700">
+      <a href="{% url 'evaluation:dashboard2' %}" class="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+        Cancel
+      </a>
+      {% if can_submit %}
+        <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+          {% if evaluation.status == "completed" %}
+            Update Evaluation
+          {% else %}
+            Submit Evaluation
+          {% endif %}
+        </button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

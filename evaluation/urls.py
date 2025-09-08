@@ -1,11 +1,15 @@
 from django.urls import path
 from . import views
+from . import views_dynamic
 
 app_name = "evaluation"
 
 urlpatterns = [
     path("dashboard/", views.evaluation_dashboard, name="dashboard"),
+    path("dashboard2/", views_dynamic.evaluation_dashboard2, name="dashboard2"),
     path("evaluate/<int:evaluation_id>/", views.evaluate_employee, name="evaluate"),
+    path("evaluate-dynamic/<int:evaluation_id>/", views_dynamic.evaluate_dynamic_employee, name="evaluate_dynamic"),
+    path("dynamic-evaluation/<int:evaluation_id>/", views_dynamic.view_dynamic_evaluation, name="view_dynamic_evaluation"),
     path("pending/", views.pending_evaluation_view, name="pending"),
     path("my-evaluations/", views.my_evaluations, name="my_evaluations"),
     path("my-evaluations/<int:evaluation_id>/", views.evaluation_detail, name="my_evaluation_detail"),
@@ -21,8 +25,6 @@ urlpatterns = [
     path("reviews/detail/<int:evaluation_id>/", views.manager_review_detail, name="manager_review_detail"),
     path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),  
 ]
-
-from . import views_dynamic
 
 # Management UI
 urlpatterns += [

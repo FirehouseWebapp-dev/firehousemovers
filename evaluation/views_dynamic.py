@@ -10,9 +10,10 @@ from django.views.decorators.http import require_http_methods
 import json
 
 from authentication.models import UserProfile
-from .models_dynamic import EvalForm, Question, QuestionChoice
+from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
-from .forms_dynamic import PreviewEvalForm
+from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
+from django.utils.timezone import now
 
 def _can_manage(user):
     if not user.is_authenticated:
@@ -256,3 +257,117 @@ def question_delete(request, question_id):
     
     # If not POST, redirect to form detail
     return redirect("evaluation:evalform_detail", pk=form_obj.id)
+
+
+@login_required
+def evaluation_dashboard2(request):
+    """
+    Dashboard 2 view: Alternative dashboard for managers showing dynamic evaluations.
+    """
+    profile = request.user.userprofile
+    
+    # Only managers can access this dashboard
+    if not (profile.role == "manager" or profile.is_manager):
+        return redirect("evaluation:dashboard")
+    
+    today = now().date()
+    
+    # Get manager's team dynamic evaluations
+    evaluations = (
+        DynamicEvaluation.objects
+        .filter(manager=profile)
+        .select_related("employee__user", "form", "department")
+        .order_by("-week_start")
+    )
+    
+    # Calculate counts
+    pending_count = evaluations.filter(status="pending").count()
+    completed_count = evaluations.filter(status="completed").count()
+    
+    return render(request, "evaluation/dashboard2.html", {
+        "evaluations": evaluations,
+        "today": today,
+        "pending_count": pending_count,
+        "completed_count": completed_count,
+    })
+
+
+@login_required
+def evaluate_dynamic_employee(request, evaluation_id):
+    """
+    Manager view: display & handle single dynamic evaluation form.
+    """
+    evaluation = get_object_or_404(DynamicEvaluation, pk=evaluation_id)
+    manager = request.user.userprofile
+
+    # only the assigned manager may access
+    if evaluation.manager != manager:
+        return redirect("evaluation:dashboard2")
+
+    # editable while within the week window
+    is_editable = (now().date() <= evaluation.week_end)
+    can_submit = is_editable or (evaluation.submitted_at is None)
+
+    if request.method == "POST" and can_submit:
+        form = DynamicEvaluationForm(request.POST, instance=evaluation)
+        if form.is_valid():
+            with transaction.atomic():
+                # Check if this is an update or new submission
+                was_completed = evaluation.status == "completed"
+                
+                # Save the evaluation status
+                evaluation.status = "completed"
+                evaluation.submitted_at = now()
+                evaluation.save()
+                
+                # Save the form data (answers)
+                form.save()
+                
+                if was_completed:
+                    messages.success(request, f"Evaluation for {evaluation.employee.user.get_full_name()} has been updated successfully!")
+                else:
+                    messages.success(request, f"Evaluation for {evaluation.employee.user.get_full_name()} has been submitted successfully!")
+                return redirect("evaluation:dashboard2")
+    else:
+        form = DynamicEvaluationForm(instance=evaluation)
+        
+        # Show info message if evaluation is already completed
+        if evaluation.status == "completed":
+            messages.info(request, f"This evaluation was completed on {evaluation.submitted_at.strftime('%B %d, %Y at %I:%M %p')}.")
+
+    return render(request, "evaluation/evaluate_dynamic_employee.html", {
+        "form": form,
+        "evaluation": evaluation,
+        "employee": evaluation.employee,
+        "week_start": evaluation.week_start,
+        "week_end": evaluation.week_end,
+        "is_editable": is_editable,
+        "can_submit": can_submit,
+    })
+
+
+@login_required
+def view_dynamic_evaluation(request, evaluation_id):
+    """
+    View completed dynamic evaluation (read-only).
+    """
+    evaluation = get_object_or_404(DynamicEvaluation, pk=evaluation_id)
+    manager = request.user.userprofile
+
+    # only the assigned manager may access
+    if evaluation.manager != manager:
+        return redirect("evaluation:dashboard2")
+
+    # Get all answers for this evaluation
+    answers = evaluation.answers.select_related('question').all()
+    
+    # Create a dictionary for easy template access
+    answers_dict = {answer.question_id: answer for answer in answers}
+
+    return render(request, "evaluation/view_dynamic_evaluation.html", {
+        "evaluation": evaluation,
+        "employee": evaluation.employee,
+        "answers": answers_dict,
+        "week_start": evaluation.week_start,
+        "week_end": evaluation.week_end,
+    })
