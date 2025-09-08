@@ -2,9 +2,32 @@
 {% block content %}
 <div class="p-6 text-white max-w-xl mx-auto">
   <h1 class="text-2xl font-bold text-red-500 mb-6">Create Reviewprint</h1>
+  
+  <!-- Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 p-4 rounded {% if message.tags == 'error' %}bg-red-600{% elif message.tags == 'success' %}bg-green-600{% else %}bg-blue-600{% endif %} text-white">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  
   <form method="post" class="space-y-4">
     {% csrf_token %}
-    {{ form.as_p }}
+    <div class="space-y-4">
+      <div>
+        <label for="{{ form.department.id_for_label }}" class="block text-sm font-medium text-white mb-2">Department</label>
+        {{ form.department }}
+      </div>
+      <div>
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-white mb-2">Name</label>
+        {{ form.name }}
+      </div>
+      <div>
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-white mb-2">Description</label>
+        {{ form.description }}
+      </div>
+    </div>
     <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-semibold">Save</button>
   </form>
 </div>

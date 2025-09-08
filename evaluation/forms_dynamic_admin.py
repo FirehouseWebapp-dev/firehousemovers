@@ -2,15 +2,29 @@ from django import forms
 from .models_dynamic import EvalForm, Question, QuestionChoice
 
 class EvalFormForm(forms.ModelForm):
+    EVALUATION_TYPE_CHOICES = [
+        ('', '----'),
+        ('Weekly Evaluation', 'Weekly Evaluation'),
+        ('Monthly Evaluation', 'Monthly Evaluation'),
+        ('Quarterly Evaluation', 'Quarterly Evaluation'),
+        ('Annual Evaluation', 'Annual Evaluation'),
+    ]
+    
+    name = forms.ChoiceField(
+        choices=EVALUATION_TYPE_CHOICES,
+        widget=forms.Select(attrs={"class": "input-field"}),
+        label="Name"
+    )
+    
     class Meta:
         model = EvalForm
-        fields = ["department", "name", "description", "is_active"]
+        fields = ["department", "name", "description"]
         widgets = {
             "department": forms.Select(attrs={"class": "input-field"}),
-            "name": forms.TextInput(attrs={"class": "input-field"}),
             "description": forms.TextInput(attrs={"class": "input-field"}),
-            "is_active": forms.CheckboxInput(attrs={"class": "h-4 w-4"}),
         }
+    
+    
 
 class QuestionForm(forms.ModelForm):
     class Meta:

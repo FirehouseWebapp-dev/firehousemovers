@@ -32,7 +32,10 @@ urlpatterns += [
     path("forms/<int:pk>/edit/", views_dynamic.evalform_edit, name="evalform_edit"),
     path("forms/<int:pk>/preview/", views_dynamic.evalform_preview, name="evalform_preview"),
     path("forms/<int:pk>/activate/", views_dynamic.evalform_activate, name="evalform_activate"),
+    path("forms/<int:pk>/delete/", views_dynamic.evalform_delete, name="evalform_delete"),
     path("forms/<int:form_id>/questions/add/", views_dynamic.question_add, name="question_add"),
     path("forms/questions/<int:question_id>/edit/", views_dynamic.question_edit, name="question_edit"),
+    path("forms/questions/<int:question_id>/delete/", views_dynamic.question_delete, name="question_delete"),
     path("forms/questions/<int:question_id>/choices/add/", views_dynamic.choice_add, name="choice_add"),
+    path("forms/<int:pk>/update_order/", views_dynamic.update_question_order, name="update_question_order"),
 ]

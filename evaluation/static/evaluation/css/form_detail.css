@@ -1,0 +1,497 @@
+/* Form Detail Styles */
+:root {
+  --bg: #000;
+  --bg-page: #111111;       /* page background behind sheet */
+  --card: #1a1a1a;
+  --card2: #1f1f1f;
+  --bg-sheet: #1a1a1a;      /* main form sheet */
+  --bg-input: #222222;      /* inputs & pills */
+  --line: #2b2b2b;
+  --bd-muted: #2b2b2b;      /* dividers/borders */
+  --ink: #fff;
+  --muted: #b8b8b8;
+  --text-muted: #b0b0b0;    /* subdued text */
+  --blue: #2563eb;
+  --danger: #ef4444;
+  --accent: #ef4444;        /* red action button */
+  --pill-border: #333333;
+  --pill-active: #2a2a2a;
+}
+
+body {
+  background: var(--bg);
+}
+
+/* Text truncation utility */
+.line-clamp-1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fh-wrap{max-width:960px;margin:2rem auto;}
+.fh-sheet{background:var(--bg-sheet);border:1px solid var(--bd-muted);border-radius:14px;overflow:hidden;}
+.fh-head{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd-muted);}
+.fh-title{font-size:1.5rem;font-weight:800;color:#ef4444;}
+.fh-sub{color:var(--text-muted);font-size:.95rem;margin-top:.25rem;}
+.fh-badge{display:inline-block;padding:.35rem .65rem;border-radius:999px;font-size:.7rem;color:#d0d0d0;background:#2a2a2a;border:1px solid var(--bd-muted);}
+
+.fh-body{padding:8px 0;}
+.fh-row{padding:18px 24px;border-top:1px solid var(--bd-muted);}
+.fh-row:first-child{border-top:none;}
+
+.fh-label{
+  font-weight:800;color:#fff;margin-bottom:.65rem;display:block;
+  letter-spacing:.2px;
+}
+.fh-help{color:var(--text-muted);font-size:.9rem;margin-top:.45rem}
+
+/* Inputs/textarea */
+.fh-row input[type="text"],
+.fh-row input[type="number"],
+.fh-row select,
+.fh-row textarea{
+  width:100%;background:var(--bg-input);color:#f5f5f5;border:1px solid var(--bd-muted);
+  border-radius:10px;padding:.75rem .9rem;outline:none;
+  cursor:text;
+}
+.fh-row textarea{min-height:120px;resize:vertical}
+
+/* Enable form fields */
+.fh-row input:focus,
+.fh-row textarea:focus,
+.fh-row select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Remove disabled styling */
+.fh-row input:not([disabled]),
+.fh-row textarea:not([disabled]),
+.fh-row select:not([disabled]) {
+  opacity: 1;
+  cursor: text;
+}
+
+/* Star / Pill radios */
+.fh-stars,.fh-pills{display:flex;gap:.6rem;list-style:none;padding:0;margin:0;align-items:center}
+.fh-star input,.fh-pill input{display:none}
+.fh-star label{font-size:1.6rem;cursor:pointer;opacity:.55;transition:opacity .12s,transform .05s}
+.fh-star input:checked+label,.fh-star label:hover{opacity:1;transform:scale(1.06)}
+.fh-pill label{
+  display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:36px;padding:0 .7rem;
+  border-radius:8px;background:var(--bg-input);color:#e0e0e0;border:1px solid var(--pill-border);
+  font-weight:700;font-size:.9rem;cursor:pointer;transition:all .12s ease
+}
+.fh-pill input:checked+label{background:var(--pill-active);border-color:#444;box-shadow:0 0 0 2px #44444466 inset}
+.fh-nps-hints{display:flex;justify-content:space-between;color:var(--text-muted);font-size:.78rem;margin-top:.35rem}
+
+/* Boolean Yes/No styling */
+.fh-bool {
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  align-items: center;
+}
+.fh-bool input {
+  display: none;
+}
+.fh-bool label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 40px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  background: transparent;
+  color: #ef4444;
+  border: 2px dashed #ef4444;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.fh-bool label:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+  transform: scale(1.05);
+}
+.fh-bool input:checked + label {
+  background: #ef4444;
+  color: white;
+  border-style: solid;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+/* Improved emoji group */
+.fh-emojis{
+  display:flex;gap:1rem;list-style:none;padding:0;margin:0;align-items:center;flex-wrap:wrap;
+}
+.fh-emoji{display:inline-block;list-style:none}
+.fh-emoji input{display:none} /* hide radios, click label */
+.fh-emoji label{
+  font-size:2rem;               /* bigger emojis */
+  cursor:pointer;
+  filter:grayscale(55%);
+  opacity:.65;
+  transition:transform .18s ease, opacity .18s ease, filter .18s ease, text-shadow .18s ease;
+  line-height:1;
+  display:inline-block;
+}
+.fh-emoji label:hover{
+  transform:scale(1.18);
+  filter:none;
+  opacity:1;
+}
+.fh-emoji input:checked + label{
+  filter:none;
+  opacity:1;
+  transform:scale(1.24);
+  text-shadow:0 0 10px rgba(255,255,255,.35);
+}
+
+/* Footer */
+.fh-foot{padding:16px 24px;border-top:1px solid var(--bd-muted);display:flex;justify-content:space-between}
+
+/* Flash Messages */
+.flash-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid;
+  font-weight: 600;
+  animation: slideIn 0.3s ease-out;
+}
+
+.flash-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.flash-content {
+  flex: 1;
+}
+
+.flash-success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.flash-success .flash-icon {
+  color: #22c55e;
+}
+
+.flash-error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.flash-error .flash-icon {
+  color: #ef4444;
+}
+
+.flash-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.flash-info .flash-icon {
+  color: #3b82f6;
+}
+
+.flash-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.flash-warning .flash-icon {
+  color: #f59e0b;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sheet {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card2);
+  color: var(--muted);
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-weight: 800;
+  border: 1px solid var(--line);
+  background: var(--card2);
+  color: #e9efff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  background: #263248;
+  filter: brightness(1.12);
+}
+
+.btn-muted {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.btn-muted:hover {
+  filter: brightness(1.12);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: white;
+  border-color: #7f1d1d;
+}
+
+.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+.btn-accent:disabled {
+  background: #6b7280 !important;
+  border-color: #4b5563;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.toolbar .btn {
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+}
+
+.q-item {
+  border: 1px solid var(--line);
+  background: var(--card2);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.q-item:hover {
+  background: #232323;
+  border-color: #3a3a3a;
+}
+
+.q-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.q-item.drag-over {
+  border-color: var(--blue);
+  background: #1a2332;
+}
+
+.drag {
+  cursor: grab;
+  color: var(--muted);
+  transition: color 0.12s;
+}
+
+.drag:hover {
+  color: var(--blue);
+  cursor: grab;
+}
+
+.q-title {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.q-sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.q-actions a {
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.q-actions a:hover {
+  color: #cfe0ff;
+  text-decoration: underline;
+}
+
+.q-actions .delete-btn {
+  color: #ef4444;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.q-actions .delete-btn:hover {
+  color: #dc2626;
+}
+
+/* Hide checkboxes in question items */
+.q-item input[type="checkbox"] {
+  display: none !important;
+}
+
+/* Hide the square icon in question items */
+.q-item .fa-square {
+  display: none !important;
+}
+
+
+.floating-add {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+}
+
+.floating-add:hover {
+  filter: brightness(1.05);
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+  background: var(--card);
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.modal-close {
+  color: var(--muted);
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--ink);
+}
+
+.modal-body {
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Badge Styles */
+.fh-badge-active {
+  background: #16321e;
+  border-color: #215c37;
+  color: #b9ffdf;
+}
+
+.section-label {
+  font-size: 1.05rem;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Modal Button Styles */
+.btn-modal {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel {
+  background: var(--card2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.btn-cancel:hover {
+  background: #232323;
+}
+
+.btn-delete {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}

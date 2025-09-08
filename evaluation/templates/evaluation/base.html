@@ -86,8 +86,8 @@
         </a>
         <a href="{% url 'evaluation:evalform_list' %}"
           class="block py-2 px-3 rounded hover:bg-red-600
-              {% if request.path == sr_pending_url %}bg-red-500{% endif %}">
-          <i class="fas fa-hourglass-half mr-2"></i> Reviewprints
+              {% if request.path|startswith:'/evaluation/forms/' %}bg-red-500{% endif %}">
+          <i class="fas fa-clipboard-list mr-2"></i> Reviewprints
         </a>
 
       {# --- Employees (default) --- #}

@@ -1,5 +1,7 @@
 from __future__ import annotations
 from django.db import models
+from django.utils.timezone import now
+from datetime import timedelta, date
 from authentication.models import UserProfile, Department
 
 
@@ -12,17 +14,19 @@ class EvalForm(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # at most one active per department
+        # Allow multiple active forms per department (one for each evaluation type)
         constraints = [
+            # Ensure only one active form per department per evaluation type
             models.UniqueConstraint(
-                fields=["department"],
+                fields=["department", "name"],
                 condition=models.Q(is_active=True),
-                name="uq_evalform_one_active_per_dept",
+                name="uq_evalform_one_active_per_dept_per_type",
             )
         ]
 
     def __str__(self) -> str:
         return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
+    
 
 
 class Question(models.Model):
