@@ -14,29 +14,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{% static 'evaluation/css/evaluation.css' %}" />
+  <link rel="stylesheet" href="{% static 'evaluation/css/widgets.css' %}" />
 {% block extra_css %}
-<style>
-    body { font-family: 'Montserrat', sans-serif; }
-    .input-field {
-      width: 100%;
-      background-color: #000;
-      border: 1px solid #4B5563;
-      color: #fff;
-      padding: 0.75rem;
-      border-radius: 0.25rem;
-    }
-    .input-field:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #dc2626;
-    }
-    .fh-stars, .fh-emojis { display:flex; gap:.5rem; list-style:none; padding:0; margin:0; align-items:center; }
-    .fh-star input, .fh-emoji input { display:none; }
-    .fh-star label { font-size:1.6rem; cursor:pointer; opacity:.5; transition:opacity .15s, transform .05s; }
-    .fh-star input:checked + label, .fh-star label:hover { opacity:1; transform:scale(1.06); }
-    .fh-emoji label { font-size:1.6rem; cursor:pointer; filter:grayscale(40%); transition:filter .15s, transform .05s; }
-    .fh-emoji input:checked + label, .fh-emoji label:hover { filter:none; transform:scale(1.06); }
-</style>
-
 {% endblock %}
 </head>
 <body class="bg-black text-white min-h-screen">
@@ -63,6 +42,11 @@
       {% url 'evaluation:pending' as pending_url %}
       <a href="{{ pending_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_url %}bg-red-500{% endif %}">
         <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
+      </a>
+
+      {% url 'evaluation:pending_v2' as pending_v2_url %}
+      <a href="{{ pending_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_v2_url %}bg-red-500{% endif %}">
+        <i class="fas fa-tasks mr-2"></i> Pending Evaluations2
       </a>
 
       {% url 'evaluation:analytics' as analytics_url %}

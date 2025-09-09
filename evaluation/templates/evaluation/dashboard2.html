@@ -36,34 +36,34 @@
           <div class="flex-1">
             <div class="text-white font-semibold">{{ evaluation.employee.user.get_full_name }}</div>
             <div class="text-sm text-gray-400">
-              {{ evaluation.form.name }} - {{ evaluation.department.name }}
+              {{ evaluation.form.name }} - {{ evaluation.department.title }}
             </div>
             <div class="text-xs text-gray-500">
               {{ evaluation.week_start|date:"M d" }} - {{ evaluation.week_end|date:"M d, Y" }}
             </div>
           </div>
           
-          <div class="flex items-center gap-3">
+          <div class="dashboard-button-group">
             {% if evaluation.status == "completed" %}
-              <span class="status-badge status-completed">Completed</span>
+              <span class="dashboard-status-badge dashboard-status-completed">Completed</span>
             {% else %}
-              <span class="status-badge status-pending">Pending</span>
+              <span class="dashboard-status-badge dashboard-status-pending">Pending</span>
             {% endif %}
             
             {% if evaluation.status == "completed" %}
               <a href="{% url 'evaluation:view_dynamic_evaluation' evaluation.id %}" 
-                 class="text-sm font-bold px-4 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white">
+                 class="dashboard-btn dashboard-btn-view">
                 View
               </a>
               {% if today <= evaluation.week_end %}
                 <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" 
-                   class="text-sm font-bold px-4 py-1 rounded bg-red-600 hover:bg-red-700 text-white ml-2">
+                   class="dashboard-btn dashboard-btn-edit">
                   Edit
                 </a>
               {% endif %}
             {% else %}
               <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" 
-                 class="text-sm font-bold px-4 py-1 rounded bg-red-600 hover:bg-red-700 text-white">
+                 class="dashboard-btn dashboard-btn-evaluate">
                 Evaluate
               </a>
             {% endif %}

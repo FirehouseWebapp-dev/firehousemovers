@@ -11,6 +11,7 @@ urlpatterns = [
     path("evaluate-dynamic/<int:evaluation_id>/", views_dynamic.evaluate_dynamic_employee, name="evaluate_dynamic"),
     path("dynamic-evaluation/<int:evaluation_id>/", views_dynamic.view_dynamic_evaluation, name="view_dynamic_evaluation"),
     path("pending/", views.pending_evaluation_view, name="pending"),
+    path("pending-v2/", views_dynamic.pending_evaluations_v2, name="pending_v2"),
     path("my-evaluations/", views.my_evaluations, name="my_evaluations"),
     path("my-evaluations/<int:evaluation_id>/", views.evaluation_detail, name="my_evaluation_detail"),
     path("analytics/", views.analytics_dashboard, name="analytics"),

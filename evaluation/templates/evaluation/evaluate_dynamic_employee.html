@@ -18,6 +18,7 @@
     <strong>Department:</strong> {{ evaluation.department.title }}<br>
     <strong>Form:</strong> {{ evaluation.form.name }}
   </p>
+  
 
 
   {# If they cannot submit, show a banner #}
@@ -32,7 +33,7 @@
     </div>
   {% endif %}
 
-  <form method="post" class="space-y-8">
+  <form method="post" class="space-y-8" action="">
     {% csrf_token %}
 
     {# Non-field errors #}
@@ -60,6 +61,7 @@
         {% if field.help_text %}
           <p class="text-sm text-gray-400 mb-2">{{ field.help_text }}</p>
         {% endif %}
+        
 
         {# Handle different field types #}
         {% if field.field.widget.input_type == "radio" %}
@@ -178,7 +180,7 @@
 
         {# Field errors #}
         {% if field.errors %}
-          <div class="mt-1 text-red-500 text-sm">
+          <div class="text-red-400 text-sm mt-1">
             {% for error in field.errors %}
               <p>{{ error }}</p>
             {% endfor %}

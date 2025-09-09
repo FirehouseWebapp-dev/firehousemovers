@@ -56,14 +56,13 @@
                       {% endfor %}
                     </div>
                   {% elif question.qtype == "emoji" %}
-                    <span class="text-2xl mr-3">
-                      {% if answer.int_value == 1 %}😡
-                      {% elif answer.int_value == 2 %}😕
-                      {% elif answer.int_value == 3 %}😐
-                      {% elif answer.int_value == 4 %}🙂
-                      {% elif answer.int_value == 5 %}😍
-                      {% endif %}
-                    </span>
+                    <div class="view-emoji-container">
+                      <span class="view-emoji {% if answer.int_value == 1 %}selected{% endif %}">😡</span>
+                      <span class="view-emoji {% if answer.int_value == 2 %}selected{% endif %}">😕</span>
+                      <span class="view-emoji {% if answer.int_value == 3 %}selected{% endif %}">😐</span>
+                      <span class="view-emoji {% if answer.int_value == 4 %}selected{% endif %}">🙂</span>
+                      <span class="view-emoji {% if answer.int_value == 5 %}selected{% endif %}">😍</span>
+                    </div>
                   {% else %}
                     <span class="text-2xl mr-3">{{ answer.int_value }}</span>
                   {% endif %}

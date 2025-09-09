@@ -18,11 +18,8 @@ Key differences from v1:
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
-from django.core.mail import get_connection
+from django.core.mail import send_mail, get_connection
 from django.conf import settings
-
-from anymail.message import AnymailMessage
-from anymail.exceptions import AnymailRequestsAPIError
 
 from authentication.models import UserProfile
 from django.db import transaction
@@ -35,6 +32,7 @@ class Command(BaseCommand):
         "Fridays: email managers with any still-pending dynamic evaluations for the current week.\n"
         "You can force either path with --when monday|friday, dry-run with --dry-run, "
         "filter a single manager with --only-manager <email>, or send a test email with --test-email <to>.\n"
+        "Emails will be printed to console in development mode.\n"
         "This v2 command focuses on the dynamic evaluation system with EvalForm and DynamicEvaluation models."
     )
 
@@ -71,29 +69,13 @@ class Command(BaseCommand):
     # -----------------------------
     # Email helpers
     # -----------------------------
-    def _current_stream(self) -> str:
-        """Pull the stream Anymail will use by default (from SEND_DEFAULTS)."""
-        anymail = getattr(settings, "ANYMAIL", {})
-        return anymail.get("SEND_DEFAULTS", {}).get("esp_extra", {}).get(
-            "MessageStream",
-            "outbound",  # default safety
-        )
 
     def _log_mail_backend(self):
         backend = settings.EMAIL_BACKEND
         app_env = getattr(settings, "APP_ENV", "unknown")
-        anymail = getattr(settings, "ANYMAIL", {})
-        esp_extra = anymail.get("SEND_DEFAULTS", {}).get("esp_extra", {})
-        stream = esp_extra.get("MessageStream", "(none)")
-        token = anymail.get("POSTMARK_SERVER_TOKEN", "")
-        token_hint = f"...{token[-6:]}" if token else "(missing)"
-        sandbox = str(getattr(settings, "USE_POSTMARK_SANDBOX", False))
         self.stdout.write(
             "📬 Email backend: {}\n"
-            "   APP_ENV: {}\n"
-            "   MessageStream (default): {}\n"
-            "   Using Sandbox: {}\n"
-            "   Token_hint: {}".format(backend, app_env, stream, sandbox, token_hint)
+            "   APP_ENV: {}".format(backend, app_env)
         )
         # Try opening the backend connection early to fail fast:
         try:
@@ -105,56 +87,25 @@ class Command(BaseCommand):
 
     def _send_with_fallback(self, subject: str, body: str, to_addr: str, dry_run: bool = False) -> bool:
         """
-        Send using AnymailMessage.
-        1) Try the configured stream (from settings.ANYMAIL.SEND_DEFAULTS).
-        2) If Postmark returns ErrorCode 1235 (stream not found), retry on 'outbound'.
+        Send email using Django's send_mail function.
         Returns True if sent, False otherwise.
         """
         if dry_run:
             self.stdout.write(f"(dry-run) Would email {to_addr} with subject '{subject}'")
             return True
 
-        # Build a message; let SEND_DEFAULTS apply tags/metadata/stream by default.
-        msg = AnymailMessage(
-            subject=subject,
-            body=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[to_addr],
-        )
-
         try:
-            sent = msg.send()  # raises on API errors
-            self.stdout.write(f"✉️ Sent to {to_addr} (stream={self._current_stream()})")
-            return bool(sent)
-        except AnymailRequestsAPIError as e:
-            # Inspect Postmark response for ErrorCode
-            err_code = None
-            try:
-                data = e.response.json()
-                err_code = data.get("ErrorCode")
-            except Exception:
-                pass
-
-            if err_code == 1235:
-                # Stream not found: retry once on 'outbound'
-                self.stdout.write("⚠️ Postmark says this stream doesn't exist. Retrying on 'outbound'…")
-                try:
-                    msg = AnymailMessage(
-                        subject=subject,
-                        body=body,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[to_addr],
-                    )
-                    msg.esp_extra = {"MessageStream": "outbound"}
-                    sent = msg.send()
-                    self.stdout.write("✅ Fallback success on 'outbound'.")
-                    return bool(sent)
-                except Exception as e2:
-                    self.stdout.write(f"❌ Fallback send failed: {e2}")
-                    return False
-
-            # Any other error: bubble up details
-            self.stdout.write(f"❌ Postmark send failed: {e}")
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to_addr],
+                fail_silently=False,
+            )
+            self.stdout.write(f"📧 Email sent to {to_addr}")
+            return True
+        except Exception as e:
+            self.stdout.write(f"❌ Email send failed: {e}")
             return False
 
     # -----------------------------
@@ -164,6 +115,7 @@ class Command(BaseCommand):
         # Quick one-off Postmark sanity test and exit
         test_to = options.get("test_email")
         self._log_mail_backend()
+        
         if test_to:
             subject = f"[{getattr(settings, 'APP_ENV', 'unknown')}] Test mail"
             body = "If you see this in Postmark Activity, wiring works."
@@ -202,17 +154,13 @@ class Command(BaseCommand):
             if only_manager_email:
                 managers_qs = managers_qs.filter(user__email__iexact=only_manager_email)
 
-            # Use prefetch_related to avoid N+1 queries - load all team members in one go
-            managers = managers_qs.filter(team_members__isnull=False).distinct().prefetch_related(
-                'team_members__user', 'team_members__department'
-            )
+            managers = managers_qs.filter(team_members__isnull=False).distinct()
 
             created_count = 0
             skipped_count = 0
             
             for mgr in managers:
-                # Now we can access team_members without additional queries
-                team = mgr.team_members.all()
+                team = UserProfile.objects.filter(manager=mgr).distinct()
                 for emp in team:
                     dept = emp.department
                     if not dept:
@@ -344,7 +292,7 @@ class Command(BaseCommand):
                 lines += [
                     "Please complete these by Sunday. Your access may be restricted until all are submitted.",
                     "",
-                    f"👉 {settings.BASE_URL}/evaluation/dashboard2/",
+                    f"👉 {settings.BASE_URL}/evaluation/pending-v2/",
                 ]
                 body = "\n".join(lines)
 

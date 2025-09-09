@@ -1,9 +1,9 @@
 /**
  * Dynamic Evaluation Form JavaScript
- * Handles clickable star interactions without radio buttons
+ * Handles interactive form widgets (stars, emojis, pills)
  * 
  * @author Firehouse Movers
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 class DynamicEvaluation {
@@ -11,18 +11,11 @@ class DynamicEvaluation {
         this.init();
     }
 
-    /**
-     * Initialize the dynamic evaluation functionality
-     */
     init() {
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                this.initializeClickableStars();
-                
-                // Initialize existing star values (for edit mode) with delay
-                setTimeout(() => {
-                    this.initializeExistingStarValues();
-                }, 100);
+                this.initializeEventListeners();
+                this.initializeExistingValues();
             } catch (error) {
                 console.error('Error initializing dynamic evaluation:', error);
             }
@@ -30,129 +23,110 @@ class DynamicEvaluation {
     }
 
     /**
-     * Initialize clickable star and rating interactions
+     * Initialize all event listeners
      */
-    initializeClickableStars() {
-        try {
-            // Handle star clicks
-            const stars = document.querySelectorAll('svg.star[data-field]');
-            stars.forEach(star => {
-                star.addEventListener('click', (event) => {
-                    this.handleStarClick(event);
-                });
+    initializeEventListeners() {
+        // Handle radio button labels (new widget system)
+        document.querySelectorAll('label[for]').forEach(label => {
+            label.addEventListener('click', (event) => {
+                this.handleLabelClick(event);
             });
+        });
+
+        // Handle legacy SVG stars and rating buttons
+        document.querySelectorAll('[data-field][data-value]').forEach(element => {
+            element.addEventListener('click', (event) => {
+                this.handleLegacyClick(event);
+            });
+        });
+    }
+
+    /**
+     * Handle label clicks for radio button widgets
+     */
+    handleLabelClick(event) {
+        try {
+            const label = event.currentTarget;
+            const input = document.getElementById(label.getAttribute('for'));
             
-            // Handle emoji/rating button clicks
-            const ratingButtons = document.querySelectorAll('[data-field][data-value]');
-            ratingButtons.forEach(button => {
-                if (!button.classList.contains('star')) {
-                    button.addEventListener('click', (event) => {
-                        this.handleRatingButtonClick(event);
-                    });
+            if (!input || input.type !== 'radio') return;
+            
+            input.checked = true;
+            this.updateWidgetGroup(input.name, input.value, label);
+        } catch (error) {
+            console.error('Error handling label click:', error);
+        }
+    }
+
+    /**
+     * Handle legacy SVG stars and rating buttons
+     */
+    handleLegacyClick(event) {
+        try {
+            const element = event.currentTarget;
+            const fieldName = element.dataset.field;
+            const value = element.dataset.value;
+            
+            if (!fieldName || !value) return;
+            
+            // Update hidden input if it exists
+            const hiddenInput = document.getElementById(`${fieldName}_value`);
+            if (hiddenInput) {
+                hiddenInput.value = value;
+            }
+            
+            // Update visual state
+            if (element.classList.contains('star')) {
+                this.updateLegacyStars(fieldName, parseInt(value, 10));
+            } else {
+                this.updateLegacyButtons(fieldName, value);
+            }
+        } catch (error) {
+            console.error('Error handling legacy click:', error);
+        }
+    }
+
+    /**
+     * Update widget group visual state
+     */
+    updateWidgetGroup(fieldName, selectedValue, clickedLabel) {
+        try {
+            const inputs = document.querySelectorAll(`input[name="${fieldName}"]`);
+            const widgetType = this.getWidgetType(clickedLabel);
+            
+            inputs.forEach(input => {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (!label) return;
+                
+                let isSelected;
+                if (widgetType === 'star') {
+                    // For stars, use cumulative selection (fill all stars up to selected one)
+                    const inputValue = parseInt(input.value, 10);
+                    const selectedValueInt = parseInt(selectedValue, 10);
+                    isSelected = inputValue <= selectedValueInt;
+                } else {
+                    // For other widgets (emoji, pill), use exact selection
+                    isSelected = input.value === selectedValue;
                 }
-            });
-            
-            // Handle emoji label clicks
-            const emojiLabels = document.querySelectorAll('.fh-emoji label[data-field]');
-            emojiLabels.forEach(label => {
-                label.addEventListener('click', (event) => {
-                    // Find the associated radio input and trigger it
-                    const radioId = label.getAttribute('for');
-                    const radioInput = document.getElementById(radioId);
-                    if (radioInput) {
-                        radioInput.checked = true;
-                        // Trigger the rating button click handler
-                        this.handleRatingButtonClick({
-                            currentTarget: label
-                        });
-                    }
-                });
+                
+                this.setWidgetState(label, widgetType, isSelected);
             });
         } catch (error) {
-            console.error('Error initializing clickable stars:', error);
+            console.error('Error updating widget group:', error);
         }
     }
 
     /**
-     * Handle star click events
-     * @param {Event} event - The click event
+     * Update legacy star group visual state
      */
-    handleStarClick(event) {
-        try {
-            const star = event.currentTarget;
-            const fieldName = star.dataset.field;
-            const selectedValue = parseInt(star.dataset.value, 10);
-            
-            if (!fieldName || isNaN(selectedValue)) {
-                console.warn('Invalid star data:', { fieldName, selectedValue });
-                return;
-            }
-            
-            // Update hidden input value
-            this.updateHiddenInput(fieldName, selectedValue);
-            
-            // Update visual state of all stars in this group
-            this.updateStarGroup(fieldName, selectedValue);
-        } catch (error) {
-            console.error('Error handling star click:', error);
-        }
-    }
-
-    /**
-     * Handle rating button click events
-     * @param {Event} event - The click event
-     */
-    handleRatingButtonClick(event) {
-        try {
-            const button = event.currentTarget;
-            const fieldName = button.dataset.field;
-            const selectedValue = button.dataset.value;
-            
-            if (!fieldName || !selectedValue) {
-                console.warn('Invalid rating button data:', { fieldName, selectedValue });
-                return;
-            }
-            
-            // Update hidden input value
-            this.updateHiddenInput(fieldName, selectedValue);
-            
-            // Update visual state of all buttons in this group
-            this.updateRatingGroup(fieldName, selectedValue);
-        } catch (error) {
-            console.error('Error handling rating button click:', error);
-        }
-    }
-
-    /**
-     * Update hidden input value
-     * @param {string} fieldName - The field name
-     * @param {string|number} value - The value to set
-     */
-    updateHiddenInput(fieldName, value) {
-        const hiddenInput = document.getElementById(`${fieldName}_value`);
-        if (hiddenInput) {
-            hiddenInput.value = value;
-        } else {
-            console.warn(`Hidden input not found for field: ${fieldName}`);
-        }
-    }
-
-    /**
-     * Update star group visual state
-     * @param {string} fieldName - The field name
-     * @param {number} selectedValue - The selected star value
-     */
-    updateStarGroup(fieldName, selectedValue) {
+    updateLegacyStars(fieldName, selectedValue) {
         try {
             const stars = document.querySelectorAll(`svg.star[data-field="${fieldName}"]`);
             stars.forEach(star => {
                 const starValue = parseInt(star.dataset.value, 10);
-                if (isNaN(starValue)) {
-                    console.warn(`Invalid star value for field ${fieldName}:`, star.dataset.value);
-                    return;
-                }
+                const isSelected = starValue <= selectedValue;
                 
-                if (starValue <= selectedValue) {
+                if (isSelected) {
                     star.classList.remove('text-gray-500');
                     star.classList.add('text-red-500');
                 } else {
@@ -161,28 +135,26 @@ class DynamicEvaluation {
                 }
             });
         } catch (error) {
-            console.error('Error updating star group:', error);
+            console.error('Error updating legacy stars:', error);
         }
     }
 
     /**
-     * Update rating group visual state (for emoji/rating buttons)
-     * @param {string} fieldName - The field name
-     * @param {string} selectedValue - The selected value
+     * Update legacy button group visual state
      */
-    updateRatingGroup(fieldName, selectedValue) {
+    updateLegacyButtons(fieldName, selectedValue) {
         try {
             const buttons = document.querySelectorAll(`[data-field="${fieldName}"][data-value]`);
             buttons.forEach(button => {
-                if (button.dataset.value === selectedValue) {
-                    // Selected button
+                const isSelected = button.dataset.value === selectedValue;
+                
+                if (isSelected) {
                     button.classList.add('ring-4', 'ring-red-500', 'bg-red-800/30');
                     if (button.classList.contains('text-white')) {
                         button.classList.remove('text-white');
                         button.classList.add('text-red-400');
                     }
                 } else {
-                    // Unselected buttons
                     button.classList.remove('ring-4', 'ring-red-500', 'bg-red-800/30');
                     if (button.classList.contains('text-red-400')) {
                         button.classList.remove('text-red-400');
@@ -191,35 +163,83 @@ class DynamicEvaluation {
                 }
             });
         } catch (error) {
-            console.error('Error updating rating group:', error);
+            console.error('Error updating legacy buttons:', error);
         }
     }
 
     /**
-     * Initialize existing star values for edit mode
+     * Set widget visual state
      */
-    initializeExistingStarValues() {
-        try {
-            const hiddenInputs = document.querySelectorAll('input[type="hidden"][id$="_value"]');
-            hiddenInputs.forEach(input => {
-                const fieldName = input.name;
-                const value = input.value;
-                
-                if (value) {
-                    // Check if this is a star field
+    setWidgetState(label, widgetType, isSelected) {
+        if (widgetType === 'star') {
+            if (isSelected) {
+                label.style.opacity = '1';
+                label.style.transform = 'scale(1.06)';
+                label.style.filter = 'none';
+                // Add a subtle glow effect for filled stars
+                label.style.textShadow = '0 0 8px rgba(239, 68, 68, 0.6)';
+            } else {
+                label.style.opacity = '0.4';
+                label.style.transform = 'scale(1)';
+                label.style.filter = 'grayscale(60%)';
+                label.style.textShadow = 'none';
+            }
+        } else if (widgetType === 'emoji') {
+            if (isSelected) {
+                label.style.filter = 'none';
+                label.style.textShadow = '0 0 20px rgba(255, 255, 0, 1), 0 0 30px rgba(255, 255, 0, 0.8), 0 0 40px rgba(255, 255, 0, 0.6)';
+                label.style.opacity = '1';
+            } else {
+                label.style.filter = 'grayscale(40%) brightness(0.7)';
+                label.style.textShadow = 'none';
+                label.style.opacity = '0.7';
+            }
+        }
+    }
+
+    /**
+     * Get widget type from label element
+     */
+    getWidgetType(label) {
+        if (label.closest('.fh-star')) return 'star';
+        if (label.closest('.fh-emoji')) return 'emoji';
+        if (label.closest('.fh-pill')) return 'pill';
+        return 'unknown';
+    }
+
+    /**
+     * Initialize existing values for edit mode
+     */
+    initializeExistingValues() {
+        setTimeout(() => {
+            try {
+                // Handle radio button widgets
+                document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+                    const label = document.querySelector(`label[for="${input.id}"]`);
+                    if (label) {
+                        this.updateWidgetGroup(input.name, input.value, label);
+                    }
+                });
+
+                // Handle legacy hidden inputs
+                document.querySelectorAll('input[type="hidden"][id$="_value"]').forEach(input => {
+                    if (!input.value) return;
+                    
+                    const fieldName = input.name;
+                    const value = input.value;
+                    
+                    // Check if it's a star field
                     const stars = document.querySelectorAll(`svg.star[data-field="${fieldName}"]`);
                     if (stars.length > 0) {
-                        // It's a star field
-                        this.updateStarGroup(fieldName, parseInt(value, 10));
+                        this.updateLegacyStars(fieldName, parseInt(value, 10));
                     } else {
-                        // It's an emoji/rating field
-                        this.updateRatingGroup(fieldName, value);
+                        this.updateLegacyButtons(fieldName, value);
                     }
-                }
-            });
-        } catch (error) {
-            console.error('Error initializing existing star values:', error);
-        }
+                });
+            } catch (error) {
+                console.error('Error initializing existing values:', error);
+            }
+        }, 100);
     }
 }
 
