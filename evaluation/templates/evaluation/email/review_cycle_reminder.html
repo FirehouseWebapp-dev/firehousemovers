@@ -1,51 +1,50 @@
 <!doctype html>
 <html>
-  <body style="margin:0; padding:0; background:#f6f7f9; font-family:Arial, Helvetica, sans-serif; color:#111;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f9; padding:24px 0;">
+  <body class="email-container">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-table">
       <tr>
         <td align="center">
-          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:12px; padding:28px;">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" class="email-content">
             <tr>
               <td>
-                <h1 style="margin:0 0 12px; font-size:28px; line-height:1.2;">
+                <h1 class="email-title">
                   Reminder: {{ cycle.get_cycle_type_display }} Reviews Due Soon
                 </h1>
 
-                <p style="margin:0 0 12px; font-size:16px;">
+                <p class="email-paragraph">
                   Hello {{ reviewer_name }},
                 </p>
 
-                <p style="margin:0 0 12px; font-size:16px;">
+                <p class="email-paragraph">
                   You still have <strong>{{ pending_count }}</strong> pending {{ pending_count|pluralize:"review,reviews" }}.
                 </p>
                 <p>Submit these evaluations before the deadline otherwise your access to the app will be limited until you submit them.</p>
 
-                <p style="margin:0 0 16px; font-size:15px; color:#444;">
+                <p class="email-paragraph-small">
                   Cycle period: <strong>{{ cycle.period_start|date:"M j, Y" }} → {{ cycle.period_end|date:"M j, Y" }}</strong><br/>
                   Deadline: <strong>{{ deadline|date:"M j, Y" }}</strong>
                 </p>
 
                 <!-- Bulletproof button -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 20px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-button-container">
                   <tr>
                     <td bgcolor="#dc2626" style="border-radius:10px;">
-                      <a href="{{ list_url }}" target="_blank"
-                         style="display:inline-block; padding:12px 20px; font-weight:700; text-decoration:none; color:#ffffff;">
+                      <a href="{{ list_url }}" target="_blank" class="email-button">
                         Complete my reviews
                       </a>
                     </td>
                   </tr>
                 </table>
 
-                <p style="margin:4px 0 0; font-size:13px; color:#666;">
-                  If the button doesn’t work, copy and paste this link:<br/>
-                  <a href="{{ list_url }}" style="color:#dc2626; word-break:break-all;">{{ list_url }}</a>
+                <p class="email-paragraph-tiny">
+                  If the button doesn't work, copy and paste this link:<br/>
+                  <a href="{{ list_url }}" class="email-link">{{ list_url }}</a>
                 </p>
 
-                <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+                <hr class="email-divider" />
 
-                <p style="margin:0; font-size:12px; color:#777;">
-                  You’re receiving this because you’re assigned as a senior reviewer for this cycle.
+                <p class="email-paragraph-footer">
+                  You're receiving this because you're assigned as a senior reviewer for this cycle.
                   Need help? Reply to this email.
                 </p>
               </td>

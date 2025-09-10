@@ -1,11 +1,62 @@
 {% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="p-6 text-white max-w-xl mx-auto">
-  <h1 class="text-2xl font-bold text-red-500 mb-6">Edit Question</h1>
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-semibold">Update</button>
-  </form>
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <h1 class="fh-title">Edit Question</h1>
+    </div>
+    
+    <div class="fh-body">
+      <form method="post" id="question-edit-form">
+        {% csrf_token %}
+        
+        {# Display non-field errors #}
+        {% if form.non_field_errors %}
+          <div class="fh-row">
+            <div class="field-error-message">
+              {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+        
+        {% for field in form %}
+          <div class="fh-row">
+            <label class="fh-label" for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
+            </label>
+            
+            {% if field.help_text %}
+              <div class="fh-help">{{ field.help_text }}</div>
+            {% endif %}
+            
+            {{ field }}
+            
+            {% if field.errors %}
+              <div class="field-error-message">
+                {{ field.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </form>
+    </div>
+    
+    <div class="fh-foot">
+      <button type="submit" form="question-edit-form" class="btn btn-accent">Update</button>
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/question_form.js' %}"></script>
 {% endblock %}
