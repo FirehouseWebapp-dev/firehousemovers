@@ -1,0 +1,132 @@
+{% extends "evaluation/base.html" %}
+{% load evaluation_tags %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}
+  View Evaluation - {{ employee.user.get_full_name }}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <div>
+        <h2 class="fh-title">{{ evaluation.form.name }} - {{ evaluation.department.title }}</h2>
+        <div class="fh-sub">
+          <strong>Employee:</strong> {{ employee.user.get_full_name }}<br>
+          <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
+          <strong>Department:</strong> {{ evaluation.department.title }}<br>
+          <strong>Form:</strong> {{ evaluation.form.name }}<br>
+          <strong>Submitted:</strong> {{ evaluation.submitted_at|date:"M j, Y, P" }}
+        </div>
+      </div>
+    </div>
+
+    <div class="fh-body">
+      <div class="fh-row">
+        <div class="flash-message flash-success">
+          <i class="fas fa-check-circle flash-icon"></i>
+          <div class="flash-content">
+            <span>Evaluation Completed</span>
+          </div>
+        </div>
+      </div>
+
+      {% for question in evaluation.form.questions.all %}
+        {% if question.qtype == "section" %}
+          {# Section header - render as a styled section title #}
+          <div class="fh-row">
+            <h3 class="section-header">
+              {{ question.text|title }}
+            </h3>
+          </div>
+        {% else %}
+          <div class="fh-row">
+            <h3 class="fh-label">
+              {{ question.text }}
+              {% if question.required %}<span style="color: #ef4444;">*</span>{% endif %}
+            </h3>
+            
+            {% if question.help_text %}
+              <div class="fh-help">{{ question.help_text }}</div>
+            {% endif %}
+
+          {% with answer=answers|lookup:question.id %}
+            <div>
+              {% if answer %}
+                {% if question.qtype == "stars" or question.qtype == "rating" or question.qtype == "emoji" %}
+                  <div class="answer-container">
+                    {% if question.qtype == "stars" %}
+                      {# Show filled stars up to the rating #}
+                      <div class="view-stars-container">
+                        {% for i in "12345" %}
+                          <span class="view-star {% if forloop.counter <= answer.int_value %}filled{% endif %}">
+                            ★
+                          </span>
+                        {% endfor %}
+                      </div>
+                    {% elif question.qtype == "emoji" %}
+                      <div class="view-emoji-container">
+                        <span class="view-emoji {% if answer.int_value == 1 %}selected{% endif %}">😡</span>
+                        <span class="view-emoji {% if answer.int_value == 2 %}selected{% endif %}">😕</span>
+                        <span class="view-emoji {% if answer.int_value == 3 %}selected{% endif %}">😐</span>
+                        <span class="view-emoji {% if answer.int_value == 4 %}selected{% endif %}">🙂</span>
+                        <span class="view-emoji {% if answer.int_value == 5 %}selected{% endif %}">😍</span>
+                      </div>
+                    {% else %}
+
+                    <div class="view-pills-container">
+                      {% for i in question.min_value|to_range:question.max_value %}
+                        <span class="view-pill {% if i == answer.int_value %}selected{% endif %}">
+                          {{ i }}
+                        </span>
+                      {% endfor %}
+                    </div>
+                    
+                    {% endif %}
+                  </div>
+                {% elif question.qtype == "bool" %}
+                  <span class="answer-display">
+                    {% if answer.int_value == 1 %}Yes{% else %}No{% endif %}
+                  </span>
+                {% elif question.qtype == "number" %}
+                  <div class="answer-text-container">
+                    {{ answer.int_value }}
+                  </div>
+                {% elif question.qtype == "select" %}
+                  <div class="answer-text-container">
+                    {{ answer.choice_value }}
+                  </div>
+                {% elif question.qtype == "short" or question.qtype == "long" %}
+                  <div class="answer-text-container">
+                    {{ answer.text_value|linebreaks }}
+                  </div>
+                {% endif %}
+              {% else %}
+                <span class="answer-display no-answer">No answer provided</span>
+              {% endif %}
+            </div>
+          {% endwith %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="fh-foot">
+      <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">
+        Back to Dashboard
+      </a>
+      {% if evaluation.status == "completed" and today <= evaluation.week_end %}
+        <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" class="btn btn-accent">
+          Edit Evaluation
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

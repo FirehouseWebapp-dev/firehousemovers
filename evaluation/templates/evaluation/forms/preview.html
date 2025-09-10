@@ -2,93 +2,13 @@
 {% load static %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
 <style>
-  :root{
-    --bg-page:#111111;       /* page background behind sheet */
-    --bg-sheet:#1a1a1a;      /* main form sheet */
-    --bg-input:#222222;      /* inputs & pills */
-    --bd-muted:#2b2b2b;      /* dividers/borders */
-    --text-muted:#b0b0b0;    /* subdued text */
-    --pill-border:#333333;
-    --pill-active:#2a2a2a;
-    --accent:#ef4444;        /* red action button */
-  }
   body { background: var(--bg-page); }
-
-  .fh-wrap{max-width:960px;margin:2rem auto;}
-  .fh-sheet{background:var(--bg-sheet);border:1px solid var(--bd-muted);border-radius:14px;overflow:hidden;}
-  .fh-head{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd-muted);}
-  .fh-title{font-size:1.5rem;font-weight:800;color:#f87171;}
-  .fh-sub{color:var(--text-muted);font-size:.95rem;margin-top:.25rem;}
-  .fh-badge{display:inline-block;padding:.35rem .65rem;border-radius:999px;font-size:.7rem;color:#d0d0d0;background:#2a2a2a;border:1px solid var(--bd-muted);}
-
-  .fh-body{padding:8px 0;}
-  .fh-row{padding:18px 24px;border-top:1px solid var(--bd-muted);}
-  .fh-row:first-child{border-top:none;}
-
-  .fh-label{
-    font-weight:800;color:#fff;margin-bottom:.65rem;display:block;
-    letter-spacing:.2px;
+  /* Remove border from first fh-row after section header */
+  .section-header + .fh-row {
+    border-top: none !important;
   }
-  .fh-help{color:var(--text-muted);font-size:.9rem;margin-top:.45rem}
-
-  /* Inputs/textarea */
-  .fh-row input[type="text"],
-  .fh-row input[type="number"],
-  .fh-row select,
-  .fh-row textarea{
-    width:100%;background:var(--bg-input);color:#f5f5f5;border:1px solid var(--bd-muted);
-    border-radius:10px;padding:.75rem .9rem;outline:none;
-  }
-  .fh-row textarea{min-height:120px;resize:vertical}
-
-  /* Star / Pill radios (unchanged, uses your widgets) */
-  .fh-stars,.fh-pills{display:flex;gap:.6rem;list-style:none;padding:0;margin:0;align-items:center}
-  .fh-star input,.fh-pill input{display:none}
-  .fh-star label{font-size:1.6rem;cursor:pointer;opacity:.55;transition:opacity .12s,transform .05s}
-  .fh-star input:checked+label,.fh-star label:hover{opacity:1;transform:scale(1.06)}
-  .fh-pill label{
-    display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:36px;padding:0 .7rem;
-    border-radius:8px;background:var(--bg-input);color:#e0e0e0;border:1px solid var(--pill-border);
-    font-weight:700;font-size:.9rem;cursor:pointer;transition:all .12s ease
-  }
-  .fh-pill input:checked+label{background:var(--pill-active);border-color:#444;box-shadow:0 0 0 2px #44444466 inset}
-  .fh-nps-hints{display:flex;justify-content:space-between;color:var(--text-muted);font-size:.78rem;margin-top:.35rem}
-
-  /* Improved emoji group */
-  .fh-emojis{
-    display:flex;gap:1rem;list-style:none;padding:0;margin:0;align-items:center;flex-wrap:wrap;
-  }
-  .fh-emoji{display:inline-block;list-style:none}
-  .fh-emoji input{display:none} /* hide radios, click label */
-  .fh-emoji label{
-    font-size:2rem;               /* bigger emojis */
-    cursor:pointer;
-    filter:grayscale(55%);
-    opacity:.65;
-    transition:transform .18s ease, opacity .18s ease, filter .18s ease, text-shadow .18s ease;
-    line-height:1;
-    display:inline-block;
-  }
-  .fh-emoji label:hover{
-    transform:scale(1.18);
-    filter:none;
-    opacity:1;
-  }
-  .fh-emoji input:checked + label{
-    filter:none;
-    opacity:1;
-    transform:scale(1.24);
-    text-shadow:0 0 10px rgba(255,255,255,.35);
-  }
-
-  /* Footer */
-  .fh-foot{padding:16px 24px;border-top:1px solid var(--bd-muted);display:flex;justify-content:space-between}
-  .btn{border-radius:8px;padding:.6rem 1rem;font-weight:800}
-  .btn-muted{background:#2a2a2a;color:#e0e0e0}
-  .btn-muted:hover{filter:brightness(1.12)}
-  .btn-accent{background:var(--accent);color:white}
-  .btn-accent:hover{filter:brightness(1.05)}
 </style>
 {% endblock %}
 
@@ -98,10 +18,10 @@
     <div class="fh-head">
       <div>
         <div class="fh-title">{{ form_obj.department.title }} — {{ form_obj.name }}</div>
-        <div class="fh-sub">Read-only preview of the manager experience.</div>
+        <div class="fh-sub">Interactive preview of the manager experience.</div>
       </div>
       {% if form_obj.is_active %}
-        <span class="fh-badge" style="background:#16321e;border-color:#215c37;color:#b9ffdf">Active</span>
+        <span class="fh-badge fh-badge-active">Active</span>
       {% else %}
         <span class="fh-badge">Inactive</span>
       {% endif %}
@@ -111,13 +31,23 @@
       <form>
         {% for field in preview_form %}
           {% if field.name|slice:":8" == "section_" %}
-            <div class="fh-row"><span class="fh-label" style="font-size:1.05rem">{{ field.value }}</span></div>
+            <h3 class="section-header text-xl font-semibold text-red-500 mt-4 mb-2 border-none border-0 outline-none" style="border: none !important; border-bottom: none !important; border-top: none !important; border-left: none !important; border-right: none !important; box-shadow: none !important; background: none !important; padding: 18px 24px;">{{ field.value | title }}</h3>
           {% else %}
             <div class="fh-row">
               {# Capitalised heading #}
               <label class="fh-label">{{ field.label|capfirst }}</label>
 
-              {{ field }}
+              {# Custom rendering for boolean fields #}
+              {% if field.field.widget.input_type == "checkbox" %}
+                <div class="fh-bool">
+                  <input type="radio" name="{{ field.name }}" value="true" id="{{ field.name }}_yes" {% if field.value %}checked{% endif %}>
+                  <label for="{{ field.name }}_yes">Yes</label>
+                  <input type="radio" name="{{ field.name }}" value="false" id="{{ field.name }}_no" {% if not field.value %}checked{% endif %}>
+                  <label for="{{ field.name }}_no">No</label>
+                </div>
+              {% else %}
+                {{ field }}
+              {% endif %}
 
               {% if field.help_text %}<p class="fh-help">{{ field.help_text }}</p>{% endif %}
 
@@ -137,11 +67,12 @@
 
     <div class="fh-foot">
       <a href="{% url 'evaluation:evalform_detail' form_obj.id %}" class="btn btn-muted">Back</a>
-      <form method="post" action="{% url 'evaluation:evalform_activate' form_obj.id %}">
-        {% csrf_token %}
-        <button class="btn btn-accent">Make Active</button>
-      </form>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/dynamic_evaluation.js' %}"></script>
+<script src="{% static 'evaluation/js/preview.js' %}"></script>
 {% endblock %}

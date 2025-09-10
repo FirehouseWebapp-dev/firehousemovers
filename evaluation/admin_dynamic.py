@@ -2,9 +2,7 @@ from django import forms
 from .models_dynamic import DynamicEvaluation, Answer, Question, EvalForm
 
 # ---------- WIDGET TEMPLATES ----------
-class StarRadioSelect(forms.RadioSelect):
-    template_name = "evaluation/widgets/star_radio.html"
-    option_template_name = "evaluation/widgets/star_option.html"
+# StarRadioSelect removed - using HiddenInput for star fields now
 
 class EmojiRadioSelect(forms.RadioSelect):
     template_name = "evaluation/widgets/emoji_radio.html"
@@ -32,7 +30,7 @@ class DynamicEvaluationForm(forms.Form):
             if q.qtype in (Question.QType.STARS, Question.QType.RATING):
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
                 field = forms.ChoiceField(choices=choices, required=q.required,
-                                          widget=StarRadioSelect if q.qtype == Question.QType.STARS else forms.RadioSelect)
+                                          widget=forms.HiddenInput if q.qtype == Question.QType.STARS else forms.RadioSelect)
                 if q.id in existing and existing[q.id].int_value is not None:
                     initial = str(existing[q.id].int_value)
 
@@ -135,7 +133,7 @@ class PreviewEvalForm(forms.Form):
             name = f"q_{q.id}"
             if q.qtype in (Question.QType.STARS, Question.QType.RATING):
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
-                widget = StarRadioSelect if q.qtype == Question.QType.STARS else forms.RadioSelect
+                widget = forms.HiddenInput if q.qtype == Question.QType.STARS else forms.RadioSelect
                 field = forms.ChoiceField(choices=choices, required=False, widget=widget)
             elif q.qtype == Question.QType.EMOJI:
                 choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]

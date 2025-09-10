@@ -6,7 +6,9 @@
          value="{{ widget.value }}"
          {% if widget.selected %}checked{% endif %}
          {% include "django/forms/widgets/attrs.html" %}>
-  <label for="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}">
+  <label for="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}"
+         data-field="{{ widget.name }}"
+         data-value="{{ widget.value }}">
     {% if val == "1" %}😡
     {% elif val == "2" %}😕
     {% elif val == "3" %}😐

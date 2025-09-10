@@ -1,0 +1,294 @@
+/* Evaluation System Styles */
+
+/* Status Badges */
+.status-badge {
+  @apply text-xs font-bold px-3 py-1 rounded;
+}
+
+.status-completed {
+  @apply bg-green-700 text-green-300;
+}
+
+.status-pending {
+  @apply bg-yellow-800 text-yellow-300;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #dc2626;
+}
+
+.btn-secondary {
+  background-color: #4b5563;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #374151;
+}
+
+.btn-large {
+  padding: 0.5rem 1.5rem;
+}
+
+/* Form Elements */
+.form-error {
+  @apply bg-red-100 text-red-700 border border-red-400 p-3 rounded mb-4;
+}
+
+.form-error-dark {
+  @apply bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded;
+}
+
+/* Progress Bars */
+.progress-bar {
+  @apply w-full bg-gray-800 rounded h-3;
+}
+
+.progress-fill {
+  @apply bg-red-600 h-3 rounded;
+}
+
+.progress-fill-small {
+  @apply bg-red-500 rounded;
+}
+
+/* Layout */
+.flex-end {
+  @apply flex justify-end space-x-4 pt-6 border-t border-gray-700;
+}
+
+.flex-center {
+  @apply flex items-center gap-2;
+}
+
+/* Email Styles */
+.email-body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color: #111;
+}
+
+.email-container {
+  margin: 0;
+  padding: 0;
+  background: #f6f7f9;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111;
+}
+
+.email-table {
+  background: #f6f7f9;
+  padding: 24px 0;
+}
+
+.email-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.email-title {
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.email-paragraph {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.email-paragraph-small {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #444;
+}
+
+.email-paragraph-tiny {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.email-paragraph-footer {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+}
+
+.email-button-container {
+  margin: 12px 0 20px;
+}
+
+.email-button {
+  display: inline-block;
+  padding: 12px 20px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #ffffff;
+  background: #dc2626;
+  border-radius: 10px;
+}
+
+.email-button-small {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #dc2626;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.email-link {
+  color: #dc2626;
+  word-break: break-all;
+}
+
+.email-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 24px 0;
+}
+
+.email-spacing {
+  margin: 16px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .email-content {
+    padding: 20px;
+  }
+  
+  .email-title {
+    font-size: 24px;
+  }
+  
+  .btn-large {
+    @apply px-4 py-2;
+  }
+}
+
+/* Status badges for evaluations */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-completed {
+  background-color: #16a34a; /* green-600 */
+  color: white;
+}
+
+.status-pending {
+  background-color: #ca8a04; /* yellow-600 */
+  color: white;
+}
+
+/* Dashboard2 Button Styles - Uniform sizing and spacing */
+.dashboard-button-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  min-width: 80px;
+  height: 36px;
+  text-align: center;
+}
+
+.dashboard-btn-completed {
+  background-color: #16a34a; /* green-600 */
+  color: white;
+}
+
+.dashboard-btn-completed:hover {
+  background-color: #15803d; /* green-700 */
+  color: white;
+}
+
+.dashboard-btn-view {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+}
+
+.dashboard-btn-view:hover {
+  background-color: #1d4ed8; /* blue-700 */
+  color: white;
+}
+
+.dashboard-btn-edit {
+  background-color: #dc2626; /* red-600 */
+  color: white;
+}
+
+.dashboard-btn-edit:hover {
+  background-color: #b91c1c; /* red-700 */
+  color: white;
+}
+
+.dashboard-btn-evaluate {
+  background-color: #dc2626; /* red-600 */
+  color: white;
+}
+
+.dashboard-btn-evaluate:hover {
+  background-color: #b91c1c; /* red-700 */
+  color: white;
+}
+
+/* Status badge improvements for dashboard2 */
+.dashboard-status-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  height: 36px;
+  text-align: center;
+}
+
+.dashboard-status-completed {
+  background-color: #16a34a; /* green-600 */
+  color: white;
+}
+
+.dashboard-status-pending {
+  background-color: #ca8a04; /* yellow-600 */
+  color: white;
+}

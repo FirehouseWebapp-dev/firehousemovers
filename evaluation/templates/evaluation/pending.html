@@ -3,16 +3,6 @@
 
 {% block content %}
 
-{# Flash messages block #}
-{% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-      <div class="bg-gray-800 border-l-4 border-gray-700 text-red-500 p-4" role="alert">
-        {{ message }}
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
 
   <h1 class="text-2xl font-bold text-red-500 mb-4">Pending Evaluations</h1>
 
@@ -24,9 +14,9 @@
       <strong class="text-white">{{ total }}</strong>
       evaluations.
     </p>
-    <div class="w-full h-4 bg-gray-600 rounded mt-2">
+    <div class="progress-bar mt-2">
       <div
-        class="h-4 bg-red-500 rounded"
+        class="progress-fill-small h-4"
         style="width: {{ percent_complete }}%"
       ></div>
     </div>
@@ -44,13 +34,13 @@
               Week of {{ eval.week_start }} to {{ eval.week_end }}
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="bg-yellow-800 text-yellow-300 text-xs font-bold px-3 py-1 rounded">
+          <div class="flex-center">
+            <span class="status-badge status-pending">
               Pending
             </span>
             <a
               href="{% url 'evaluation:evaluate' eval.id %}"
-              class="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700"
+              class="btn btn-primary"
             >
               Evaluate
             </a>

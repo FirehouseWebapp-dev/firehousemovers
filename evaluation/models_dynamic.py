@@ -1,5 +1,6 @@
 from __future__ import annotations
 from django.db import models
+from django.core.exceptions import ValidationError
 from authentication.models import UserProfile, Department
 
 
@@ -7,22 +8,24 @@ class EvalForm(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="eval_forms")
     name = models.CharField(max_length=120, default="Weekly Evaluation")
     description = models.CharField(max_length=255, blank=True, default="")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # at most one active per department
+        # Allow multiple active forms per department (one for each evaluation type)
         constraints = [
+            # Ensure only one active form per department per evaluation type
             models.UniqueConstraint(
-                fields=["department"],
+                fields=["department", "name"],
                 condition=models.Q(is_active=True),
-                name="uq_evalform_one_active_per_dept",
+                name="uq_evalform_one_active_per_dept_per_type",
             )
         ]
 
     def __str__(self) -> str:
         return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
+    
 
 
 class Question(models.Model):
@@ -51,6 +54,38 @@ class Question(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
+
+    def clean(self):
+        """Validate model-level constraints."""
+        super().clean()
+        
+        # Enforce max_value limits based on question type
+        if self.qtype in [self.QType.STARS, self.QType.EMOJI] and self.max_value is not None and self.max_value > 5:
+            raise ValidationError({
+                'max_value': 'Maximum value cannot exceed 5 for star and emoji rating questions.'
+            })
+        elif self.qtype == self.QType.RATING and self.max_value is not None and self.max_value > 10:
+            raise ValidationError({
+                'max_value': 'Maximum value cannot exceed 10 for plain rating questions.'
+            })
+        
+        # Ensure min_value is not greater than max_value
+        if (self.min_value is not None and self.max_value is not None and 
+            self.min_value > self.max_value):
+            raise ValidationError({
+                'min_value': 'Minimum value cannot be greater than maximum value.'
+            })
+        
+        # Ensure min_value is not negative for number questions
+        if self.qtype == self.QType.NUMBER and self.min_value is not None and self.min_value < 0:
+            raise ValidationError({
+                'min_value': 'Minimum value cannot be negative for number questions.'
+            })
+
+    def save(self, *args, **kwargs):
+        """Override save to run model validation."""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"[{self.qtype}] {self.text[:50]}"
