@@ -10,8 +10,9 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
 import json
+import logging
 from authentication.models import UserProfile, Department
-from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation
+from .models_dynamic import EvalForm, Question, DynamicEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
 from django.utils.timezone import now
@@ -264,50 +265,110 @@ def evalform_delete(request, pk):
     
     return redirect("evaluation:evalform_list")
 
-# ------- Questions -------
 @login_required
 def question_add(request, form_id):
     """Add question to evaluation form with department-specific permissions."""
     ef = get_object_or_404(EvalForm, pk=form_id)
-    
-    # Check if user can manage this form
+
+    # Permission check
     if not _can_manage_department(request.user, ef.department):
-        messages.error(request, "You don't have permission to add questions to this evaluation form.")
+        messages.error(
+            request,
+            "You don't have permission to add questions to this evaluation form."
+        )
         return redirect("evaluation:evalform_list")
-    
+
     if request.method == "POST":
-        qf = QuestionForm(request.POST)
+        qf = QuestionForm(request.POST, evaluation=ef)
         if qf.is_valid():
-            # Set order to be the next available order
-            max_order = ef.questions.aggregate(max_order=Max('order'))['max_order'] or 0
-            qf.instance.form = ef
-            qf.instance.order = max_order + 1
-            qf.save()
-            messages.success(request, "Question added.")
+            new_order = qf.cleaned_data.get("order", 0)
+            q = qf.save(commit=False)
+            q.form = ef
+
+            with transaction.atomic():
+                q.save()  # Save once here
+
+                # Get all questions (id + order only for efficiency)
+                all_questions = list(
+                    ef.questions.only("id", "order").order_by("order", "id")
+                )
+
+                # Remove the newly added question
+                all_questions = [question for question in all_questions if question.id != q.id]
+
+                # Insert new question at its desired position
+                all_questions.insert(new_order, q)
+
+                # Reassign sequential order
+                for index, question in enumerate(all_questions):
+                    question.order = index
+
+                # Bulk update (no N+1)
+                Question.objects.bulk_update(all_questions, ["order"])
+
+            messages.success(request, "Question added successfully.")
             return redirect("evaluation:evalform_detail", pk=ef.id)
+        # Invalid form → render again with errors
     else:
-        qf = QuestionForm()
-    return render(request, "evaluation/forms/question_add.html", {"form": qf, "form_obj": ef})
+        qf = QuestionForm(evaluation=ef)
+
+    return render(
+        request,
+        "evaluation/forms/question_add.html",
+        {"form": qf, "form_obj": ef},
+    )
 
 @login_required
 def question_edit(request, question_id):
     """Edit question with department-specific permissions."""
     q = get_object_or_404(Question, pk=question_id)
-    
+
     # Check if user can manage this form
     if not _can_manage_department(request.user, q.form.department):
-        messages.error(request, "You don't have permission to edit questions in this evaluation form.")
+        messages.error(
+            request,
+            "You don't have permission to edit questions in this evaluation form."
+        )
         return redirect("evaluation:evalform_list")
-    
+
     if request.method == "POST":
         qf = QuestionForm(request.POST, instance=q)
         if qf.is_valid():
-            qf.save()
-            messages.success(request, "Question updated.")
+            new_order = qf.cleaned_data.get("order", 0)
+
+            # Save main edits first
+            q = qf.save(commit=False)
+
+            with transaction.atomic():
+                # Get all questions ordered by current order
+                all_questions = list(
+                    q.form.questions.only("id", "order").order_by("order", "id")
+                )
+
+                # Remove the edited question
+                all_questions = [question for question in all_questions if question.id != q.id]
+
+                # Insert the edited one at its new position
+                all_questions.insert(new_order, q)
+
+                # Reorder sequentially
+                for index, question in enumerate(all_questions):
+                    question.order = index
+
+                # Bulk update in one query
+                Question.objects.bulk_update(all_questions, ["order"])
+
+            messages.success(request, "Question updated successfully.")
             return redirect("evaluation:evalform_detail", pk=q.form_id)
+        # Invalid form → fall through to render with errors
     else:
         qf = QuestionForm(instance=q)
-    return render(request, "evaluation/forms/question_edit.html", {"form": qf, "question": q})
+
+    return render(
+        request,
+        "evaluation/forms/question_edit.html",
+        {"form": qf, "question": q},
+    )
 
 @login_required
 def choice_add(request, question_id):
@@ -329,34 +390,42 @@ def choice_add(request, question_id):
     else:
         cf = QuestionChoiceForm()
     return render(request, "evaluation/forms/choice_add.html", {"form": cf, "question": q})
-
-
 @login_required
 @require_http_methods(["POST"])
 def update_question_order(request, pk):
     """Update the order of questions via AJAX with department-specific permissions."""
     try:
         form_obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
-        
+
         # Check if user can manage this form
         if not _can_manage_department(request.user, form_obj.department):
             return JsonResponse({'success': False, 'error': 'Permission denied'})
-        
+
         data = json.loads(request.body)
         question_orders = data.get('question_orders', [])
-        
+
+        # Build a mapping of {id: order}
+        order_map = {
+            int(item["id"]): int(item["order"])
+            for item in question_orders
+            if item.get("id") and item.get("order") is not None
+        }
+
         with transaction.atomic():
-            for item in question_orders:
-                question_id = item.get('id')
-                order = item.get('order')
-                
-                if question_id and order:
-                    question = get_object_or_404(Question, id=question_id, form=form_obj)
-                    question.order = order
-                    question.save()
-        
+            # Fetch all questions in one go
+            questions = list(
+                Question.objects.filter(form=form_obj, id__in=order_map.keys())
+            )
+
+            # Update their order values
+            for q in questions:
+                q.order = order_map.get(q.id, q.order)
+
+            # Bulk update in one query
+            Question.objects.bulk_update(questions, ["order"])
+
         return JsonResponse({'success': True})
-    
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -430,9 +499,9 @@ def evaluate_dynamic_employee(request, evaluation_id):
     is_editable = (now().date() <= evaluation.week_end)
     can_submit = is_editable or (evaluation.submitted_at is None)
 
-    if request.method == "POST" and can_submit:
+    if request.method == "POST":
         form = DynamicEvaluationForm(request.POST, instance=evaluation)
-        if form.is_valid():
+        if form.is_valid() and can_submit:
             with transaction.atomic():
                 # Check if this is an update or new submission
                 was_completed = evaluation.status == "completed"
@@ -474,15 +543,17 @@ def evaluate_dynamic_employee(request, evaluation_id):
                             recipient_list=[evaluation.employee.user.email],
                             html_message=html_content,
                         )
-                    except Exception:
-                        # swallow email errors but keep the saved evaluation
-                        pass
+                    except Exception as e:
+                        # Log email errors but keep the saved evaluation
+                        logging.error(f"Failed to send evaluation email to {evaluation.employee.user.email}: {str(e)}", exc_info=True)
+                        # Continue execution - don't fail the evaluation submission due to email issues
                 
                 if was_completed:
                     messages.success(request, f"Evaluation for {evaluation.employee.user.get_full_name()} has been updated successfully!")
                 else:
                     messages.success(request, f"Evaluation for {evaluation.employee.user.get_full_name()} has been submitted successfully!")
                 return redirect("evaluation:dashboard2")
+        # If form is invalid, it will be passed to the template with errors
     else:
         form = DynamicEvaluationForm(instance=evaluation)
 

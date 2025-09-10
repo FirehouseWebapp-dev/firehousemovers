@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{% static 'evaluation/css/evaluation.css' %}" />
-  <link rel="stylesheet" href="{% static 'evaluation/css/widgets.css' %}" />
 {% block extra_css %}
 {% endblock %}
 </head>
@@ -45,7 +44,7 @@
       </a>
 
       {% url 'evaluation:pending_v2' as pending_v2_url %}
-      <a href="{{ pending_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_v2_url %}bg-red-500{% endif %}">
+      <a href="{{ pending_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_v2_url or request.path|startswith:'/evaluation/evaluate-dynamic/' or request.path|startswith:'/evaluation/dynamic-evaluation/' %}bg-red-500{% endif %}">
         <i class="fas fa-tasks mr-2"></i> Pending Evaluations2
       </a>
 

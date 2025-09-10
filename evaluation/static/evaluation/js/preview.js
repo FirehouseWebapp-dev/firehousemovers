@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add focus styling
     field.addEventListener('focus', function() {
       this.style.borderColor = '#ef4444';
-      this.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
     });
     
     field.addEventListener('blur', function() {

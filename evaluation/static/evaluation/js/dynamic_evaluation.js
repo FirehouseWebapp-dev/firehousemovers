@@ -39,6 +39,16 @@ class DynamicEvaluation {
                 this.handleLegacyClick(event);
             });
         });
+
+        // Handle number input validation
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', (event) => {
+                this.validateNumberInput(event);
+            });
+            input.addEventListener('blur', (event) => {
+                this.validateNumberInput(event);
+            });
+        });
     }
 
     /**
@@ -126,12 +136,11 @@ class DynamicEvaluation {
                 const starValue = parseInt(star.dataset.value, 10);
                 const isSelected = starValue <= selectedValue;
                 
+                // Use direct style manipulation like the original evaluation
                 if (isSelected) {
-                    star.classList.remove('text-gray-500');
-                    star.classList.add('text-red-500');
+                    star.style.fill = '#ef4444'; // text-red-500 equivalent
                 } else {
-                    star.classList.remove('text-red-500');
-                    star.classList.add('text-gray-500');
+                    star.style.fill = '#6b7280'; // text-gray-500 equivalent
                 }
             });
         } catch (error) {
@@ -176,8 +185,7 @@ class DynamicEvaluation {
                 label.style.opacity = '1';
                 label.style.transform = 'scale(1.06)';
                 label.style.filter = 'none';
-                // Add a subtle glow effect for filled stars
-                label.style.textShadow = '0 0 8px rgba(239, 68, 68, 0.6)';
+                // Remove glow effect for filled stars
             } else {
                 label.style.opacity = '0.4';
                 label.style.transform = 'scale(1)';
@@ -187,7 +195,7 @@ class DynamicEvaluation {
         } else if (widgetType === 'emoji') {
             if (isSelected) {
                 label.style.filter = 'none';
-                label.style.textShadow = '0 0 20px rgba(255, 255, 0, 1), 0 0 30px rgba(255, 255, 0, 0.8), 0 0 40px rgba(255, 255, 0, 0.6)';
+                label.style.textShadow = 'none';
                 label.style.opacity = '1';
             } else {
                 label.style.filter = 'grayscale(40%) brightness(0.7)';
@@ -205,6 +213,59 @@ class DynamicEvaluation {
         if (label.closest('.fh-emoji')) return 'emoji';
         if (label.closest('.fh-pill')) return 'pill';
         return 'unknown';
+    }
+
+    /**
+     * Validate number input against min/max constraints
+     */
+    validateNumberInput(event) {
+        try {
+            const input = event.currentTarget;
+            const value = parseInt(input.value, 10);
+            const min = parseInt(input.getAttribute('min'), 10) || 0;
+            const max = parseInt(input.getAttribute('max'), 10);
+            
+            // Clear previous error styling
+            input.classList.remove('border-red-500', 'bg-red-50');
+            
+            // Remove existing error message
+            const existingError = input.parentNode.querySelector('.number-error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Validate if value is provided
+            if (input.value && !isNaN(value)) {
+                if (value < min) {
+                    this.showNumberError(input, `Value must be at least ${min}.`);
+                    return false;
+                } else if (max && value > max) {
+                    this.showNumberError(input, `Value cannot exceed ${max}.`);
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('Error validating number input:', error);
+            return true;
+        }
+    }
+
+    /**
+     * Show error message for number input
+     */
+    showNumberError(input, message) {
+        // Add error styling
+        input.classList.add('border-red-500', 'bg-red-50');
+        
+        // Create error message element
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'number-error-message text-red-500 text-sm mt-1';
+        errorDiv.textContent = message;
+        
+        // Insert error message after the input
+        input.parentNode.insertBefore(errorDiv, input.nextSibling);
     }
 
     /**

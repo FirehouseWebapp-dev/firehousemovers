@@ -16,6 +16,7 @@ Key differences from v1:
 """
 
 from datetime import timedelta
+import logging
 from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 from django.core.mail import send_mail, get_connection
@@ -84,6 +85,7 @@ class Command(BaseCommand):
             self.stdout.write("   ✅ Email connection initialized.")
         except Exception as e:
             self.stdout.write(f"   ❌ Email connection failed: {e}")
+            logging.error(f"Email connection initialization failed: {str(e)}", exc_info=True)
 
     def _send_with_fallback(self, subject: str, body: str, to_addr: str, dry_run: bool = False) -> bool:
         """
@@ -106,6 +108,7 @@ class Command(BaseCommand):
             return True
         except Exception as e:
             self.stdout.write(f"❌ Email send failed: {e}")
+            logging.error(f"Failed to send email to {to_addr} with subject '{subject}': {str(e)}", exc_info=True)
             return False
 
     # -----------------------------

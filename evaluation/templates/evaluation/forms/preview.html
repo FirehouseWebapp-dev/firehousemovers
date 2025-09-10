@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
 <style>
   body { background: var(--bg-page); }
+  /* Remove border from first fh-row after section header */
+  .section-header + .fh-row {
+    border-top: none !important;
+  }
 </style>
 {% endblock %}
 
@@ -27,7 +31,7 @@
       <form>
         {% for field in preview_form %}
           {% if field.name|slice:":8" == "section_" %}
-            <div class="fh-row"><span class="fh-label section-label">{{ field.value }}</span></div>
+            <h3 class="section-header text-xl font-semibold text-red-500 mt-4 mb-2 border-none border-0 outline-none" style="border: none !important; border-bottom: none !important; border-top: none !important; border-left: none !important; border-right: none !important; box-shadow: none !important; background: none !important; padding: 18px 24px;">{{ field.value | title }}</h3>
           {% else %}
             <div class="fh-row">
               {# Capitalised heading #}

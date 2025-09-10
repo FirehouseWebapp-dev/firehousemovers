@@ -1,26 +1,50 @@
 {% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="p-6 text-white max-w-xl mx-auto">
-  <h1 class="text-2xl font-bold text-red-500 mb-6">Edit Reviewprint</h1>
-  
-  
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
-    <div class="space-y-4">
-      <div>
-        <label for="{{ form.department.id_for_label }}" class="block text-sm font-medium text-white mb-2">Department</label>
-        {{ form.department }}
-      </div>
-      <div>
-        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-white mb-2">Name</label>
-        {{ form.name }}
-      </div>
-      <div>
-        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-white mb-2">Description</label>
-        {{ form.description }}
-      </div>
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <h1 class="fh-title">Edit Reviewprint</h1>
     </div>
-    <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white font-semibold">Update</button>
-  </form>
+    
+    <div class="fh-body">
+      <form method="post" id="edit-form">
+        {% csrf_token %}
+        
+        <div class="fh-row">
+          <label class="fh-label" for="{{ form.department.id_for_label }}">Department</label>
+          {{ form.department }}
+          {% if form.department.errors %}
+            <div class="field-error-message">{{ form.department.errors.0 }}</div>
+          {% endif %}
+        </div>
+        
+        <div class="fh-row">
+          <label class="fh-label" for="{{ form.name.id_for_label }}">Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="field-error-message">{{ form.name.errors.0 }}</div>
+          {% endif %}
+        </div>
+        
+        <div class="fh-row">
+          <label class="fh-label" for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="field-error-message">{{ form.description.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+    
+    <div class="fh-foot">
+      <button type="submit" form="edit-form" class="btn btn-accent">Update</button>
+    </div>
+  </div>
 </div>
 {% endblock %}

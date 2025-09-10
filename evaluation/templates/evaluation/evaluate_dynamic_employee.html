@@ -6,210 +6,122 @@
   Evaluate {{ employee.user.get_full_name }}
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/evaluation.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-[#1a1a1a] rounded-lg shadow-lg text-white">
-  <h2 class="text-3xl font-extrabold text-red-500 mb-6">
-    {{ evaluation.form.name }} - {{ evaluation.department.title }}
-  </h2>
-
-  <p class="mb-6 text-gray-300">
-    <strong>Evaluating:</strong> {{ employee.user.get_full_name }}<br>
-    <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
-    <strong>Department:</strong> {{ evaluation.department.title }}<br>
-    <strong>Form:</strong> {{ evaluation.form.name }}
-  </p>
-  
-
-
-  {# If they cannot submit, show a banner #}
-  {% if not can_submit %}
-    <div class="mb-6 text-yellow-400 font-semibold">
-      {% if evaluation.submitted_at %}
-        You've already submitted this on 
-        {{ evaluation.submitted_at|date:"M j, Y, P" }}.
-      {% else %}
-        This evaluation is from a previous week and cannot be edited.
-      {% endif %}
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <div>
+        <h2 class="fh-title">{{ evaluation.form.name }} - {{ evaluation.department.title }}</h2>
+        <div class="fh-sub">
+          <strong>Evaluating:</strong> {{ employee.user.get_full_name }}<br>
+          <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
+          <strong>Department:</strong> {{ evaluation.department.title }}<br>
+          <strong>Form:</strong> {{ evaluation.form.name }}
+        </div>
+      </div>
     </div>
-  {% endif %}
 
-  <form method="post" class="space-y-8" action="">
-    {% csrf_token %}
-
-    {# Non-field errors #}
-    {% if form.non_field_errors %}
-      <div class="form-error">
-        {% for err in form.non_field_errors %}
-          <p>{{ err }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {# Disable entire fieldset when cannot submit #}
-    {% if not can_submit %}
-      <fieldset disabled class="opacity-60">
-    {% endif %}
-
-    {# Render dynamic form fields #}
-    {% for field in form %}
-      <div class="mb-6">
-        <label class="block mb-2 font-semibold text-white">
-          {{ field.label }}
-          {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
-        </label>
-        
-        {% if field.help_text %}
-          <p class="text-sm text-gray-400 mb-2">{{ field.help_text }}</p>
-        {% endif %}
-        
-
-        {# Handle different field types #}
-        {% if field.field.widget.input_type == "radio" %}
-          {# Use the widget's template for proper rendering #}
-          {{ field }}
-
-        {% elif field.field.widget.input_type == "hidden" and field.field.choices %}
-          {# Hidden input fields with choices (star ratings) #}
-          <div class="flex gap-2 mb-2">
-            {% for choice in field.field.choices %}
-              {# Clickable SVG Star - matching dashboard styling #}
-              <svg
-                class="star w-6 h-6 text-gray-500 fill-current transition-colors cursor-pointer hover:text-red-400"
-                data-field="{{ field.name }}"
-                data-value="{{ choice.0 }}"
-                viewBox="0 0 20 20"
-              >
-                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-              </svg>
-            {% endfor %}
+    <div class="fh-body">
+      {# Banner if cannot submit #}
+      {% if not can_submit %}
+        <div class="fh-row">
+          <div class="flash-message flash-warning">
+            <i class="fas fa-exclamation-triangle flash-icon"></i>
+            <div class="flash-content">
+              {% if evaluation.submitted_at %}
+                You've already submitted this on {{ evaluation.submitted_at|date:"M j, Y, P" }}.
+              {% else %}
+                This evaluation is from a previous week and cannot be edited.
+              {% endif %}
+            </div>
           </div>
-          
-          {# Hidden input to store the selected value #}
-          <input type="hidden" name="{{ field.name }}" value="{{ field.value|default:'' }}" id="{{ field.name }}_value">
+        </div>
+      {% endif %}
 
-        {% elif field.field.widget.input_type == "checkbox" %}
-          {# Boolean Yes/No radio buttons #}
-          <div class="flex gap-3">
-            <label class="relative cursor-pointer">
-              <input
-                type="radio"
-                name="{{ field.name }}"
-                value="True"
-                class="sr-only peer"
-                {% if field.value %}checked{% endif %}
-              >
-              <div
-                class="px-3 py-1.5 rounded border border-gray-600 text-center
-                       bg-[#2a2a2a] hover:bg-gray-600 text-white
-                       peer-checked:ring-1 peer-checked:ring-red-500
-                       peer-checked:bg-red-800/30 peer-checked:text-red-400
-                       peer-checked:border-red-500 transition-all duration-200"
-              >
-                <span class="text-xs font-medium">Yes</span>
+      <form method="post" id="evaluation-form" {% if not can_submit %}disabled{% endif %}>
+        {% csrf_token %}
+
+        {# Non-field errors #}
+        {% if form.non_field_errors %}
+          <div class="fh-row">
+            <div class="flash-message flash-error">
+              <i class="fas fa-exclamation-circle flash-icon"></i>
+              <div class="flash-content">
+                {% for err in form.non_field_errors %}
+                  <p>{{ err }}</p>
+                {% endfor %}
               </div>
-            </label>
-            
-            <label class="relative cursor-pointer">
-              <input
-                type="radio"
-                name="{{ field.name }}"
-                value="False"
-                class="sr-only peer"
-                {% if not field.value %}checked{% endif %}
-              >
-              <div
-                class="px-3 py-1.5 rounded border border-gray-600 text-center
-                       bg-[#2a2a2a] hover:bg-gray-600 text-white
-                       peer-checked:ring-1 peer-checked:ring-red-500
-                       peer-checked:bg-red-800/30 peer-checked:text-red-400
-                       peer-checked:border-red-500 transition-all duration-200"
-              >
-                <span class="text-xs font-medium">No</span>
-              </div>
-            </label>
-          </div>
-
-        {% elif field.field.widget.input_type == "number" %}
-          {# Number input #}
-          <input
-            type="number"
-            name="{{ field.name }}"
-            id="{{ field.id_for_label }}"
-            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
-            value="{{ field.value|default:'' }}"
-            {% if field.field.min_value %}min="{{ field.field.min_value }}"{% endif %}
-            {% if field.field.max_value %}max="{{ field.field.max_value }}"{% endif %}
-          >
-
-        {% elif field.field.widget.input_type == "select" %}
-          {# Select dropdown #}
-          <select
-            name="{{ field.name }}"
-            id="{{ field.id_for_label }}"
-            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
-          >
-            <option value="">Select an option...</option>
-            {% for choice in field.field.choices %}
-              <option value="{{ choice.0 }}" {% if field.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
-                {{ choice.1 }}
-              </option>
-            {% endfor %}
-          </select>
-
-        {% elif field.field.widget.input_type == "textarea" or field.field.widget.template_name == "django/forms/widgets/textarea.html" %}
-          {# Textarea (long text) #}
-          <textarea
-            name="{{ field.name }}"
-            id="{{ field.id_for_label }}"
-            rows="4"
-            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
-            placeholder="Enter your response..."
-          >{{ field.value|default:'' }}</textarea>
-
-        {% else %}
-          {# Text input (short text) #}
-          <input
-            type="text"
-            name="{{ field.name }}"
-            id="{{ field.id_for_label }}"
-            class="w-full px-3 py-2 rounded bg-[#2a2a2a] border border-gray-600 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500"
-            value="{{ field.value|default:'' }}"
-            placeholder="Enter your response..."
-          >
-        {% endif %}
-
-        {# Field errors #}
-        {% if field.errors %}
-          <div class="text-red-400 text-sm mt-1">
-            {% for error in field.errors %}
-              <p>{{ error }}</p>
-            {% endfor %}
+            </div>
           </div>
         {% endif %}
-      </div>
-    {% endfor %}
 
-    {# Close fieldset if disabled #}
-    {% if not can_submit %}
-      </fieldset>
-    {% endif %}
-
-    {# Submit button #}
-    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-700">
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary btn-large">
-        Cancel
-      </a>
-      {% if can_submit %}
-        <button type="submit" class="btn btn-primary btn-large">
-          {% if evaluation.status == "completed" %}
-            Update Evaluation
+        {# Fields #}
+        {% for field in form %}
+          {% if field.name|slice:":8" == "section_" %}
+            <div class="fh-row">
+              <h3 class="section-header">
+                {{ field.value|default:field.initial|default:field.label|title }}
+              </h3>
+            </div>
           {% else %}
-            Submit Evaluation
+            <div class="fh-row{% if forloop.counter0 == 0 %} first-question{% endif %}">
+              <label for="{{ field.id_for_label }}" class="fh-label">
+                {{ field.label }}{% if field.field.required %}<span style="color:#ef4444;">*</span>{% endif %}
+              </label>
+
+              {% if field.help_text %}
+                <div class="fh-help">{{ field.help_text }}</div>
+              {% endif %}
+
+              {# Render field itself #}
+              {{ field }}
+
+              {# Error once, DRY #}
+              {% if field.errors %}
+                <div class="field-error-message">{{ field.errors.0 }}</div>
+              {% endif %}
+            </div>
           {% endif %}
+        {% endfor %}
+
+        {# Error summary #}
+        {% if form.errors %}
+          <div class="fh-row">
+            <div class="flash-message flash-error">
+              <i class="fas fa-exclamation-circle flash-icon"></i>
+              <div class="flash-content">
+                <strong>Please fix the errors below:</strong>
+                <ul style="margin-top:0.5rem; padding-left:1rem;">
+                  {% for field in form %}
+                    {% for err in field.errors %}
+                      <li><strong>{{ field.label }}:</strong> {{ err }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                  {% for err in form.non_field_errors %}
+                    <li>{{ err }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="fh-foot">
+      <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">Cancel</a>
+      {% if can_submit %}
+        <button type="submit" form="evaluation-form" class="btn btn-accent">
+          {% if evaluation.status == "completed" %}Update Evaluation{% else %}Submit Evaluation{% endif %}
         </button>
       {% endif %}
     </div>
-  </form>
+  </div>
 </div>
 {% endblock %}
 

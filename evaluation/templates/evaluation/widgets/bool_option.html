@@ -1,0 +1,7 @@
+<li class="fh-bool-option">
+  <input type="radio" id="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}"
+         name="{{ widget.name }}" value="{{ widget.value }}"
+         {% if widget.selected %}checked{% endif %}
+         {% include "django/forms/widgets/attrs.html" %}>
+  <label for="{{ widget.attrs.id }}_{{ widget.value|stringformat:'s' }}">{{ widget.label }}</label>
+</li>

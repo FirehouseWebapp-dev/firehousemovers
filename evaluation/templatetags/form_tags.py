@@ -1,5 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
+import logging
 
 register = template.Library()
 
@@ -26,5 +27,12 @@ def pct(done, total):
         done = int(done or 0)
         total = int(total or 0)
         return int(round((done / total) * 100)) if total else 100
-    except Exception:
+    except Exception as e:
+        logging.warning(f"Error calculating percentage in pct filter: done={done}, total={total}, error={str(e)}")
         return 0
+
+
+@register.filter
+def to_range(value, max_value):
+    return range(value, max_value + 1)
+

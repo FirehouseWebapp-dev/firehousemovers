@@ -32,17 +32,30 @@ body {
 .fh-wrap{max-width:960px;margin:2rem auto;}
 .fh-sheet{background:var(--bg-sheet);border:1px solid var(--bd-muted);border-radius:14px;overflow:hidden;}
 .fh-head{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd-muted);}
-.fh-title{font-size:1.5rem;font-weight:800;color:#ef4444;}
+.fh-title{font-size:1.5rem;font-weight:800;color:#ef4444; /* red-500 */}
 .fh-sub{color:var(--text-muted);font-size:.95rem;margin-top:.25rem;}
 .fh-badge{display:inline-block;padding:.35rem .65rem;border-radius:999px;font-size:.7rem;color:#d0d0d0;background:#2a2a2a;border:1px solid var(--bd-muted);}
 
 .fh-body{padding:8px 0;}
-.fh-row{padding:18px 24px;border-top:1px solid var(--bd-muted);}
+.fh-row{padding:12px 24px;border-top:none;}
 .fh-row:first-child{border-top:none;}
 
+/* Remove border from first question row (after flash messages) */
+.fh-row.first-question{border-top:none;}
+
+/* Remove borders from widget containers */
+.fh-row:has(.fh-stars),
+.fh-row:has(.fh-pills),
+.fh-row:has(.fh-emojis),
+.fh-row:has(.fh-bool) {
+  border: none !important;
+}
+
 .fh-label{
-  font-weight:800;color:#fff;margin-bottom:.65rem;display:block;
+  font-weight:800;color:#fff; /* white */ margin-bottom:.65rem;display:block;
   letter-spacing:.2px;
+  text-transform: capitalize;
+  font-size:0.9rem;
 }
 .fh-help{color:var(--text-muted);font-size:.9rem;margin-top:.45rem}
 
@@ -51,7 +64,7 @@ body {
 .fh-row input[type="number"],
 .fh-row select,
 .fh-row textarea{
-  width:100%;background:var(--bg-input);color:#f5f5f5;border:1px solid var(--bd-muted);
+  width:100%;background:var(--bg-input);color:#f5f5f5;border:1px solid #404040;
   border-radius:10px;padding:.75rem .9rem;outline:none;
   cursor:text;
 }
@@ -62,7 +75,6 @@ body {
 .fh-row textarea:focus,
 .fh-row select:focus {
   border-color: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
 /* Remove disabled styling */
@@ -74,16 +86,53 @@ body {
 }
 
 /* Star / Pill radios */
-.fh-stars,.fh-pills{display:flex;gap:.6rem;list-style:none;padding:0;margin:0;align-items:center}
-.fh-star input,.fh-pill input{display:none}
-.fh-star label{font-size:1.6rem;cursor:pointer;opacity:.55;transition:opacity .12s,transform .05s}
+.fh-stars,.fh-pills{display:flex;gap:.6rem;list-style:none;padding:0;margin:0;align-items:center;border:none !important;}
+.fh-star label{font-size:1.6rem;cursor:pointer;opacity:.55;transition:opacity .12s,transform .05s;color:#ef4444}
 .fh-star input:checked+label,.fh-star label:hover{opacity:1;transform:scale(1.06)}
 .fh-pill label{
   display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:36px;padding:0 .7rem;
   border-radius:8px;background:var(--bg-input);color:#e0e0e0;border:1px solid var(--pill-border);
   font-weight:700;font-size:.9rem;cursor:pointer;transition:all .12s ease
 }
-.fh-pill input:checked+label{background:var(--pill-active);border-color:#444;box-shadow:0 0 0 2px #44444466 inset}
+.fh-pill input:checked+label{background:var(--pill-active);border-color:#ef4444;box-shadow:0 0 0 2px #ef444466 inset}
+
+/* View mode pill styling - selected state */
+.fh-pill label.selected {
+  background: var(--pill-active);
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px #ef444466 inset;
+}
+
+/* View mode pill styling - ensure proper appearance */
+.view-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 34px !important;
+  height: 36px !important;
+  padding: 0 0.7rem !important;
+  border-radius: 8px !important;
+  background: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #444 !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  cursor: default !important; /* Not clickable in view mode */
+  transition: all 0.12s ease !important;
+}
+
+.view-pill.selected {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px #ef444466 inset !important;
+}
+
+/* View mode pills container */
+.view-pills-container {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
 .fh-nps-hints{display:flex;justify-content:space-between;color:var(--text-muted);font-size:.78rem;margin-top:.35rem}
 
 /* Boolean Yes/No styling */
@@ -94,21 +143,19 @@ body {
   padding: 0;
   margin: 0;
   align-items: center;
-}
-.fh-bool input {
-  display: none;
+  border: none !important;
 }
 .fh-bool label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
-  height: 40px;
-  padding: 0 1rem;
+  min-width: 80px;
+  height: 48px;
+  padding: 0 1.5rem;
   border-radius: 8px;
-  background: transparent;
-  color: #ef4444;
-  border: 2px dashed #ef4444;
+  background: var(--bg-input);
+  color: #e0e0e0;
+  border: 1px solid var(--bd-muted);
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
@@ -116,43 +163,44 @@ body {
   position: relative;
 }
 .fh-bool label:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: #dc2626;
-  transform: scale(1.05);
+  background: #2a2a2a;
+  border-color: #ef4444;
+  transform: scale(1.02);
 }
 .fh-bool input:checked + label {
   background: #ef4444;
   color: white;
-  border-style: solid;
   border-color: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
-/* Improved emoji group */
+/* Emoji group - matching regular evaluation form */
 .fh-emojis{
-  display:flex;gap:1rem;list-style:none;padding:0;margin:0;align-items:center;flex-wrap:wrap;
+  display:flex;gap:1rem;list-style:none;padding:0;margin:0;align-items:center;flex-wrap:wrap;border:none !important;
 }
 .fh-emoji{display:inline-block;list-style:none}
-.fh-emoji input{display:none} /* hide radios, click label */
+/* hide radios visually but keep focusable, click label */
 .fh-emoji label{
-  font-size:2rem;               /* bigger emojis */
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:4rem;
+  height:4rem;
+  border-radius:50%;
+  background:#1a1a1a;
+  color:#fff;
+  font-size:2rem;
   cursor:pointer;
-  filter:grayscale(55%);
-  opacity:.65;
-  transition:transform .18s ease, opacity .18s ease, filter .18s ease, text-shadow .18s ease;
-  line-height:1;
-  display:inline-block;
+  transition:all .15s ease;
+  position:relative;
 }
 .fh-emoji label:hover{
-  transform:scale(1.18);
-  filter:none;
-  opacity:1;
+  background:#374151;
 }
 .fh-emoji input:checked + label{
-  filter:none;
-  opacity:1;
-  transform:scale(1.24);
-  text-shadow:0 0 10px rgba(255,255,255,.35);
+  background:rgba(239, 68, 68, 0.3);
+  color:#fca5a5;
+  border: 2px solid #ef4444;
 }
 
 /* Footer */
@@ -467,6 +515,301 @@ body {
   display: none;
 }
 
+/* Hide radio buttons in evaluation forms and question items */
+.fh-row input[type="radio"], 
+.q-item input[type="radio"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0, 0, 0, 0) !important;
+  overflow: hidden !important;
+}
+
+/* Hide checkboxes only in question items (not in form creation) */
+.q-item input[type="checkbox"] {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0, 0, 0, 0) !important;
+  overflow: hidden !important;
+}
+
+/* Checkbox styling for forms */
+.fh-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+/* ===== WIDGET STYLES ===== */
+
+/* Input field styles */
+.input-field {
+  width: 100%;
+  background-color: #000;
+  border: 1px solid #4B5563;
+  color: #fff;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #ef4444;
+}
+
+/* Ensure proper styling for all form inputs */
+.fh-row input[type="text"],
+.fh-row input[type="number"],
+.fh-row input[type="email"],
+.fh-row input[type="url"],
+.fh-row select,
+.fh-row textarea {
+  width: 100%;
+  background: var(--bg-input);
+  color: #f5f5f5;
+  border: 1px solid #404040;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  outline: none;
+  cursor: text;
+  font-size: 1rem;
+}
+
+.fh-row input:focus,
+.fh-row textarea:focus,
+.fh-row select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* Ensure proper styling for regular form inputs outside of fh-row */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="url"],
+select,
+textarea {
+  width: 100%;
+  background: var(--bg-input);
+  color: #f5f5f5;
+  border: 1px solid #404040;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  outline: none;
+  cursor: text;
+  font-size: 1rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* View mode emoji styles - static display */
+.view-emoji-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  min-height: 4rem; /* Match the evaluation form height */
+}
+
+.view-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 2rem;
+  cursor: default; /* Not clickable in view mode */
+  transition: all 0.15s ease;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.view-emoji.selected {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border: 2px solid #ef4444;
+  transform: scale(1.1);
+}
+
+/* View mode answer display styles */
+.answer-display {
+  color: #fff;
+  font-weight: 600;
+}
+
+.answer-display.no-answer {
+  color: #666;
+  font-style: italic;
+}
+
+.answer-text-container {
+  background: var(--bg-input);
+  border: 1px solid var(--bd-muted);
+  border-radius: 10px;
+  padding: 0.75rem;
+  color: #fff;
+}
+
+.star-filled {
+  color: #ef4444;
+  filter: none;
+}
+
+.star-empty {
+  color: #666;
+  filter: grayscale(100%);
+}
+
+/* View mode star container */
+.view-stars-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.view-star {
+  font-size: 1.6rem;
+  color: #666;
+  transition: color 0.15s ease;
+}
+
+.view-star.filled {
+  color: #ef4444;
+}
+
+.answer-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Error states for form validation */
+.field-error-message {
+  color: #ef4444; /* red-500 */
+  font-size: 0.875rem; /* text-sm */
+  margin-top: 0.25rem; /* mt-1 */
+}
+
+.has-error .fh-emojis,
+.has-error .fh-stars,
+.has-error .flex.gap-2 {
+  border: 2px solid #ef4444; /* border-red-500 */
+  border-radius: 0.375rem; /* rounded */
+  padding: 0.5rem; /* p-2 */
+  background-color: rgba(239, 68, 68, 0.05); /* Very light red background */
+}
+
+.has-error input.border-red-500 {
+  border-color: #ef4444; /* Focus border in red */
+}
+
+/* Form layout improvements */
+.form-field {
+  margin-bottom: 1.5rem;
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  color: #fff; /* white */
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+}
+
+.form-field .help-text {
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.form-field .error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Section headers */
+.section-header {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ef4444; /* red-500 */
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  text-transform: none;
+}
+
+/* Reduce top padding and remove border for section header rows */
+.fh-row:has(.section-header) {
+  padding-top: 8px;
+  border-top: none !important;
+}
+
+/* Form container improvements */
+.form-container {
+  background: var(--bg-sheet);
+  border: 1px solid var(--bd-muted);
+  border-radius: 14px;
+  padding: 2rem;
+  margin: 1rem 0;
+}
+
+/* Button improvements */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #dc2626;
+}
+
+.btn-secondary {
+  background: #4b5563;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #374151;
+}
+
+.btn-large {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+}
+
 /* Modal Button Styles */
 .btn-modal {
   padding: 8px 16px;
@@ -494,4 +837,19 @@ body {
 
 .btn-delete:hover {
   background: #dc2626;
+}
+
+/* Disabled field styles */
+.input-field.disabled,
+.input-field:disabled {
+  background-color: #1a1a1a !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.input-field.disabled:focus,
+.input-field:disabled:focus {
+  border-color: #2b2b2b !important;
+  box-shadow: none !important;
 }

@@ -1,132 +1,129 @@
 // Drag and Drop functionality for questions
 document.addEventListener('DOMContentLoaded', function() {
     const questionList = document.getElementById('q-list');
-    
     if (!questionList) return;
-    
-    // Make questions sortable
+
     let draggedElement = null;
-    
+    let orderUpdateTimeout = null; // debounce timer
+
     // Add event listeners to all question items
     function addDragListeners() {
         const questionItems = questionList.querySelectorAll('.q-item');
-        
+
         questionItems.forEach(item => {
-            const dragHandle = item.querySelector('.drag');
-            
-            // Make the entire item draggable
             item.draggable = true;
-            
-            // Add visual feedback
+
             item.addEventListener('dragstart', function(e) {
                 draggedElement = this;
                 this.style.opacity = '0.5';
                 this.classList.add('dragging');
-                
-                // Set drag data
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/html', this.outerHTML);
             });
-            
-            item.addEventListener('dragend', function(e) {
+
+            item.addEventListener('dragend', function() {
                 this.style.opacity = '1';
                 this.classList.remove('dragging');
                 draggedElement = null;
             });
-            
+
             item.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                
-                // Add visual indicator
                 this.classList.add('drag-over');
             });
-            
-            item.addEventListener('dragleave', function(e) {
+
+            item.addEventListener('dragleave', function() {
                 this.classList.remove('drag-over');
             });
-            
+
             item.addEventListener('drop', function(e) {
                 e.preventDefault();
                 this.classList.remove('drag-over');
-                
+
                 if (draggedElement && draggedElement !== this) {
-                    // Get the position to insert
                     const rect = this.getBoundingClientRect();
                     const midpoint = rect.top + rect.height / 2;
                     const mouseY = e.clientY;
-                    
+
                     if (mouseY < midpoint) {
-                        // Insert before this element
                         questionList.insertBefore(draggedElement, this);
                     } else {
-                        // Insert after this element
                         questionList.insertBefore(draggedElement, this.nextSibling);
                     }
-                    
-                    // Update question order in database
-                    updateQuestionOrder();
+
+                    // Debounced order update
+                    scheduleUpdateOrder();
                 }
             });
         });
     }
-    
+
+    // Debounce wrapper
+    function scheduleUpdateOrder() {
+        if (orderUpdateTimeout) clearTimeout(orderUpdateTimeout);
+        orderUpdateTimeout = setTimeout(() => {
+            updateQuestionOrder();
+        }, 400); // wait 400ms after last drag
+    }
+
     // Function to update question order in database
     function updateQuestionOrder() {
         const questionItems = questionList.querySelectorAll('.q-item');
         const questionIds = [];
-        
+
         questionItems.forEach((item, index) => {
-            // Extract question ID from the edit link
-            const editLink = item.querySelector('a[href*="question_edit"]');
+            let editLink = item.querySelector('a[title="Edit Question"]')
+                || item.querySelector('a[href*="question_edit"]')
+                || item.querySelector('a[href*="/edit/"]');
+
             if (editLink) {
                 const href = editLink.getAttribute('href');
-                const questionId = href.match(/question_edit\/(\d+)/);
+                let questionId = href.match(/questions\/(\d+)\/edit/)
+                    || href.match(/question_edit\/(\d+)/)
+                    || href.match(/\/(\d+)\/edit/);
+
                 if (questionId) {
                     questionIds.push({
                         id: questionId[1],
-                        order: index + 1
+                        order: index
                     });
+
+                    const orderInput = item.querySelector('input[name*="order"]');
+                    if (orderInput) orderInput.value = index;
                 }
             }
         });
-        
-        // Send AJAX request to update order
+
         fetch(window.location.href + 'update_order/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({
-                question_orders: questionIds
-            })
+            body: JSON.stringify({ question_orders: questionIds })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Question order updated successfully');
-                // Show success message
                 showMessage('Question order updated successfully!', 'success');
             } else {
-                console.error('Failed to update question order');
-                showMessage('Failed to update question order', 'error');
+                showMessage('Failed to update question order: ' + (data.error || 'Unknown error'), 'error');
             }
         })
-        .catch(error => {
-            console.error('Error updating question order:', error);
+        .catch(() => {
             showMessage('Error updating question order', 'error');
         });
     }
-    
-    // Helper function to get CSRF token
+
+    // Helper: Get CSRF token
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                if (cookie.startsWith(name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
                 }
@@ -134,39 +131,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
-    
-    // Function to show messages
+
+    // Helper: Show message
     function showMessage(message, type) {
-        // Create message element
         const messageDiv = document.createElement('div');
         messageDiv.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
             type === 'success' ? 'bg-green-600' : 'bg-red-600'
         }`;
         messageDiv.textContent = message;
-        
-        // Add to page
         document.body.appendChild(messageDiv);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            messageDiv.remove();
-        }, 3000);
+        setTimeout(() => messageDiv.remove(), 3000);
     }
-    
-    // Initialize drag and drop
+
+    // Initialize
     addDragListeners();
-    
-    // Re-initialize when new questions are added (if needed)
+
+    // Re-initialize when new questions are added dynamically
     const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
+        mutations.forEach(mutation => {
             if (mutation.type === 'childList') {
                 addDragListeners();
             }
         });
     });
-    
-    observer.observe(questionList, {
-        childList: true,
-        subtree: true
-    });
+
+    observer.observe(questionList, { childList: true, subtree: true });
 });
