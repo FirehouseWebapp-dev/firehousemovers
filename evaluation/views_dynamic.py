@@ -17,31 +17,27 @@ from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
 from django.utils.timezone import now
 from datetime import timedelta
+from firehousemovers.utils.permissions import role_checker, require_management, require_admin_or_senior, ajax_require_management
 
 def _can_manage(user):
     """Check if user can manage evaluation forms globally (superusers and senior management only)."""
     if not user.is_authenticated:
         return False
-    p = getattr(user, "userprofile", None)
-    return (
-        user.is_superuser
-        or (p and (p.is_admin or p.is_senior_management))
-    )
+    checker = role_checker(user)
+    return checker.is_admin_or_senior()
 
 def _can_manage_department(user, department):
     """Check if user can manage evaluation forms for a specific department."""
     if not user.is_authenticated:
         return False
-    p = getattr(user, "userprofile", None)
-    if not p:
-        return False
+    checker = role_checker(user)
     
     # Superusers and global admins can manage any department
-    if user.is_superuser or p.is_admin or p.is_senior_management:
+    if checker.is_admin_or_senior():
         return True
     
     # Department managers can only manage their own department
-    if p.is_manager and p.managed_department == department:
+    if checker.is_manager() and checker.user_profile.managed_department == department:
         return True
     
     return False
@@ -50,7 +46,7 @@ def _can_manage_department(user, department):
 @login_required
 def evalform_list(request):
     """List evaluation forms with department-specific permissions."""
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     
     # Get forms based on user permissions
     if _can_manage(request.user):
@@ -61,9 +57,9 @@ def evalform_list(request):
             forms = forms.filter(department_id=dept)
     else:
         # Department managers can only see their own department's forms
-        if profile.is_manager and profile.managed_department:
+        if checker.is_manager() and checker.user_profile.managed_department:
             forms = EvalForm.objects.filter(
-                department=profile.managed_department
+                department=checker.user_profile.managed_department
             ).select_related("department").order_by("-created_at")
         else:
             # No permission to view any forms
@@ -74,7 +70,7 @@ def evalform_list(request):
 @login_required
 def evalform_create(request):
     """Create evaluation form with department-specific permissions."""
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     
     if request.method == "POST":
         form = EvalFormForm(request.POST)
@@ -109,9 +105,9 @@ def evalform_create(request):
     else:
         form = EvalFormForm()
         # Restrict department choices for non-global admins
-        if profile.is_manager and profile.managed_department:
-            form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
-            form.fields['department'].initial = profile.managed_department
+        if checker.is_manager() and checker.user_profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
+            form.fields['department'].initial = checker.user_profile.managed_department
     
     return render(request, "evaluation/forms/create.html", {"form": form})
 
@@ -119,7 +115,7 @@ def evalform_create(request):
 def evalform_edit(request, pk):
     """Edit evaluation form with department-specific permissions."""
     obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     
     # Check if user can edit this form
     if not _can_manage_department(request.user, obj.department):
@@ -162,8 +158,8 @@ def evalform_edit(request, pk):
     else:
         form = EvalFormForm(instance=obj)
         # Restrict department choices for non-global admins
-        if profile.is_manager and profile.managed_department:
-            form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
+        if checker.is_manager() and checker.user_profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
     
     return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
 
@@ -455,10 +451,10 @@ def evaluation_dashboard2(request):
     """
     Dashboard 2 view: Alternative dashboard for managers showing dynamic evaluations.
     """
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     
     # Only managers can access this dashboard
-    if not profile.is_manager:
+    if not checker.is_manager():
         return redirect("evaluation:dashboard")
     
     today = now().date()
@@ -466,7 +462,7 @@ def evaluation_dashboard2(request):
     # Get manager's team dynamic evaluations
     evaluations = (
         DynamicEvaluation.objects
-        .filter(manager=profile)
+        .filter(manager=checker.user_profile)
         .select_related("employee__user", "form", "department")
         .order_by("-week_start")
     )
@@ -491,10 +487,10 @@ def evaluate_dynamic_employee(request, evaluation_id):
     Manager view: display & handle single dynamic evaluation form.
     """
     evaluation = get_object_or_404(DynamicEvaluation, pk=evaluation_id)
-    manager = request.user.userprofile
+    checker = role_checker(request.user)
 
     # only the assigned manager may access
-    if evaluation.manager != manager:
+    if evaluation.manager != checker.user_profile:
         return redirect("evaluation:dashboard2")
 
     # editable while within the week window
@@ -580,10 +576,10 @@ def view_dynamic_evaluation(request, evaluation_id):
                                  .prefetch_related('form__questions__choices'),
         pk=evaluation_id
     )
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
 
     # Allow access if user is the manager OR the employee being evaluated
-    if evaluation.manager != profile and evaluation.employee != profile:
+    if evaluation.manager != checker.user_profile and evaluation.employee != checker.user_profile:
         return redirect("evaluation:dashboard2")
 
     # Get all answers for this evaluation with optimized queries
@@ -607,7 +603,7 @@ def pending_evaluations_v2(request):
     Manager view: show progress & list of pending dynamic evaluations
     for last week and this week.
     """
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     today = now().date()
     weekday = today.weekday()
 
@@ -617,7 +613,7 @@ def pending_evaluations_v2(request):
 
     # stats for both weeks
     stats_qs = DynamicEvaluation.objects.filter(
-        manager=profile,
+        manager=checker.user_profile,
         week_start__in=[last_monday, this_monday],
     )
 
@@ -630,7 +626,7 @@ def pending_evaluations_v2(request):
 
     # Get pending evaluations for both weeks
     pending_evaluations = DynamicEvaluation.objects.filter(
-        manager=profile,
+        manager=checker.user_profile,
         week_start__in=[last_monday, this_monday],
         status="pending"
     ).select_related("employee__user", "form", "department").order_by("week_start", "employee__user__first_name")
@@ -651,13 +647,13 @@ def my_evaluations_v2(request):
     """
     Employee view: show all dynamic evaluations for this employee.
     """
-    profile = request.user.userprofile
+    checker = role_checker(request.user)
     today = now().date()
     
     # Get all dynamic evaluations for this employee
     evaluations = (
         DynamicEvaluation.objects
-        .filter(employee=profile)
+        .filter(employee=checker.user_profile)
         .select_related("manager__user", "form", "department")
         .order_by("-week_start")
     )

@@ -24,10 +24,10 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
-  {% with up=request.user.userprofile role=request.user.userprofile.role %}
+  {% with up=role.user_profile role_name=role.user_profile.role %}
 
     {# --- Managers --- #}
-    {% if up.is_manager %}
+    {% if role.is_manager %}
       {% url 'evaluation:dashboard' as dash_url %}
       <a href="{{ dash_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == dash_url %}bg-red-500{% endif %}">
         <i class="fas fa-chart-line mr-2"></i> Dashboard
@@ -59,7 +59,7 @@
       </a>
 
       {# --- Senior management --- #}
-      {% elif up.is_senior_management or up.is_superuser %}
+      {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:regular_reviews' as rr_url %}
         {% url 'evaluation:senior_pending_reviews' as sr_pending_url %}
 

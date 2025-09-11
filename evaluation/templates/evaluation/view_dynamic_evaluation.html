@@ -4,7 +4,7 @@
 {% load form_tags %}
 
 {% block title %}
-  {% if request.user.userprofile == evaluation.manager %}
+  {% if role.user_profile == evaluation.manager %}
     View Evaluation - {{ employee.user.get_full_name }}
   {% else %}
     My Evaluation - {{ evaluation.form.name }}
@@ -22,7 +22,7 @@
       <div>
         <h2 class="fh-title">{{ evaluation.form.name }} - {{ evaluation.department.title }}</h2>
         <div class="fh-sub">
-          {% if request.user.userprofile == evaluation.manager %}
+          {% if role.user_profile == evaluation.manager %}
             <strong>Employee:</strong> {{ employee.user.get_full_name }}<br>
           {% else %}
             <strong>Manager:</strong> {{ evaluation.manager.user.get_full_name }}<br>
@@ -126,7 +126,7 @@
     </div>
 
     <div class="fh-foot">
-      {% if request.user.userprofile == evaluation.manager %}
+      {% if role.user_profile == evaluation.manager %}
         <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">
           Back to Dashboard
         </a>
