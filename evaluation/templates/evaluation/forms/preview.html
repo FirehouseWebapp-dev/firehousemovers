@@ -1,0 +1,78 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+<style>
+  body { background: var(--bg-page); }
+  /* Remove border from first fh-row after section header */
+  .section-header + .fh-row {
+    border-top: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fh-wrap text-white">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <div>
+        <div class="fh-title">{{ form_obj.department.title }} — {{ form_obj.name }}</div>
+        <div class="fh-sub">Interactive preview of the manager experience.</div>
+      </div>
+      {% if form_obj.is_active %}
+        <span class="fh-badge fh-badge-active">Active</span>
+      {% else %}
+        <span class="fh-badge">Inactive</span>
+      {% endif %}
+    </div>
+
+    <div class="fh-body">
+      <form>
+        {% for field in preview_form %}
+          {% if field.name|slice:":8" == "section_" %}
+            <h3 class="section-header text-xl font-semibold text-red-500 mt-4 mb-2 border-none border-0 outline-none" style="border: none !important; border-bottom: none !important; border-top: none !important; border-left: none !important; border-right: none !important; box-shadow: none !important; background: none !important; padding: 18px 24px;">{{ field.value | title }}</h3>
+          {% else %}
+            <div class="fh-row">
+              {# Capitalised heading #}
+              <label class="fh-label">{{ field.label|capfirst }}</label>
+
+              {# Custom rendering for boolean fields #}
+              {% if field.field.widget.input_type == "checkbox" %}
+                <div class="fh-bool">
+                  <input type="radio" name="{{ field.name }}" value="true" id="{{ field.name }}_yes" {% if field.value %}checked{% endif %}>
+                  <label for="{{ field.name }}_yes">Yes</label>
+                  <input type="radio" name="{{ field.name }}" value="false" id="{{ field.name }}_no" {% if not field.value %}checked{% endif %}>
+                  <label for="{{ field.name }}_no">No</label>
+                </div>
+              {% else %}
+                {{ field }}
+              {% endif %}
+
+              {% if field.help_text %}<p class="fh-help">{{ field.help_text }}</p>{% endif %}
+
+              {# NPS hint row when 0..10 pill scale #}
+              {% if field.field.widget.template_name == "evaluation/widgets/pill_radio.html" %}
+                {% with first=field.field.choices.0.0 last=field.field.choices|last %}
+                  {% if first == 0 and last.0 == 10 %}
+                    <div class="fh-nps-hints"><span>Least Likely</span><span>Most Likely</span></div>
+                  {% endif %}
+                {% endwith %}
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </form>
+    </div>
+
+    <div class="fh-foot">
+      <a href="{% url 'evaluation:evalform_detail' form_obj.id %}" class="btn btn-muted">Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/dynamic_evaluation.js' %}"></script>
+<script src="{% static 'evaluation/js/preview.js' %}"></script>
+{% endblock %}

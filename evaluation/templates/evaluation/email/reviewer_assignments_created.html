@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-  <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:#111;">
+  <body class="email-body">
     <p>Hi {{ reviewer_name }},</p>
     <p>
       You have <strong>{{ new_count }}</strong> new
@@ -8,7 +8,7 @@
       to complete for the period <strong>{{ cycle.period_start }}</strong> to <strong>{{ cycle.period_end }}</strong>.
     </p>
     <p>
-      <a href="{{ list_url }}" style="display:inline-block;padding:10px 14px;background:#dc2626;color:#fff;text-decoration:none;border-radius:6px;">
+      <a href="{{ list_url }}" class="email-button-small">
         Open assignments
       </a>
     </p>

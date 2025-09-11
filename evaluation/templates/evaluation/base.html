@@ -1,5 +1,6 @@
 {% load static %}
 {% load form_tags %}
+{% load evaluation_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -12,22 +13,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
-
-  <style>
-    body { font-family: 'Montserrat', sans-serif; }
-    .input-field {
-      width: 100%;
-      background-color: #000;
-      border: 1px solid #4B5563;
-      color: #fff;
-      padding: 0.75rem;
-      border-radius: 0.25rem;
-    }
-    .input-field:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #dc2626;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'evaluation/css/evaluation.css' %}" />
+{% block extra_css %}
+{% endblock %}
 </head>
 <body class="bg-black text-white min-h-screen">
   {% include "inventory_app/navbar.html" %}
@@ -45,9 +33,19 @@
         <i class="fas fa-chart-line mr-2"></i> Dashboard
       </a>
 
+      {% url 'evaluation:dashboard2' as dash2_url %}
+      <a href="{{ dash2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == dash2_url %}bg-red-500{% endif %}">
+        <i class="fas fa-chart-bar mr-2"></i> Dashboard 2
+      </a>
+
       {% url 'evaluation:pending' as pending_url %}
       <a href="{{ pending_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_url %}bg-red-500{% endif %}">
         <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
+      </a>
+
+      {% url 'evaluation:pending_v2' as pending_v2_url %}
+      <a href="{{ pending_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == pending_v2_url or request.path|startswith:'/evaluation/evaluate-dynamic/' or request.path|startswith:'/evaluation/dynamic-evaluation/' %}bg-red-500{% endif %}">
+        <i class="fas fa-tasks mr-2"></i> Pending Evaluations2
       </a>
 
       {% url 'evaluation:analytics' as analytics_url %}
@@ -61,7 +59,7 @@
       </a>
 
       {# --- Senior management --- #}
-      {% elif up.is_senior_management or role in "ceo vp llc/owner" %}
+      {% elif up.is_senior_management or role in "ceo vp llc/owner" or up.is_superuser %}
         {% url 'evaluation:regular_reviews' as rr_url %}
         {% url 'evaluation:senior_pending_reviews' as sr_pending_url %}
 
@@ -76,6 +74,12 @@
               {% if request.path == sr_pending_url %}bg-red-500{% endif %}">
           <i class="fas fa-hourglass-half mr-2"></i> Pending Reviews
         </a>
+        <a href="{% url 'evaluation:evalform_list' %}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path|startswith:'/evaluation/forms/' %}bg-red-500{% endif %}">
+          <i class="fas fa-clipboard-list mr-2"></i> Reviewprints
+        </a>
+
       {# --- Employees (default) --- #}
       {% else %}
       {% url 'evaluation:my_evaluations' as my_evals_url %}
@@ -96,6 +100,7 @@
 
     <!-- Main Content -->
     <main class="flex-1 px-6 py-10 bg-black">
+      {% include "messages.html" %}
       {% block content %}{% endblock %}
     </main>
   </div>

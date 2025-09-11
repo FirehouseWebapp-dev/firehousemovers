@@ -1,11 +1,20 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import UserProfile
-from .models import Department
+from .models import UserProfile, Department
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ("title", "description", "manager")
+    # ✅ REQUIRED for other admins' autocomplete_fields to work
+    search_fields = (
+        "title",
+        "description",
+        "manager__user__first_name",
+        "manager__user__last_name",
+        "manager__user__username",
+        "manager__user__email",
+    )
+    list_select_related = ("manager__user",)
 
     def has_module_permission(self, request):
         """Show Department section only for senior management/admins."""
@@ -26,6 +35,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return self.has_module_permission(request)
+
 
 
 @admin.register(UserProfile)
