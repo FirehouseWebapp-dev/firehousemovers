@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Evaluation
 from .models import ReviewCycle, ManagerEvaluation
-from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation, Answer
+from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation, Answer, DynamicManagerEvaluation, ManagerAnswer
 
 @admin.register(ReviewCycle)
 class ReviewCycleAdmin(admin.ModelAdmin):
@@ -89,3 +89,18 @@ class DynamicEvaluationAdmin(admin.ModelAdmin):
 class AnswerAdmin(admin.ModelAdmin):
     list_display = ("instance", "question", "int_value", "choice_value")
     list_filter  = ("question__qtype", "instance__status", "instance__department")
+
+@admin.register(DynamicManagerEvaluation)
+class DynamicManagerEvaluationAdmin(admin.ModelAdmin):
+    list_display = ("manager", "senior_manager", "department", "period_start", "period_end", "status", "submitted_at")
+    list_filter  = ("status", "department", "form", "period_start", "period_end")
+    search_fields = ("manager__user__username", "manager__user__first_name", "manager__user__last_name", 
+                    "senior_manager__user__username", "senior_manager__user__first_name", "senior_manager__user__last_name")
+    date_hierarchy = "period_start"
+    autocomplete_fields = ("manager", "senior_manager", "form", "department")
+
+@admin.register(ManagerAnswer)
+class ManagerAnswerAdmin(admin.ModelAdmin):
+    list_display = ("instance", "question", "int_value", "choice_value", "text_value")
+    list_filter  = ("question__qtype", "instance__status", "instance__department")
+    search_fields = ("instance__manager__user__username", "question__text")

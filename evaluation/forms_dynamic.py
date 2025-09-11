@@ -1,6 +1,6 @@
 # evaluation/forms_dynamic.py
 from django import forms
-from .models_dynamic import DynamicEvaluation, Answer, Question, QuestionChoice, EvalForm
+from .models_dynamic import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm
 from authentication.models import Department
 
 class EvalFormForm(forms.ModelForm):
@@ -175,7 +175,7 @@ class DynamicEvaluationForm(forms.Form):
             
         return field, initial
 
-    def __init__(self, *args, instance: DynamicEvaluation, **kwargs):
+    def __init__(self, *args, instance=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = instance
         # Store prefetched questions to avoid extra queries in clean() and save()
@@ -224,8 +224,8 @@ class DynamicEvaluationForm(forms.Form):
         
         return cleaned_data
 
-    def save(self) -> DynamicEvaluation:
-        """Save the form data to the DynamicEvaluation instance."""
+    def save(self):
+        """Save the form data to the evaluation instance (employee or manager)."""
         inst = self.instance
         cleaned = self.cleaned_data
 
@@ -264,7 +264,13 @@ class DynamicEvaluationForm(forms.Form):
                 a.int_value, a.text_value, a.choice_value = int_val, text_val, choice_val
                 updates.append(a)
             else:
-                new_answers.append(Answer(
+                # Determine which Answer model to use based on instance type
+                if isinstance(inst, DynamicManagerEvaluation):
+                    answer_class = ManagerAnswer
+                else:
+                    answer_class = Answer
+                
+                new_answers.append(answer_class(
                     instance=inst,
                     question=q,
                     int_value=int_val,
@@ -273,16 +279,24 @@ class DynamicEvaluationForm(forms.Form):
                 ))
 
         if new_answers:
-            Answer.objects.bulk_create(new_answers, ignore_conflicts=True)
+            # Use the appropriate Answer model for bulk_create
+            if isinstance(inst, DynamicManagerEvaluation):
+                ManagerAnswer.objects.bulk_create(new_answers, ignore_conflicts=True)
+            else:
+                Answer.objects.bulk_create(new_answers, ignore_conflicts=True)
         if updates:
-            Answer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
+            # Use the appropriate Answer model for bulk_update
+            if isinstance(inst, DynamicManagerEvaluation):
+                ManagerAnswer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
+            else:
+                Answer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
 
         return inst
 
 class PreviewEvalForm(forms.Form):
     def __init__(self, *args, eval_form: EvalForm, existing_answers=None, **kwargs):
         """
-        Initialize preview form for an evaluation form.
+        Initialize preview form for an evaluation form (employee or manager).
         
         Args:
             eval_form: The EvalForm instance to preview

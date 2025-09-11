@@ -1,0 +1,142 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+{% block title %}My Manager Evaluations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="pending-evaluations-page">
+  <!-- Page Title -->
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-user-tie mr-2"></i>
+      My Manager Evaluations
+    </h1>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="progress-section slide-in animation-delay-1">
+    <div class="progress-header">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-white font-semibold">My Manager Evaluation Summary</h3>
+        <div class="flex items-center gap-4 text-sm">
+          <span class="text-gray-400">{{ completed }} of {{ total }} completed</span>
+          {% if overdue > 0 %}
+            <span class="text-orange-500 font-semibold">{{ overdue }} overdue</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: {{ percent_complete }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evaluations List -->
+  {% if evaluations %}
+    <div class="evaluation-list">
+      {% for eval in evaluations %}
+        <div class="evaluation-card card-hover slide-in animation-delay-4 {% if eval.period_end < today and eval.status == 'pending' %}overdue-card{% endif %}">
+          <div class="flex justify-between items-center">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="user-avatar">
+                  <i class="fas fa-user-tie text-white text-sm"></i>
+                </div>
+                <div>
+                  <h3 class="evaluation-name">
+                    {{ eval.senior_manager.user.get_full_name }} (Senior Manager)
+                  </h3>
+                  <div class="flex items-center gap-1 mt-1">
+                    <span class="department-badge">
+                      <i class="fas fa-building mr-1"></i>
+                      {{ eval.department.title }}
+                    </span>
+                    <span class="form-badge">
+                      <i class="fas fa-file-alt mr-1"></i>
+                      {{ eval.form.name }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="evaluation-info flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>{{ eval.period_start }} to {{ eval.period_end }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  {% if eval.period_end < today and eval.status == 'pending' %}
+                    <i class="fas fa-exclamation-triangle text-orange-500"></i>
+                    <span class="text-orange-500 font-semibold">Overdue</span>
+                  {% elif eval.status == 'pending' %}
+                    <i class="fas fa-clock"></i>
+                    <span>Pending</span>
+                  {% else %}
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">Completed</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              {% if eval.status == 'completed' %}
+                <span class="status-badge-modern status-completed">
+                  <i class="fas fa-check mr-1"></i>
+                  Completed
+                </span>
+                <a href="{% url 'evaluation:view_manager_evaluation' eval.id %}" class="btn-modern">
+                  <i class="fas fa-eye"></i>
+                  View
+                </a>
+              {% elif eval.period_end < today %}
+                <span class="status-badge-modern status-overdue">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  Overdue
+                </span>
+                <span class="text-orange-500 text-sm">Waiting for senior manager</span>
+              {% else %}
+                <span class="status-badge-modern">
+                  <i class="fas fa-clock mr-1"></i>
+                  Pending
+                </span>
+                <span class="text-yellow-500 text-sm">Waiting for senior manager</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state slide-in">
+      <div class="empty-state-icon">
+        <i class="fas fa-clipboard-list text-white text-xl"></i>
+      </div>
+      <h2 class="empty-state-title">No Manager Evaluations</h2>
+      <p class="empty-state-description">You don't have any manager evaluations yet. They will appear here when your senior manager creates them.</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+// Add some interactive animations
+document.addEventListener('DOMContentLoaded', function() {
+  // Add hover effects to cards
+  const cards = document.querySelectorAll('.card-hover');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.borderColor = '#ef4444';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.borderColor = '#374151';
+    });
+  });
+});
+</script>
+{% endblock %}

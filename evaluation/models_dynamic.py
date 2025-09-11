@@ -140,3 +140,44 @@ class Answer(models.Model):
 
     class Meta:
         unique_together = [("instance", "question")]
+
+
+# Manager Evaluation Models - Using same structure as employee evaluations
+class DynamicManagerEvaluation(models.Model):
+    """Dynamic evaluations for managers, evaluated by senior managers."""
+    STATUS = (("pending", "Pending"), ("completed", "Completed"))
+
+    form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="manager_instances")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_manager_evaluations")
+    senior_manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_senior_evaluations")
+    manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_manager_reviews")
+
+    # Evaluation period (monthly, quarterly, annual)
+    period_start = models.DateField()
+    period_end = models.DateField()
+
+    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("manager", "senior_manager", "period_start", "period_end", "form")]
+        indexes = [
+            models.Index(fields=["period_start", "period_end", "manager_id"]),
+            models.Index(fields=["senior_manager_id", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.manager} • {self.period_start}–{self.period_end} ({self.form})"
+
+
+class ManagerAnswer(models.Model):
+    """Answers for manager evaluations - reuses the same Question model."""
+    instance = models.ForeignKey(DynamicManagerEvaluation, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
+
+    int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)
+    text_value  = models.TextField(null=True, blank=True)      # short/long
+    choice_value = models.CharField(max_length=100, null=True, blank=True)  # select
+
+    class Meta:
+        unique_together = [("instance", "question")]

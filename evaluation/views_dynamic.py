@@ -12,7 +12,7 @@ from django.urls import reverse
 import json
 import logging
 from authentication.models import UserProfile, Department
-from .models_dynamic import EvalForm, Question, DynamicEvaluation
+from .models_dynamic import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
 from django.utils.timezone import now
@@ -671,6 +671,227 @@ def my_evaluations_v2(request):
         "evaluations": evaluations,
         "total": total,
         "completed": completed,
+        "pending": pending,
+        "overdue": overdue,
+        "percent_complete": percent_complete,
+        "today": today,
+    })
+
+
+# Manager Evaluation Views
+@login_required
+def manager_evaluation_dashboard(request):
+    """
+    Dashboard for senior managers showing manager evaluations they need to complete.
+    """
+    checker = role_checker(request.user)
+    
+    # Only senior managers can access this dashboard
+    if not checker.is_admin_or_senior():
+        return redirect("evaluation:dashboard")
+    
+    today = now().date()
+    
+    # Get manager evaluations assigned to this senior manager
+    evaluations = (
+        DynamicManagerEvaluation.objects
+        .filter(senior_manager=checker.user_profile)
+        .select_related("manager__user", "form", "department")
+        .order_by("-period_start")
+    )
+    
+    # Calculate counts
+    pending_count = evaluations.filter(status="pending").count()
+    completed_count = evaluations.filter(status="completed").count()
+    overdue_count = evaluations.filter(status="pending", period_end__lt=today).count()
+    
+    return render(request, "evaluation/manager_evaluation_dashboard.html", {
+        "evaluations": evaluations,
+        "today": today,
+        "pending_count": pending_count,
+        "completed_count": completed_count,
+        "overdue_count": overdue_count,
+    })
+
+
+@login_required
+def evaluate_manager(request, evaluation_id):
+    """
+    Senior manager view: display & handle single manager evaluation form.
+    """
+    evaluation = get_object_or_404(DynamicManagerEvaluation, pk=evaluation_id)
+    checker = role_checker(request.user)
+
+    # only the assigned senior manager may access
+    if evaluation.senior_manager != checker.user_profile:
+        return redirect("evaluation:manager_evaluation_dashboard")
+
+    # editable while within the period window
+    is_editable = (now().date() <= evaluation.period_end)
+    can_submit = is_editable or (evaluation.submitted_at is None)
+
+    if request.method == "POST":
+        form = DynamicEvaluationForm(request.POST, instance=evaluation)
+        if form.is_valid() and can_submit:
+            with transaction.atomic():
+                # Check if this is an update or new submission
+                was_completed = evaluation.status == "completed"
+                
+                # Save the evaluation status
+                evaluation.status = "completed"
+                evaluation.submitted_at = now()
+                evaluation.save()
+                
+                # Save the form data (answers)
+                form.save()
+                
+                # Send email notification to manager (only for new submissions, not updates)
+                if not was_completed:
+                    try:
+                        detail_path = reverse("evaluation:view_manager_evaluation", args=[evaluation.id])
+                        evaluation_url = f"{settings.BASE_URL}{detail_path}"
+
+                        # plain-text fallback
+                        text_content = (
+                            f"Hi {evaluation.manager.user.get_full_name()},\n\n"
+                            f"Your senior manager {evaluation.senior_manager.user.get_full_name()} has submitted your evaluation "
+                            f"for the period {evaluation.period_start} to {evaluation.period_end}.\n"
+                            f"View your evaluations here: {evaluation_url}\n\n"
+                            "Thanks,"
+                        )
+
+                        # render the HTML template
+                        html_content = render_to_string(
+                            "evaluation/email/manager_evaluation_submitted.html",
+                            {"ev": evaluation, "evaluation_url": evaluation_url}
+                        )
+
+                      
+                        send_mail(
+                            subject=f"Your evaluation for {evaluation.period_start}–{evaluation.period_end} is ready",
+                            message=text_content,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[evaluation.manager.user.email],
+                            html_message=html_content,
+                        )
+                    except Exception as e:
+                        # Log email errors but keep the saved evaluation
+                        logging.error(f"Failed to send manager evaluation email to {evaluation.manager.user.email}: {str(e)}", exc_info=True)
+                        # Continue execution - don't fail the evaluation submission due to email issues
+                
+                if was_completed:
+                    messages.success(request, f"Evaluation for {evaluation.manager.user.get_full_name()} has been updated successfully!")
+                else:
+                    messages.success(request, f"Evaluation for {evaluation.manager.user.get_full_name()} has been submitted successfully!")
+                return redirect("evaluation:manager_evaluation_dashboard")
+        # If form is invalid, it will be passed to the template with errors
+    else:
+        form = DynamicEvaluationForm(instance=evaluation)
+
+    return render(request, "evaluation/evaluate_manager.html", {
+        "form": form,
+        "evaluation": evaluation,
+        "manager": evaluation.manager,
+        "period_start": evaluation.period_start,
+        "period_end": evaluation.period_end,
+        "is_editable": is_editable,
+        "can_submit": can_submit,
+    })
+
+
+@login_required
+def view_manager_evaluation(request, evaluation_id):
+    """
+    View completed manager evaluation (read-only).
+    """
+    evaluation = get_object_or_404(
+        DynamicManagerEvaluation.objects.select_related('form', 'department', 'manager__user', 'senior_manager__user')
+                                 .prefetch_related('form__questions__choices'),
+        pk=evaluation_id
+    )
+    checker = role_checker(request.user)
+
+    # Allow access if user is the senior manager OR the manager being evaluated
+    if evaluation.senior_manager != checker.user_profile and evaluation.manager != checker.user_profile:
+        return redirect("evaluation:manager_evaluation_dashboard")
+
+    # Get all answers for this evaluation with optimized queries
+    answers = evaluation.answers.select_related('question').all()
+    
+    # Create a dictionary for easy template access
+    answers_dict = {answer.question_id: answer for answer in answers}
+
+    return render(request, "evaluation/view_manager_evaluation.html", {
+        "evaluation": evaluation,
+        "manager": evaluation.manager,
+        "answers": answers_dict,
+        "period_start": evaluation.period_start,
+        "period_end": evaluation.period_end,
+    })
+
+
+@login_required
+def my_manager_evaluations(request):
+    """
+    Manager view: show all evaluations for this manager.
+    """
+    checker = role_checker(request.user)
+    today = now().date()
+    
+    # Get all manager evaluations for this manager
+    evaluations = (
+        DynamicManagerEvaluation.objects
+        .filter(manager=checker.user_profile)
+        .select_related("senior_manager__user", "form", "department")
+        .order_by("-period_start")
+    )
+    
+    # Calculate counts
+    total = evaluations.count()
+    completed = evaluations.filter(status="completed").count()
+    pending = evaluations.filter(status="pending").count()
+    overdue = evaluations.filter(status="pending", period_end__lt=today).count()
+    
+    # Calculate percentage
+    percent_complete = (completed / total * 100) if total > 0 else 0
+    
+    return render(request, "evaluation/my_manager_evaluations.html", {
+        "evaluations": evaluations,
+        "total": total,
+        "completed": completed,
+        "pending": pending,
+        "overdue": overdue,
+        "percent_complete": percent_complete,
+        "today": today,
+    })
+
+
+@login_required
+def pending_manager_evaluations(request):
+    """
+    Senior manager view: show progress & list of pending manager evaluations.
+    """
+    checker = role_checker(request.user)
+    today = now().date()
+
+    # Get pending manager evaluations for this senior manager
+    pending_evaluations = DynamicManagerEvaluation.objects.filter(
+        senior_manager=checker.user_profile,
+        status="pending"
+    ).select_related("manager__user", "form", "department").order_by("-period_start", "manager__user__first_name")
+
+    # Calculate stats
+    total = DynamicManagerEvaluation.objects.filter(senior_manager=checker.user_profile).count()
+    completed = DynamicManagerEvaluation.objects.filter(senior_manager=checker.user_profile, status="completed").count()
+    pending = pending_evaluations.count()
+    overdue = pending_evaluations.filter(period_end__lt=today).count()
+    
+    percent_complete = (completed / total * 100) if total > 0 else 0
+
+    return render(request, "evaluation/pending_manager_evaluations.html", {
+        "pending_evaluations": pending_evaluations,
+        "completed": completed,
+        "total": total,
         "pending": pending,
         "overdue": overdue,
         "percent_complete": percent_complete,

@@ -58,6 +58,11 @@
         <i class="fas fa-clipboard-check mr-2"></i> My Manager Reviews
       </a>
 
+      {% url 'evaluation:my_manager_evaluations' as my_mgr_evals_url %}
+      <a href="{{ my_mgr_evals_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_mgr_evals_url %}bg-red-500{% endif %}">
+        <i class="fas fa-user-check mr-2"></i> My Manager Evals
+      </a>
+
       {# --- Senior management --- #}
       {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:regular_reviews' as rr_url %}
@@ -78,6 +83,20 @@
           class="block py-2 px-3 rounded hover:bg-red-600
               {% if request.path|startswith:'/evaluation/forms/' %}bg-red-500{% endif %}">
           <i class="fas fa-clipboard-list mr-2"></i> Reviewprints
+        </a>
+
+        {% url 'evaluation:manager_evaluation_dashboard' as mgr_eval_dash_url %}
+        <a href="{{ mgr_eval_dash_url }}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path == mgr_eval_dash_url %}bg-red-500{% endif %}">
+          <i class="fas fa-user-tie mr-2"></i> Manager Evaluations
+        </a>
+
+        {% url 'evaluation:pending_manager_evaluations' as pending_mgr_evals_url %}
+        <a href="{{ pending_mgr_evals_url }}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path == pending_mgr_evals_url %}bg-red-500{% endif %}">
+          <i class="fas fa-hourglass-half mr-2"></i> Pending Manager Evaluations
         </a>
 
       {# --- Employees (default) --- #}

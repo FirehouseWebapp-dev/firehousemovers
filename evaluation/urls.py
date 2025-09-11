@@ -25,7 +25,14 @@ urlpatterns = [
     path("reviews/evaluate/<int:evaluation_id>/", views.evaluate_manager, name="evaluate_manager"),
     path("reviews/my/", views.my_manager_reviews, name="my_manager_reviews"),
     path("reviews/detail/<int:evaluation_id>/", views.manager_review_detail, name="manager_review_detail"),
-    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),  
+    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),
+    
+    # --- Manager evaluations (dynamic) ---
+    path("manager-evaluations/", views_dynamic.manager_evaluation_dashboard, name="manager_evaluation_dashboard"),
+    path("manager-evaluations/evaluate/<int:evaluation_id>/", views_dynamic.evaluate_manager, name="evaluate_manager_dynamic"),
+    path("manager-evaluations/view/<int:evaluation_id>/", views_dynamic.view_manager_evaluation, name="view_manager_evaluation"),
+    path("manager-evaluations/my/", views_dynamic.my_manager_evaluations, name="my_manager_evaluations"),
+    path("manager-evaluations/pending/", views_dynamic.pending_manager_evaluations, name="pending_manager_evaluations"),  
 ]
 
 # Management UI
