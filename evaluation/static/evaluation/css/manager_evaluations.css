@@ -21,12 +21,18 @@
 
 /* ===== EMPTY STATE STYLES ===== */
 .empty-state-actions {
-  @apply mt-4;
+  margin-top: 1rem;
 }
 
 /* ===== EVALUATION TYPE HEADING ===== */
 .evaluation-type-heading {
-  @apply text-lg font-bold text-blue-400 bg-blue-900/20 px-3 py-1 rounded-lg border border-blue-500/30;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #60a5fa; /* blue-400 */
+  background-color: rgba(30, 58, 138, 0.2); /* blue-900/20 */
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.3); /* blue-500/30 */
   display: inline-block;
   margin: 0;
 }

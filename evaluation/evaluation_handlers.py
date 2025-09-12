@@ -157,7 +157,8 @@ def handle_evaluation_view(request, evaluation_id, config):
     )
     
     # Get all answers for this evaluation with optimized queries
-    answers = evaluation.answers.select_related('question').all()
+    # prefetch_related('question__choices') optimizes rendering of SELECT question types
+    answers = evaluation.answers.select_related('question').prefetch_related('question__choices').all()
     
     # Create a dictionary for easy template access
     answers_dict = {answer.question_id: answer for answer in answers}

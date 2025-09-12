@@ -18,7 +18,7 @@ from authentication.models import UserProfile, Department
 from .models_dynamic import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
-from .constants import EvaluationStatus, DisplayStatus
+from .constants import EvaluationStatus
 from django.utils.timezone import now
 from datetime import timedelta
 from firehousemovers.utils.permissions import role_checker, require_management, require_admin_or_senior, ajax_require_management
@@ -524,11 +524,11 @@ def manager_evaluation_dashboard(request):
         
         # Determine status
         if overdue_count > 0:
-            status = DisplayStatus.OVERDUE
+            status = "Overdue"
         elif pending_count > 0:
-            status = DisplayStatus.OPEN
+            status = "Open"
         else:
-            status = DisplayStatus.COMPLETED
+            status = "Completed"
         
         # Get the actual evaluations for this period (needed for template display)
         period_evaluations = evaluations.filter(
@@ -626,11 +626,11 @@ def manager_evaluation_cards_detail(request):
     
     # Determine overall status
     if overdue_count > 0:
-        overall_status = DisplayStatus.OVERDUE
+        overall_status = "Overdue"
     elif pending_count > 0:
-        overall_status = DisplayStatus.OPEN
+        overall_status = "Open"
     else:
-        overall_status = DisplayStatus.COMPLETED
+        overall_status = "Completed"
     
     return render(request, "evaluation/manager_evaluation_cards_detail.html", {
         "evaluations": evaluations,

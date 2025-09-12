@@ -2,15 +2,20 @@
 
 /* Status Badges */
 .status-badge {
-  @apply text-xs font-bold px-3 py-1 rounded;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
 }
 
 .status-completed {
-  @apply bg-green-700 text-green-300;
+  background-color: #15803d; /* green-700 */
+  color: #86efac; /* green-300 */
 }
 
 .status-pending {
-  @apply bg-yellow-800 text-yellow-300;
+  background-color: #854d0e; /* yellow-800 */
+  color: #fde047; /* yellow-300 */
 }
 
 /* Buttons */
@@ -49,33 +54,54 @@
 
 /* Form Elements */
 .form-error {
-  @apply bg-red-100 text-red-700 border border-red-400 p-3 rounded mb-4;
+  background-color: #fee2e2; /* red-100 */
+  color: #b91c1c; /* red-700 */
+  border: 1px solid #f87171; /* red-400 */
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
 }
 
 .form-error-dark {
-  @apply bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded;
+  background-color: rgba(127, 29, 29, 0.5); /* red-900/50 */
+  border: 1px solid #b91c1c; /* red-700 */
+  color: #fecaca; /* red-200 */
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
 }
 
 /* Progress Bars */
 .progress-bar {
-  @apply w-full bg-gray-800 rounded h-3;
+  width: 100%;
+  background-color: #1f2937; /* gray-800 */
+  border-radius: 0.25rem;
+  height: 0.75rem;
 }
 
 .progress-fill {
-  @apply bg-red-600 h-3 rounded;
+  background-color: #dc2626; /* red-600 */
+  height: 0.75rem;
+  border-radius: 0.25rem;
 }
 
 .progress-fill-small {
-  @apply bg-red-500 rounded;
+  background-color: #ef4444; /* red-500 */
+  border-radius: 0.25rem;
 }
 
 /* Layout */
 .flex-end {
-  @apply flex justify-end space-x-4 pt-6 border-t border-gray-700;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #374151; /* gray-700 */
 }
 
 .flex-center {
-  @apply flex items-center gap-2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Email Styles */
@@ -182,7 +208,7 @@
   }
   
   .btn-large {
-    @apply px-4 py-2;
+    padding: 0.5rem 1rem;
   }
 }
 

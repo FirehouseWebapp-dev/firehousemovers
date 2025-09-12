@@ -9,9 +9,7 @@ def add_class(field, css):
     return field.as_widget(attrs={"class": css})
 
 
-@register.filter
-def startswith(value: str, prefix: str) -> bool:
-    return value.startswith(prefix)
+# startswith filter moved to evaluation_tags.py to avoid conflicts
 
 @register.filter(name="repeat")
 def repeat(value, count):

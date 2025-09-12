@@ -104,7 +104,7 @@ def deactivate_evalform_safely(form_obj, request, success_message=None):
 
 def get_active_forms_for_department_type(department, form_name):
     """
-    Get active forms for a specific department and form type with locking.
+    Get active forms for a specific department and form type.
     
     Args:
         department: Department instance
@@ -113,7 +113,7 @@ def get_active_forms_for_department_type(department, form_name):
     Returns:
         QuerySet of active forms
     """
-    return EvalForm.objects.select_for_update().filter(
+    return EvalForm.objects.filter(
         department=department,
         name=form_name,
         is_active=True
@@ -203,6 +203,9 @@ def deactivate_conflicting_forms(department, form_name, exclude_form=None):
     """
     Deactivate any conflicting forms for the same department and type.
     
+    WARNING: This function uses select_for_update() and MUST be called within
+    a transaction.atomic() block to avoid database errors.
+    
     Args:
         department: Department instance
         form_name: Name of the form type
@@ -210,7 +213,18 @@ def deactivate_conflicting_forms(department, form_name, exclude_form=None):
     
     Returns:
         int: Number of forms deactivated
+        
+    Raises:
+        RuntimeError: If called outside of a transaction
     """
+    from django.db import transaction
+    
+    # Ensure we're in a transaction
+    if not transaction.get_connection().in_atomic_block:
+        raise RuntimeError(
+            "deactivate_conflicting_forms() must be called within a transaction.atomic() block"
+        )
+    
     queryset = EvalForm.objects.select_for_update().filter(
         department=department,
         name=form_name,

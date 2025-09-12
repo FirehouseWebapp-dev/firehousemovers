@@ -7,11 +7,7 @@ class EvaluationStatus:
     PENDING = "pending"
     COMPLETED = "completed"
 
-# Display status values (for UI)
-class DisplayStatus:
-    OVERDUE = "Overdue"
-    OPEN = "Open"
-    COMPLETED = "Completed"
+# Display status values removed - templates use hardcoded strings directly
 
 # Question types (from models)
 class QuestionType:

@@ -2,6 +2,7 @@ from __future__ import annotations
 from django.db import models
 from django.core.exceptions import ValidationError
 from authentication.models import UserProfile, Department
+from .constants import EvaluationStatus
 
 
 class EvalForm(models.Model):
@@ -13,15 +14,9 @@ class EvalForm(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Allow multiple active forms per department (one for each evaluation type)
-        constraints = [
-            # Ensure only one active form per department per evaluation type
-            models.UniqueConstraint(
-                fields=["department", "name"],
-                condition=models.Q(is_active=True),
-                name="uq_evalform_one_active_per_dept_per_type",
-            )
-        ]
+        # Business rule: Only one active form per department per evaluation type
+        # This is enforced by a unique partial index created in migration 0017
+        pass
 
     def __str__(self) -> str:
         return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
@@ -106,7 +101,6 @@ class QuestionChoice(models.Model):
 
 
 class DynamicEvaluation(models.Model):
-    from .constants import EvaluationStatus
     STATUS = (
         (EvaluationStatus.PENDING, "Pending"), 
         (EvaluationStatus.COMPLETED, "Completed")
@@ -149,7 +143,6 @@ class Answer(models.Model):
 # Manager Evaluation Models - Using same structure as employee evaluations
 class DynamicManagerEvaluation(models.Model):
     """Dynamic evaluations for managers, evaluated by senior managers."""
-    from .constants import EvaluationStatus
     STATUS = (
         (EvaluationStatus.PENDING, "Pending"), 
         (EvaluationStatus.COMPLETED, "Completed")

@@ -9,7 +9,13 @@ def lookup(dictionary, key):
 
 @register.filter
 def startswith(value, arg):
-    """Template filter to check if a string starts with a given prefix."""
+    """
+    Template filter to check if a string starts with a given prefix.
+    Handles None values and type conversion safely.
+    """
     if not value or not arg:
         return False
-    return str(value).startswith(str(arg))
+    try:
+        return str(value).startswith(str(arg))
+    except (TypeError, AttributeError):
+        return False
