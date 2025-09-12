@@ -9,7 +9,7 @@
 </div>
 
 <script>
-  // Set a timeout to fade out and then remove the message after 3 seconds (3000 ms)
+  // Set a timeout to fade out and then remove the message after 6 seconds (6000 ms)
   setTimeout(function() {
     var alertMessage = document.getElementById('alert-{{ forloop.counter }}');
     if (alertMessage) {
@@ -21,6 +21,6 @@
         alertMessage.remove();
       }, 500); // Wait for the transition to complete (500ms)
     }
-  }, 3000); // 3000 milliseconds = 3 seconds
+  }, 6000); // 6000 milliseconds = 6 seconds
 </script>
 {% endfor %}

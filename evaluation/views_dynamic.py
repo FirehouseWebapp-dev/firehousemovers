@@ -25,7 +25,7 @@ def _can_manage(user):
     p = getattr(user, "userprofile", None)
     return (
         user.is_superuser
-        or (p and p.role in {"admin", "vp", "ceo"})
+        or (p and (p.is_admin or p.is_senior_management))
     )
 
 def _can_manage_department(user, department):
@@ -37,11 +37,11 @@ def _can_manage_department(user, department):
         return False
     
     # Superusers and global admins can manage any department
-    if user.is_superuser or p.role in {"admin", "vp", "ceo"}:
+    if user.is_superuser or p.is_admin or p.is_senior_management:
         return True
     
     # Department managers can only manage their own department
-    if p.role == "manager" and p.managed_department == department:
+    if p.is_manager and p.managed_department == department:
         return True
     
     return False
@@ -61,7 +61,7 @@ def evalform_list(request):
             forms = forms.filter(department_id=dept)
     else:
         # Department managers can only see their own department's forms
-        if profile.role == "manager" and profile.managed_department:
+        if profile.is_manager and profile.managed_department:
             forms = EvalForm.objects.filter(
                 department=profile.managed_department
             ).select_related("department").order_by("-created_at")
@@ -109,7 +109,7 @@ def evalform_create(request):
     else:
         form = EvalFormForm()
         # Restrict department choices for non-global admins
-        if profile.role == "manager" and profile.managed_department:
+        if profile.is_manager and profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
             form.fields['department'].initial = profile.managed_department
     
@@ -162,7 +162,7 @@ def evalform_edit(request, pk):
     else:
         form = EvalFormForm(instance=obj)
         # Restrict department choices for non-global admins
-        if profile.role == "manager" and profile.managed_department:
+        if profile.is_manager and profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=profile.managed_department.id)
     
     return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
@@ -458,7 +458,7 @@ def evaluation_dashboard2(request):
     profile = request.user.userprofile
     
     # Only managers can access this dashboard
-    if not (profile.role == "manager" or profile.is_manager):
+    if not profile.is_manager:
         return redirect("evaluation:dashboard")
     
     today = now().date()
@@ -474,12 +474,14 @@ def evaluation_dashboard2(request):
     # Calculate counts
     pending_count = evaluations.filter(status="pending").count()
     completed_count = evaluations.filter(status="completed").count()
+    overdue_count = evaluations.filter(status="pending", week_end__lt=today).count()
     
     return render(request, "evaluation/dashboard2.html", {
         "evaluations": evaluations,
         "today": today,
         "pending_count": pending_count,
         "completed_count": completed_count,
+        "overdue_count": overdue_count,
     })
 
 
@@ -525,7 +527,7 @@ def evaluate_dynamic_employee(request, evaluation_id):
                             f"Hi {evaluation.employee.user.get_full_name()},\n\n"
                             f"Your manager {evaluation.manager.user.get_full_name()} has submitted your evaluation "
                             f"for the week {evaluation.week_start} to {evaluation.week_end}.\n"
-                            f"View it here: {evaluation_url}\n\n"
+                            f"View your evaluations here: {evaluation_url}\n\n"
                             "Thanks,"
                         )
 
@@ -574,14 +576,14 @@ def view_dynamic_evaluation(request, evaluation_id):
     View completed dynamic evaluation (read-only).
     """
     evaluation = get_object_or_404(
-        DynamicEvaluation.objects.select_related('form', 'department', 'employee__user')
+        DynamicEvaluation.objects.select_related('form', 'department', 'employee__user', 'manager__user')
                                  .prefetch_related('form__questions__choices'),
         pk=evaluation_id
     )
-    manager = request.user.userprofile
+    profile = request.user.userprofile
 
-    # only the assigned manager may access
-    if evaluation.manager != manager:
+    # Allow access if user is the manager OR the employee being evaluated
+    if evaluation.manager != profile and evaluation.employee != profile:
         return redirect("evaluation:dashboard2")
 
     # Get all answers for this evaluation with optimized queries
@@ -622,6 +624,7 @@ def pending_evaluations_v2(request):
     total = stats_qs.count()
     completed = stats_qs.filter(status="completed").count()
     pending = stats_qs.filter(status="pending").count()
+    overdue = stats_qs.filter(status="pending", week_end__lt=today).count()
     
     percent_complete = (completed / total * 100) if total > 0 else 0
 
@@ -637,5 +640,43 @@ def pending_evaluations_v2(request):
         "completed": completed,
         "total": total,
         "pending": pending,
+        "overdue": overdue,
         "percent_complete": percent_complete,
+        "today": today,
+    })
+
+
+@login_required
+def my_evaluations_v2(request):
+    """
+    Employee view: show all dynamic evaluations for this employee.
+    """
+    profile = request.user.userprofile
+    today = now().date()
+    
+    # Get all dynamic evaluations for this employee
+    evaluations = (
+        DynamicEvaluation.objects
+        .filter(employee=profile)
+        .select_related("manager__user", "form", "department")
+        .order_by("-week_start")
+    )
+    
+    # Calculate counts
+    total = evaluations.count()
+    completed = evaluations.filter(status="completed").count()
+    pending = evaluations.filter(status="pending").count()
+    overdue = evaluations.filter(status="pending", week_end__lt=today).count()
+    
+    # Calculate percentage
+    percent_complete = (completed / total * 100) if total > 0 else 0
+    
+    return render(request, "evaluation/my_evaluations_v2.html", {
+        "evaluations": evaluations,
+        "total": total,
+        "completed": completed,
+        "pending": pending,
+        "overdue": overdue,
+        "percent_complete": percent_complete,
+        "today": today,
     })

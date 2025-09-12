@@ -51,6 +51,17 @@
   letter-spacing: 0.025em;
 }
 
+.status-badge-modern.status-overdue {
+  background: #f97316;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.status-badge-modern.status-completed {
+  background: #10b981;
+  color: white;
+}
+
 .btn-modern {
   background: #ef4444;
   color: white;
@@ -90,6 +101,16 @@
   width: 3px;
   height: 100%;
   background: #ef4444;
+}
+
+.evaluation-card.overdue-card::before {
+  background: #f97316;
+  animation: pulse 2s infinite;
+}
+
+.evaluation-card.overdue-card {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
 }
 
 .department-badge {

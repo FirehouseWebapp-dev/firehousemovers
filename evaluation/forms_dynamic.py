@@ -54,8 +54,10 @@ class QuestionForm(forms.ModelForm):
         min_value = self.cleaned_data.get('min_value')
         qtype = self.cleaned_data.get('qtype')
         
-        if qtype == 'number' and min_value is not None and min_value < 0:
-            raise forms.ValidationError('Minimum value cannot be negative for number questions.')
+        # Validate that min_value cannot be negative for any question type that uses it
+        numeric_qtypes = ['stars', 'emoji', 'rating', 'number']
+        if qtype in numeric_qtypes and min_value is not None and min_value < 0:
+            raise forms.ValidationError(f'Minimum value cannot be negative for {qtype} questions.')
         
         return min_value
 

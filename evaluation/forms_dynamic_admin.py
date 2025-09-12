@@ -52,6 +52,18 @@ class QuestionForm(forms.ModelForm):
             self.fields["order"].initial = next_order
             self.fields["order"].widget.attrs["placeholder"] = str(next_order)
 
+    def clean_min_value(self):
+        """Validate min_value field individually."""
+        min_value = self.cleaned_data.get('min_value')
+        qtype = self.cleaned_data.get('qtype')
+        
+        # Validate that min_value cannot be negative for any question type that uses it
+        numeric_qtypes = ['stars', 'emoji', 'rating', 'number']
+        if qtype in numeric_qtypes and min_value is not None and min_value < 0:
+            raise forms.ValidationError(f'Minimum value cannot be negative for {qtype} questions.')
+        
+        return min_value
+
 class QuestionChoiceForm(forms.ModelForm):
     class Meta:
         model = QuestionChoice

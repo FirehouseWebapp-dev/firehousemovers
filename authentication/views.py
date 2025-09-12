@@ -37,7 +37,10 @@ def is_manager_or_admin(user):
 def can_manage_departments(user):
     # Keep this consistent with DepartmentForm manager queryset (manager role only)
     if hasattr(user, "userprofile"):
-        return user.is_superuser or user.userprofile.role in ["ceo", "vp", "llc/owner", "admin", "manager"]
+        return (user.is_superuser or 
+                user.userprofile.is_admin or 
+                user.userprofile.is_senior_management or 
+                user.userprofile.is_manager)
     return False
 
 

@@ -76,10 +76,11 @@ class Question(models.Model):
                 'min_value': 'Minimum value cannot be greater than maximum value.'
             })
         
-        # Ensure min_value is not negative for number questions
-        if self.qtype == self.QType.NUMBER and self.min_value is not None and self.min_value < 0:
+        # Ensure min_value is not negative for any question type that uses it
+        numeric_qtypes = [self.QType.STARS, self.QType.EMOJI, self.QType.RATING, self.QType.NUMBER]
+        if self.qtype in numeric_qtypes and self.min_value is not None and self.min_value < 0:
             raise ValidationError({
-                'min_value': 'Minimum value cannot be negative for number questions.'
+                'min_value': f'Minimum value cannot be negative for {self.qtype} questions.'
             })
 
     def save(self, *args, **kwargs):

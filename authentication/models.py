@@ -47,10 +47,10 @@ class UserProfile(models.Model):
     ]
 
     MANAGEMENT_ROLES = {"manager"}
-    SENIOR_MANAGEMENT_ROLES = {"llc/owner", "vp", "ceo"}
+    SENIOR_MANAGEMENT_ROLES = {"ceo"}
     ADMIN_ROLES = {"admin"}
     EMPLOYEE_ROLES = {
-        "llc/field", "sales", "field", "driver", "rwh",
+        "llc/field", "llc/owner", "vp", "sales", "field", "driver", "rwh",
         "technician", "warehouse", "mover", "customers- per trevor"
     }
 

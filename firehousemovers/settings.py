@@ -78,6 +78,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "evaluation.middleware.EvaluationLockMiddleware",
+    "evaluation.middleware2.OverdueEvaluationLockMiddleware",
     "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
 
 ]

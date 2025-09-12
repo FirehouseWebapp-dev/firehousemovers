@@ -27,7 +27,7 @@
   {% with up=request.user.userprofile role=request.user.userprofile.role %}
 
     {# --- Managers --- #}
-    {% if role == "manager" or up.is_manager %}
+    {% if up.is_manager %}
       {% url 'evaluation:dashboard' as dash_url %}
       <a href="{{ dash_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == dash_url %}bg-red-500{% endif %}">
         <i class="fas fa-chart-line mr-2"></i> Dashboard
@@ -59,7 +59,7 @@
       </a>
 
       {# --- Senior management --- #}
-      {% elif up.is_senior_management or role in "ceo vp llc/owner" or up.is_superuser %}
+      {% elif up.is_senior_management or up.is_superuser %}
         {% url 'evaluation:regular_reviews' as rr_url %}
         {% url 'evaluation:senior_pending_reviews' as sr_pending_url %}
 
@@ -86,6 +86,12 @@
       <a href="{{ my_evals_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_evals_url %}bg-red-500{% endif %}">
         <i class="fas fa-list mr-2"></i> My Evaluations
       </a>
+      
+      {% url 'evaluation:my_evaluations_v2' as my_evals_v2_url %}
+      <a href="{{ my_evals_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_evals_v2_url %}bg-red-500{% endif %}">
+        <i class="fas fa-tasks mr-2"></i> My Evaluations 2
+      </a>
+      
       {% url 'evaluation:analytics' as analytics_url %}
       <a href="{{ analytics_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:analytics_url %}bg-red-500{% endif %}">
         <i class="fas fa-chart-pie mr-2"></i> Analytics
