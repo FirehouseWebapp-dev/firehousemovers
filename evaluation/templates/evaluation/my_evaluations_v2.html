@@ -1,6 +1,6 @@
 {% extends "evaluation/base.html" %}
 {% load static %}
-{% block title %}Pending Dynamic Evaluations{% endblock %}
+{% block title %}My Dynamic Evaluations{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
@@ -11,8 +11,8 @@
   <!-- Page Title -->
   <div class="page-header">
     <h1 class="page-title">
-      <i class="fas fa-tasks mr-2"></i>
-      Pending Dynamic Evaluations
+      <i class="fas fa-user mr-2"></i>
+      My Dynamic Evaluations
     </h1>
   </div>
 
@@ -20,7 +20,7 @@
   <div class="progress-section slide-in animation-delay-1">
     <div class="progress-header">
       <div class="flex items-center justify-between mb-2">
-        <h3 class="text-white font-semibold">Evaluation Progress</h3>
+        <h3 class="text-white font-semibold">My Evaluation Summary</h3>
         <div class="flex items-center gap-4 text-sm">
           <span class="text-gray-400">{{ completed }} of {{ total }} completed</span>
           {% if overdue > 0 %}
@@ -37,19 +37,19 @@
   </div>
 
   <!-- Evaluations List -->
-  {% if pending_evaluations %}
+  {% if evaluations %}
     <div class="evaluation-list">
-      {% for eval in pending_evaluations %}
-        <div class="evaluation-card card-hover slide-in animation-delay-4 {% if eval.week_end < today %}overdue-card{% endif %}">
+      {% for eval in evaluations %}
+        <div class="evaluation-card card-hover slide-in animation-delay-4 {% if eval.week_end < today and eval.status == 'pending' %}overdue-card{% endif %}">
           <div class="flex justify-between items-center">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
                 <div class="user-avatar">
-                  <i class="fas fa-user text-white text-sm"></i>
+                  <i class="fas fa-user-tie text-white text-sm"></i>
                 </div>
                 <div>
                   <h3 class="evaluation-name">
-                    {{ eval.employee.user.get_full_name }}
+                    {{ eval.manager.user.get_full_name }} (Manager)
                   </h3>
                   <div class="flex items-center gap-1 mt-1">
                     <span class="department-badge">
@@ -70,33 +70,43 @@
                   <span>{{ eval.week_start }} to {{ eval.week_end }}</span>
                 </div>
                 <div class="flex items-center gap-1">
-                  {% if eval.week_end < today %}
+                  {% if eval.week_end < today and eval.status == 'pending' %}
                     <i class="fas fa-exclamation-triangle text-orange-500"></i>
                     <span class="text-orange-500 font-semibold">Overdue</span>
-                  {% else %}
+                  {% elif eval.status == 'pending' %}
                     <i class="fas fa-clock"></i>
-                    <span>Due Soon</span>
+                    <span>Pending</span>
+                  {% else %}
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">Completed</span>
                   {% endif %}
                 </div>
               </div>
             </div>
             
             <div class="flex items-center gap-2">
-              {% if eval.week_end < today %}
+              {% if eval.status == 'completed' %}
+                <span class="status-badge-modern status-completed">
+                  <i class="fas fa-check mr-1"></i>
+                  Completed
+                </span>
+                <a href="{% url 'evaluation:view_dynamic_evaluation' eval.id %}" class="btn-modern">
+                  <i class="fas fa-eye"></i>
+                  View
+                </a>
+              {% elif eval.week_end < today %}
                 <span class="status-badge-modern status-overdue">
                   <i class="fas fa-exclamation-triangle mr-1"></i>
                   Overdue
                 </span>
+                <span class="text-orange-500 text-sm">Waiting for manager</span>
               {% else %}
                 <span class="status-badge-modern">
                   <i class="fas fa-clock mr-1"></i>
                   Pending
                 </span>
+                <span class="text-yellow-500 text-sm">Waiting for manager</span>
               {% endif %}
-              <a href="{% url 'evaluation:evaluate_dynamic' eval.id %}" class="btn-modern">
-                <i class="fas fa-edit"></i>
-                Evaluate
-              </a>
             </div>
           </div>
         </div>
@@ -105,24 +115,10 @@
   {% else %}
     <div class="empty-state slide-in">
       <div class="empty-state-icon">
-        <i class="fas fa-check text-white text-xl"></i>
+        <i class="fas fa-clipboard-list text-white text-xl"></i>
       </div>
-      <h2 class="empty-state-title">All Caught Up! 🎉</h2>
-      <p class="empty-state-description">No pending evaluations. Your team's performance reviews are up to date.</p>
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn-modern">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
-    </div>
-  {% endif %}
-
-  <!-- Bottom Navigation -->
-  {% if pending_evaluations %}
-    <div class="bottom-navigation">
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn-modern">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
+      <h2 class="empty-state-title">No Dynamic Evaluations</h2>
+      <p class="empty-state-description">You don't have any dynamic evaluations yet. They will appear here when your manager creates them.</p>
     </div>
   {% endif %}
 </div>

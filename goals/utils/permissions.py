@@ -33,7 +33,7 @@ class RoleChecker:
     # Basic role checks
     def is_admin(self):
         """Check if user is admin (by role)"""
-        return self.user_profile and self.user_profile.role == "admin"
+        return self.user_profile and self.user_profile.is_admin
     
     def is_senior_management(self):
         """Check if user is senior management"""

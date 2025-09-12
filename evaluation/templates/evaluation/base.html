@@ -24,10 +24,10 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
-  {% with up=request.user.userprofile role=request.user.userprofile.role %}
+  {% with up=role.user_profile role_name=role.user_profile.role %}
 
     {# --- Managers --- #}
-    {% if role == "manager" or up.is_manager %}
+    {% if role.is_manager %}
       {% url 'evaluation:dashboard' as dash_url %}
       <a href="{{ dash_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path == dash_url %}bg-red-500{% endif %}">
         <i class="fas fa-chart-line mr-2"></i> Dashboard
@@ -58,8 +58,13 @@
         <i class="fas fa-clipboard-check mr-2"></i> My Manager Reviews
       </a>
 
+      {% url 'evaluation:my_manager_evaluations' as my_mgr_evals_url %}
+      <a href="{{ my_mgr_evals_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_mgr_evals_url %}bg-red-500{% endif %}">
+        <i class="fas fa-user-check mr-2"></i> My Manager Evals
+      </a>
+
       {# --- Senior management --- #}
-      {% elif up.is_senior_management or role in "ceo vp llc/owner" or up.is_superuser %}
+      {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:regular_reviews' as rr_url %}
         {% url 'evaluation:senior_pending_reviews' as sr_pending_url %}
 
@@ -80,12 +85,32 @@
           <i class="fas fa-clipboard-list mr-2"></i> Reviewprints
         </a>
 
+        {% url 'evaluation:manager_evaluation_dashboard' as mgr_eval_dash_url %}
+        <a href="{{ mgr_eval_dash_url }}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path == mgr_eval_dash_url or request.path|startswith:'/evaluation/manager-evaluations/cards/' %}bg-red-500{% endif %}">
+          <i class="fas fa-user-tie mr-2"></i> Manager Evaluations
+        </a>
+
+        {% url 'evaluation:pending_manager_evaluations' as pending_mgr_evals_url %}
+        <a href="{{ pending_mgr_evals_url }}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path == pending_mgr_evals_url %}bg-red-500{% endif %}">
+          <i class="fas fa-hourglass-half mr-2"></i> Pending Evaluations
+        </a>
+
       {# --- Employees (default) --- #}
       {% else %}
       {% url 'evaluation:my_evaluations' as my_evals_url %}
       <a href="{{ my_evals_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_evals_url %}bg-red-500{% endif %}">
         <i class="fas fa-list mr-2"></i> My Evaluations
       </a>
+      
+      {% url 'evaluation:my_evaluations_v2' as my_evals_v2_url %}
+      <a href="{{ my_evals_v2_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:my_evals_v2_url %}bg-red-500{% endif %}">
+        <i class="fas fa-tasks mr-2"></i> My Evaluations 2
+      </a>
+      
       {% url 'evaluation:analytics' as analytics_url %}
       <a href="{{ analytics_url }}" class="block py-2 px-3 rounded hover:bg-red-600 {% if request.path|startswith:analytics_url %}bg-red-500{% endif %}">
         <i class="fas fa-chart-pie mr-2"></i> Analytics

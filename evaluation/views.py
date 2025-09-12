@@ -34,7 +34,7 @@ def evaluation_dashboard(request):
     profile = request.user.userprofile
     today = now().date()
 
-    if profile.role == "admin":
+    if profile.is_admin:
         evaluations = (
             Evaluation.objects
             .select_related("employee__user")
@@ -200,11 +200,11 @@ def evaluation_detail(request, evaluation_id):
 @login_required
 def analytics_dashboard(request):
     profile = request.user.userprofile
-    is_manager = profile.role == "manager" or profile.role == "admin" or profile.is_senior_management
-    is_employee = profile.role not in ["manager", "admin"] and not profile.is_senior_management
+    is_manager = profile.is_manager or profile.is_admin or profile.is_senior_management
+    is_employee = profile.is_employee
 
     employees = (UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk)
-                 if profile.role == "admin"
+                 if profile.is_admin
                  else (UserProfile.objects.filter(manager=profile).exclude(pk=profile.pk) if is_manager else []))
 
     cards = [
@@ -236,9 +236,9 @@ def team_totals_api(request):
     profile = request.user.userprofile
 
     # managers get their team; admins get all; everyone else gets just their own evals
-    if profile.role == "manager":
+    if profile.is_manager:
         qs = Evaluation.objects.filter(manager=profile)
-    elif profile.role == "admin":
+    elif profile.is_admin:
         qs = Evaluation.objects.all()
     else:
         qs = Evaluation.objects.filter(employee=profile)
@@ -279,9 +279,9 @@ def metrics_api(request):
     profile = request.user.userprofile
 
     # managers see only their team's evaluations; admins see all; employees see only their own
-    if profile.role == "manager":
+    if profile.is_manager:
         qs = Evaluation.objects.filter(manager=profile)
-    elif profile.role == "admin":
+    elif profile.is_admin:
         qs = Evaluation.objects.all()
     else:
         qs = Evaluation.objects.filter(employee=profile)
@@ -325,10 +325,10 @@ def metrics_api(request):
 @login_required
 def metrics_by_employee_api(request):
     profile = request.user.userprofile
-    if profile.role not in ["manager", "admin"] and not profile.is_senior_management:
+    if not (profile.is_manager or profile.is_admin or profile.is_senior_management):
         return HttpResponseForbidden()
 
-    if profile.role == "manager":
+    if profile.is_manager:
         qs = Evaluation.objects.filter(manager=profile)
     else:  # admin
         qs = Evaluation.objects.all()
@@ -372,14 +372,12 @@ def metrics_by_employee_api(request):
 
 def _user_is_admin(profile: UserProfile) -> bool:
     return (getattr(profile, "is_admin", False)
-            or profile.role == "admin"
             or profile.user.is_staff
             or profile.user.is_superuser)
 
 
 def _user_is_senior(profile: UserProfile) -> bool:
-    return (getattr(profile, "is_senior_management", False)
-            or profile.role in {"llc/owner", "vp", "ceo"})
+    return getattr(profile, "is_senior_management", False)
 
 
 @login_required
@@ -442,7 +440,7 @@ def cycle_assignments(request, cycle_id: int):
     cycle = get_object_or_404(ReviewCycle, pk=cycle_id)
 
     is_reviewer = _user_is_admin(profile) or _user_is_senior(profile)
-    is_manager = getattr(profile, "is_manager", False) or profile.role == "manager"
+    is_manager = getattr(profile, "is_manager", False)
 
     if is_reviewer:
         assignments = (ManagerEvaluation.objects

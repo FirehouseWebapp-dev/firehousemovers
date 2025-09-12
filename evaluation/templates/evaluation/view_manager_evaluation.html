@@ -1,15 +1,8 @@
 {% extends "evaluation/base.html" %}
-{% load evaluation_tags %}
 {% load static %}
+{% load evaluation_tags %}
 {% load form_tags %}
-
-{% block title %}
-  {% if role.user_profile == evaluation.manager %}
-    View Evaluation - {{ employee.user.get_full_name }}
-  {% else %}
-    My Evaluation - {{ evaluation.form.name }}
-  {% endif %}
-{% endblock %}
+{% block title %}Manager Evaluation Details{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
@@ -22,15 +15,14 @@
       <div>
         <h2 class="fh-title">{{ evaluation.form.name }} - {{ evaluation.department.title }}</h2>
         <div class="fh-sub">
-          {% if role.user_profile == evaluation.manager %}
-            <strong>Employee:</strong> {{ employee.user.get_full_name }}<br>
-          {% else %}
-            <strong>Manager:</strong> {{ evaluation.manager.user.get_full_name }}<br>
-          {% endif %}
-          <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
+          <strong>Manager:</strong> {{ manager.user.get_full_name }}<br>
+          <strong>Period:</strong> {{ period_start }} to {{ period_end }}<br>
           <strong>Department:</strong> {{ evaluation.department.title }}<br>
           <strong>Form:</strong> {{ evaluation.form.name }}<br>
+          <strong>Evaluated by:</strong> {{ evaluation.senior_manager.user.get_full_name|title }} ({{ evaluation.senior_manager.get_role_display }})<br>
+          {% if evaluation.submitted_at %}
           <strong>Submitted:</strong> {{ evaluation.submitted_at|date:"M j, Y, P" }}
+          {% endif %}
         </div>
       </div>
     </div>
@@ -45,7 +37,7 @@
         </div>
       </div>
 
-      {% for question in evaluation.form.questions.all %}
+      {% for question in evaluation.form.questions.all|dictsort:"order" %}
         {% if question.qtype == "section" %}
           {# Section header - render as a styled section title #}
           <div class="fh-row">
@@ -126,21 +118,17 @@
     </div>
 
     <div class="fh-foot">
-      {% if role.user_profile == evaluation.manager %}
-        <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">
+      {% if evaluation.senior_manager.user == request.user %}
+        <a href="{% url 'evaluation:manager_evaluation_dashboard' %}" class="btn btn-secondary">
           Back to Dashboard
         </a>
-        {% if evaluation.status == "completed" and today <= evaluation.week_end %}
-          <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" class="btn btn-accent">
-            Edit Evaluation
-          </a>
-        {% endif %}
       {% else %}
-        <a href="{% url 'evaluation:my_evaluations_v2' %}" class="btn btn-secondary">
+        <a href="{% url 'evaluation:my_manager_evaluations' %}" class="btn btn-secondary">
           Back to My Evaluations
         </a>
       {% endif %}
     </div>
   </div>
 </div>
+
 {% endblock %}

@@ -13,6 +13,7 @@ urlpatterns = [
     path("pending/", views.pending_evaluation_view, name="pending"),
     path("pending-v2/", views_dynamic.pending_evaluations_v2, name="pending_v2"),
     path("my-evaluations/", views.my_evaluations, name="my_evaluations"),
+    path("my-evaluations-v2/", views_dynamic.my_evaluations_v2, name="my_evaluations_v2"),
     path("my-evaluations/<int:evaluation_id>/", views.evaluation_detail, name="my_evaluation_detail"),
     path("analytics/", views.analytics_dashboard, name="analytics"),
     path("api/team-totals/",            views.team_totals_api,            name="team_totals_api"),
@@ -24,7 +25,16 @@ urlpatterns = [
     path("reviews/evaluate/<int:evaluation_id>/", views.evaluate_manager, name="evaluate_manager"),
     path("reviews/my/", views.my_manager_reviews, name="my_manager_reviews"),
     path("reviews/detail/<int:evaluation_id>/", views.manager_review_detail, name="manager_review_detail"),
-    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),  
+    path("reviews/pending/", views.senior_pending_reviews, name="senior_pending_reviews"),
+    
+    # --- Manager evaluations (dynamic) ---
+    path("manager-evaluations/", views_dynamic.manager_evaluation_dashboard, name="manager_evaluation_dashboard"),
+    path("manager-evaluations/cards/", views_dynamic.manager_evaluation_dashboard, name="manager_evaluation_cards"),
+    path("manager-evaluations/cards/detail/", views_dynamic.manager_evaluation_cards_detail, name="manager_evaluation_cards_detail"),
+    path("manager-evaluations/evaluate/<int:evaluation_id>/", views_dynamic.evaluate_manager, name="evaluate_manager_dynamic"),
+    path("manager-evaluations/view/<int:evaluation_id>/", views_dynamic.view_manager_evaluation, name="view_manager_evaluation"),
+    path("manager-evaluations/my/", views_dynamic.my_manager_evaluations, name="my_manager_evaluations"),
+    path("manager-evaluations/pending/", views_dynamic.pending_manager_evaluations, name="pending_manager_evaluations"),  
 ]
 
 # Management UI
