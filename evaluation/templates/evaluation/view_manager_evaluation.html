@@ -19,7 +19,7 @@
           <strong>Period:</strong> {{ period_start }} to {{ period_end }}<br>
           <strong>Department:</strong> {{ evaluation.department.title }}<br>
           <strong>Form:</strong> {{ evaluation.form.name }}<br>
-          <strong>Evaluated by:</strong> {{ evaluation.senior_manager.user.get_full_name }}<br>
+          <strong>Evaluated by:</strong> {{ evaluation.senior_manager.user.get_full_name|title }} ({{ evaluation.senior_manager.get_role_display }})<br>
           {% if evaluation.submitted_at %}
           <strong>Submitted:</strong> {{ evaluation.submitted_at|date:"M j, Y, P" }}
           {% endif %}

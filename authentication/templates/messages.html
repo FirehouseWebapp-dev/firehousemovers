@@ -1,26 +1,46 @@
+{% load static %}
 {% for message in messages %}
-<div class="fixed top-4 right-4 z-50 w-80">
-  <div class="alert {{ message.tags }} rounded-lg px-4 py-2 flex items-center justify-between opacity-100 transition-opacity duration-500 ease-out" role="alert" id="alert-{{ forloop.counter }}">
-    <span>{{ message }}</span>
-    <button type="button" class="text-red-500 hover:text-red-800" aria-label="Close" onclick="this.closest('.alert').remove()">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-</div>
+  {% if 'overdue-critical' in message.extra_tags %}
+    <!-- Overdue critical messages as full-width banners -->
+    <link rel="stylesheet" href="{% static 'authentication/css/messages.css' %}">
+    <div class="max-w-6xl mx-auto p-6">
+      <div class="overdue-banner" id="overdue-banner">
+        <div class="banner-content">
+          <div class="banner-text">
+            You have pending evaluations to complete so you cannot access other pages
+          </div>
+          <button type="button" class="banner-close" onclick="this.closest('.overdue-banner').remove()">
+            <span>&times;</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
-<script>
-  // Set a timeout to fade out and then remove the message after 6 seconds (6000 ms)
-  setTimeout(function() {
-    var alertMessage = document.getElementById('alert-{{ forloop.counter }}');
-    if (alertMessage) {
-      // Apply the fade-out transition
-      alertMessage.classList.add('opacity-0');
-      
-      // After the fade-out transition (500ms), remove the message from the DOM
+  {% else %}
+    <!-- Standard floating messages for non-critical alerts -->
+    <div class="fixed top-4 right-4 z-50 w-80">
+      <div class="alert {{ message.tags }} rounded-lg px-4 py-2 flex items-center justify-between opacity-100 transition-opacity duration-500 ease-out" role="alert" id="alert-{{ forloop.counter }}">
+        <span>{{ message }}</span>
+        <button type="button" class="text-red-500 hover:text-red-800" aria-label="Close" onclick="this.closest('.alert').remove()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Set a timeout to fade out and then remove the message after 6 seconds
       setTimeout(function() {
-        alertMessage.remove();
-      }, 500); // Wait for the transition to complete (500ms)
-    }
-  }, 6000); // 6000 milliseconds = 6 seconds
-</script>
+        var alertMessage = document.getElementById('alert-{{ forloop.counter }}');
+        if (alertMessage) {
+          // Apply the fade-out transition
+          alertMessage.classList.add('opacity-0');
+          
+          // After the fade-out transition (500ms), remove the message from the DOM
+          setTimeout(function() {
+            alertMessage.remove();
+          }, 500); // Wait for the transition to complete (500ms)
+        }
+      }, 6000); // 6000 milliseconds = 6 seconds
+    </script>
+  {% endif %}
 {% endfor %}

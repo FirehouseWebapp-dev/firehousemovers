@@ -6,6 +6,10 @@
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'evaluation/js/my_manager_evaluations.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="pending-evaluations-page">
   <!-- Page Title -->
@@ -49,7 +53,7 @@
                 </div>
                 <div>
                   <h3 class="evaluation-name">
-                    {{ eval.senior_manager.user.get_full_name }} (Senior Manager)
+                    {{ eval.senior_manager.user.get_full_name|title }} ({{ eval.senior_manager.get_role_display }})
                   </h3>
                   <div class="flex items-center gap-1 mt-1">
                     <span class="department-badge">
@@ -123,20 +127,4 @@
   {% endif %}
 </div>
 
-<script>
-// Add some interactive animations
-document.addEventListener('DOMContentLoaded', function() {
-  // Add hover effects to cards
-  const cards = document.querySelectorAll('.card-hover');
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.borderColor = '#ef4444';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.borderColor = '#374151';
-    });
-  });
-});
-</script>
 {% endblock %}

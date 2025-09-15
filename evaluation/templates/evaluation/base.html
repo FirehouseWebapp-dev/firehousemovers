@@ -88,7 +88,7 @@
         {% url 'evaluation:manager_evaluation_dashboard' as mgr_eval_dash_url %}
         <a href="{{ mgr_eval_dash_url }}"
           class="block py-2 px-3 rounded hover:bg-red-600
-              {% if request.path == mgr_eval_dash_url %}bg-red-500{% endif %}">
+              {% if request.path == mgr_eval_dash_url or request.path|startswith:'/evaluation/manager-evaluations/cards/' %}bg-red-500{% endif %}">
           <i class="fas fa-user-tie mr-2"></i> Manager Evaluations
         </a>
 
@@ -96,7 +96,7 @@
         <a href="{{ pending_mgr_evals_url }}"
           class="block py-2 px-3 rounded hover:bg-red-600
               {% if request.path == pending_mgr_evals_url %}bg-red-500{% endif %}">
-          <i class="fas fa-hourglass-half mr-2"></i> Pending Manager Evaluations
+          <i class="fas fa-hourglass-half mr-2"></i> Pending Evaluations
         </a>
 
       {# --- Employees (default) --- #}

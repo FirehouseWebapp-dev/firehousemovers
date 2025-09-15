@@ -106,7 +106,11 @@ class QuestionChoice(models.Model):
 
 
 class DynamicEvaluation(models.Model):
-    STATUS = (("pending", "Pending"), ("completed", "Completed"))
+    from .constants import EvaluationStatus
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
+    )
 
     form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="instances")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_evaluations")
@@ -116,7 +120,7 @@ class DynamicEvaluation(models.Model):
     week_start = models.DateField()
     week_end   = models.DateField()
 
-    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -145,7 +149,11 @@ class Answer(models.Model):
 # Manager Evaluation Models - Using same structure as employee evaluations
 class DynamicManagerEvaluation(models.Model):
     """Dynamic evaluations for managers, evaluated by senior managers."""
-    STATUS = (("pending", "Pending"), ("completed", "Completed"))
+    from .constants import EvaluationStatus
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
+    )
 
     form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="manager_instances")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_manager_evaluations")
@@ -156,7 +164,7 @@ class DynamicManagerEvaluation(models.Model):
     period_start = models.DateField()
     period_end = models.DateField()
 
-    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

@@ -1,0 +1,126 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+{% block title %}Manager Evaluations (Monthly / Quarterly / Annual){% endblock %}
+
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/manager_evaluations.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  <h1 class="text-3xl font-bold mb-8 text-red-500">Manager Evaluations (Monthly / Quarterly / Annual)</h1>
+  
+  {% if evaluation_cards %}
+    <!-- Overview Statistics -->
+    <div class="bg-[#1a1a1a] rounded-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4 text-white">Manager Evaluations Overview</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-[#2a2a2a] rounded-lg p-4">
+          <div class="text-2xl font-bold text-red-500">{{ total_evaluations }}</div>
+          <div class="text-sm text-gray-400">Total Evaluations</div>
+        </div>
+        
+        <div class="bg-[#2a2a2a] rounded-lg p-4">
+          <div class="text-2xl font-bold text-green-500">{{ total_completed }}</div>
+          <div class="text-sm text-gray-400">Completed</div>
+        </div>
+        
+        <div class="bg-[#2a2a2a] rounded-lg p-4">
+          <div class="text-2xl font-bold text-yellow-500">{{ total_pending }}</div>
+          <div class="text-sm text-gray-400">Pending</div>
+        </div>
+        
+        <div class="bg-[#2a2a2a] rounded-lg p-4">
+          <div class="text-2xl font-bold text-orange-500">{{ total_overdue }}</div>
+          <div class="text-sm text-gray-400">Overdue</div>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-6">
+      {% for card in evaluation_cards %}
+        <div class="{% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/50{% else %}bg-[#1a1a1a] border-gray-700{% endif %} rounded-lg p-6 border hover:border-red-500 transition-colors cursor-pointer"
+             onclick="window.location.href='{% url 'evaluation:manager_evaluation_cards_detail' %}?form={{ card.form_name|urlencode }}&period_start={{ card.period_start|date:'Y-m-d' }}&period_end={{ card.period_end|date:'Y-m-d' }}'">
+          
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="text-white text-lg font-semibold mb-2">
+                {{ card.form_name|title }} - {{ card.period_start|date:"M d, Y" }} → {{ card.period_end|date:"M d, Y" }}
+              </div>
+              <div class="text-gray-400 text-sm">
+                {% if card.status == "Overdue" %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                  </span>
+                {% elif card.status == "Open" %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500 text-white">
+                    <i class="fas fa-clock mr-1"></i>Open
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500 text-white">
+                    <i class="fas fa-check-circle mr-1"></i>Completed
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="text-right">
+              <div class="text-white text-sm mb-1">Your items: {{ card.total_count }} ({{ card.pending_count }} pending)</div>
+              {% if card.pending_count > 0 %}
+                <div class="inline-flex items-center justify-center w-8 h-6 bg-red-500 text-white text-xs font-bold rounded">
+                  {{ card.pending_count }}
+                </div>
+              {% else %}
+                <div class="inline-flex items-center justify-center w-8 h-6 bg-gray-500 text-white text-xs font-bold rounded">
+                  {{ card.total_count }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Progress bar -->
+          {% if card.total_count > 0 %}
+            <div class="mt-4">
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Progress</span>
+                <span>{{ card.completed_count }}/{{ card.total_count }} completed</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2">
+                <div class="{% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-500 to-red-500{% else %}bg-red-500{% endif %} h-2 rounded-full" style="width: {% widthratio card.completed_count card.total_count 100 %}%"></div>
+              </div>
+            </div>
+          {% endif %}
+          
+          <!-- Quick stats -->
+          <div class="mt-4 flex space-x-4 text-xs">
+            {% if card.completed_count > 0 %}
+              <span class="text-green-400">
+                <i class="fas fa-check-circle mr-1"></i>{{ card.completed_count }} completed
+              </span>
+            {% endif %}
+            {% if card.pending_count > 0 %}
+              <span class="text-yellow-400">
+                <i class="fas fa-clock mr-1"></i>{{ card.pending_count }} pending
+              </span>
+            {% endif %}
+            {% if card.overdue_count > 0 %}
+              <span class="text-red-400">
+                <i class="fas fa-exclamation-triangle mr-1"></i>{{ card.overdue_count }} overdue
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-12">
+      <i class="fas fa-clipboard-list text-6xl text-gray-600 mb-6"></i>
+      <h2 class="text-2xl font-semibold text-gray-400 mb-4">No Manager Evaluations Found</h2>
+      <p class="text-gray-500 text-lg mb-6">Manager evaluations will appear here when the system creates them</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

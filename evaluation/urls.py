@@ -29,6 +29,8 @@ urlpatterns = [
     
     # --- Manager evaluations (dynamic) ---
     path("manager-evaluations/", views_dynamic.manager_evaluation_dashboard, name="manager_evaluation_dashboard"),
+    path("manager-evaluations/cards/", views_dynamic.manager_evaluation_dashboard, name="manager_evaluation_cards"),
+    path("manager-evaluations/cards/detail/", views_dynamic.manager_evaluation_cards_detail, name="manager_evaluation_cards_detail"),
     path("manager-evaluations/evaluate/<int:evaluation_id>/", views_dynamic.evaluate_manager, name="evaluate_manager_dynamic"),
     path("manager-evaluations/view/<int:evaluation_id>/", views_dynamic.view_manager_evaluation, name="view_manager_evaluation"),
     path("manager-evaluations/my/", views_dynamic.my_manager_evaluations, name="my_manager_evaluations"),

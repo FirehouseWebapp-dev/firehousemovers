@@ -77,9 +77,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "evaluation.middleware.EvaluationLockMiddleware",
-    "evaluation.middleware2.OverdueEvaluationLockMiddleware",
-    "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
+    # "evaluation.middleware.EvaluationLockMiddleware",
+     "evaluation.middleware2.OverdueEvaluationLockMiddleware",
+     "evaluation.senior_middleware_2.OverdueManagerEvaluationLockMiddleware",
+    # "evaluation.senior_lock_middleware.SeniorEvaluationLockMiddleware",
 
 ]
 

@@ -4,6 +4,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/manager_evaluations.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/pending_manager_evaluations.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -14,7 +19,6 @@
       <i class="fas fa-hourglass-half mr-2"></i>
       Pending Manager Evaluations
     </h1>
-    <p class="page-subtitle">Complete your pending manager evaluations</p>
   </div>
 
   <!-- Progress Section -->
@@ -50,17 +54,19 @@
                 </div>
                 <div>
                   <h3 class="evaluation-name">
-                    {{ eval.manager.user.get_full_name }} (Manager)
+                    {{ eval.manager.user.get_full_name|title }} (Manager)
                   </h3>
                   <div class="flex items-center gap-1 mt-1">
                     <span class="department-badge">
                       <i class="fas fa-building mr-1"></i>
                       {{ eval.department.title }}
                     </span>
-                    <span class="form-badge">
-                      <i class="fas fa-file-alt mr-1"></i>
+                  </div>
+                  <div class="mt-2">
+                    <h4 class="evaluation-type-heading">
+                      <i class="fas fa-file-alt mr-2"></i>
                       {{ eval.form.name }}
-                    </span>
+                    </h4>
                   </div>
                 </div>
               </div>
@@ -110,7 +116,7 @@
   {% else %}
     <div class="empty-state slide-in">
       <div class="empty-state-icon">
-        <i class="fas fa-check-circle text-green-500 text-4xl"></i>
+        <i class="fas fa-check-circle text-white text-4xl"></i>
       </div>
       <h2 class="empty-state-title">All Caught Up! 🎉</h2>
       <p class="empty-state-description">You have no pending manager evaluations. Great job staying on top of your reviews!</p>
@@ -124,41 +130,4 @@
   {% endif %}
 </div>
 
-<script>
-// Add some interactive animations
-document.addEventListener('DOMContentLoaded', function() {
-  // Add hover effects to cards
-  const cards = document.querySelectorAll('.card-hover');
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.borderColor = '#ef4444';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.borderColor = '#374151';
-    });
-  });
-  
-  // Add urgency animation for overdue items
-  const overdueCards = document.querySelectorAll('.overdue-card');
-  overdueCards.forEach(card => {
-    card.style.animation = 'pulse 2s infinite';
-  });
-});
-</script>
-
-<style>
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.empty-state-actions {
-  @apply mt-4;
-}
-</style>
 {% endblock %}
