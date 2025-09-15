@@ -1,6 +1,6 @@
-# evaluation/forms_dynamic.py
+# evaluation/forms.py
 from django import forms
-from .models_dynamic import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm
+from .models import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm
 from authentication.models import Department
 from django.utils.html import strip_tags
 import logging

@@ -16,8 +16,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .models_dynamic import DynamicEvaluation, DynamicManagerEvaluation
-from .forms_dynamic import DynamicEvaluationForm
+from .models import DynamicEvaluation, DynamicManagerEvaluation
+from .forms import DynamicEvaluationForm
 from .constants import EvaluationStatus
 
 
@@ -44,7 +44,7 @@ EMPLOYEE_EVALUATION_CONFIG = EvaluationConfig(
     evaluatee_field='employee',
     period_start_field='week_start',
     period_end_field='week_end',
-    detail_view_name='evaluation:view_dynamic_evaluation',
+    detail_view_name='evaluation:view_evaluation',
     email_template='evaluation/email/evaluation_submitted.html',
     email_subject_template='Your evaluation for {start}–{end} is ready'
 )

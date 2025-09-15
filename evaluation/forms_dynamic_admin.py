@@ -1,5 +1,5 @@
 from django import forms
-from .models_dynamic import EvalForm, Question, QuestionChoice
+from .models import EvalForm, Question, QuestionChoice
 from django.db.models import Max
 from django.utils.html import strip_tags
 import re
@@ -40,7 +40,6 @@ class EvalFormForm(forms.ModelForm):
             if len(description) > 500:
                 raise forms.ValidationError("Description cannot exceed 500 characters.")
         return description
-    
     
 
 class QuestionForm(forms.ModelForm):

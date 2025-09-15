@@ -6,7 +6,7 @@ This command has been updated to work with the dynamic evaluation system:
 - Supports multiple evaluation types (Weekly, Monthly, Quarterly, Annual)
 - Creates evaluations based on active forms per department
 - Sends reminders for pending dynamic evaluations
-- Links to dashboard2 for dynamic evaluation management
+- Links to dashboard for dynamic evaluation management
 
 Key differences from v1:
 - Removed legacy Evaluation model dependency
@@ -24,7 +24,7 @@ from django.conf import settings
 
 from authentication.models import UserProfile
 from django.db import transaction
-from evaluation.models_dynamic import EvalForm, DynamicEvaluation, Answer, Question
+from evaluation.models import EvalForm, DynamicEvaluation, Answer, Question
 
 
 class Command(BaseCommand):

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models_dynamic import (
+from .models import (
     EvalForm, Question, QuestionChoice, 
     DynamicEvaluation, Answer, 
     DynamicManagerEvaluation, ManagerAnswer

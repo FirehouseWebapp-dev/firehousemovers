@@ -1,9 +1,9 @@
 {% extends "evaluation/base.html" %}
 {% load static %}
-{% block title %}My Dynamic Evaluations{% endblock %}
+{% block title %}My Evaluations{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
   <div class="page-header">
     <h1 class="page-title">
       <i class="fas fa-user mr-2"></i>
-      My Dynamic Evaluations
+      My Evaluations
     </h1>
   </div>
 
@@ -90,7 +90,7 @@
                   <i class="fas fa-check mr-1"></i>
                   Completed
                 </span>
-                <a href="{% url 'evaluation:view_dynamic_evaluation' eval.id %}" class="btn-modern">
+                <a href="{% url 'evaluation:view_evaluation' eval.id %}" class="btn-modern">
                   <i class="fas fa-eye"></i>
                   View
                 </a>

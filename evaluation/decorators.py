@@ -55,7 +55,7 @@ def require_department_management(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        from .models_dynamic import EvalForm, Question
+        from .models import EvalForm, Question
         
         # Get the object to check permissions for
         obj = None
@@ -114,7 +114,7 @@ def require_department_management_for_form(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        from .models_dynamic import EvalForm
+        from .models import EvalForm
         from authentication.models import Department
         
         if request.method == "POST":
@@ -158,7 +158,7 @@ def ajax_require_department_management(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        from .models_dynamic import EvalForm, Question
+        from .models import EvalForm, Question
         
         # Get the object to check permissions for
         obj = None
@@ -274,7 +274,7 @@ def require_evaluation_access(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        from .models_dynamic import DynamicEvaluation, DynamicManagerEvaluation
+        from .models import DynamicEvaluation, DynamicManagerEvaluation
         
         evaluation_id = kwargs.get('evaluation_id')
         if not evaluation_id:

@@ -1,6 +1,6 @@
 from django.shortcuts import redirect
 from django.utils.timezone import now
-from evaluation.models_dynamic import DynamicEvaluation
+from evaluation.models import DynamicEvaluation
 from django.contrib import messages
 from firehousemovers.utils.permissions import role_checker
 

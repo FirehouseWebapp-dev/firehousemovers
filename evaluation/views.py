@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.db.models import Max, Count, Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -15,9 +15,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from authentication.models import UserProfile, Department
-from .models_dynamic import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
+from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
-from .forms_dynamic import PreviewEvalForm, DynamicEvaluationForm
+from .forms import PreviewEvalForm, DynamicEvaluationForm
 from .constants import EvaluationStatus
 from django.utils.timezone import now
 from datetime import timedelta
@@ -39,43 +39,6 @@ from .evaluation_handlers import (
 )
 
 # Permission checking functions moved to decorators.py
-
-@login_required
-def evaluation_dashboard(request):
-    """
-    Dashboard view: managers see their team's evaluations; admins see all.
-    Supports optional search by employee name/username.
-    """
-    query = request.GET.get("q", "")
-    profile = request.user.userprofile
-    today = now().date()
-
-    if profile.is_admin:
-        evaluations = (
-            Evaluation.objects
-            .select_related("employee__user")
-            .order_by("-week_start")
-        )
-    else:
-        evaluations = (
-            Evaluation.objects
-            .filter(manager=profile)
-            .select_related("employee__user")
-            .order_by("-week_start")
-        )
-
-    if query:
-        evaluations = evaluations.filter(
-            Q(employee__user__first_name__icontains=query) |
-            Q(employee__user__last_name__icontains=query) |
-            Q(employee__user__username__icontains=query)
-        )
-
-    return render(request, "evaluation/dashboard.html", {
-        "evaluations": evaluations,
-        "today": today,
-    })
-
 
 
 @login_required
@@ -426,9 +389,9 @@ def question_delete(request, question_id):
 
 @login_required
 @require_manager_access
-def evaluation_dashboard2(request):
+def evaluation_dashboard(request):
     """
-    Dashboard 2 view: Alternative dashboard for managers showing dynamic evaluations.
+    Dashboard view: Alternative dashboard for managers showing dynamic evaluations.
     """
     checker = get_role_checker(request.user)
     
@@ -454,7 +417,7 @@ def evaluation_dashboard2(request):
     completed_count = stats['completed_count']
     overdue_count = stats['overdue_count']
     
-    return render(request, "evaluation/dashboard2.html", {
+    return render(request, "evaluation/dashboard.html", {
         "evaluations": evaluations,
         "today": today,
         "pending_count": pending_count,
@@ -465,7 +428,7 @@ def evaluation_dashboard2(request):
 
 @login_required
 @require_evaluation_access
-def evaluate_dynamic_employee(request, evaluation_id):
+def evaluate_employee(request, evaluation_id):
     """
     Manager view: display & handle single dynamic evaluation form.
     """
@@ -476,12 +439,12 @@ def evaluate_dynamic_employee(request, evaluation_id):
         return result
     
     # Otherwise, result is template context - render the template
-    return render(request, "evaluation/evaluate_dynamic_employee.html", result)
+    return render(request, "evaluation/evaluate_employee.html", result)
 
 
 @login_required
 @require_evaluation_access
-def view_dynamic_evaluation(request, evaluation_id):
+def view_evaluation(request, evaluation_id):
     """
     View completed dynamic evaluation (read-only).
     """
@@ -490,17 +453,17 @@ def view_dynamic_evaluation(request, evaluation_id):
     # Rename 'evaluatee' to 'employee' for template compatibility
     template_context['employee'] = template_context['evaluatee']
     
-    return render(request, "evaluation/view_dynamic_evaluation.html", template_context)
+    return render(request, "evaluation/view_evaluation.html", template_context)
 
 
 @login_required
 @require_manager_access
-def pending_evaluations_v2(request):
+def pending_evaluations(request):
     """
     Manager view: show progress & list of pending dynamic evaluations
     for last week and this week.
     """
-    return handle_pending_evaluations(request, EMPLOYEE_EVALUATION_CONFIG, "evaluation/pending_evaluations_v2.html")
+    return handle_pending_evaluations(request, EMPLOYEE_EVALUATION_CONFIG, "evaluation/pending_evaluations.html")
 
 
 @login_required

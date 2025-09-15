@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models_dynamic import EvalForm, Question, QuestionChoice
+from .models import EvalForm, Question, QuestionChoice
 
 
 @receiver(post_save, sender=EvalForm)
