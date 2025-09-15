@@ -2,6 +2,7 @@ from __future__ import annotations
 from django.db import models
 from django.core.exceptions import ValidationError
 from authentication.models import UserProfile, Department
+from .constants import EvaluationStatus
 
 
 class EvalForm(models.Model):
@@ -13,15 +14,9 @@ class EvalForm(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Allow multiple active forms per department (one for each evaluation type)
-        constraints = [
-            # Ensure only one active form per department per evaluation type
-            models.UniqueConstraint(
-                fields=["department", "name"],
-                condition=models.Q(is_active=True),
-                name="uq_evalform_one_active_per_dept_per_type",
-            )
-        ]
+        # Business rule: Only one active form per department per evaluation type
+        # This is enforced by a unique partial index created in migration 0017
+        pass
 
     def __str__(self) -> str:
         return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
@@ -76,10 +71,11 @@ class Question(models.Model):
                 'min_value': 'Minimum value cannot be greater than maximum value.'
             })
         
-        # Ensure min_value is not negative for number questions
-        if self.qtype == self.QType.NUMBER and self.min_value is not None and self.min_value < 0:
+        # Ensure min_value is not negative for any question type that uses it
+        numeric_qtypes = [self.QType.STARS, self.QType.EMOJI, self.QType.RATING, self.QType.NUMBER]
+        if self.qtype in numeric_qtypes and self.min_value is not None and self.min_value < 0:
             raise ValidationError({
-                'min_value': 'Minimum value cannot be negative for number questions.'
+                'min_value': f'Minimum value cannot be negative for {self.qtype} questions.'
             })
 
     def save(self, *args, **kwargs):
@@ -105,7 +101,10 @@ class QuestionChoice(models.Model):
 
 
 class DynamicEvaluation(models.Model):
-    STATUS = (("pending", "Pending"), ("completed", "Completed"))
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
+    )
 
     form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="instances")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_evaluations")
@@ -115,7 +114,7 @@ class DynamicEvaluation(models.Model):
     week_start = models.DateField()
     week_end   = models.DateField()
 
-    status = models.CharField(max_length=10, choices=STATUS, default="pending")
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -131,6 +130,50 @@ class DynamicEvaluation(models.Model):
 
 class Answer(models.Model):
     instance = models.ForeignKey(DynamicEvaluation, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
+
+    int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)
+    text_value  = models.TextField(null=True, blank=True)      # short/long
+    choice_value = models.CharField(max_length=100, null=True, blank=True)  # select
+
+    class Meta:
+        unique_together = [("instance", "question")]
+
+
+# Manager Evaluation Models - Using same structure as employee evaluations
+class DynamicManagerEvaluation(models.Model):
+    """Dynamic evaluations for managers, evaluated by senior managers."""
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
+    )
+
+    form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="manager_instances")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_manager_evaluations")
+    senior_manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_senior_evaluations")
+    manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_manager_reviews")
+
+    # Evaluation period (monthly, quarterly, annual)
+    period_start = models.DateField()
+    period_end = models.DateField()
+
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("manager", "senior_manager", "period_start", "period_end", "form")]
+        indexes = [
+            models.Index(fields=["period_start", "period_end", "manager_id"]),
+            models.Index(fields=["senior_manager_id", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.manager} • {self.period_start}–{self.period_end} ({self.form})"
+
+
+class ManagerAnswer(models.Model):
+    """Answers for manager evaluations - reuses the same Question model."""
+    instance = models.ForeignKey(DynamicManagerEvaluation, on_delete=models.CASCADE, related_name="answers")
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
 
     int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)

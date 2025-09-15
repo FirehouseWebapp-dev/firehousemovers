@@ -385,9 +385,9 @@
 
                 {% with up=request.user.userprofile role=request.user.userprofile.role %}
                     {% if up.is_senior_management %}
-            <a href="{% url 'evaluation:regular_reviews' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+                    <a href="{% url 'evaluation:regular_reviews' %}">
                     {% elif up.is_manager or up.is_admin or request.user.is_superuser %}
-            <a href="{% url 'evaluation:dashboard' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+                    <a href="{% url 'evaluation:dashboard' %}">
                     {% else %}
             <a href="{% url 'evaluation:my_evaluations' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
                     {% endif %}
