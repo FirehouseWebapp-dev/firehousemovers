@@ -1,620 +1,696 @@
-# evaluation/views.py
-
-from datetime import date, timedelta
-
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.core.mail import EmailMultiAlternatives
-from django.db.models import Avg, Sum, F, FloatField, ExpressionWrapper, Q, Count
-from django.http import JsonResponse, HttpResponseForbidden
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.timezone import now
-from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Max, Count, Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.urls import reverse
+import json
+import logging
 
-from authentication.models import UserProfile
-from .forms import EvaluationForm, ManagerEvaluationForm
-from .models import Evaluation, ReviewCycle, ManagerEvaluation
+logger = logging.getLogger(__name__)
 
+from authentication.models import UserProfile, Department
+from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
+from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
+from .forms import PreviewEvalForm, DynamicEvaluationForm
+from .constants import EvaluationStatus
+from django.utils.timezone import now
+from datetime import timedelta
+from firehousemovers.utils.permissions import role_checker, require_management, require_admin_or_senior, ajax_require_management
+from .decorators import (
+    require_department_management, require_department_management_for_form, 
+    ajax_require_department_management, 
+    require_manager_access, require_senior_management_access, require_evaluation_access
+)
+from .utils import (
+    activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
+    check_department_permission, process_form_creation_with_conflicts, 
+    process_form_edit_with_conflicts
+)
+from .evaluation_handlers import (
+    handle_evaluation_submission, handle_evaluation_view, 
+    handle_my_evaluations, handle_pending_evaluations,
+    EMPLOYEE_EVALUATION_CONFIG, MANAGER_EVALUATION_CONFIG
+)
 
-# --------------------------------------------------------------------
-# Employee weekly evaluations (manager -> employees)  [YOUR ORIGINALS]
-# --------------------------------------------------------------------
+# Permission checking functions moved to decorators.py
+
 
 @login_required
+def evalform_list(request):
+    """List evaluation forms with department-specific permissions."""
+    checker = get_role_checker(request.user)
+    
+    # Get forms based on user permissions
+    from .decorators import _can_manage
+    if _can_manage(request.user):
+        # Global admins can see all forms
+        forms = EvalForm.objects.select_related("department").order_by("-created_at")
+        dept = request.GET.get("department")
+        if dept and dept != "all":
+            forms = forms.filter(department_id=dept)
+    else:
+        # Department managers can only see their own department's forms
+        if checker.is_manager() and checker.user_profile.managed_department:
+            forms = EvalForm.objects.filter(
+                department=checker.user_profile.managed_department
+            ).select_related("department").order_by("-created_at")
+        else:
+            # No permission to view any forms
+            forms = EvalForm.objects.none()
+    
+    return render(request, "evaluation/forms/list.html", {"forms": forms})
+
+@login_required
+@require_department_management_for_form
+def evalform_create(request):
+    """Create evaluation form with department-specific permissions."""
+    checker = get_role_checker(request.user)
+    
+    if request.method == "POST":
+        try:
+            form = EvalFormForm(request.POST)
+            if form.is_valid():
+                # Use consolidated form creation logic
+                success, form_obj, error_response = process_form_creation_with_conflicts(form, request)
+                
+                if success:
+                    return redirect("evaluation:evalform_detail", pk=form_obj.id)
+                else:
+                    return error_response
+        except Exception as e:
+            logger.exception("Failed to create evaluation form")
+            messages.error(request, "An error occurred while creating the evaluation form. Please try again.")
+            form = EvalFormForm(request.POST)
+    else:
+        form = EvalFormForm()
+        # Restrict department choices for non-global admins
+        if checker.is_manager() and checker.user_profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
+            form.fields['department'].initial = checker.user_profile.managed_department
+    
+    return render(request, "evaluation/forms/create.html", {"form": form})
+
+@login_required
+@require_department_management
+def evalform_edit(request, pk):
+    """Edit evaluation form with department-specific permissions."""
+    obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    checker = get_role_checker(request.user)
+    
+    if request.method == "POST":
+        try:
+            form = EvalFormForm(request.POST, instance=obj)
+            if form.is_valid():
+                # Check department permissions for the new department
+                department = form.cleaned_data["department"]
+                has_permission, error_msg = check_department_permission(
+                    request.user, department, "move this form to"
+                )
+                if not has_permission:
+                    messages.error(request, error_msg)
+                    return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
+                
+                # Use consolidated form edit logic
+                success, error_response = process_form_edit_with_conflicts(form, obj, request)
+                
+                if success:
+                    return redirect("evaluation:evalform_detail", pk=obj.id)
+                else:
+                    return error_response
+        except Exception as e:
+            logger.exception("Failed to edit evaluation form")
+            messages.error(request, "An error occurred while updating the evaluation form. Please try again.")
+            form = EvalFormForm(request.POST, instance=obj)
+    else:
+        form = EvalFormForm(instance=obj)
+        # Restrict department choices for non-global admins
+        if checker.is_manager() and checker.user_profile.managed_department:
+            form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
+    
+    return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
+
+@login_required
+@require_department_management
+def evalform_detail(request, pk):
+    """View evaluation form details with department-specific permissions."""
+    obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    qs = obj.questions.prefetch_related("choices").order_by('order')
+    return render(request, "evaluation/forms/detail.html", {"form_obj": obj, "questions": qs})
+
+@login_required
+@require_department_management
+def evalform_preview(request, pk):
+    """Preview evaluation form with department-specific permissions."""
+    obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    form = PreviewEvalForm(eval_form=obj)
+    return render(request, "evaluation/forms/preview.html", {"form_obj": obj, "preview_form": form})
+
+@login_required
+@require_department_management
+def evalform_activate(request, pk):
+    """Activate/deactivate evaluation form with department-specific permissions."""
+    if request.method != "POST":
+        return redirect("evaluation:evalform_detail", pk=pk)
+    
+    obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    # Check if the form has any questions
+    question_count = obj.questions.count()
+    if question_count == 0:
+        messages.error(request, f"Cannot activate '{obj.name}' - it has no questions. Please add at least one question before activating.")
+        return redirect("evaluation:evalform_detail", pk=pk)
+    
+    if obj.is_active:
+        # Deactivate the form
+        success, _ = deactivate_evalform_safely(obj, request)
+    else:
+        # Activate the form
+        success, _ = activate_evalform_safely(obj, request)
+    
+    # Redirect back to forms list to show updated status
+    return redirect("evaluation:evalform_list")
+
+@login_required
+@require_department_management
+def evalform_delete(request, pk):
+    """Delete evaluation form with department-specific permissions."""
+    if request.method != "POST":
+        return redirect("evaluation:evalform_list")
+    
+    obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+    
+    # Prevent deletion of active forms
+    if obj.is_active:
+        messages.error(request, f"Cannot delete '{obj.name}' - it is currently active. Please deactivate the form first.")
+        return redirect("evaluation:evalform_list")
+    
+    form_name = obj.name
+    
+    try:
+        with transaction.atomic():
+            # Delete all questions first (which will cascade to choices)
+            obj.questions.all().delete()
+            # Then delete the form
+            obj.delete()
+        
+        messages.success(request, f"Form '{form_name}' has been deleted successfully.")
+    except Exception as e:
+        logger.exception(f"Failed to delete evaluation form '{form_name}'")
+        messages.error(request, f"Cannot delete '{form_name}' - it has associated evaluations. Please delete the evaluations first.")
+    
+    return redirect("evaluation:evalform_list")
+
+@login_required
+@require_department_management
+def question_add(request, form_id):
+    """Add question to evaluation form with department-specific permissions."""
+    ef = get_object_or_404(EvalForm, pk=form_id)
+
+    if request.method == "POST":
+        try:
+            qf = QuestionForm(request.POST, evaluation=ef)
+            if qf.is_valid():
+                new_order = qf.cleaned_data.get("order", 0)
+                q = qf.save(commit=False)
+                q.form = ef
+
+                with transaction.atomic():
+                    q.save()  # Save once here
+
+                    # Get all questions (id + order only for efficiency)
+                    all_questions = list(
+                        ef.questions.only("id", "order").order_by("order", "id")
+                    )
+
+                    # Remove the newly added question
+                    all_questions = [question for question in all_questions if question.id != q.id]
+
+                    # Clamp new_order to valid range [0, len(all_questions)]
+                    max_order = len(all_questions)
+                    clamped_order = max(0, min(new_order, max_order))
+
+                    # Insert new question at its desired position
+                    all_questions.insert(clamped_order, q)
+
+                    # Reassign sequential order
+                    for index, question in enumerate(all_questions):
+                        question.order = index
+
+                    # Bulk update (no N+1)
+                    Question.objects.bulk_update(all_questions, ["order"])
+
+                messages.success(request, "Question added successfully.")
+                return redirect("evaluation:evalform_detail", pk=ef.id)
+            # Invalid form → render again with errors
+        except Exception as e:
+            logger.exception("Failed to add question to evaluation form")
+            messages.error(request, "An error occurred while adding the question. Please try again.")
+            qf = QuestionForm(request.POST, evaluation=ef)
+    else:
+        qf = QuestionForm(evaluation=ef)
+
+    return render(
+        request,
+        "evaluation/forms/question_add.html",
+        {"form": qf, "form_obj": ef},
+    )
+
+@login_required
+@require_department_management
+def question_edit(request, question_id):
+    """Edit question with department-specific permissions."""
+    q = get_object_or_404(Question, pk=question_id)
+
+    if request.method == "POST":
+        qf = QuestionForm(request.POST, instance=q)
+        if qf.is_valid():
+            new_order = qf.cleaned_data.get("order", 0)
+
+            # Save main edits first
+            q = qf.save(commit=False)
+
+            with transaction.atomic():
+                # Get all questions ordered by current order
+                all_questions = list(
+                    q.form.questions.only("id", "order").order_by("order", "id")
+                )
+
+                # Remove the edited question
+                all_questions = [question for question in all_questions if question.id != q.id]
+
+                # Clamp new_order to valid range [0, len(all_questions)]
+                max_order = len(all_questions)
+                clamped_order = max(0, min(new_order, max_order))
+
+                # Insert the edited one at its new position
+                all_questions.insert(clamped_order, q)
+
+                # Reorder sequentially
+                for index, question in enumerate(all_questions):
+                    question.order = index
+
+                # Bulk update in one query
+                Question.objects.bulk_update(all_questions, ["order"])
+
+            messages.success(request, "Question updated successfully.")
+            return redirect("evaluation:evalform_detail", pk=q.form_id)
+        # Invalid form → fall through to render with errors
+    else:
+        qf = QuestionForm(instance=q)
+
+    return render(
+        request,
+        "evaluation/forms/question_edit.html",
+        {"form": qf, "question": q},
+    )
+
+@login_required
+@require_department_management
+def choice_add(request, question_id):
+    """Add choice to question with department-specific permissions."""
+    q = get_object_or_404(Question, pk=question_id)
+    
+    if request.method == "POST":
+        try:
+            cf = QuestionChoiceForm(request.POST)
+            if cf.is_valid():
+                cf.instance.question = q
+                cf.save()
+                messages.success(request, "Choice added.")
+                return redirect("evaluation:evalform_detail", pk=q.form_id)
+        except Exception as e:
+            logger.exception("Failed to add choice to question")
+            messages.error(request, "An error occurred while adding the choice. Please try again.")
+            cf = QuestionChoiceForm(request.POST)
+    else:
+        cf = QuestionChoiceForm()
+    return render(request, "evaluation/forms/choice_add.html", {"form": cf, "question": q})
+@login_required
+@require_http_methods(["POST"])
+@ajax_require_department_management
+def update_question_order(request, pk):
+    """Update the order of questions via AJAX with department-specific permissions."""
+    try:
+        form_obj = get_object_or_404(EvalForm.objects.select_related("department"), pk=pk)
+
+        data = json.loads(request.body)
+        question_orders = data.get('question_orders', [])
+
+        # Build a mapping of {id: order}
+        order_map = {
+            int(item["id"]): int(item["order"])
+            for item in question_orders
+            if item.get("id") and item.get("order") is not None
+        }
+
+        with transaction.atomic():
+            # Fetch all questions in one go
+            questions = list(
+                Question.objects.filter(form=form_obj, id__in=order_map.keys())
+            )
+
+            # Update their order values
+            for q in questions:
+                q.order = order_map.get(q.id, q.order)
+
+            # Bulk update in one query
+            Question.objects.bulk_update(questions, ["order"])
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        logger.exception("Failed to update question order via AJAX")
+        return JsonResponse({'success': False, 'error': 'An error occurred while updating question order. Please try again.'})
+
+
+@login_required
+@require_department_management
+def question_delete(request, question_id):
+    """Delete a question with department-specific permissions."""
+    question = get_object_or_404(Question, id=question_id)
+    form_obj = question.form
+    
+    if request.method == "POST":
+        question.delete()
+        messages.success(request, "Question deleted successfully.")
+        return redirect("evaluation:evalform_detail", pk=form_obj.id)
+    
+    # If not POST, redirect to form detail
+    return redirect("evaluation:evalform_detail", pk=form_obj.id)
+
+
+@login_required
+@require_manager_access
 def evaluation_dashboard(request):
     """
-    Dashboard view: managers see their team's evaluations; admins see all.
-    Supports optional search by employee name/username.
+    Dashboard view: Alternative dashboard for managers showing dynamic evaluations.
     """
-    query = request.GET.get("q", "")
-    profile = request.user.userprofile
+    checker = get_role_checker(request.user)
+    
     today = now().date()
-
-    if profile.is_admin:
-        evaluations = (
-            Evaluation.objects
-            .select_related("employee__user")
-            .order_by("-week_start")
-        )
-    else:
-        evaluations = (
-            Evaluation.objects
-            .filter(manager=profile)
-            .select_related("employee__user")
-            .order_by("-week_start")
-        )
-
-    if query:
-        evaluations = evaluations.filter(
-            Q(employee__user__first_name__icontains=query) |
-            Q(employee__user__last_name__icontains=query) |
-            Q(employee__user__username__icontains=query)
-        )
-
+    
+    # Get manager's team dynamic evaluations with optimized stats calculation
+    evaluations = (
+        DynamicEvaluation.objects
+        .filter(manager=checker.user_profile)
+        .select_related("employee__user", "form", "department")
+        .order_by("-week_start")
+    )
+    
+    # Calculate all counts in a single optimized query using aggregation
+    
+    stats = evaluations.aggregate(
+        pending_count=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
+        completed_count=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
+        overdue_count=Count('id', filter=Q(status=EvaluationStatus.PENDING, week_end__lt=today))
+    )
+    
+    pending_count = stats['pending_count']
+    completed_count = stats['completed_count']
+    overdue_count = stats['overdue_count']
+    
     return render(request, "evaluation/dashboard.html", {
         "evaluations": evaluations,
         "today": today,
+        "pending_count": pending_count,
+        "completed_count": completed_count,
+        "overdue_count": overdue_count,
     })
 
 
 @login_required
+@require_evaluation_access
 def evaluate_employee(request, evaluation_id):
     """
-    Manager view: display & handle single evaluation form.
-    Sends email to the employee upon submission.
+    Manager view: display & handle single dynamic evaluation form.
     """
-    evaluation = get_object_or_404(Evaluation, pk=evaluation_id)
-    manager = request.user.userprofile
-
-    # only the assigned manager may access
-    if evaluation.manager != manager:
-        return redirect("evaluation:dashboard")
-
-    # editable while within the week window
-    is_editable = (now().date() <= evaluation.week_end)
-    can_submit = is_editable or (evaluation.submitted_at is None)
-
-    if request.method == "POST" and can_submit:
-        form = EvaluationForm(request.POST, instance=evaluation)
-        if form.is_valid():
-            ev = form.save(commit=False)
-            ev.status = "completed"
-            ev.submitted_at = now()
-            ev.save()
-
-            detail_path = reverse("evaluation:my_evaluation_detail", args=[ev.id])
-            evaluation_url = f"{settings.BASE_URL}{detail_path}"
-
-            # plain-text fallback
-            text_content = (
-                f"Hi {ev.employee.user.get_full_name()},\n\n"
-                f"Your manager {ev.manager.user.get_full_name()} has submitted your evaluation "
-                f"for the week {ev.week_start} to {ev.week_end}.\n"
-                f"View it here: {evaluation_url}\n\n"
-                "Thanks,"
-            )
-
-            # render the HTML template
-            html_content = render_to_string(
-                "evaluation/email/evaluation_submitted.html",
-                {"ev": ev, "evaluation_url": evaluation_url}
-            )
-
-            # construct and send
-            msg = EmailMultiAlternatives(
-                subject=f"Your evaluation for {ev.week_start}–{ev.week_end} is ready",
-                body=text_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[ev.employee.user.email],
-            )
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
-
-            return redirect("evaluation:dashboard")
-    else:
-        form = EvaluationForm(instance=evaluation)
-
-    return render(request, "evaluation/evaluate_employee.html", {
-        "form": form,
-        "evaluation": evaluation,
-        "employee": evaluation.employee,
-        "week_start": evaluation.week_start,
-        "week_end": evaluation.week_end,
-        "is_editable": is_editable,
-        "can_submit": can_submit,
-    })
+    result = handle_evaluation_submission(request, evaluation_id, EMPLOYEE_EVALUATION_CONFIG)
+    
+    # If result is a redirect (success), return it
+    if hasattr(result, 'status_code'):
+        return result
+    
+    # Otherwise, result is template context - render the template
+    return render(request, "evaluation/evaluate_employee.html", result)
 
 
 @login_required
-def pending_evaluation_view(request):
+@require_evaluation_access
+def view_evaluation(request, evaluation_id):
     """
-    Manager view: show progress & list of pending evaluations
+    View completed dynamic evaluation (read-only).
+    """
+    template_context = handle_evaluation_view(request, evaluation_id, EMPLOYEE_EVALUATION_CONFIG)
+    
+    # Rename 'evaluatee' to 'employee' for template compatibility
+    template_context['employee'] = template_context['evaluatee']
+    
+    return render(request, "evaluation/view_evaluation.html", template_context)
+
+
+@login_required
+@require_manager_access
+def pending_evaluations(request):
+    """
+    Manager view: show progress & list of pending dynamic evaluations
     for last week and this week.
     """
-    profile = request.user.userprofile
+    return handle_pending_evaluations(request, EMPLOYEE_EVALUATION_CONFIG, "evaluation/pending_evaluations.html")
+
+
+@login_required
+def my_evaluations_v2(request):
+    """
+    Employee view: show all dynamic evaluations for this employee.
+    """
+    return handle_my_evaluations(request, EMPLOYEE_EVALUATION_CONFIG, "evaluation/my_evaluations_v2.html")
+
+
+# Manager Evaluation Views
+@login_required
+@require_senior_management_access
+def manager_evaluation_dashboard(request):
+    """
+    Card-based dashboard for senior managers showing manager evaluations grouped by type.
+    """
+    checker = get_role_checker(request.user)
+    
     today = now().date()
-    weekday = today.weekday()
-
-    # compute Mondays
-    this_monday = today - timedelta(days=weekday)
-    last_monday = this_monday - timedelta(days=7)
-
-    # stats for both weeks
-    stats_qs = Evaluation.objects.filter(
-        manager=profile,
-        week_start__in=[last_monday, this_monday],
-    )
-    total = stats_qs.count()
-    completed = stats_qs.filter(status="completed").count()
-    percent_complete = int((completed / total) * 100) if total else 100
-
-    # list only those still pending
-    pending_evaluations = stats_qs.filter(status="pending") \
-        .order_by('-week_start', 'employee__user__last_name')
-
-    return render(request, "evaluation/pending.html", {
-        "pending_evaluations": pending_evaluations,
-        "total": total,
-        "completed": completed,
-        "percent_complete": percent_complete,
-    })
-
-
-@login_required
-def my_evaluations(request):
-    """
-    Employee view: list all completed evaluations for this user.
-    """
-    profile = request.user.userprofile
+    
+    # Get manager evaluations assigned to this senior manager with optimized query
     evaluations = (
-        Evaluation.objects
-        .filter(employee=profile, status="completed")
-        .select_related("manager__user")
-        .order_by("-week_start")
-    )
-    return render(request, "evaluation/my_evaluations.html", {
-        "evaluations": evaluations,
-    })
-
-
-@login_required
-def evaluation_detail(request, evaluation_id):
-    """
-    Employee view: detail page for a single evaluation.
-    """
-    profile = request.user.userprofile
-    evaluation = get_object_or_404(
-        Evaluation,
-        pk=evaluation_id,
-        employee=profile,
-    )
-    return render(request, "evaluation/evaluation_detail.html", {
-        "evaluation": evaluation,
-    })
-
-
-@login_required
-def analytics_dashboard(request):
-    profile = request.user.userprofile
-    is_manager = profile.is_manager or profile.is_admin or profile.is_senior_management
-    is_employee = profile.is_employee
-
-    employees = (UserProfile.objects.exclude(role="admin").exclude(pk=profile.pk)
-                 if profile.is_admin
-                 else (UserProfile.objects.filter(manager=profile).exclude(pk=profile.pk) if is_manager else []))
-
-    cards = [
-        {"id": "stat-5stars",       "icon": "fas fa-star",         "label": "5★ Reviews",        "negative": False},
-        {"id": "stat-satisfaction", "icon": "fas fa-smile",        "label": "Avg Satisfaction",  "negative": False},
-        {"id": "stat-revenue",      "icon": "fas fa-dollar-sign",  "label": "Total Revenue",     "negative": False},
-        {"id": "stat-moves",        "icon": "fas fa-truck-moving", "label": "Moves Completed",   "negative": False},
-        {"id": "stat-negative",     "icon": "fas fa-frown",        "label": "Negative Reviews",  "negative": True},
-    ]
-
-    pies = [
-        {"title": "Avg Satisfaction", "id": "satisfactionPie"},
-        {"title": "Avg Reliability",  "id": "reliabilityPie"},
-        {"title": "Moves Completed",  "id": "movesPie"},
-        {"title": "Avg Revenue",      "id": "revenuePie"},
-    ]
-
-    return render(request, "evaluation/analytics.html", {
-        "is_manager": is_manager,
-        "is_employee": is_employee,
-        "employees": employees,
-        "cards": cards,
-        "pies": pies,
-    })
-
-
-@login_required
-def team_totals_api(request):
-    profile = request.user.userprofile
-
-    # managers get their team; admins get all; everyone else gets just their own evals
-    if profile.is_manager:
-        qs = Evaluation.objects.filter(manager=profile)
-    elif profile.is_admin:
-        qs = Evaluation.objects.all()
-    else:
-        qs = Evaluation.objects.filter(employee=profile)
-
-    # include only submitted evaluations
-    qs = qs.filter(status="completed")
-
-    # optional date filters
-    start, end = request.GET.get("start"), request.GET.get("end")
-    if start:
-        qs = qs.filter(week_start__gte=start)
-    if end:
-        qs = qs.filter(week_start__lte=end)
-
-    # aggregates
-    total_5_star = qs.aggregate(sum=Sum("five_star_reviews"))["sum"] or 0
-    avg_satisfaction = qs.aggregate(avg=Avg("avg_customer_satisfaction_score"))["avg"] or 0
-    total_moves = qs.aggregate(sum=Sum("moves_within_schedule"))["sum"] or 0
-    total_negative = qs.aggregate(sum=Sum("negative_reviews"))["sum"] or 0
-
-    revenue_expr = ExpressionWrapper(
-        F("avg_revenue_per_move") * F("moves_within_schedule"),
-        output_field=FloatField()
-    )
-    total_revenue = qs.aggregate(sum=Sum(revenue_expr))["sum"] or 0
-
-    return JsonResponse({
-        "total_5_star":     total_5_star,
-        "avg_satisfaction": round(avg_satisfaction, 2),
-        "total_revenue":    round(total_revenue,    2),
-        "total_moves":      total_moves,
-        "total_negative":   total_negative,
-    })
-
-
-@login_required
-def metrics_api(request):
-    profile = request.user.userprofile
-
-    # managers see only their team's evaluations; admins see all; employees see only their own
-    if profile.is_manager:
-        qs = Evaluation.objects.filter(manager=profile)
-    elif profile.is_admin:
-        qs = Evaluation.objects.all()
-    else:
-        qs = Evaluation.objects.filter(employee=profile)
-
-    # optional employee filter still works for managers
-    emp = request.GET.get("employee_id")
-    if emp and emp != "all":
-        qs = qs.filter(employee_id=emp)
-
-    # only submitted evaluations
-    qs = qs.filter(status="completed")
-
-    # date filtering
-    start, end = request.GET.get("start"), request.GET.get("end")
-    if start:
-        qs = qs.filter(week_start__gte=start)
-    if end:
-        qs = qs.filter(week_start__lte=end)
-
-    # annotate & return
-    data = (
-        qs.values("week_start")
-          .annotate(
-              avg_satisfaction=Avg("avg_customer_satisfaction_score"),
-              avg_reliability=Avg("reliability_rating"),
-              avg_revenue=Avg("avg_revenue_per_move"),
-              total_moves=Sum("moves_within_schedule"),
-          )
-          .order_by("week_start")
-    )
-
-    return JsonResponse({
-        "labels":       [x["week_start"].isoformat() for x in data],
-        "satisfaction": [float(x["avg_satisfaction"] or 0) for x in data],
-        "reliability":  [float(x["avg_reliability"]  or 0) for x in data],
-        "revenue":      [float(x["avg_revenue"]      or 0) for x in data],
-        "moves":        [int(x["total_moves"]        or 0) for x in data],
-    })
-
-
-@login_required
-def metrics_by_employee_api(request):
-    profile = request.user.userprofile
-    if not (profile.is_manager or profile.is_admin or profile.is_senior_management):
-        return HttpResponseForbidden()
-
-    if profile.is_manager:
-        qs = Evaluation.objects.filter(manager=profile)
-    else:  # admin
-        qs = Evaluation.objects.all()
-
-    # only submitted evaluations
-    qs = qs.filter(status="completed")
-
-    start, end = request.GET.get("start"), request.GET.get("end")
-    if start:
-        qs = qs.filter(week_start__gte=start)
-    if end:
-        qs = qs.filter(week_start__lte=end)
-
-    data = (
-        qs.values("employee_id", "employee__user__first_name", "employee__user__last_name")
-          .annotate(
-              avg_satisfaction=Avg("avg_customer_satisfaction_score"),
-              avg_reliability=Avg("reliability_rating"),
-              avg_revenue=Avg("avg_revenue_per_move"),
-              total_moves=Sum("moves_within_schedule"),
-          )
-          .order_by("employee__user__last_name")
-    )
-
-    labels = [
-        f"{x['employee__user__first_name']} {x['employee__user__last_name']}"
-        for x in data
-    ]
-    return JsonResponse({
-        "labels":       labels,
-        "satisfaction": [float(x["avg_satisfaction"] or 0) for x in data],
-        "reliability":  [float(x["avg_reliability"]  or 0) for x in data],
-        "revenue":      [float(x["avg_revenue"]      or 0) for x in data],
-        "moves":        [int(x["total_moves"]        or 0) for x in data],
-    })
-
-
-# --------------------------------------------------------------------
-# Senior‑management reviews of managers (monthly/quarterly/annual)
-# --------------------------------------------------------------------
-
-def _user_is_admin(profile: UserProfile) -> bool:
-    return (getattr(profile, "is_admin", False)
-            or profile.user.is_staff
-            or profile.user.is_superuser)
-
-
-def _user_is_senior(profile: UserProfile) -> bool:
-    return getattr(profile, "is_senior_management", False)
-
-
-@login_required
-def regular_reviews(request):
-    """
-    Senior/admin (reviewers): show cycles with count of THEIR assignments.
-    Managers (subjects): show cycles with count of reviews ABOUT them.
-    """
-    profile = request.user.userprofile
-    is_reviewer = _user_is_admin(profile) or _user_is_senior(profile)
-
-    if is_reviewer:
-        cycles = (
-            ReviewCycle.objects.all()
-            .annotate(
-                my_items=Count(
-                    "manager_evaluations",
-                    filter=Q(manager_evaluations__reviewer=profile),
-                ),
-                my_pending=Count(
-                    "manager_evaluations",
-                    filter=Q(
-                        manager_evaluations__reviewer=profile,
-                        manager_evaluations__status="pending",
-                    ),
-                ),
-            )
-        )
-    else:
-        # Managers see cycles where they are the subject
-        cycles = (
-            ReviewCycle.objects.filter(manager_evaluations__subject_manager=profile)
-            .distinct()
-            .annotate(
-                my_items=Count(
-                    "manager_evaluations",
-                    filter=Q(manager_evaluations__subject_manager=profile),
-                ),
-                my_pending=Count(
-                    "manager_evaluations",
-                    filter=Q(
-                        manager_evaluations__subject_manager=profile,
-                        manager_evaluations__status="pending",
-                    ),
-                ),
-            )
-        )
-
-    return render(request, "evaluation/regular_reviews.html", {"cycles": cycles})
-
-
-@login_required
-def cycle_assignments(request, cycle_id: int):
-    """
-    Show assignments for a given cycle.
-    Senior/admin (reviewers): see their assigned manager reviews.
-    Managers: see reviews about them (read-only).
-    """
-    profile = request.user.userprofile
-    cycle = get_object_or_404(ReviewCycle, pk=cycle_id)
-
-    is_reviewer = _user_is_admin(profile) or _user_is_senior(profile)
-    is_manager = getattr(profile, "is_manager", False)
-
-    if is_reviewer:
-        assignments = (ManagerEvaluation.objects
-                       .filter(cycle=cycle, reviewer=profile)
-                       .select_related("subject_manager__user")
-                       .order_by("subject_manager__user__last_name"))
-    else:
-        assignments = (ManagerEvaluation.objects
-                       .filter(cycle=cycle, subject_manager=profile)
-                       .select_related("reviewer__user"))
-
-    return render(request, "evaluation/cycle_assignments.html", {
-        "cycle": cycle,
-        "assignments": assignments,
-        "is_reviewer": is_reviewer,
-        "is_manager": is_manager,
-    })
-
-
-
-@login_required
-def evaluate_manager(request, evaluation_id: int):
-    ev = get_object_or_404(ManagerEvaluation, pk=evaluation_id)
-    profile = request.user.userprofile
-
-    if not (_user_is_admin(profile) or _user_is_senior(profile)):
-        return redirect("evaluation:regular_reviews")
-    if ev.reviewer != profile:
-        return redirect("evaluation:regular_reviews")
-
-    # If cycle closed and not already completed, block access
-    if not ev.cycle.is_open and ev.status != "completed":
-        return redirect("evaluation:cycle_assignments", cycle_id=ev.cycle_id)
-
-    # If already completed and no ?edit=1, show read-only
-    if request.method == "GET" and ev.status == "completed" and request.GET.get("edit") != "1":
-        return render(request, "evaluation/manager_review_detail.html", {
-            "evaluation": ev,
-            "cycle": ev.cycle,
-            "subject": ev.subject_manager,
-            "can_edit": ev.cycle.is_open,  # allow edit button if cycle still open
-        })
-
-    # If POST, also block edits when cycle is closed
-    if request.method == "POST" and not ev.cycle.is_open:
-        return redirect("evaluation:cycle_assignments", cycle_id=ev.cycle_id)
-
-    if request.method == "POST":
-        form = ManagerEvaluationForm(request.POST, instance=ev, cycle=ev.cycle)
-        if form.is_valid():
-            with transaction.atomic():
-                obj = form.save(commit=False)
-                obj.status = "completed"
-                obj.submitted_at = now()
-                obj.save()
-
-                # Notify the subject manager
-                try:
-                    detail_url = f"{settings.BASE_URL}{reverse('evaluation:manager_review_detail', args=[obj.id])}"
-                    ctx = {
-                        "subject_name": obj.subject_manager.user.get_full_name() or obj.subject_manager.user.username,
-                        "reviewer_name": obj.reviewer.user.get_full_name() or obj.reviewer.user.username,
-                        "cycle": obj.cycle,
-                        "detail_url": detail_url,
-                    }
-                    txt = render_to_string("evaluation/email/manager_review_submitted.txt", ctx)
-                    html = render_to_string("evaluation/email/manager_review_submitted.html", ctx)
-                    to_addr = obj.subject_manager.user.email
-                    if to_addr:
-                        msg = EmailMultiAlternatives(
-                            subject=f"Your {obj.cycle.get_cycle_type_display()} review was submitted",
-                            body=txt,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=[to_addr],
-                        )
-                        msg.attach_alternative(html, "text/html")
-                        msg.send()
-                except Exception:
-                    # swallow email errors but keep the saved review
-                    pass
-
-            messages.success(request, "Review submitted.")
-            return redirect("evaluation:evaluate_manager", evaluation_id=obj.id)
-    else:
-        form = ManagerEvaluationForm(instance=ev, cycle=ev.cycle)
-
-    return render(request, "evaluation/evaluate_manager.html", {
-        "form": form,
-        "evaluation": ev,
-        "cycle": ev.cycle,
-        "subject": ev.subject_manager,
-    })
-
-
-
-@login_required
-def manager_review_detail(request, evaluation_id: int):
-    """
-    Explicit read-only detail route (in case you want to link to it elsewhere).
-    """
-    ev = get_object_or_404(ManagerEvaluation, pk=evaluation_id)
-    profile = request.user.userprofile
-
-    # Reviewer or subject manager can view
-    if not (
-        (_user_is_admin(profile) or _user_is_senior(profile)) and ev.reviewer == profile
-        or ev.subject_manager == profile
-    ):
-        return redirect("evaluation:regular_reviews")
-
-    return render(request, "evaluation/manager_review_detail.html", {
-        "evaluation": ev,
-        "cycle": ev.cycle,
-        "subject": ev.subject_manager,
-        "can_edit": (_user_is_admin(profile) or _user_is_senior(profile)) and ev.reviewer == profile and ev.cycle.is_open,
-    })
-
-
-
-@login_required
-def my_manager_reviews(request):
-    """
-    Managers see reviews they've received (completed only), compact list with pagination.
-    """
-    profile = request.user.userprofile
-    qs = (
-        ManagerEvaluation.objects
-        .filter(subject_manager=profile, status="completed")
-        .select_related("cycle", "reviewer__user")
-        .only(
-            "id", "overall_rating", "submitted_at", "subject_manager_id",
-            "cycle__cycle_type", "cycle__period_start", "cycle__period_end",
-            "reviewer__user__first_name", "reviewer__user__last_name", "reviewer__user__username",
-        )
-        .order_by("-cycle__period_start", "-submitted_at")
-    )
-
-    paginator = Paginator(qs, 10)  # 10 per page
-    page_obj = paginator.get_page(request.GET.get("page") or 1)
-
-    return render(request, "evaluation/my_manager_reviews.html", {"page_obj": page_obj})
-
-@login_required
-def senior_pending_reviews(request):
-    """
-    Senior management dashboard of pending ManagerEvaluations they must complete,
-    with per-cycle progress.
-    """
-    profile = request.user.userprofile
-    if not (_user_is_senior(profile) or _user_is_admin(profile)):  # if admins shouldn't see it, drop _user_is_admin
-        return redirect("evaluation:regular_reviews")
-
-    # Per-cycle progress for THIS reviewer
-    cycles = (
-        ReviewCycle.objects
-        .filter(manager_evaluations__reviewer=profile)
-        .distinct()
-        .annotate(
-            total=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile)),
-            done=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile, manager_evaluations__status="completed")),
-            pending=Count("manager_evaluations", filter=Q(manager_evaluations__reviewer=profile, manager_evaluations__status="pending")),
-        )
+        DynamicManagerEvaluation.objects
+        .filter(senior_manager=checker.user_profile)
+        .select_related("manager__user", "form", "department")
         .order_by("-period_start")
     )
-
-    # Flat list of pending items to act on
-    pending_items = (
-        ManagerEvaluation.objects
-        .filter(reviewer=profile, status="pending")
-        .select_related("subject_manager__user", "cycle")
-        .order_by("-cycle__period_start", "subject_manager__user__last_name")
-    )
-
-    return render(request, "evaluation/senior_pending.html", {
-        "cycles": cycles,
-        "pending_items": pending_items,
+    
+    # Group evaluations by type and period
+    evaluation_cards = []
+    
+    # Get unique combinations of form name and period
+    unique_periods = evaluations.values('form__name', 'period_start', 'period_end').distinct()
+    
+    for period_info in unique_periods:
+        form_name = period_info['form__name']
+        period_start = period_info['period_start']
+        period_end = period_info['period_end']
+        
+        # Calculate all stats in a single optimized query using aggregation
+        
+        stats = evaluations.filter(
+            form__name=form_name,
+            period_start=period_start,
+            period_end=period_end
+        ).aggregate(
+            total_count=Count('id'),
+            pending_count=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
+            completed_count=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
+            overdue_count=Count('id', filter=Q(status=EvaluationStatus.PENDING, period_end__lt=today))
+        )
+        
+        total_count = stats['total_count']
+        pending_count = stats['pending_count']
+        completed_count = stats['completed_count']
+        overdue_count = stats['overdue_count']
+        
+        # Determine status
+        if overdue_count > 0:
+            status = "Overdue"
+        elif pending_count > 0:
+            status = "Open"
+        else:
+            status = "Completed"
+        
+        # Get the actual evaluations for this period (needed for template display)
+        period_evaluations = evaluations.filter(
+            form__name=form_name,
+            period_start=period_start,
+            period_end=period_end
+        )
+        
+        # Create card data
+        card = {
+            'form_name': form_name,
+            'period_start': period_start,
+            'period_end': period_end,
+            'status': status,
+            'total_count': total_count,
+            'pending_count': pending_count,
+            'completed_count': completed_count,
+            'overdue_count': overdue_count,
+            'evaluations': period_evaluations,
+        }
+        
+        evaluation_cards.append(card)
+    
+    # Sort cards by period start (most recent first)
+    evaluation_cards.sort(key=lambda x: x['period_start'], reverse=True)
+    
+    # Calculate totals for overview
+    total_evaluations = len(evaluation_cards)
+    total_completed = sum(card['completed_count'] for card in evaluation_cards)
+    total_pending = sum(card['pending_count'] for card in evaluation_cards)
+    total_overdue = sum(card['overdue_count'] for card in evaluation_cards)
+    
+    return render(request, "evaluation/manager_evaluation_cards.html", {
+        "evaluation_cards": evaluation_cards,
+        "today": today,
+        "total_evaluations": total_evaluations,
+        "total_completed": total_completed,
+        "total_pending": total_pending,
+        "total_overdue": total_overdue,
     })
+
+
+@login_required
+@require_senior_management_access
+def manager_evaluation_cards_detail(request):
+    """
+    Detail view for a specific evaluation card showing all evaluations for that period and form.
+    """
+    checker = get_role_checker(request.user)
+    
+    today = now().date()
+    
+    # Get filter parameters
+    form_name = request.GET.get('form')
+    period_start = request.GET.get('period_start')
+    period_end = request.GET.get('period_end')
+    
+    if not all([form_name, period_start, period_end]):
+        return redirect("evaluation:manager_evaluation_dashboard")
+    
+    # Parse dates
+    try:
+        from datetime import datetime
+        period_start_date = datetime.strptime(period_start, '%Y-%m-%d').date()
+        period_end_date = datetime.strptime(period_end, '%Y-%m-%d').date()
+    except ValueError:
+        return redirect("evaluation:manager_evaluation_dashboard")
+    
+    # Get evaluations for this specific period and form with optimized stats calculation
+    evaluations = (
+        DynamicManagerEvaluation.objects
+        .filter(
+            senior_manager=checker.user_profile,
+            form__name=form_name,
+            period_start=period_start_date,
+            period_end=period_end_date
+        )
+        .select_related("manager__user", "form", "department")
+        .order_by("manager__user__first_name", "manager__user__last_name")
+    )
+    
+    # Calculate all stats in a single optimized query using aggregation
+    
+    stats = evaluations.aggregate(
+        total_count=Count('id'),
+        pending_count=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
+        completed_count=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
+        overdue_count=Count('id', filter=Q(status=EvaluationStatus.PENDING, period_end__lt=today))
+    )
+    
+    total_count = stats['total_count']
+    pending_count = stats['pending_count']
+    completed_count = stats['completed_count']
+    overdue_count = stats['overdue_count']
+    
+    # Determine overall status
+    if overdue_count > 0:
+        overall_status = "Overdue"
+    elif pending_count > 0:
+        overall_status = "Open"
+    else:
+        overall_status = "Completed"
+    
+    return render(request, "evaluation/manager_evaluation_cards_detail.html", {
+        "evaluations": evaluations,
+        "form_name": form_name,
+        "period_start": period_start_date,
+        "period_end": period_end_date,
+        "today": today,
+        "total_count": total_count,
+        "pending_count": pending_count,
+        "completed_count": completed_count,
+        "overdue_count": overdue_count,
+        "overall_status": overall_status,
+    })
+
+
+@login_required
+@require_evaluation_access
+def evaluate_manager(request, evaluation_id):
+    """
+    Senior manager view: display & handle single manager evaluation form.
+    """
+    result = handle_evaluation_submission(request, evaluation_id, MANAGER_EVALUATION_CONFIG)
+    
+    # If result is a redirect (success), return it
+    if hasattr(result, 'status_code'):
+        return result
+    
+    # Otherwise, result is template context - rename 'evaluatee' to 'manager' for template compatibility
+    result['manager'] = result['evaluatee']
+    
+    # Otherwise, result is template context - render the template
+    return render(request, "evaluation/evaluate_manager.html", result)
+
+
+@login_required
+@require_evaluation_access
+def view_manager_evaluation(request, evaluation_id):
+    """
+    View completed manager evaluation (read-only).
+    """
+    template_context = handle_evaluation_view(request, evaluation_id, MANAGER_EVALUATION_CONFIG)
+    
+    # Rename 'evaluatee' to 'manager' for template compatibility
+    template_context['manager'] = template_context['evaluatee']
+    
+    return render(request, "evaluation/view_manager_evaluation.html", template_context)
+
+
+@login_required
+def my_manager_evaluations(request):
+    """
+    Manager view: show all evaluations for this manager.
+    """
+    return handle_my_evaluations(request, MANAGER_EVALUATION_CONFIG, "evaluation/my_manager_evaluations.html")
+
+
+@login_required
+@require_senior_management_access
+def pending_manager_evaluations(request):
+    """
+    Senior manager view: show progress & list of pending manager evaluations.
+    """
+    return handle_pending_evaluations(request, MANAGER_EVALUATION_CONFIG, "evaluation/pending_manager_evaluations.html")

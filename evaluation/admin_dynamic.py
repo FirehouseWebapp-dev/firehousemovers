@@ -1,5 +1,5 @@
 from django import forms
-from .models_dynamic import DynamicEvaluation, Answer, Question, EvalForm
+from .models import DynamicEvaluation, Answer, Question, EvalForm
 
 # ---------- WIDGET TEMPLATES ----------
 # StarRadioSelect removed - using HiddenInput for star fields now

@@ -6,211 +6,122 @@
   Evaluate {{ employee.user.get_full_name }}
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/evaluation.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-[#1a1a1a] rounded-lg shadow-lg text-white">
-  <h2 class="text-3xl font-extrabold text-red-500 mb-6">
-    Weekly Employee Evaluation
-  </h2>
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <div>
+        <h2 class="fh-title">{{ evaluation.form.name }} - {{ evaluation.department.title }}</h2>
+        <div class="fh-sub">
+          <strong>Evaluating:</strong> {{ employee.user.get_full_name }}<br>
+          <strong>Week:</strong> {{ week_start }} to {{ week_end }}<br>
+          <strong>Department:</strong> {{ evaluation.department.title }}<br>
+          <strong>Form:</strong> {{ evaluation.form.name }}
+        </div>
+      </div>
+    </div>
 
-  <p class="mb-6 text-gray-300">
-    <strong>Evaluating:</strong> {{ employee.user.get_full_name }}<br>
-    <strong>Week:</strong> {{ week_start }} to {{ week_end }}
-  </p>
+    <div class="fh-body">
+      {# Banner if cannot submit #}
+      {% if not can_submit %}
+        <div class="fh-row">
+          <div class="flash-message flash-warning">
+            <i class="fas fa-exclamation-triangle flash-icon"></i>
+            <div class="flash-content">
+              {% if evaluation.submitted_at %}
+                You've already submitted this on {{ evaluation.submitted_at|date:"M j, Y, P" }}.
+              {% else %}
+                This evaluation is from a previous week and cannot be edited.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
 
-  {# If they cannot submit, show a banner #}
-  {% if not can_submit %}
-    <div class="mb-6 text-yellow-400 font-semibold">
-      {% if evaluation.submitted_at %}
-        You’ve already submitted this on 
-        {{ evaluation.submitted_at|date:"M j, Y, P" }}.
-      {% else %}
-        This evaluation is from a previous week and cannot be edited.
+      <form method="post" id="evaluation-form" {% if not can_submit %}disabled{% endif %}>
+        {% csrf_token %}
+
+        {# Non-field errors #}
+        {% if form.non_field_errors %}
+          <div class="fh-row">
+            <div class="flash-message flash-error">
+              <i class="fas fa-exclamation-circle flash-icon"></i>
+              <div class="flash-content">
+                {% for err in form.non_field_errors %}
+                  <p>{{ err }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {# Fields #}
+        {% for field in form %}
+          {% if field.name|slice:":8" == "section_" %}
+            <div class="fh-row">
+              <h3 class="section-header">
+                {{ field.value|default:field.initial|default:field.label|title }}
+              </h3>
+            </div>
+          {% else %}
+            <div class="fh-row{% if forloop.counter0 == 0 %} first-question{% endif %}">
+              <label for="{{ field.id_for_label }}" class="fh-label">
+                {{ field.label }}{% if field.field.required %}<span style="color:#ef4444;">*</span>{% endif %}
+              </label>
+
+              {% if field.help_text %}
+                <div class="fh-help">{{ field.help_text }}</div>
+              {% endif %}
+
+              {# Render field itself #}
+              {{ field }}
+
+              {# Error once, DRY #}
+              {% if field.errors %}
+                <div class="field-error-message">{{ field.errors.0 }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {# Error summary #}
+        {% if form.errors %}
+          <div class="fh-row">
+            <div class="flash-message flash-error">
+              <i class="fas fa-exclamation-circle flash-icon"></i>
+              <div class="flash-content">
+                <strong>Please fix the errors below:</strong>
+                <ul style="margin-top:0.5rem; padding-left:1rem;">
+                  {% for field in form %}
+                    {% for err in field.errors %}
+                      <li><strong>{{ field.label }}:</strong> {{ err }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                  {% for err in form.non_field_errors %}
+                    <li>{{ err }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="fh-foot">
+      <a href="{% url 'evaluation:dashboard' %}" class="btn btn-secondary">Cancel</a>
+      {% if can_submit %}
+        <button type="submit" form="evaluation-form" class="btn btn-accent">
+          {% if evaluation.status == "completed" %}Update Evaluation{% else %}Submit Evaluation{% endif %}
+        </button>
       {% endif %}
     </div>
-  {% endif %}
-
-  <form method="post" class="space-y-10">
-    {% csrf_token %}
-
-    {# Non-field errors #}
-    {% if form.non_field_errors %}
-      <div class="form-error">
-        {% for err in form.non_field_errors %}
-          <p>{{ err }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {# Disable entire fieldset when cannot submit #}
-    {% if not can_submit %}
-      <fieldset disabled class="opacity-60">
-    {% endif %}
-
-    <!-- Customer Service -->
-    <section>
-      <h3 class="text-xl font-semibold text-red-400 mb-4">
-        Customer Service
-      </h3>
-
-      <label class="block mb-2 font-semibold">
-        Avg customer satisfaction score
-      </label>
-      <div class="flex gap-4 mb-6">
-        {% for val, emoji in form.avg_customer_satisfaction_score.field.choices %}
-          <label class="relative cursor-pointer">
-            <input
-              type="radio"
-              name="{{ form.avg_customer_satisfaction_score.name }}"
-              value="{{ val }}"
-              class="sr-only peer"
-              {% if form.avg_customer_satisfaction_score.value|stringformat:"s" == val|stringformat:"s" %}
-                checked
-              {% endif %}
-            >
-            <div
-              class="w-14 h-14 flex items-center justify-center text-4xl rounded-full
-                     bg-[#1a1a1a] hover:bg-gray-700 text-white
-                     peer-checked:ring-4 peer-checked:ring-red-500
-                     peer-checked:bg-red-800/30 peer-checked:text-red-400"
-              title="{{ form.avg_customer_satisfaction_score.field.label }}"
-            >
-              {{ emoji }}
-            </div>
-          </label>
-        {% endfor %}
-      </div>
-      {% if form.avg_customer_satisfaction_score.errors %}
-        <p class="text-red-500 text-sm mt-1">
-          {{ form.avg_customer_satisfaction_score.errors.0 }}
-        </p>
-      {% endif %}
-
-      <div class="mt-4">
-        <label class="block mb-1">5-Star Reviews</label>
-        {{ form.five_star_reviews|add_class:"input-field" }}
-      </div>
-      <div class="mt-4">
-        <label class="block mb-1">Negative Reviews</label>
-        {{ form.negative_reviews|add_class:"input-field" }}
-      </div>
-    </section>
-
-    <!-- Attendance -->
-    <section>
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Attendance</h3>
-      <div>
-        <label class="block mb-1">Late Arrivals</label>
-        {{ form.late_arrivals|add_class:"input-field" }}
-      </div>
-      <div class="mt-4">
-        <label class="block mb-1">Absences</label>
-        {{ form.absences|add_class:"input-field" }}
-      </div>
-      <div class="mb-2 mt-4">
-        <label class="block mb-1 font-semibold">Reliability</label>
-        <div class="flex gap-2" id="reliability-stars">
-          {% for i in "12345" %}
-            <svg
-              class="star w-6 h-6 text-gray-500 fill-current transition-colors cursor-pointer hover:text-red-400"
-              data-field="reliability_rating"
-              data-value="{{ i }}"
-              viewBox="0 0 20 20"
-              title="Rate {{ i }} star{{ i|pluralize }}"
-            >
-              <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.561-.955L10 0l2.951 5.955 6.561.955-4.756 4.635 1.122 6.545z"/>
-            </svg>
-          {% endfor %}
-        </div>
-        {% if form.reliability_rating.errors %}
-          <p class="text-red-500 text-sm mt-1">
-            {{ form.reliability_rating.errors.0 }}
-          </p>
-        {% endif %}
-        
-        {# Hidden input to store the selected value #}
-        <input type="hidden" name="reliability_rating" value="{{ form.reliability_rating.value|default:'' }}" id="reliability_rating_value">
-      </div>
-    </section>
-
-    <!-- Productivity -->
-    <section>
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Productivity</h3>
-      <label class="block mb-1">Avg Move Completion Time</label>
-      {{ form.avg_move_completion_time|add_class:"input-field" }}
-      <div class="mt-4">
-        <label class="block mb-1">Moves Within Schedule</label>
-        {{ form.moves_within_schedule|add_class:"input-field" }}
-      </div>
-      <div class="mt-4">
-        <label class="block mb-1">Avg Revenue Per Move</label>
-        {{ form.avg_revenue_per_move|add_class:"input-field" }}
-      </div>
-    </section>
-
-    <!-- Safety -->
-    <section>
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Safety</h3>
-      <div>
-        <label class="block mb-1">Damage Claims</label>
-        {{ form.damage_claims|add_class:"input-field" }}
-      </div>
-      <div class="mt-4">
-        <label class="block mb-1">Safety Incidents</label>
-        {{ form.safety_incidents|add_class:"input-field" }}
-      </div>
-      <div class="mt-4">
-        <label class="block mb-1">Consecutive Damage-Free Moves</label>
-        {{ form.consecutive_damage_free_moves|add_class:"input-field" }}
-      </div>
-    </section>
-
-    <!-- Additional Feedback -->
-    <section>
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Additional Feedback</h3>
-      <label class="block mb-2 font-semibold">Written Feedback (optional)</label>
-      {{ form.notes|add_class:"w-full h-32 bg-black border border-gray-600 rounded p-3 text-white resize-none" }}
-      {% if form.notes.errors %}
-        <p class="text-red-500 text-sm mt-1">
-          {{ form.notes.errors.0 }}
-        </p>
-      {% endif %}
-    </section>
-
-    {# Close disabled fieldset #}
-    {% if not can_submit %}
-      </fieldset>
-    {% endif %}
-
-    {# Submit button only when can_submit is True #}
-    {% if can_submit %}
-      <div class="text-right pt-6">
-        <button
-          type="submit"
-          class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg text-white font-semibold transition"
-        >
-          Submit Evaluation
-        </button>
-      </div>
-    {% endif %}
-
-    {# Field error summary #}
-    {% if form.errors %}
-      <div class="form-error">
-        <strong class="font-bold">Please fix the errors below:</strong>
-        <ul class="mt-2 list-disc list-inside">
-          {% for field in form %}
-            {% for err in field.errors %}
-              <li><strong>{{ field.label }}:</strong> {{ err }}</li>
-            {% endfor %}
-          {% endfor %}
-          {% for err in form.non_field_errors %}
-            <li>{{ err }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-
-  </form>
+  </div>
 </div>
 {% endblock %}
 

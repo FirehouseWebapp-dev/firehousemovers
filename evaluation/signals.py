@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models_dynamic import EvalForm, Question, QuestionChoice
+from .models import EvalForm, Question, QuestionChoice
 
 
 @receiver(post_save, sender=EvalForm)
@@ -26,25 +26,25 @@ def create_default_questions_for_manager_evaluations(sender, instance, created, 
     default_questions = [
         {
             'text': 'Goals Achieved',
-            'qtype': Question.QType.SHORT,
+            'qtype': Question.QType.LONG,
             'required': True,
             'order': 0,
         },
         {
             'text': 'Set Objectives',
-            'qtype': Question.QType.SHORT,
+            'qtype': Question.QType.LONG,
             'required': True,
             'order': 1,
         },
         {
             'text': 'Strengths',
-            'qtype': Question.QType.SHORT,
+            'qtype': Question.QType.LONG,
             'required': True,
             'order': 2,
         },
         {
             'text': 'Areas for Improvement',
-            'qtype': Question.QType.SHORT,
+            'qtype': Question.QType.LONG,
             'required': True,
             'order': 3,
         },

@@ -1,9 +1,9 @@
 {% extends "evaluation/base.html" %}
 {% load static %}
-{% block title %}Pending Dynamic Evaluations{% endblock %}
+{% block title %}Pending Evaluations{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations_v2.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
   <div class="page-header">
     <h1 class="page-title">
       <i class="fas fa-tasks mr-2"></i>
-      Pending Dynamic Evaluations
+      Pending Evaluations
     </h1>
   </div>
 
@@ -93,7 +93,7 @@
                   Pending
                 </span>
               {% endif %}
-              <a href="{% url 'evaluation:evaluate_dynamic' eval.id %}" class="btn-modern">
+              <a href="{% url 'evaluation:evaluate' eval.id %}" class="btn-modern">
                 <i class="fas fa-edit"></i>
                 Evaluate
               </a>
@@ -109,7 +109,7 @@
       </div>
       <h2 class="empty-state-title">All Caught Up! 🎉</h2>
       <p class="empty-state-description">No pending evaluations. Your team's performance reviews are up to date.</p>
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn-modern">
+      <a href="{% url 'evaluation:dashboard' %}" class="btn-modern">
         <i class="fas fa-arrow-left"></i>
         Back to Dashboard
       </a>
@@ -119,7 +119,7 @@
   <!-- Bottom Navigation -->
   {% if pending_evaluations %}
     <div class="bottom-navigation">
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn-modern">
+      <a href="{% url 'evaluation:dashboard' %}" class="btn-modern">
         <i class="fas fa-arrow-left"></i>
         Back to Dashboard
       </a>

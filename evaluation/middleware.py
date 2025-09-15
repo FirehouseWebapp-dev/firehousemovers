@@ -1,10 +1,10 @@
 from django.shortcuts import redirect
 from django.utils.timezone import now
-from datetime import timedelta
-from evaluation.models import Evaluation
+from evaluation.models import DynamicEvaluation
 from django.contrib import messages
+from firehousemovers.utils.permissions import role_checker
 
-class EvaluationLockMiddleware:
+class OverdueEvaluationLockMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -13,38 +13,34 @@ class EvaluationLockMiddleware:
         if not request.user.is_authenticated:
             return self.get_response(request)
 
-        profile = getattr(request.user, "userprofile", None)
-        if not profile or profile.role != "manager":
+        checker = role_checker(request.user)
+        if not checker.is_manager():
             return self.get_response(request)
 
         today = now().date()
-        weekday = today.weekday()
 
-        # Last week's Mon → Sun
-        last_monday = today - timedelta(days=weekday + 7)
-        last_sunday = last_monday + timedelta(days=6)
-
-        # Any still-pending evals from last week?
-        pending_qs = Evaluation.objects.filter(
-            manager=profile,
-            week_start=last_monday,
-            week_end=last_sunday,
+        # Check for overdue dynamic evaluations
+        overdue_dynamic_qs = DynamicEvaluation.objects.filter(
+            manager=checker.user_profile,
             status="pending",
+            week_end__lt=today,
         )
 
-        if pending_qs.exists():
-            # Allow the user to see only:
-            #  • pending list  (/evaluation/pending/)
-            #  • the evaluate form (/evaluation/evaluate/<id>/)
-            #  • plus anything else you might need (e.g. logout, static files...)
+        if overdue_dynamic_qs.exists():
+            # Block access to everything except overdue evaluations
             path = request.path
             if (
                 not path.startswith("/evaluation/pending")
                 and not path.startswith("/evaluation/evaluate")
+                and not path.startswith("/evaluation/dynamic-evaluation")
+                and not path.startswith("/evaluation/pending-v2")
+                and not path.startswith("/evaluation/evaluate-dynamic")
+                and not path.startswith("/logout")
+                and not path.startswith("/login")
             ):
-                messages.warning (
+                messages.error(
                     request,
-                    "You have pending evaluations to complete so you cannot access other pages."
+                    f"You have {overdue_dynamic_qs.count()} overdue evaluation(s) that must be completed before accessing other pages."
                 )
                 return redirect("evaluation:pending")
 
