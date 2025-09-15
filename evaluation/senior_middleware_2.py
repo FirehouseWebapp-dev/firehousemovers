@@ -19,12 +19,12 @@ class OverdueManagerEvaluationLockMiddleware:
 
         today = now().date()
 
-        # Check for overdue manager evaluations
+        # Check for overdue manager evaluations - force fresh query
         overdue_manager_evaluations = DynamicManagerEvaluation.objects.filter(
             senior_manager=checker.user_profile,
             status="pending",
             period_end__lt=today,
-        )
+        ).select_related()
 
         if overdue_manager_evaluations.exists():
             # Block access to everything except manager evaluation pages
@@ -36,6 +36,8 @@ class OverdueManagerEvaluationLockMiddleware:
                 "/evaluation/manager-evaluations/view/",
                 "/evaluation/manager-evaluations/my/",
                 "/evaluation/manager-evaluations/pending/",
+                "/logout/",  # Allow logout
+                "/login/",   # Allow login
             ]
             
             # Check if current path is allowed
@@ -46,7 +48,7 @@ class OverdueManagerEvaluationLockMiddleware:
                 messages.add_message(
                     request,
                     messages.ERROR,
-                    f"You have pending evaluations to complete so you cannot access other pages.",
+                    f"You have {overdue_count} pending evaluation(s) to complete so you cannot access other pages.",
                     extra_tags="overdue-critical"
                 )
                 return redirect("/evaluation/manager-evaluations/")
