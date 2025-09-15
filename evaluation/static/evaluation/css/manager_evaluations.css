@@ -1,0 +1,38 @@
+/* Manager Evaluations Consolidated Styles */
+
+/* ===== CARD HOVER EFFECTS ===== */
+.hover\:border-red-500:hover {
+  border-color: #ef4444;
+}
+
+.transition-colors {
+  transition: border-color 0.2s ease-in-out;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ===== EMPTY STATE STYLES ===== */
+.empty-state-actions {
+  margin-top: 1rem;
+}
+
+/* ===== EVALUATION TYPE HEADING ===== */
+.evaluation-type-heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #60a5fa; /* blue-400 */
+  background-color: rgba(30, 58, 138, 0.2); /* blue-900/20 */
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(59, 130, 246, 0.3); /* blue-500/30 */
+  display: inline-block;
+  margin: 0;
+}

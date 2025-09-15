@@ -1,7 +1,12 @@
 # evaluation/forms_dynamic.py
 from django import forms
-from .models_dynamic import DynamicEvaluation, Answer, Question, QuestionChoice, EvalForm
+from .models_dynamic import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm
 from authentication.models import Department
+from django.utils.html import strip_tags
+import logging
+from .constants import QuestionType, NUMERIC_QUESTION_TYPES, TEXT_QUESTION_TYPES
+
+logger = logging.getLogger(__name__)
 
 class EvalFormForm(forms.ModelForm):
     class Meta:
@@ -54,8 +59,10 @@ class QuestionForm(forms.ModelForm):
         min_value = self.cleaned_data.get('min_value')
         qtype = self.cleaned_data.get('qtype')
         
-        if qtype == 'number' and min_value is not None and min_value < 0:
-            raise forms.ValidationError('Minimum value cannot be negative for number questions.')
+        # Validate that min_value cannot be negative for any question type that uses it
+        numeric_qtypes = ['stars', 'emoji', 'rating', 'number']
+        if qtype in numeric_qtypes and min_value is not None and min_value < 0:
+            raise forms.ValidationError(f'Minimum value cannot be negative for {qtype} questions.')
         
         return min_value
 
@@ -99,7 +106,7 @@ class DynamicEvaluationForm(forms.Form):
         initial = None
         required = q.required if not is_preview else False
         
-        if q.qtype == Question.QType.STARS:
+        if q.qtype == QuestionType.STARS:
             max_stars = q.max_value or 5
             choices = [(i, str(i)) for i in range(q.min_value or 1, max_stars + 1)]
             field = forms.ChoiceField(choices=choices, required=required, widget=StarRadioSelect)
@@ -107,7 +114,7 @@ class DynamicEvaluationForm(forms.Form):
             if existing_answers and q.id in existing_answers and existing_answers[q.id].int_value is not None:
                 initial = str(existing_answers[q.id].int_value)
 
-        elif q.qtype == Question.QType.RATING:
+        elif q.qtype == QuestionType.RATING:
             max_rating = q.max_value or 5
             choices = [(i, str(i)) for i in range(q.min_value or 1, max_rating + 1)]
             field = forms.ChoiceField(choices=choices, required=required, widget=PillRadioSelect)
@@ -115,14 +122,14 @@ class DynamicEvaluationForm(forms.Form):
             if existing_answers and q.id in existing_answers and existing_answers[q.id].int_value is not None:
                 initial = str(existing_answers[q.id].int_value)
 
-        elif q.qtype == Question.QType.EMOJI:
+        elif q.qtype == QuestionType.EMOJI:
             choices = [(i, str(i)) for i in range(q.min_value or 1, (q.max_value or 5) + 1)]
             field = forms.ChoiceField(choices=choices, required=required, widget=EmojiRadioSelect)
             
             if existing_answers and q.id in existing_answers and existing_answers[q.id].int_value is not None:
                 initial = str(existing_answers[q.id].int_value)
 
-        elif q.qtype == Question.QType.NUMBER:
+        elif q.qtype == QuestionType.NUMBER:
             min_val = q.min_value or 0
             max_val = q.max_value
             field = forms.IntegerField(
@@ -135,14 +142,14 @@ class DynamicEvaluationForm(forms.Form):
             if existing_answers and q.id in existing_answers:
                 initial = existing_answers[q.id].int_value
 
-        elif q.qtype == Question.QType.BOOL:
+        elif q.qtype == QuestionType.BOOL:
             choices = [(1, "Yes"), (0, "No")]
             field = forms.ChoiceField(choices=choices, required=required, widget=BoolRadioSelect)
             
             if existing_answers and q.id in existing_answers and existing_answers[q.id].int_value is not None:
                 initial = str(existing_answers[q.id].int_value)
 
-        elif q.qtype == Question.QType.SELECT:
+        elif q.qtype == QuestionType.SELECT:
             # Note: q.choices.all() uses prefetched data from prefetch_related("choices") in __init__
             # This avoids N+1 queries when multiple questions have choices
             choices = [(c.value, c.label) for c in q.choices.all()]
@@ -151,7 +158,7 @@ class DynamicEvaluationForm(forms.Form):
             if existing_answers and q.id in existing_answers:
                 initial = existing_answers[q.id].choice_value
 
-        elif q.qtype == Question.QType.LONG:
+        elif q.qtype == QuestionType.LONG:
             field = forms.CharField(required=required, widget=forms.Textarea(attrs={"rows": 4}))
             
             if existing_answers and q.id in existing_answers:
@@ -173,7 +180,7 @@ class DynamicEvaluationForm(forms.Form):
             
         return field, initial
 
-    def __init__(self, *args, instance: DynamicEvaluation, **kwargs):
+    def __init__(self, *args, instance=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance = instance
         # Store prefetched questions to avoid extra queries in clean() and save()
@@ -181,7 +188,7 @@ class DynamicEvaluationForm(forms.Form):
         self.existing_answers = {a.question_id: a for a in instance.answers.all()}
 
         for q in self.questions:
-            if q.qtype == Question.QType.SECTION:
+            if q.qtype == QuestionType.SECTION:
                 # No input; rendered by template as a step header
                 self.fields[f"section_{q.id}"] = forms.CharField(required=False, initial=q.text, widget=forms.HiddenInput())
                 continue
@@ -210,8 +217,18 @@ class DynamicEvaluationForm(forms.Form):
             qid = int(name.split("_", 1)[1])
             q = q_by_id[qid]
             
+            # Sanitize text inputs
+            if q.qtype in TEXT_QUESTION_TYPES and value:
+                # Strip HTML tags and limit length
+                sanitized_value = strip_tags(str(value)).strip()
+                if len(sanitized_value) > (1000 if q.qtype == QuestionType.LONG else 500):
+                    max_len = 1000 if q.qtype == QuestionType.LONG else 500
+                    self.add_error(name, f"Text cannot exceed {max_len} characters.")
+                else:
+                    cleaned_data[name] = sanitized_value
+            
             # Validate NUMBER type questions
-            if q.qtype == Question.QType.NUMBER and value is not None:
+            if q.qtype == QuestionType.NUMBER and value is not None:
                 min_val = q.min_value or 0
                 max_val = q.max_value
                 
@@ -222,8 +239,8 @@ class DynamicEvaluationForm(forms.Form):
         
         return cleaned_data
 
-    def save(self) -> DynamicEvaluation:
-        """Save the form data to the DynamicEvaluation instance."""
+    def save(self):
+        """Save the form data to the evaluation instance (employee or manager)."""
         inst = self.instance
         cleaned = self.cleaned_data
 
@@ -243,18 +260,18 @@ class DynamicEvaluationForm(forms.Form):
             text_val = None
             choice_val = None
 
-            if q.qtype in (Question.QType.STARS, Question.QType.RATING, Question.QType.EMOJI, Question.QType.NUMBER):
+            if q.qtype in NUMERIC_QUESTION_TYPES:
                 int_val = int(value) if value not in (None, "") else None
-            elif q.qtype == Question.QType.BOOL:
+            elif q.qtype == QuestionType.BOOL:
                 if value == "True":
                     int_val = 1
                 elif value == "False":
                     int_val = 0
                 else:
                     int_val = 1 if value else 0
-            elif q.qtype == Question.QType.SELECT:
+            elif q.qtype == QuestionType.SELECT:
                 choice_val = value or None
-            elif q.qtype in (Question.QType.SHORT, Question.QType.LONG):
+            elif q.qtype in TEXT_QUESTION_TYPES:
                 text_val = value or None
 
             if qid in ans_by_qid:
@@ -262,7 +279,13 @@ class DynamicEvaluationForm(forms.Form):
                 a.int_value, a.text_value, a.choice_value = int_val, text_val, choice_val
                 updates.append(a)
             else:
-                new_answers.append(Answer(
+                # Determine which Answer model to use based on instance type
+                if isinstance(inst, DynamicManagerEvaluation):
+                    answer_class = ManagerAnswer
+                else:
+                    answer_class = Answer
+                
+                new_answers.append(answer_class(
                     instance=inst,
                     question=q,
                     int_value=int_val,
@@ -271,16 +294,24 @@ class DynamicEvaluationForm(forms.Form):
                 ))
 
         if new_answers:
-            Answer.objects.bulk_create(new_answers, ignore_conflicts=True)
+            # Use the appropriate Answer model for bulk_create
+            if isinstance(inst, DynamicManagerEvaluation):
+                ManagerAnswer.objects.bulk_create(new_answers, ignore_conflicts=True)
+            else:
+                Answer.objects.bulk_create(new_answers, ignore_conflicts=True)
         if updates:
-            Answer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
+            # Use the appropriate Answer model for bulk_update
+            if isinstance(inst, DynamicManagerEvaluation):
+                ManagerAnswer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
+            else:
+                Answer.objects.bulk_update(updates, ["int_value", "text_value", "choice_value"])
 
         return inst
 
 class PreviewEvalForm(forms.Form):
     def __init__(self, *args, eval_form: EvalForm, existing_answers=None, **kwargs):
         """
-        Initialize preview form for an evaluation form.
+        Initialize preview form for an evaluation form (employee or manager).
         
         Args:
             eval_form: The EvalForm instance to preview
@@ -291,7 +322,7 @@ class PreviewEvalForm(forms.Form):
         qs = eval_form.questions.prefetch_related("choices").all()
 
         for q in qs:
-            if q.qtype == Question.QType.SECTION:
+            if q.qtype == QuestionType.SECTION:
                 self.fields[f"section_{q.id}"] = forms.CharField(required=False, initial=q.text, widget=forms.HiddenInput())
                 continue
 

@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
         seniors = (
             UserProfile.objects.filter(
-                models.Q(is_senior_management=True) | models.Q(role__in=["ceo", "vp", "llc/owner"])
+                models.Q(is_senior_management=True)
             )
             .exclude(role="admin")
             .distinct()
