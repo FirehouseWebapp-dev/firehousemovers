@@ -7,3 +7,4 @@ class EvaluationConfig(AppConfig):
     
     def ready(self):
         import evaluation.signals
+        import evaluation.admin

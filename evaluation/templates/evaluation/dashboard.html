@@ -1,44 +1,87 @@
 {% extends "evaluation/base.html" %}
-{% block title %}Evaluation Dashboard{% endblock %}
+{% block title %}Dashboard 2{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-red-500">Evaluation Dashboard</h1>
+<h1 class="text-3xl font-bold mb-6 text-red-500">Dynamic Evaluations</h1>
 
-<form method="get" class="mb-6 flex items-center gap-4">
-  <input type="text" name="q" placeholder="Search employee..." class="px-3 py-2 rounded bg-[#1a1a1a] text-white border border-gray-700 w-full md:w-1/3" />
-  <button type="submit" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 text-white">
-    <i class="fas fa-search mr-1"></i> Search
-  </button>
-</form>
 
-<ul class="space-y-4">
-  {% for evaluation in evaluations %}
-    <li class="flex justify-between items-center border-b border-gray-700 py-3">
-      <div>
-        <div class="text-white text-lg font-semibold">{{ evaluation.employee.user.get_full_name }}</div>
-        <div class="text-sm text-gray-400">Week of {{ evaluation.week_start }}</div>
-      </div>
+<div class="bg-[#1a1a1a] rounded-lg p-6 mb-6">
+  <h2 class="text-xl font-semibold mb-4 text-white">Team Dynamic Evaluations Overview</h2>
+  
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-[#2a2a2a] rounded-lg p-4">
+      <div class="text-2xl font-bold text-red-500">{{ evaluations|length }}</div>
+      <div class="text-sm text-gray-400">Total Evaluations</div>
+    </div>
+    
+    <div class="bg-[#2a2a2a] rounded-lg p-4">
+      <div class="text-2xl font-bold text-green-500">{{ completed_count }}</div>
+      <div class="text-sm text-gray-400">Completed</div>
+    </div>
+    
+    <div class="bg-[#2a2a2a] rounded-lg p-4">
+      <div class="text-2xl font-bold text-yellow-500">{{ pending_count }}</div>
+      <div class="text-sm text-gray-400">Pending</div>
+    </div>
+    
+    <div class="bg-[#2a2a2a] rounded-lg p-4">
+      <div class="text-2xl font-bold text-orange-500">{{ overdue_count }}</div>
+      <div class="text-sm text-gray-400">Overdue</div>
+    </div>
+  </div>
+</div>
 
-      <div class="flex items-center gap-3">
-        {% if evaluation.status == "completed" %}
-          <span class="status-badge status-completed">Submitted</span>
-        {% else %}
-          <span class="status-badge status-pending">Pending</span>
-        {% endif %}
-
-        <a href="{% url 'evaluation:evaluate' evaluation.id %}" class="text-sm font-bold px-4 py-1 rounded bg-red-600 hover:bg-red-700 text-white">
-          {% if evaluation.status == "completed" and today <= evaluation.week_end %}
-            Edit
-          {% elif evaluation.status == "completed" %}
-            View
-          {% else %}
-            Evaluate
-          {% endif %}
-        </a>
-      </div>
-    </li>
-  {% empty %}
-    <li class="text-gray-400">No evaluations to display.</li>
-  {% endfor %}
-</ul>
+<div class="bg-[#1a1a1a] rounded-lg p-6">
+  <h3 class="text-xl font-semibold mb-4 text-red-500">Team Member Evaluations</h3>
+  
+  {% if evaluations %}
+    <div class="space-y-3">
+      {% for evaluation in evaluations|slice:":15" %}
+        <div class="flex justify-between items-center border-b border-gray-700 py-3">
+          <div class="flex-1">
+            <div class="text-red-500 font-semibold">{{ evaluation.employee.user.get_full_name|title }}</div>
+            <div class="text-sm text-gray-400">
+              {{ evaluation.form.name }} - {{ evaluation.department.title }}
+            </div>
+            <div class="text-xs text-gray-500">
+              {{ evaluation.week_start|date:"M d" }} - {{ evaluation.week_end|date:"M d, Y" }}
+            </div>
+          </div>
+          
+          <div class="dashboard-button-group">
+            {% if evaluation.status == "completed" %}
+              <span class="dashboard-status-badge dashboard-status-completed">Completed</span>
+            {% else %}
+              <span class="dashboard-status-badge dashboard-status-pending">Pending</span>
+            {% endif %}
+            
+            {% if evaluation.status == "completed" %}
+              <a href="{% url 'evaluation:view_evaluation' evaluation.id %}" 
+                 class="dashboard-btn dashboard-btn-view">
+                View
+              </a>
+              {% if today <= evaluation.week_end %}
+                <a href="{% url 'evaluation:evaluate' evaluation.id %}" 
+                   class="dashboard-btn dashboard-btn-edit">
+                  Edit
+                </a>
+              {% endif %}
+            {% else %}
+              <a href="{% url 'evaluation:evaluate' evaluation.id %}" 
+                 class="dashboard-btn dashboard-btn-evaluate">
+                Evaluate
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-8">
+      <i class="fas fa-clipboard-list text-4xl text-gray-600 mb-4"></i>
+      <p class="text-gray-400 text-lg">No dynamic evaluations found</p>
+      <p class="text-gray-500 text-sm mt-2">Dynamic evaluations will appear here when VP activates weekly evaluations</p>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

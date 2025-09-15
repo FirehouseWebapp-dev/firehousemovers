@@ -8,7 +8,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("authentication", "0012_department_userprofile_department"),
-        ("evaluation", "0008_reviewcycle_managerevaluation"),
     ]
 
     operations = [

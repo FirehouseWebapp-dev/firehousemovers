@@ -23,7 +23,7 @@ from django.conf import settings
 
 from authentication.models import UserProfile
 from django.db import transaction
-from evaluation.models_dynamic import EvalForm, DynamicManagerEvaluation, ManagerAnswer, Question
+from evaluation.models import EvalForm, DynamicManagerEvaluation, ManagerAnswer, Question
 
 
 class Command(BaseCommand):

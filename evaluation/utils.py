@@ -5,7 +5,7 @@ Utility functions for evaluation forms to handle race conditions and concurrent 
 from django.db import transaction, IntegrityError
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from .models_dynamic import EvalForm
+from .models import EvalForm
 from firehousemovers.utils.permissions import role_checker
 import logging
 

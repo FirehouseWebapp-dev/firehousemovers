@@ -127,16 +127,16 @@
 
     <div class="fh-foot">
       {% if role.user_profile == evaluation.manager %}
-        <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">
+        <a href="{% url 'evaluation:dashboard' %}" class="btn btn-secondary">
           Back to Dashboard
         </a>
         {% if evaluation.status == "completed" and today <= evaluation.week_end %}
-          <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" class="btn btn-accent">
+          <a href="{% url 'evaluation:evaluate' evaluation.id %}" class="btn btn-accent">
             Edit Evaluation
           </a>
         {% endif %}
       {% else %}
-        <a href="{% url 'evaluation:my_evaluations_v2' %}" class="btn btn-secondary">
+        <a href="{% url 'evaluation:my_evaluations' %}" class="btn btn-secondary">
           Back to My Evaluations
         </a>
       {% endif %}

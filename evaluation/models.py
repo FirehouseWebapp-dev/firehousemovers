@@ -1,115 +1,184 @@
+from __future__ import annotations
 from django.db import models
-from authentication.models import UserProfile
-from .models_dynamic import EvalForm, Question, QuestionChoice, DynamicEvaluation, Answer
-
-class Evaluation(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('overdue', 'Overdue'),
-    ]
-    employee = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='evaluations')
-    manager = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='submitted_evaluations')
-    week_start = models.DateField()
-    week_end = models.DateField()
-
-    # Customer Service Metrics
-    avg_customer_satisfaction_score = models.PositiveSmallIntegerField()
-    five_star_reviews = models.PositiveIntegerField()
-    negative_reviews = models.PositiveIntegerField()
-
-    # Attendance Metrics
-    late_arrivals = models.PositiveIntegerField()
-    absences = models.PositiveIntegerField()
-    reliability_rating = models.PositiveSmallIntegerField()
-
-    # Productivity Metrics
-    avg_move_completion_time = models.DurationField()
-    moves_within_schedule = models.PositiveIntegerField()
-    avg_revenue_per_move = models.FloatField()
-
-    # Safety Metrics
-    damage_claims = models.PositiveIntegerField()
-    safety_incidents = models.PositiveIntegerField()
-    consecutive_damage_free_moves = models.PositiveIntegerField()
-
-    # notes
-    notes = models.TextField(blank=True, null=True)
-
-    # Status
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-
-    # Submission details
-    submitted_at = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        unique_together = ("employee", "week_start", "week_end")
-
-    def __str__(self):
-        return f"{self.employee.user.get_full_name()} - {self.week_start} to {self.week_end}"
+from django.core.exceptions import ValidationError
+from authentication.models import UserProfile, Department
+from .constants import EvaluationStatus
 
 
-class ReviewCycle(models.Model):
-    class CycleType(models.TextChoices):
-        MONTHLY = "monthly", "Monthly"
-        QUARTERLY = "quarterly", "Quarterly"
-        ANNUAL = "annual", "Annual"
-
-    cycle_type = models.CharField(max_length=12, choices=CycleType.choices)
-    period_start = models.DateField()
-    period_end = models.DateField()
-    is_open = models.BooleanField(default=True)  # can toggle when closed
-
+class EvalForm(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="eval_forms")
+    name = models.CharField(max_length=120, default="Weekly Evaluation")
+    description = models.CharField(max_length=255, blank=True, default="")
+    is_active = models.BooleanField(default=False)
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("cycle_type", "period_start", "period_end")
-        ordering = ["-period_start"]
+        # Business rule: Only one active form per department per evaluation type
+        # This is enforced by a unique partial index created in migration 0017
+        pass
 
-    def __str__(self):
-        return f"{self.get_cycle_type_display()} • {self.period_start} → {self.period_end}"
+    def __str__(self) -> str:
+        return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
+    
 
 
-class ManagerEvaluation(models.Model):
-    STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("completed", "Completed"),
-    ]
+class Question(models.Model):
+    class QType(models.TextChoices):
+        SECTION = "section", "Section header (no input)"   # ✅ NEW
+        STARS  = "stars",  "Star rating (1–5)"
+        EMOJI  = "emoji",  "Emoji satisfaction (1–5)"
+        RATING = "rating", "Plain rating (1–5 or 0–10)"
+        SHORT  = "short",  "Short text"
+        LONG   = "long",   "Long text"
+        NUMBER = "number", "Number"
+        BOOL   = "bool",   "Yes/No"
+        SELECT = "select", "Single select"
 
-    cycle = models.ForeignKey(ReviewCycle, on_delete=models.CASCADE, related_name="manager_evaluations")
+    form = models.ForeignKey(EvalForm, on_delete=models.CASCADE, related_name="questions")
+    text = models.CharField(max_length=300)
+    help_text = models.CharField(max_length=300, blank=True, default="")
+    qtype = models.CharField(max_length=20, choices=QType.choices, default=QType.STARS)
+    required = models.BooleanField(default=True)
 
-    # Who is being reviewed (must be a manager)
-    subject_manager = models.ForeignKey(
-        UserProfile, on_delete=models.CASCADE, related_name="received_manager_reviews"
+    # For numeric scales
+    min_value = models.IntegerField(null=True, blank=True, default=1)
+    max_value = models.IntegerField(null=True, blank=True, default=5)
+
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def clean(self):
+        """Validate model-level constraints."""
+        super().clean()
+        
+        # Enforce max_value limits based on question type
+        if self.qtype in [self.QType.STARS, self.QType.EMOJI] and self.max_value is not None and self.max_value > 5:
+            raise ValidationError({
+                'max_value': 'Maximum value cannot exceed 5 for star and emoji rating questions.'
+            })
+        elif self.qtype == self.QType.RATING and self.max_value is not None and self.max_value > 10:
+            raise ValidationError({
+                'max_value': 'Maximum value cannot exceed 10 for plain rating questions.'
+            })
+        
+        # Ensure min_value is not greater than max_value
+        if (self.min_value is not None and self.max_value is not None and 
+            self.min_value > self.max_value):
+            raise ValidationError({
+                'min_value': 'Minimum value cannot be greater than maximum value.'
+            })
+        
+        # Ensure min_value is not negative for any question type that uses it
+        numeric_qtypes = [self.QType.STARS, self.QType.EMOJI, self.QType.RATING, self.QType.NUMBER]
+        if self.qtype in numeric_qtypes and self.min_value is not None and self.min_value < 0:
+            raise ValidationError({
+                'min_value': f'Minimum value cannot be negative for {self.qtype} questions.'
+            })
+
+    def save(self, *args, **kwargs):
+        """Override save to run model validation."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"[{self.qtype}] {self.text[:50]}"
+
+
+class QuestionChoice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
+    value = models.CharField(max_length=100)
+    label = models.CharField(max_length=120)
+
+    class Meta:
+        unique_together = [("question", "value")]
+        ordering = ["id"]
+
+    def __str__(self) -> str:
+        return f"{self.label}"
+
+
+class DynamicEvaluation(models.Model):
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
     )
 
-    # Who reviews (must be senior mgmt or admin)
-    reviewer = models.ForeignKey(
-        UserProfile, on_delete=models.CASCADE, related_name="authored_manager_reviews"
-    )
+    form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="instances")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_evaluations")
+    manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_mgr_evaluations")
+    employee = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_emp_evaluations")
 
-    # Core fields you requested
-    regular_evaluations = models.TextField(blank=True)  # “Regular Evaluations”
-    performance_summary = models.TextField(blank=True)  # “Quarterly or monthly performance summaries”
-    supervisors_comments = models.TextField(blank=True)  # “Supervisor’s comments and observations”
-    annual_review = models.TextField(blank=True)  # “Annual Performance Review”
-    goals_achieved = models.TextField(blank=True)  # “Goals achieved”
-    objectives_set = models.TextField(blank=True)  # “Set objectives”
-    strengths = models.TextField(blank=True)
-    improvement_areas = models.TextField(blank=True)
+    week_start = models.DateField()
+    week_end   = models.DateField()
 
-    # Optional overall rating
-    overall_rating = models.PositiveSmallIntegerField(null=True, blank=True)  # 1–5
-
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = [("employee", "week_start", "week_end", "form")]
+        indexes = [
+            models.Index(fields=["week_start", "week_end", "employee_id"]),
+            models.Index(fields=["manager_id", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.employee} • {self.week_start}–{self.week_end} ({self.form})"
+
+
+class Answer(models.Model):
+    instance = models.ForeignKey(DynamicEvaluation, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
+
+    int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)
+    text_value  = models.TextField(null=True, blank=True)      # short/long
+    choice_value = models.CharField(max_length=100, null=True, blank=True)  # select
 
     class Meta:
-        unique_together = ("cycle", "subject_manager", "reviewer")
-        ordering = ["subject_manager__user__last_name", "subject_manager__user__first_name"]
+        unique_together = [("instance", "question")]
 
-    def __str__(self):
-        subj = self.subject_manager.user.get_full_name() or self.subject_manager.user.username
-        return f"{self.cycle} • {subj} (by {self.reviewer.user.username})"
+
+# Manager Evaluation Models - Using same structure as employee evaluations
+class DynamicManagerEvaluation(models.Model):
+    """Dynamic evaluations for managers, evaluated by senior managers."""
+    STATUS = (
+        (EvaluationStatus.PENDING, "Pending"), 
+        (EvaluationStatus.COMPLETED, "Completed")
+    )
+
+    form = models.ForeignKey(EvalForm, on_delete=models.PROTECT, related_name="manager_instances")
+    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="dynamic_manager_evaluations")
+    senior_manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_senior_evaluations")
+    manager = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="dynamic_manager_reviews")
+
+    # Evaluation period (monthly, quarterly, annual)
+    period_start = models.DateField()
+    period_end = models.DateField()
+
+    status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [("manager", "senior_manager", "period_start", "period_end", "form")]
+        indexes = [
+            models.Index(fields=["period_start", "period_end", "manager_id"]),
+            models.Index(fields=["senior_manager_id", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.manager} • {self.period_start}–{self.period_end} ({self.form})"
+
+
+class ManagerAnswer(models.Model):
+    """Answers for manager evaluations - reuses the same Question model."""
+    instance = models.ForeignKey(DynamicManagerEvaluation, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
+
+    int_value   = models.IntegerField(null=True, blank=True)   # rating/number/bool(0/1)
+    text_value  = models.TextField(null=True, blank=True)      # short/long
+    choice_value = models.CharField(max_length=100, null=True, blank=True)  # select
+
+    class Meta:
+        unique_together = [("instance", "question")]

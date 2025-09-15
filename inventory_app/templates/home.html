@@ -385,7 +385,7 @@
 
                 {% with up=request.user.userprofile role=request.user.userprofile.role %}
                     {% if up.is_senior_management %}
-                    <a href="{% url 'evaluation:regular_reviews' %}">
+                    <a href="{% url 'evaluation:evalform_list' %}">
                     {% elif up.is_manager or up.is_admin or request.user.is_superuser %}
                     <a href="{% url 'evaluation:dashboard' %}">
                     {% else %}
