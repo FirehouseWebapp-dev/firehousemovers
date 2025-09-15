@@ -40,6 +40,43 @@ from .evaluation_handlers import (
 
 # Permission checking functions moved to decorators.py
 
+@login_required
+def evaluation_dashboard(request):
+    """
+    Dashboard view: managers see their team's evaluations; admins see all.
+    Supports optional search by employee name/username.
+    """
+    query = request.GET.get("q", "")
+    profile = request.user.userprofile
+    today = now().date()
+
+    if profile.is_admin:
+        evaluations = (
+            Evaluation.objects
+            .select_related("employee__user")
+            .order_by("-week_start")
+        )
+    else:
+        evaluations = (
+            Evaluation.objects
+            .filter(manager=profile)
+            .select_related("employee__user")
+            .order_by("-week_start")
+        )
+
+    if query:
+        evaluations = evaluations.filter(
+            Q(employee__user__first_name__icontains=query) |
+            Q(employee__user__last_name__icontains=query) |
+            Q(employee__user__username__icontains=query)
+        )
+
+    return render(request, "evaluation/dashboard.html", {
+        "evaluations": evaluations,
+        "today": today,
+    })
+
+
 
 @login_required
 def evalform_list(request):

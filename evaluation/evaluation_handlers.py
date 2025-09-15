@@ -338,6 +338,6 @@ def _send_evaluation_notification_email(evaluation, config):
 def _get_dashboard_url(config):
     """Get the appropriate dashboard URL based on evaluation type."""
     if config == EMPLOYEE_EVALUATION_CONFIG:
-        return "evaluation:dashboard2"
+        return "evaluation:dashboard"
     else:  # MANAGER_EVALUATION_CONFIG
         return "evaluation:manager_evaluation_dashboard"

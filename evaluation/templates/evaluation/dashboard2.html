@@ -61,13 +61,13 @@
                 View
               </a>
               {% if today <= evaluation.week_end %}
-                <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" 
+                <a href="{% url 'evaluation:evaluate' evaluation.id %}" 
                    class="dashboard-btn dashboard-btn-edit">
                   Edit
                 </a>
               {% endif %}
             {% else %}
-              <a href="{% url 'evaluation:evaluate_dynamic' evaluation.id %}" 
+              <a href="{% url 'evaluation:evaluate' evaluation.id %}" 
                  class="dashboard-btn dashboard-btn-evaluate">
                 Evaluate
               </a>

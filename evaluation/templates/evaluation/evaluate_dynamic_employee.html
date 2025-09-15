@@ -114,7 +114,7 @@
     </div>
 
     <div class="fh-foot">
-      <a href="{% url 'evaluation:dashboard2' %}" class="btn btn-secondary">Cancel</a>
+      <a href="{% url 'evaluation:dashboard' %}" class="btn btn-secondary">Cancel</a>
       {% if can_submit %}
         <button type="submit" form="evaluation-form" class="btn btn-accent">
           {% if evaluation.status == "completed" %}Update Evaluation{% else %}Submit Evaluation{% endif %}

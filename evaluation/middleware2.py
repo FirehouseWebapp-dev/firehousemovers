@@ -30,14 +30,18 @@ class OverdueEvaluationLockMiddleware:
             # Block access to everything except overdue evaluations
             path = request.path
             if (
-                not path.startswith("/evaluation/pending-v2")
-                and not path.startswith("/evaluation/evaluate-dynamic")
+                not path.startswith("/evaluation/pending")
+                and not path.startswith("/evaluation/evaluate")
                 and not path.startswith("/evaluation/dynamic-evaluation")
+                and not path.startswith("/evaluation/pending-v2")
+                and not path.startswith("/evaluation/evaluate-dynamic")
+                and not path.startswith("/logout")
+                and not path.startswith("/login")
             ):
                 messages.error(
                     request,
                     f"You have {overdue_dynamic_qs.count()} overdue evaluation(s) that must be completed before accessing other pages."
                 )
-                return redirect("evaluation:pending_v2")
+                return redirect("evaluation:pending")
 
         return self.get_response(request)
