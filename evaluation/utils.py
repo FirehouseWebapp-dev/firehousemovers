@@ -5,11 +5,70 @@ Utility functions for evaluation forms to handle race conditions and concurrent 
 from django.db import transaction, IntegrityError
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.db.models import Count, Q
 from .models import EvalForm
+from .constants import EvaluationStatus
 from firehousemovers.utils.permissions import role_checker
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def calculate_eval_stats(queryset, today, date_field):
+    """
+    Helper function to calculate evaluation statistics (total, completed, pending, overdue).
+    
+    Args:
+        queryset: Django QuerySet or list of evaluation objects
+        today: Current date for overdue calculation
+        date_field: Field name for date comparison (e.g., 'week_end', 'period_end')
+    
+    Returns:
+        Dictionary with total, completed, pending, overdue counts
+    """
+    # Handle both QuerySets and lists
+    if hasattr(queryset, 'aggregate'):
+        # It's a QuerySet, use database aggregation
+        return queryset.aggregate(
+            total=Count('id'),
+            completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
+            pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
+            overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **{f"{date_field}__lt": today}))
+        )
+    else:
+        # It's a list, calculate manually
+        total = len(queryset)
+        completed = len([e for e in queryset if e.status == EvaluationStatus.COMPLETED])
+        pending = len([e for e in queryset if e.status == EvaluationStatus.PENDING])
+        overdue = len([e for e in queryset if e.status == EvaluationStatus.PENDING and getattr(e, date_field) < today])
+        
+        return {
+            'total': total,
+            'completed': completed,
+            'pending': pending,
+            'overdue': overdue
+        }
+
+
+def determine_status(total, pending, overdue):
+    """
+    Helper function to determine status based on evaluation counts.
+    
+    Args:
+        total: Total number of evaluations
+        pending: Number of pending evaluations
+        overdue: Number of overdue evaluations
+    
+    Returns:
+        Status string: 'awaiting', 'critical', 'needs_attention', or 'on_track'
+    """
+    if total == 0:
+        return 'awaiting'
+    if overdue > 0:
+        return 'critical'
+    if pending > 0:
+        return 'needs_attention'
+    return 'on_track'
 
 
 def activate_evalform_safely(form_obj, request, success_message=None):

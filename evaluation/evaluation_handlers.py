@@ -19,26 +19,7 @@ logger = logging.getLogger(__name__)
 from .models import DynamicEvaluation, DynamicManagerEvaluation
 from .forms import DynamicEvaluationForm
 from .constants import EvaluationStatus
-
-def calculate_eval_stats(queryset, today, date_field):
-    """
-    Helper function to calculate evaluation statistics (total, completed, pending, overdue).
-    
-    Args:
-        queryset: Django QuerySet to aggregate
-        today: Current date for overdue calculation
-        date_field: Field name for date comparison (e.g., 'week_end', 'period_end')
-    
-    Returns:
-        Dictionary with total, completed, pending, overdue counts
-    """
-    period_end_filter = {f"{date_field}__lt": today}
-    return queryset.aggregate(
-        total=Count('id'),
-        completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
-        pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
-        overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **period_end_filter))
-    )
+from .utils import calculate_eval_stats
 
 
 class EvaluationConfig:

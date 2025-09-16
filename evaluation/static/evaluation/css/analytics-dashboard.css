@@ -387,8 +387,41 @@
 .bg-blue-600 { background-color: #2563eb; }
 .bg-yellow-600 { background-color: #d97706; }
 .bg-purple-600 { background-color: #7c3aed; }
-.bg-red-600 { background-color: #dc2626; }
 .bg-gray-600 { background-color: #4b5563; }
+
+/* Analytics Dashboard Utility Classes */
+.analytics-card-icon-overdue {
+    background-color: #dc2626;
+}
+
+.analytics-status-badge-critical {
+    background-color: #dc2626;
+}
+
+.analytics-nav-link {
+    transition: background-color 0.2s ease;
+}
+
+.analytics-nav-link:hover {
+    background-color: #dc2626;
+}
+
+.analytics-nav-link.active {
+    background-color: #ef4444; /* bg-red-500 */
+}
+
+.analytics-btn-primary {
+    background-color: #dc2626;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.analytics-btn-primary:hover {
+    background-color: #b91c1c; /* bg-red-700 */
+}
 
 /* Chart Tab Styles */
 .chart-tab-btn {

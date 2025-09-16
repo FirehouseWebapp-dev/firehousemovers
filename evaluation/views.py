@@ -12,6 +12,10 @@ from django.conf import settings
 from django.urls import reverse
 import json
 import logging
+from django.core.cache import cache
+from datetime import datetime
+from django.db.models import Prefetch
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ from .decorators import (
 from .utils import (
     activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
     check_department_permission, process_form_creation_with_conflicts, 
-    process_form_edit_with_conflicts
+    process_form_edit_with_conflicts, calculate_eval_stats, determine_status
 )
 from .evaluation_handlers import (
     handle_evaluation_submission, handle_evaluation_view, 
@@ -42,44 +46,6 @@ from .evaluation_handlers import (
 
 # Permission checking functions moved to decorators.py
 
-def calculate_eval_stats(queryset, today, date_field):
-    """
-    Helper function to calculate evaluation statistics (total, completed, pending, overdue).
-    
-    Args:
-        queryset: Django QuerySet to aggregate
-        today: Current date for overdue calculation
-        date_field: Field name for date comparison (e.g., 'week_end', 'period_end')
-    
-    Returns:
-        Dictionary with total, completed, pending, overdue counts
-    """
-    return queryset.aggregate(
-        total=Count('id'),
-        completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
-        pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
-        overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **{f"{date_field}__lt": today}))
-    )
-
-def determine_status(total, pending, overdue):
-    """
-    Helper function to determine status based on evaluation counts.
-    
-    Args:
-        total: Total number of evaluations
-        pending: Number of pending evaluations
-        overdue: Number of overdue evaluations
-    
-    Returns:
-        Status string: 'awaiting', 'critical', 'needs_attention', or 'on_track'
-    """
-    if total == 0:
-        return 'awaiting'
-    if overdue > 0:
-        return 'critical'
-    if pending > 0:
-        return 'needs_attention'
-    return 'on_track'
 
 
 @login_required
@@ -436,7 +402,8 @@ def evaluation_dashboard(request):
     """
     checker = get_role_checker(request.user)
     
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
     # Get manager's team dynamic evaluations with optimized stats calculation
     evaluations = (
@@ -448,7 +415,7 @@ def evaluation_dashboard(request):
     
     # Calculate all counts in a single optimized query using aggregation
     
-    stats = calculate_eval_stats(evaluations, today, "week_end")
+    stats = calculate_eval_stats(evaluations, today_date, "week_end")
     # Rename keys to match original naming
     stats = {
         'pending_count': stats['pending'],
@@ -526,7 +493,8 @@ def manager_evaluation_dashboard(request):
     """
     checker = get_role_checker(request.user)
     
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
     # Get manager evaluations assigned to this senior manager with optimized query
     evaluations = (
@@ -542,20 +510,22 @@ def manager_evaluation_dashboard(request):
     # Get unique combinations of form name and period
     unique_periods = evaluations.values('form__name', 'period_start', 'period_end').distinct()
     
+    # Pre-compute all stats to avoid database hits in loop
+    period_stats_map = {}
+    for eval in evaluations:
+        key = (eval.form.name, eval.period_start, eval.period_end)
+        if key not in period_stats_map:
+            period_stats_map[key] = []
+        period_stats_map[key].append(eval)
+    
     for period_info in unique_periods:
         form_name = period_info['form__name']
         period_start = period_info['period_start']
         period_end = period_info['period_end']
         
-        # Calculate all stats in a single optimized query using aggregation
-        
-        stats = evaluations.filter(
-            form__name=form_name,
-            period_start=period_start,
-            period_end=period_end
-        )
-        
-        period_stats = calculate_eval_stats(period_evaluations, today, "period_end")
+        # Use pre-computed stats to avoid database hits
+        period_evaluations = period_stats_map.get((form_name, period_start, period_end), [])
+        period_stats = calculate_eval_stats(period_evaluations, today_date, "period_end")
         # Rename keys to match original naming
         period_stats = {
             'total_count': period_stats['total'],
@@ -626,7 +596,8 @@ def manager_evaluation_cards_detail(request):
     """
     checker = get_role_checker(request.user)
     
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
     # Get filter parameters
     form_name = request.GET.get('form')
@@ -638,7 +609,6 @@ def manager_evaluation_cards_detail(request):
     
     # Parse dates
     try:
-        from datetime import datetime
         period_start_date = datetime.strptime(period_start, '%Y-%m-%d').date()
         period_end_date = datetime.strptime(period_end, '%Y-%m-%d').date()
     except ValueError:
@@ -659,7 +629,7 @@ def manager_evaluation_cards_detail(request):
     
     # Calculate all stats in a single optimized query using aggregation
     
-    stats = calculate_eval_stats(evaluations, today, "period_end")
+    stats = calculate_eval_stats(evaluations, today_date, "period_end")
     # Rename keys to match original naming
     stats = {
         'total_count': stats['total'],
@@ -750,27 +720,64 @@ def pending_manager_evaluations(request):
 def senior_manager_analytics_dashboard(request):
     """
     Senior manager analytics dashboard with comprehensive organizational insights.
+    Cached for 30 minutes to improve performance for senior-only view.
     """
     checker = get_role_checker(request.user)
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
-    # Get all departments for senior managers with prefetched evaluations
-    departments = Department.objects.prefetch_related(
+    # Create cache key based on user and date
+    cache_key = f"analytics_dashboard_{request.user.id}_{today_date}"
+    
+    # Try to get cached data first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info(f"Analytics dashboard cache hit for user {request.user.id}")
+        # Update the last viewed timestamp to current time
+        current_time = timezone.now()
+        cached_data['last_viewed_at'] = current_time
+        # Update cache with new timestamp
+        cache.set(cache_key, cached_data, timeout=1800)
+        return render(request, "evaluation/senior_manager_analytics_dashboard.html", cached_data)
+    
+    logger.info(f"Analytics dashboard cache miss for user {request.user.id}, computing data...")
+    
+    # Get all departments for senior managers with optimized prefetched evaluations
+    
+    # Prefetch all evaluations for department stats (need total counts)
+    employee_prefetch = Prefetch(
         'dynamic_evaluations',
-        'dynamic_manager_evaluations'
-    ).all()
+        queryset=DynamicEvaluation.objects.only('id', 'status', 'week_end', 'department_id', 'employee_id')
+    )
+    manager_prefetch = Prefetch(
+        'dynamic_manager_evaluations', 
+        queryset=DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'department_id', 'manager_id')
+    )
     
-    # Calculate overall organizational metrics
+    departments = Department.objects.prefetch_related(
+        employee_prefetch,
+        manager_prefetch
+    ).only('id', 'title').all()
+    
+    # Calculate overall organizational metrics - optimize for summary data
     all_employee_evaluations = DynamicEvaluation.objects.select_related(
         'employee__user', 'form', 'department'
+    ).only(
+        'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'department_id', 
+        'form_id', 'employee__user__first_name', 'employee__user__last_name',
+        'department__title', 'form__name'
     ).all()
     
     all_manager_evaluations = DynamicManagerEvaluation.objects.select_related(
         'manager__user', 'form', 'department'
+    ).only(
+        'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'department_id',
+        'form_id', 'manager__user__first_name', 'manager__user__last_name',
+        'department__title', 'form__name'
     ).all()
     
     # Overall completion rates
-    employee_stats = calculate_eval_stats(all_employee_evaluations, today, "week_end")
+    employee_stats = calculate_eval_stats(all_employee_evaluations, today_date, "week_end")
     # Rename keys to match original naming
     employee_stats = {
         'total_employee_evals': employee_stats['total'],
@@ -779,7 +786,7 @@ def senior_manager_analytics_dashboard(request):
         'overdue_employee_evals': employee_stats['overdue']
     }
     
-    manager_stats = calculate_eval_stats(all_manager_evaluations, today, "period_end")
+    manager_stats = calculate_eval_stats(all_manager_evaluations, today_date, "period_end")
     # Rename keys to match original naming
     manager_stats = {
         'total_manager_evals': manager_stats['total'],
@@ -795,8 +802,8 @@ def senior_manager_analytics_dashboard(request):
         dept_employee_evals = dept.dynamic_evaluations.all()
         dept_manager_evals = dept.dynamic_manager_evaluations.all()
         
-        dept_employee_stats = calculate_eval_stats(dept_employee_evals, today, "week_end")
-        dept_manager_stats = calculate_eval_stats(dept_manager_evals, today, "period_end")
+        dept_employee_stats = calculate_eval_stats(dept_employee_evals, today_date, "week_end")
+        dept_manager_stats = calculate_eval_stats(dept_manager_evals, today_date, "period_end")
         
         # Calculate completion rates
         employee_completion_rate = (dept_employee_stats['completed'] / dept_employee_stats['total'] * 100) if dept_employee_stats['total'] > 0 else 0
@@ -827,12 +834,26 @@ def senior_manager_analytics_dashboard(request):
     # Sort departments by employee completion rate
     department_analytics.sort(key=lambda x: x['employee_completion_rate'], reverse=True)
     
-    # Manager effectiveness analytics
-    managers = UserProfile.objects.filter(role='manager').select_related('user').prefetch_related(
-        'dynamic_mgr_evaluations',  # Evaluations they manage
-        'dynamic_manager_reviews',  # Manager evaluations they receive
-        'team_members'  # Prefetch team members
+    # Manager effectiveness analytics - optimize with prefetch
+    # Prefetch all evaluations for manager stats (need total counts)
+    mgr_evaluations_prefetch = Prefetch(
+        'dynamic_mgr_evaluations',
+        queryset=DynamicEvaluation.objects.only('id', 'status', 'week_end', 'employee_id', 'manager_id')
     )
+    manager_reviews_prefetch = Prefetch(
+        'dynamic_manager_reviews',
+        queryset=DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'manager_id', 'senior_manager_id')
+    )
+    team_members_prefetch = Prefetch(
+        'team_members',
+        queryset=UserProfile.objects.only('id', 'user__first_name', 'user__last_name', 'role')
+    )
+    
+    managers = UserProfile.objects.filter(role='manager').select_related('user').prefetch_related(
+        mgr_evaluations_prefetch,
+        manager_reviews_prefetch,
+        team_members_prefetch
+    ).only('id', 'user__first_name', 'user__last_name', 'role')
     manager_effectiveness = []
     
     for manager in managers:
@@ -840,8 +861,8 @@ def senior_manager_analytics_dashboard(request):
         manager_team_evals = manager.dynamic_mgr_evaluations.all()
         manager_self_evals = manager.dynamic_manager_reviews.all()
         
-        team_stats = calculate_eval_stats(manager_team_evals, today, "week_end")
-        self_stats = calculate_eval_stats(manager_self_evals, today, "period_end")
+        team_stats = calculate_eval_stats(manager_team_evals, today_date, "week_end")
+        self_stats = calculate_eval_stats(manager_self_evals, today_date, "period_end")
         
         team_completion_rate = (team_stats['completed'] / team_stats['total'] * 100) if team_stats['total'] > 0 else 0
         self_completion_rate = (self_stats['completed'] / self_stats['total'] * 100) if self_stats['total'] > 0 else 0
@@ -866,17 +887,27 @@ def senior_manager_analytics_dashboard(request):
     manager_effectiveness.sort(key=lambda x: x['team_completion_rate'], reverse=True)
     
     # Teams performance analytics (grouped by manager/team leader)
+    # Pre-compute team member evaluations to avoid database hits
+    team_member_evaluations = {}
+    for eval in all_employee_evaluations:
+        employee_id = eval.employee_id
+        if employee_id not in team_member_evaluations:
+            team_member_evaluations[employee_id] = []
+        team_member_evaluations[employee_id].append(eval)
+    
     teams_analytics = []
     for manager in managers:
         # Use prefetched team members to avoid N+1 queries
-        team_members = manager.team_members.all()
+        team_members = list(manager.team_members.all())
         
-        # Get evaluations for all team members using prefetched data
-        team_employee_evals = all_employee_evaluations.filter(employee__in=team_members)
-        team_manager_evals = manager.dynamic_manager_reviews.all()
+        # Get evaluations for all team members using pre-computed data
+        team_employee_evals = []
+        for member in team_members:
+            team_employee_evals.extend(team_member_evaluations.get(member.id, []))
+        team_manager_evals = list(manager.dynamic_manager_reviews.all())
         
-        team_employee_stats = calculate_eval_stats(team_employee_evals, today, "week_end")
-        team_manager_stats = calculate_eval_stats(team_manager_evals, today, "period_end")
+        team_employee_stats = calculate_eval_stats(team_employee_evals, today_date, "week_end")
+        team_manager_stats = calculate_eval_stats(team_manager_evals, today_date, "period_end")
         
         # Calculate completion rates
         team_employee_completion_rate = (team_employee_stats['completed'] / team_employee_stats['total'] * 100) if team_employee_stats['total'] > 0 else 0
@@ -901,8 +932,8 @@ def senior_manager_analytics_dashboard(request):
         else:
             team_status = 'on_track'
         
-        # Get team size
-        team_size = team_members.count()
+        # Get team size (use len() to avoid DB hit on prefetched data)
+        team_size = len(team_members)
         
         teams_analytics.append({
             'manager': manager,
@@ -927,7 +958,7 @@ def senior_manager_analytics_dashboard(request):
     overall_employee_completion_rate = (employee_stats['completed_employee_evals'] / total_employee_evals * 100) if total_employee_evals > 0 else 0
     overall_manager_completion_rate = (manager_stats['completed_manager_evals'] / total_manager_evals * 100) if total_manager_evals > 0 else 0
     
-    # Recent activity (last 30 days)
+    # Recent activity (last 30 days) - use timezone-aware datetime for precision
     thirty_days_ago = today - timedelta(days=30)
     recent_employee_evals = all_employee_evaluations.filter(submitted_at__gte=thirty_days_ago)
     recent_manager_evals = all_manager_evaluations.filter(submitted_at__gte=thirty_days_ago)
@@ -940,12 +971,12 @@ def senior_manager_analytics_dashboard(request):
         dept_employee_evals = dept.dynamic_evaluations.all()
         dept_manager_evals = dept.dynamic_manager_evaluations.all()
         
-        dept_emp_completed = dept_employee_evals.filter(status=EvaluationStatus.COMPLETED).count()
-        dept_emp_total = dept_employee_evals.count()
+        dept_emp_completed = len([e for e in dept_employee_evals if e.status == EvaluationStatus.COMPLETED])
+        dept_emp_total = len(dept_employee_evals)
         dept_emp_completion_rate = (dept_emp_completed / dept_emp_total * 100) if dept_emp_total > 0 else 0
         
-        dept_mgr_completed = dept_manager_evals.filter(status=EvaluationStatus.COMPLETED).count()
-        dept_mgr_total = dept_manager_evals.count()
+        dept_mgr_completed = len([e for e in dept_manager_evals if e.status == EvaluationStatus.COMPLETED])
+        dept_mgr_total = len(dept_manager_evals)
         dept_mgr_completion_rate = (dept_mgr_completed / dept_mgr_total * 100) if dept_mgr_total > 0 else 0
         
         # Calculate department average rating
@@ -967,7 +998,10 @@ def senior_manager_analytics_dashboard(request):
             'completed_evaluations': dept_emp_completed + dept_mgr_completed
         })
     
-    return render(request, "evaluation/senior_manager_analytics_dashboard.html", {
+    # Prepare context data with current time
+    current_time = timezone.now()
+    
+    context_data = {
         'departments': departments,
         'department_analytics': department_analytics,
         'teams_analytics': teams_analytics,
@@ -976,11 +1010,21 @@ def senior_manager_analytics_dashboard(request):
         'manager_stats': manager_stats,
         'overall_employee_completion_rate': round(overall_employee_completion_rate, 1),
         'overall_manager_completion_rate': round(overall_manager_completion_rate, 1),
-        'recent_employee_evals': recent_employee_evals.count(),
-        'recent_manager_evals': recent_manager_evals.count(),
-        'today': today,
+        'recent_employee_evals': list(recent_employee_evals),  # Convert to list to avoid accidental queries
+        'recent_manager_evals': list(recent_manager_evals),    # Convert to list to avoid accidental queries
+        'recent_employee_evals_count': len(recent_employee_evals),  # Pre-computed count
+        'recent_manager_evals_count': len(recent_manager_evals),    # Pre-computed count
+        'today': today_date,
         'department_comparison': department_comparison,
-    })
+        'data_computed_at': current_time,  # When the data was computed
+        'last_viewed_at': current_time,    # When the user last viewed (will be updated on each view)
+    }
+    
+    # Cache the computed data for 30 minutes (1800 seconds)
+    cache.set(cache_key, context_data, timeout=1800)
+    logger.info(f"Analytics dashboard data cached for user {request.user.id}")
+    
+    return render(request, "evaluation/senior_manager_analytics_dashboard.html", context_data)
 
 
 @login_required
@@ -990,32 +1034,51 @@ def analytics_department_detail(request, department_id):
     Detailed analytics view for a specific department.
     """
     department = get_object_or_404(Department, id=department_id)
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
-    # Get department-specific evaluations
+    # Get department-specific evaluations - optimize for detail page
     dept_employee_evals = DynamicEvaluation.objects.filter(department=department).select_related(
         'employee__user', 'form', 'manager__user'
+    ).only(
+        'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'manager_id',
+        'employee__user__first_name', 'employee__user__last_name',
+        'manager__user__first_name', 'manager__user__last_name',
+        'form__name'
     )
     
     dept_manager_evals = DynamicManagerEvaluation.objects.filter(department=department).select_related(
         'manager__user', 'form', 'senior_manager__user'
+    ).only(
+        'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'senior_manager_id',
+        'manager__user__first_name', 'manager__user__last_name',
+        'senior_manager__user__first_name', 'senior_manager__user__last_name',
+        'form__name'
     )
     
     # Department statistics
-    dept_stats = calculate_eval_stats(dept_employee_evals, today, "week_end")
+    dept_stats = calculate_eval_stats(dept_employee_evals, today_date, "week_end")
     
     # Calculate completion rate
     completion_rate = (dept_stats['completed'] / dept_stats['total'] * 100) if dept_stats['total'] > 0 else 0
     
-    # Employee performance in this department
+    # Employee performance in this department - pre-compute all stats to avoid N+1 queries
     employees = UserProfile.objects.filter(
         dynamic_emp_evaluations__department=department
     ).distinct().select_related('user')
     
+    # Group evaluations by employee to avoid N+1 queries
+    employee_evaluations = {}
+    for eval in dept_employee_evals:
+        employee_id = eval.employee_id
+        if employee_id not in employee_evaluations:
+            employee_evaluations[employee_id] = []
+        employee_evaluations[employee_id].append(eval)
+    
     employee_performance = []
     for employee in employees:
-        emp_evals = dept_employee_evals.filter(employee=employee)
-        emp_stats = calculate_eval_stats(emp_evals, today, "week_end")
+        emp_evals = employee_evaluations.get(employee.id, [])
+        emp_stats = calculate_eval_stats(emp_evals, today_date, "week_end")
         
         completion_rate = (emp_stats['completed'] / emp_stats['total'] * 100) if emp_stats['total'] > 0 else 0
         
@@ -1033,7 +1096,7 @@ def analytics_department_detail(request, department_id):
     # Sort by completion rate
     employee_performance.sort(key=lambda x: x['completion_rate'], reverse=True)
     
-    # Recent evaluations in this department
+    # Recent evaluations in this department - use timezone-aware datetime for precision
     thirty_days_ago = today - timedelta(days=30)
     recent_evals = dept_employee_evals.filter(submitted_at__gte=thirty_days_ago).order_by('-submitted_at')[:10]
     
@@ -1042,8 +1105,9 @@ def analytics_department_detail(request, department_id):
         'dept_stats': dept_stats,
         'completion_rate': round(completion_rate, 1),
         'employee_performance': employee_performance,
-        'recent_evals': recent_evals,
-        'today': today,
+        'recent_evals': list(recent_evals),  # Convert to list to avoid accidental queries
+        'recent_evals_count': len(recent_evals),  # Pre-computed count
+        'today': today_date,
     })
 
 
@@ -1054,35 +1118,56 @@ def analytics_team_detail(request, team_leader_id):
     Detailed analytics view for a specific team (managed by a team leader).
     """
     team_leader = get_object_or_404(UserProfile, id=team_leader_id, role='manager')
-    today = now().date()
+    today = now()  # Use timezone-aware datetime for precision
+    today_date = today.date()  # Keep date for display purposes
     
-    # Get team members
-    team_members = UserProfile.objects.filter(manager=team_leader).select_related('user')
+    # Get team members - optimize for detail page
+    team_members = UserProfile.objects.filter(manager=team_leader).select_related('user').only(
+        'id', 'user__first_name', 'user__last_name', 'role'
+    )
     
-    # Get team-specific evaluations (both employee and manager evaluations)
+    # Get team-specific evaluations - optimize for detail page
     team_employee_evals = DynamicEvaluation.objects.filter(employee__in=team_members).select_related(
         'employee__user', 'form', 'manager__user'
+    ).only(
+        'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'manager_id',
+        'employee__user__first_name', 'employee__user__last_name',
+        'manager__user__first_name', 'manager__user__last_name',
+        'form__name'
     )
     
     team_manager_evals = DynamicManagerEvaluation.objects.filter(manager=team_leader).select_related(
         'manager__user', 'form', 'senior_manager__user'
+    ).only(
+        'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'senior_manager_id',
+        'manager__user__first_name', 'manager__user__last_name',
+        'senior_manager__user__first_name', 'senior_manager__user__last_name',
+        'form__name'
     )
     
     # Team statistics
-    team_stats = calculate_eval_stats(team_employee_evals, today, "week_end")
+    team_stats = calculate_eval_stats(team_employee_evals, today_date, "week_end")
     
     # Manager self-evaluation statistics
-    manager_stats = calculate_eval_stats(team_manager_evals, today, "period_end")
+    manager_stats = calculate_eval_stats(team_manager_evals, today_date, "period_end")
     
     # Calculate completion rates
     team_completion_rate = (team_stats['completed'] / team_stats['total'] * 100) if team_stats['total'] > 0 else 0
     manager_completion_rate = (manager_stats['completed'] / manager_stats['total'] * 100) if manager_stats['total'] > 0 else 0
     
-    # Team member performance
+    # Team member performance - pre-compute all stats to avoid N+1 queries
+    # Group evaluations by team member to avoid N+1 queries
+    member_evaluations = {}
+    for eval in team_employee_evals:
+        member_id = eval.employee_id
+        if member_id not in member_evaluations:
+            member_evaluations[member_id] = []
+        member_evaluations[member_id].append(eval)
+    
     member_performance = []
     for member in team_members:
-        member_evals = team_employee_evals.filter(employee=member)
-        member_stats = calculate_eval_stats(member_evals, today, "week_end")
+        member_evals = member_evaluations.get(member.id, [])
+        member_stats = calculate_eval_stats(member_evals, today_date, "week_end")
         
         completion_rate = (member_stats['completed'] / member_stats['total'] * 100) if member_stats['total'] > 0 else 0
         
@@ -1100,18 +1185,19 @@ def analytics_team_detail(request, team_leader_id):
     # Sort by completion rate
     member_performance.sort(key=lambda x: x['completion_rate'], reverse=True)
     
-    # Recent evaluations in this team
+    # Recent evaluations in this team - use timezone-aware datetime for precision
     thirty_days_ago = today - timedelta(days=30)
     recent_evals = team_employee_evals.filter(submitted_at__gte=thirty_days_ago).order_by('-submitted_at')[:10]
     
     return render(request, "evaluation/analytics_team_detail.html", {
         'team_leader': team_leader,
-        'team_members': team_members,
+        'team_members': list(team_members),  # Convert to list to avoid accidental queries
         'team_stats': team_stats,
         'manager_stats': manager_stats,
         'team_completion_rate': round(team_completion_rate, 1),
         'manager_completion_rate': round(manager_completion_rate, 1),
         'member_performance': member_performance,
-        'recent_evals': recent_evals,
-        'today': today,
+        'recent_evals': list(recent_evals),  # Convert to list to avoid accidental queries
+        'recent_evals_count': len(recent_evals),  # Pre-computed count
+        'today': today_date,
     })

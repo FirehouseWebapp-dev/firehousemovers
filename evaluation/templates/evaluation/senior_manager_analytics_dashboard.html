@@ -1,5 +1,6 @@
 {% extends "evaluation/base.html" %}
 {% load static %}
+{% load cache %}
 
 {% block title %}Analytics Dashboard - Executive View{% endblock %}
 
@@ -18,9 +19,9 @@
             <div class="flex items-center space-x-4">
                 <div class="text-right">
                     <p class="text-sm text-gray-400">Last Viewed</p>
-                    <p class="text-sm text-white">{{ today|date:"M d, Y" }}</p>
+                    <p class="text-sm text-white" id="last-viewed-time">{{ last_viewed_at|date:"M d, Y H:i" }}</p>
                 </div>
-                <button class="analytics-refresh-btn" onclick="location.reload()">
+                <button class="analytics-refresh-btn" onclick="updateLastViewedTime(); location.reload()">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
@@ -74,7 +75,7 @@
             <!-- Overdue Evaluations -->
             <div class="analytics-card">
                 <div class="analytics-card-header">
-                    <div class="analytics-card-icon bg-red-600">
+                    <div class="analytics-card-icon analytics-card-icon-overdue">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <div class="analytics-card-title">
@@ -103,10 +104,10 @@
                     </div>
                 </div>
                 <div class="analytics-card-content">
-                    <div class="analytics-stat-large">{{ recent_employee_evals|add:recent_manager_evals }}</div>
+                    <div class="analytics-stat-large">{{ recent_employee_evals_count|add:recent_manager_evals_count }}</div>
                     <div class="analytics-stat-breakdown">
-                        <span class="text-purple-400">{{ recent_employee_evals }} Employee</span>
-                        <span class="text-purple-400">{{ recent_manager_evals }} Manager</span>
+                        <span class="text-purple-400">{{ recent_employee_evals_count }} Employee</span>
+                        <span class="text-purple-400">{{ recent_manager_evals_count }} Manager</span>
                     </div>
                 </div>
             </div>
@@ -114,6 +115,7 @@
 
 
         <!-- Department Performance Section -->
+        {% cache 1800 department_performance_section today %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Department Performance</h2>
@@ -180,7 +182,7 @@
                                         <i class="fas fa-exclamation-triangle mr-1"></i>Needs Attention
                                     </span>
                                 {% elif dept_data.employee_status == 'critical' %}
-                                    <span class="analytics-status-badge bg-red-600">
+                                    <span class="analytics-status-badge analytics-status-badge-critical">
                                         <i class="fas fa-times-circle mr-1"></i>Critical
                                     </span>
                                 {% endif %}
@@ -198,8 +200,10 @@
                 </table>
             </div>
         </div>
+        {% endcache %}
 
         <!-- Teams Performance Section -->
+        {% cache 1800 teams_performance_section today %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Teams Performance</h2>
@@ -273,7 +277,7 @@
                                         <i class="fas fa-exclamation-triangle mr-1"></i>Needs Attention
                                     </span>
                                 {% elif team_data.team_status == 'critical' %}
-                                    <span class="analytics-status-badge bg-red-600">
+                                    <span class="analytics-status-badge analytics-status-badge-critical">
                                         <i class="fas fa-times-circle mr-1"></i>Critical
                                     </span>
                                 {% endif %}
@@ -291,8 +295,10 @@
                 </table>
             </div>
         </div>
+        {% endcache %}
 
         <!-- Manager Effectiveness Section -->
+        {% cache 1800 manager_effectiveness_section today %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Manager Effectiveness</h2>
@@ -357,7 +363,7 @@
                                     <i class="fas fa-exclamation-triangle mr-1"></i>Needs Attention
                                 </span>
                             {% elif manager_data.team_status == 'critical' %}
-                                <span class="analytics-status-badge bg-red-600">
+                                <span class="analytics-status-badge analytics-status-badge-critical">
                                     <i class="fas fa-times-circle mr-1"></i>Critical
                                 </span>
                             {% endif %}
@@ -367,6 +373,10 @@
                 {% endfor %}
             </div>
         </div>
+        {% endcache %}
 
 </div>
+
+{% load static %}
+<script src="{% static 'evaluation/js/senior_manager_analytics_dashboard.js' %}"></script>
 {% endblock %}
