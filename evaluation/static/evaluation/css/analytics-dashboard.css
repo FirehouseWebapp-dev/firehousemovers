@@ -1,0 +1,444 @@
+/* Analytics Dashboard Styles */
+
+/* Main Layout - Remove since we're using base.html layout */
+
+/* Header Styles */
+.analytics-header {
+    border-bottom: 1px solid #374151;
+    padding: 1.5rem;
+    background-color: #1a1a1a;
+}
+
+.analytics-refresh-btn {
+    background-color: #1a1a1a;
+    border: 1px solid #374151;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.analytics-refresh-btn:hover {
+    background-color: #374151;
+    color: #ef4444;
+}
+
+/* Content Area */
+.analytics-content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+/* Card Styles */
+.analytics-card {
+    background-color: #1a1a1a;
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s;
+}
+
+.analytics-card:hover {
+    border-color: #4b5563;
+    transform: translateY(-2px);
+}
+
+.analytics-card-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.analytics-card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.analytics-card-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.analytics-card-title h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.analytics-card-title p {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.analytics-card-content {
+    text-align: center;
+}
+
+.analytics-stat-large {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.analytics-stat-breakdown {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* Section Styles */
+.analytics-section {
+    margin-bottom: 2rem;
+}
+
+.analytics-section-header {
+    margin-bottom: 1.5rem;
+}
+
+.analytics-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.5rem 0;
+}
+
+.analytics-section-subtitle {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* Table Styles */
+.analytics-table-container {
+    background-color: #1a1a1a;
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.analytics-table th {
+    background-color: #2a2a2a;
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #374151;
+}
+
+.analytics-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #374151;
+    color: #d1d5db;
+    vertical-align: middle;
+}
+
+.analytics-table tr:hover {
+    background-color: #2a2a2a;
+}
+
+.analytics-department-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.analytics-eval-stats {
+    display: flex;
+    flex-direction: column;
+}
+
+.analytics-completion-bar {
+    position: relative;
+    background-color: #374151;
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+}
+
+.analytics-completion-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #10b981;
+    border-radius: 0.75rem;
+    transition: width 0.3s ease;
+}
+
+.analytics-completion-text {
+    position: relative;
+    z-index: 1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.analytics-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    min-height: 1.5rem;
+}
+
+/* Manager Card Styles */
+.analytics-manager-card {
+    background-color: #1a1a1a;
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s;
+}
+
+.analytics-manager-card:hover {
+    border-color: #4b5563;
+    transform: translateY(-2px);
+}
+
+.analytics-manager-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.analytics-manager-avatar {
+    width: 3rem;
+    height: 3rem;
+    background-color: #374151;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: #9ca3af;
+}
+
+.analytics-manager-info {
+    flex: 1;
+}
+
+.analytics-manager-score {
+    text-align: center;
+}
+
+.analytics-manager-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+.analytics-manager-stat {
+    text-align: center;
+}
+
+
+/* Action button styling for View Details */
+.analytics-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #ef4444;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    min-height: 1.75rem;
+}
+
+.analytics-action-btn:hover {
+    background-color: #dc2626;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.analytics-action-btn i {
+    font-size: 0.75rem;
+}
+
+/* Action column styling */
+.analytics-table td:last-child {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .analytics-manager-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-main-content {
+        margin-left: 0;
+    }
+    
+    .analytics-content {
+        padding: 1rem;
+    }
+    
+    .analytics-table-container {
+        overflow-x: auto;
+    }
+    
+    .analytics-table {
+        min-width: 800px;
+    }
+    
+    .analytics-manager-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading States */
+.analytics-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.analytics-card,
+.analytics-manager-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Status Colors */
+.status-excellent {
+    background-color: #10b981;
+}
+
+.status-good {
+    background-color: #f59e0b;
+}
+
+.status-needs-attention {
+    background-color: #ef4444;
+}
+
+/* Progress Bars */
+.analytics-progress-bar {
+    width: 100%;
+    height: 0.5rem;
+    background-color: #374151;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.analytics-progress-fill {
+    height: 100%;
+    background-color: #10b981;
+    transition: width 0.3s ease;
+}
+
+/* Utility Classes */
+.text-red-500 { color: #ef4444; }
+.text-green-500 { color: #10b981; }
+.text-blue-500 { color: #3b82f6; }
+.text-yellow-500 { color: #f59e0b; }
+.text-purple-500 { color: #8b5cf6; }
+.text-orange-500 { color: #f97316; }
+
+.bg-red-600 { background-color: #dc2626; }
+.bg-green-600 { background-color: #059669; }
+.bg-blue-600 { background-color: #2563eb; }
+.bg-yellow-600 { background-color: #d97706; }
+.bg-purple-600 { background-color: #7c3aed; }
+.bg-red-600 { background-color: #dc2626; }
+.bg-gray-600 { background-color: #4b5563; }
+
+/* Chart Tab Styles */
+.chart-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: #374151;
+    color: #9ca3af;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.chart-tab-btn:hover {
+    background-color: #4b5563;
+    color: #d1d5db;
+    border-color: #6b7280;
+}
+
+.chart-tab-btn.active {
+    background-color: #ef4444;
+    color: white;
+    border-color: #dc2626;
+}
+
+.chart-tab-btn.active:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* Chart Container Styles */
+.chart-container {
+    min-height: 400px;
+}
+
+
+.chart-container canvas {
+    max-height: 400px;
+}
+
+/* Modal Styles */
+
+/* Additional Color Classes */
+.text-indigo-400 { color: #818cf8; }
+.text-teal-400 { color: #2dd4bf; }
+.text-orange-400 { color: #fb923c; }
+
+.bg-indigo-600 { background-color: #4f46e5; }
+.bg-teal-600 { background-color: #0d9488; }

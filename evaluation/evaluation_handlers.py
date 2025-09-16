@@ -20,6 +20,26 @@ from .models import DynamicEvaluation, DynamicManagerEvaluation
 from .forms import DynamicEvaluationForm
 from .constants import EvaluationStatus
 
+def calculate_eval_stats(queryset, today, date_field):
+    """
+    Helper function to calculate evaluation statistics (total, completed, pending, overdue).
+    
+    Args:
+        queryset: Django QuerySet to aggregate
+        today: Current date for overdue calculation
+        date_field: Field name for date comparison (e.g., 'week_end', 'period_end')
+    
+    Returns:
+        Dictionary with total, completed, pending, overdue counts
+    """
+    period_end_filter = {f"{date_field}__lt": today}
+    return queryset.aggregate(
+        total=Count('id'),
+        completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
+        pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
+        overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **period_end_filter))
+    )
+
 
 class EvaluationConfig:
     """Configuration class for different evaluation types."""
@@ -207,14 +227,7 @@ def handle_my_evaluations(request, config, template_name):
     
     # Calculate all counts in a single optimized query using aggregation
     
-    period_end_filter = {f"{config.period_end_field}__lt": today}
-    
-    stats = evaluations.aggregate(
-        total=Count('id'),
-        completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
-        pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
-        overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **period_end_filter))
-    )
+    stats = calculate_eval_stats(evaluations, today, config.period_end_field)
     
     total = stats['total']
     completed = stats['completed']
@@ -265,17 +278,10 @@ def handle_pending_evaluations(request, config, template_name):
     
     # Calculate all stats in a single optimized query using aggregation
     
-    period_end_filter = {f"{config.period_end_field}__lt": today}
-    
     # Get all evaluations for this evaluator to calculate total stats
     all_evaluations = config.model_class.objects.filter(**evaluator_field_filter)
     
-    stats = all_evaluations.aggregate(
-        total=Count('id'),
-        completed=Count('id', filter=Q(status=EvaluationStatus.COMPLETED)),
-        pending=Count('id', filter=Q(status=EvaluationStatus.PENDING)),
-        overdue=Count('id', filter=Q(status=EvaluationStatus.PENDING, **period_end_filter))
-    )
+    stats = calculate_eval_stats(all_evaluations, today, config.period_end_field)
     
     total = stats['total']
     completed = stats['completed']

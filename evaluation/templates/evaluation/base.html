@@ -47,6 +47,13 @@
       {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:manager_evaluation_dashboard' as mgr_dashboard_url %}
         {% url 'evaluation:pending_manager_evaluations' as mgr_pending_url %}
+        {% url 'evaluation:senior_analytics_dashboard' as analytics_url %}
+
+        <a href="{{ analytics_url }}"
+          class="block py-2 px-3 rounded hover:bg-red-600
+              {% if request.path|startswith:'/evaluation/analytics/' %}bg-red-500{% endif %}">
+          <i class="fas fa-chart-bar mr-2"></i> Analytics Dashboard
+        </a>
 
         <a href="{% url 'evaluation:evalform_list' %}"
           class="block py-2 px-3 rounded hover:bg-red-600
