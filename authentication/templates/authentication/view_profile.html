@@ -120,6 +120,53 @@
       </div>
     </section>
 
+    <!-- Department Section -->
+    <section id="department" class="bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] p-8 rounded-2xl shadow-2xl border border-gray-600 mt-8 relative overflow-hidden">
+      
+      <div class="relative z-10">
+        <div class="mb-6">
+          <h3 class="text-xl font-semibold text-red-400">Department</h3>
+        </div>
+        
+        {% if profile.department or profile.managed_department %}
+          <div class="flex-1">
+              {% if profile.managed_department %}
+                <div class="flex items-start justify-between mb-3 mt-1">
+                  <h4 class="text-xl font-bold text-white">{{ profile.managed_department.title }}</h4>
+                  <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
+                    <i class="fas fa-crown mr-1"></i>Manager
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-400">
+                  <i class="fas fa-user-crown text-red-400"></i>
+                  <span>{{ profile.user.get_full_name|title|default:profile.user.username|title }} is the manager of this department</span>
+                </div>
+              {% else %}
+                <div class="flex items-start justify-between mb-3 mt-1">
+                  <h4 class="text-xl font-bold text-white">{{ profile.department.title }}</h4>
+                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/30">
+                    <i class="fas fa-user mr-1"></i>Member
+                  </span>
+                </div>
+                {% if profile.department.manager %}
+                  <div class="flex items-center gap-2 text-sm text-gray-400">
+                    <i class="fas fa-user-tie text-blue-400"></i>
+                    <span>Manager: {{ profile.department.manager.user.get_full_name|title|default:profile.department.manager.user.username|title }}</span>
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="flex-1">
+              <h4 class="text-xl font-bold text-white mb-2">No Assigned Department</h4>
+              <p class="text-gray-300 leading-relaxed">This user hasn't been assigned to any department yet.</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
     <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8"> 
       <h3 class="text-xl font-semibold text-red-400 mb-4">Teammates</h3>
       <div>
