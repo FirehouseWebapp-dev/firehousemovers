@@ -12,7 +12,7 @@ from django.conf import settings
 from django.urls import reverse
 import json
 import logging
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from datetime import datetime
 from django.db.models import Prefetch
 from django.utils import timezone
@@ -22,7 +22,6 @@ from io import BytesIO, StringIO
 import csv
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-
 logger = logging.getLogger(__name__)
 
 from authentication.models import UserProfile, Department
@@ -735,15 +734,23 @@ def senior_manager_analytics_dashboard(request):
     # Create cache key based on user and date
     cache_key = f"analytics_dashboard_{request.user.id}_{today_date}"
     
-    # Try to get cached data first
-    cached_data = cache.get(cache_key)
+    # Try to get cached data first from analytics cache
+    analytics_cache = caches['analytics']
+    cached_data = analytics_cache.get(cache_key)
     if cached_data:
         logger.info(f"Analytics dashboard cache hit for user {request.user.id}")
         # Update the last viewed timestamp to current time
         current_time = timezone.now()
-        cached_data['last_viewed_at'] = current_time
+        cached_data['last_viewed_at'] = current_time.isoformat()
         # Update cache with new timestamp
-        cache.set(cache_key, cached_data, timeout=1800)
+        analytics_cache.set(cache_key, cached_data, timeout=1800)
+        
+        # Convert serialized dates back to proper objects for template rendering
+        from datetime import datetime
+        cached_data['today'] = datetime.fromisoformat(cached_data['today']).date()
+        cached_data['data_computed_at'] = datetime.fromisoformat(cached_data['data_computed_at'])
+        cached_data['last_viewed_at'] = current_time  # Use current time object for display
+        
         return render(request, "evaluation/senior_manager_analytics_dashboard.html", cached_data)
     
     logger.info(f"Analytics dashboard cache miss for user {request.user.id}, computing data...")
@@ -1007,8 +1014,44 @@ def senior_manager_analytics_dashboard(request):
     # Prepare context data with current time
     current_time = timezone.now()
     
+    # Serialize departments to avoid caching ORM objects
+    departments_data = [
+        {
+            'id': dept.id,
+            'title': dept.title,
+        }
+        for dept in departments
+    ]
+    
+    # Serialize recent evaluations to avoid caching ORM objects
+    recent_employee_evals_data = [
+        {
+            'id': eval.id,
+            'employee_name': f"{eval.employee.user.first_name} {eval.employee.user.last_name}",
+            'department_name': eval.department.title,
+            'form_name': eval.form.name,
+            'status': eval.status,
+            'week_end': eval.week_end.isoformat() if eval.week_end else None,
+            'submitted_at': eval.submitted_at.isoformat() if eval.submitted_at else None,
+        }
+        for eval in recent_employee_evals
+    ]
+    
+    recent_manager_evals_data = [
+        {
+            'id': eval.id,
+            'manager_name': f"{eval.manager.user.first_name} {eval.manager.user.last_name}",
+            'department_name': eval.department.title,
+            'form_name': eval.form.name,
+            'status': eval.status,
+            'period_end': eval.period_end.isoformat() if eval.period_end else None,
+            'submitted_at': eval.submitted_at.isoformat() if eval.submitted_at else None,
+        }
+        for eval in recent_manager_evals
+    ]
+    
     context_data = {
-        'departments': departments,
+        'departments': departments_data,
         'department_analytics': department_analytics,
         'teams_analytics': teams_analytics,
         'manager_effectiveness': manager_effectiveness,
@@ -1016,19 +1059,24 @@ def senior_manager_analytics_dashboard(request):
         'manager_stats': manager_stats,
         'overall_employee_completion_rate': round(overall_employee_completion_rate, 1),
         'overall_manager_completion_rate': round(overall_manager_completion_rate, 1),
-        'recent_employee_evals': list(recent_employee_evals),  # Convert to list to avoid accidental queries
-        'recent_manager_evals': list(recent_manager_evals),    # Convert to list to avoid accidental queries
+        'recent_employee_evals': recent_employee_evals_data,
+        'recent_manager_evals': recent_manager_evals_data,
         'recent_employee_evals_count': len(recent_employee_evals),  # Pre-computed count
         'recent_manager_evals_count': len(recent_manager_evals),    # Pre-computed count
-        'today': today_date,
+        'today': today_date.isoformat(),  # Serialize date
         'department_comparison': department_comparison,
-        'data_computed_at': current_time,  # When the data was computed
-        'last_viewed_at': current_time,    # When the user last viewed (will be updated on each view)
+        'data_computed_at': current_time.isoformat(),  # Serialize datetime
+        'last_viewed_at': current_time.isoformat(),    # Serialize datetime
     }
     
     # Cache the computed data for 30 minutes (1800 seconds)
-    cache.set(cache_key, context_data, timeout=1800)
+    analytics_cache.set(cache_key, context_data, timeout=1800)
     logger.info(f"Analytics dashboard data cached for user {request.user.id}")
+    
+    # Convert serialized data back to proper objects for template rendering
+    context_data['today'] = today_date  # Use original date object
+    context_data['data_computed_at'] = current_time  # Use original datetime object
+    context_data['last_viewed_at'] = current_time  # Use original datetime object
     
     return render(request, "evaluation/senior_manager_analytics_dashboard.html", context_data)
 
