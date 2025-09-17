@@ -144,7 +144,7 @@ LOGOUT_URL = "authentication:logout"
 # i18n / tz
 # -------------------------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "America/New_York"  # Change to your local timezone
+TIME_ZONE = "UTC"  # Keep as server default, use timezone-aware datetimes in code
 USE_I18N = True
 USE_TZ = True  # Enable timezone support
 

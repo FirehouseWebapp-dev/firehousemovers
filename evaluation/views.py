@@ -16,6 +16,12 @@ from django.core.cache import cache
 from datetime import datetime
 from django.db.models import Prefetch
 from django.utils import timezone
+from .models import Answer
+from django.http import HttpResponse
+from io import BytesIO, StringIO
+import csv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
 logger = logging.getLogger(__name__)
 
@@ -982,12 +988,12 @@ def senior_manager_analytics_dashboard(request):
         # Calculate department average rating
         dept_avg_rating = 0
         if dept_emp_completed > 0:
-            from .models import Answer
+
             dept_ratings = Answer.objects.filter(
                 instance__in=dept_employee_evals.filter(status=EvaluationStatus.COMPLETED),
                 question__qtype='rating'
             ).aggregate(avg_rating=Avg('int_value'))['avg_rating'] or 0
-            dept_avg_rating = round(dept_avg_rating, 1)
+            dept_avg_rating = round(dept_ratings, 1)
         
         department_comparison.append({
             'department_name': dept.title,
@@ -1200,4 +1206,139 @@ def analytics_team_detail(request, team_leader_id):
         'recent_evals': list(recent_evals),  # Convert to list to avoid accidental queries
         'recent_evals_count': len(recent_evals),  # Pre-computed count
         'today': today_date,
+    })
+
+
+@login_required
+@require_senior_management_access
+def analytics_export(request):
+    """Export analytics data as PDF or Excel."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    format_type = request.POST.get('format', 'pdf').lower()
+    
+    try:
+        if format_type == 'pdf':
+            return export_analytics_pdf(request)
+        elif format_type == 'excel':
+            return export_analytics_excel(request)
+        else:
+            return JsonResponse({'error': 'Invalid format'}, status=400)
+    except Exception as e:
+        logger.exception("Analytics export failed")
+        return JsonResponse({'error': 'Export failed'}, status=500)
+
+
+def export_analytics_pdf(request):
+    """Generate PDF report of analytics data."""
+    try:
+        # Try to import reportlab for PDF generation
+        
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        
+        # Add content to PDF
+        p.drawString(100, 750, "Analytics Report")
+        p.drawString(100, 730, f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M')}")
+        p.drawString(100, 710, "Evaluation Analytics Dashboard Export")
+        
+        # Add basic analytics data (you can expand this)
+        p.drawString(100, 680, "Summary:")
+        p.drawString(120, 660, "• Total Evaluations: [Dynamic data would go here]")
+        p.drawString(120, 640, "• Completion Rate: [Dynamic data would go here]")
+        p.drawString(120, 620, "• Overdue Evaluations: [Dynamic data would go here]")
+        
+        p.save()
+        buffer.seek(0)
+        
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="analytics_report_{timezone.now().strftime("%Y%m%d")}.pdf"'
+        return response
+        
+    except ImportError:
+        # Fallback if reportlab is not installed
+        response = HttpResponse("PDF export requires reportlab library", content_type='text/plain')
+        response.status_code = 500
+        return response
+
+
+def export_analytics_excel(request):
+    """Generate Excel report of analytics data."""
+    
+    # Create CSV content (simpler fallback for Excel)
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write headers
+    writer.writerow(['Analytics Report', f'Generated: {timezone.now().strftime("%Y-%m-%d %H:%M")}'])
+    writer.writerow([])  # Empty row
+    writer.writerow(['Metric', 'Value'])
+    
+    # Add sample data (you can expand this with real analytics data)
+    writer.writerow(['Total Evaluations', 'Dynamic data would go here'])
+    writer.writerow(['Completion Rate', 'Dynamic data would go here'])
+    writer.writerow(['Overdue Evaluations', 'Dynamic data would go here'])
+    writer.writerow(['Recent Activity', 'Dynamic data would go here'])
+    
+    output.seek(0)
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="analytics_report_{timezone.now().strftime("%Y%m%d")}.csv"'
+    return response
+
+
+@login_required
+@require_senior_management_access
+def analytics_trends(request):
+    """Analytics trends page."""
+    return render(request, "evaluation/analytics_trends.html", {
+        'title': 'Performance Trends',
+        'today': timezone.now().date(),
+    })
+
+
+@login_required
+@require_senior_management_access
+def analytics_alerts(request):
+    """Get analytics alerts data."""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Return JSON data for AJAX requests
+        alerts_data = {
+            'alerts': [
+                {
+                    'id': 1,
+                    'severity': 'critical',
+                    'icon': 'exclamation-triangle',
+                    'message': 'Department A has 15 overdue evaluations',
+                    'timestamp': '2 hours ago'
+                },
+                {
+                    'id': 2,
+                    'severity': 'warning',
+                    'icon': 'clock',
+                    'message': 'Manager evaluations due in 24 hours',
+                    'timestamp': '4 hours ago'
+                },
+                {
+                    'id': 3,
+                    'severity': 'critical',
+                    'icon': 'user-times',
+                    'message': '5 employees have not started evaluations',
+                    'timestamp': '6 hours ago'
+                },
+                {
+                    'id': 4,
+                    'severity': 'warning',
+                    'icon': 'chart-line',
+                    'message': 'Performance trend declining in Department B',
+                    'timestamp': '1 day ago'
+                }
+            ]
+        }
+        return JsonResponse(alerts_data)
+    
+    # Return HTML page for direct access
+    return render(request, "evaluation/analytics_alerts.html", {
+        'title': 'Risk Alerts',
+        'today': timezone.now().date(),
     })
