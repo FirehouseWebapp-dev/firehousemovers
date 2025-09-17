@@ -26,6 +26,9 @@ urlpatterns += [
     path("analytics/", views.senior_manager_analytics_dashboard, name="senior_analytics_dashboard"),
     path("analytics/department/<int:department_id>/", views.analytics_department_detail, name="analytics_department_detail"),
     path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
+    path("analytics/export/", views.analytics_export, name="analytics_export"),
+    path("analytics/trends/", views.analytics_trends, name="analytics_trends"),
+    path("analytics/alerts/", views.analytics_alerts, name="analytics_alerts"),
 ]
 
 # Management UI
