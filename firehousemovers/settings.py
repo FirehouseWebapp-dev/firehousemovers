@@ -144,9 +144,9 @@ LOGOUT_URL = "authentication:logout"
 # i18n / tz
 # -------------------------
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "UTC"  # Keep as server default, use timezone-aware datetimes in code
 USE_I18N = True
-USE_TZ = False
+USE_TZ = True  # Enable timezone support
 
 # -------------------------
 # Messages → Tailwind classes
@@ -247,6 +247,50 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 
+
+# -------------------------
+# Caching Configuration
+# -------------------------
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    },
+    'analytics': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'analytics-cache',
+        'TIMEOUT': 1800,  # 30 minutes for analytics data
+        'OPTIONS': {
+            'MAX_ENTRIES': 100,
+            'CULL_FREQUENCY': 2,
+        }
+    }
+}
+
+# Cache settings for different environments
+if APP_ENV == "production":
+    # Use Redis for production (if available)
+    CACHES['default'] = {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'TIMEOUT': 300,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+    CACHES['analytics'] = {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+        'TIMEOUT': 1800,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
 
 # -------------------------
 # Default PK

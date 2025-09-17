@@ -1,0 +1,228 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}{{ department.title }} - Analytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/analytics-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="analytics-header bg-[#1a1a1a] border-b border-gray-700 p-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="text-red-500 hover:text-red-400">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-red-500 mb-2">{{ department.title }}</h1>
+                <p class="text-gray-400">Department Performance Analytics</p>
+                {% if department.manager %}
+                    <div class="text-sm text-blue-400 mt-1">
+                        <i class="fas fa-user-tie mr-1"></i>Manager: {{ department.manager.user.get_full_name|title }}
+                    </div>
+                {% else %}
+                    <div class="text-sm text-gray-500 mt-1">
+                        <i class="fas fa-user-slash mr-1"></i>No Manager Assigned
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="analytics-content p-6">
+    <!-- Department Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="analytics-card">
+            <div class="analytics-card-header">
+                <div class="analytics-card-icon bg-blue-600">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Total Evaluations</h3>
+                    <p class="text-gray-400">{{ department.title }}</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <div class="analytics-stat-large">{{ dept_stats.total }}</div>
+                <div class="analytics-stat-breakdown">
+                    <span class="text-green-400">{{ dept_stats.completed }} Completed</span>
+                    <span class="text-yellow-400">{{ dept_stats.pending }} Pending</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="analytics-card-header">
+                <div class="analytics-card-icon bg-green-600">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Completion of Evaluations</h3>
+                    <p class="text-gray-400">Department</p>
+                </div>
+            </div>
+                <div class="analytics-card-content">
+                    <div class="analytics-stat-large">{{ dept_stats.completed }}</div>
+                    <div class="analytics-stat-breakdown">
+                        <span class="text-green-400">{{ dept_stats.completed }} Completed</span>
+                    </div>
+                </div>
+        </div>
+
+        <div class="analytics-card">
+            <div class="analytics-card-header">
+                <div class="analytics-card-icon analytics-card-icon-overdue">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Overdue</h3>
+                    <p class="text-gray-400">Past Due Date</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <div class="analytics-stat-large">{{ dept_stats.overdue }}</div>
+                <div class="analytics-stat-breakdown">
+                    <span class="text-red-400">Requires Attention</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="analytics-card">
+            <div class="analytics-card-header">
+                <div class="analytics-card-icon bg-purple-600">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Recent Activity</h3>
+                    <p class="text-gray-400">Last 30 Days</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <div class="analytics-stat-large">{{ recent_evals_count }}</div>
+                <div class="analytics-stat-breakdown">
+                    <span class="text-purple-400">{{ recent_evals_count }} Recent Evaluations</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Performance -->
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">Employee Performance</h2>
+            <p class="analytics-section-subtitle">Individual employee evaluation completion rates</p>
+        </div>
+        
+        <div class="analytics-table-container">
+            <table class="analytics-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Role</th>
+                        <th>Total Evaluations</th>
+                        <th>Completed</th>
+                        <th>Pending</th>
+                        <th>Completion Rate</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp_data in employee_performance %}
+                    <tr>
+                        <td>
+                            <div class="analytics-department-info">
+                                <div class="font-semibold text-white">{{ emp_data.employee.user.get_full_name|title }}</div>
+                                <div class="text-sm text-gray-400">{{ emp_data.employee.user.email }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-blue-400">{{ emp_data.employee.role|title }}</span>
+                        </td>
+                        <td>
+                            <div class="text-white font-semibold">{{ emp_data.stats.total }}</div>
+                        </td>
+                        <td>
+                            <div class="text-green-400 font-semibold">{{ emp_data.stats.completed }}</div>
+                        </td>
+                        <td>
+                            <div class="text-yellow-400 font-semibold">{{ emp_data.stats.pending }}</div>
+                        </td>
+                        <td>
+                            <div class="analytics-completion-bar">
+                                <div class="analytics-completion-fill" style="width: {{ emp_data.completion_rate }}%"></div>
+                                <span class="analytics-completion-text">{{ emp_data.completion_rate }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if emp_data.emp_status == 'awaiting' %}
+                                <span class="analytics-status-badge bg-gray-600">
+                                    <i class="fas fa-hourglass-half mr-1"></i>Awaiting
+                                </span>
+                            {% elif emp_data.emp_status == 'on_track' %}
+                                <span class="analytics-status-badge bg-green-600">
+                                    <i class="fas fa-check-circle mr-1"></i>On Track
+                                </span>
+                            {% elif emp_data.emp_status == 'needs_attention' %}
+                                <span class="analytics-status-badge bg-yellow-600">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Needs Attention
+                                </span>
+                            {% elif emp_data.emp_status == 'critical' %}
+                                <span class="analytics-status-badge analytics-status-badge-critical">
+                                    <i class="fas fa-times-circle mr-1"></i>Critical
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="analytics-section">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">Recent Activity</h2>
+            <p class="analytics-section-subtitle">Latest evaluation submissions in {{ department.title }}</p>
+        </div>
+        
+        {% if recent_evals %}
+        <div class="space-y-4">
+            {% for eval in recent_evals %}
+            <div class="bg-[#1a1a1a] border border-gray-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white">{{ eval.employee.user.get_full_name|title }}</h3>
+                            <p class="text-sm text-gray-400">{{ eval.form.name }} • {{ eval.department.title }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-green-400 font-medium">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Completed
+                        </div>
+                        <div class="text-xs text-gray-400">{{ eval.submitted_at|date:"M d, Y" }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-clipboard-list text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400 text-lg">No recent activity</p>
+            <p class="text-gray-500 text-sm mt-2">Recent evaluations will appear here</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
