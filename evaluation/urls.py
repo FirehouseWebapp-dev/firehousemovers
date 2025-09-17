@@ -21,6 +21,13 @@ urlpatterns = [
     path("manager-evaluations/pending/", views.pending_manager_evaluations, name="pending_manager_evaluations"),  
 ]
 
+# Analytics Dashboard (Senior Management)
+urlpatterns += [
+    path("analytics/", views.senior_manager_analytics_dashboard, name="senior_analytics_dashboard"),
+    path("analytics/department/<int:department_id>/", views.analytics_department_detail, name="analytics_department_detail"),
+    path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
+]
+
 # Management UI
 urlpatterns += [
     path("forms/", views.evalform_list, name="evalform_list"),

@@ -16,7 +16,11 @@ class EvalForm(models.Model):
     class Meta:
         # Business rule: Only one active form per department per evaluation type
         # This is enforced by a unique partial index created in migration 0017
-        pass
+        indexes = [
+            models.Index(fields=["department_id", "is_active"]),  # For department + active filtering
+            models.Index(fields=["is_active"]),  # For active form queries
+            models.Index(fields=["name", "department_id"]),  # For form name + department queries
+        ]
 
     def __str__(self) -> str:
         return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
@@ -122,6 +126,13 @@ class DynamicEvaluation(models.Model):
         indexes = [
             models.Index(fields=["week_start", "week_end", "employee_id"]),
             models.Index(fields=["manager_id", "status"]),
+            # Performance indexes for common filtering patterns
+            models.Index(fields=["status"]),  # For status filtering
+            models.Index(fields=["submitted_at"]),  # For recent activity queries
+            models.Index(fields=["department_id", "status"]),  # For department + status filtering
+            models.Index(fields=["employee_id", "status"]),  # For employee + status filtering
+            models.Index(fields=["week_end", "status"]),  # For overdue calculations
+            models.Index(fields=["submitted_at", "status"]),  # For recent completed evaluations
         ]
 
     def __str__(self) -> str:
@@ -165,6 +176,13 @@ class DynamicManagerEvaluation(models.Model):
         indexes = [
             models.Index(fields=["period_start", "period_end", "manager_id"]),
             models.Index(fields=["senior_manager_id", "status"]),
+            # Performance indexes for common filtering patterns
+            models.Index(fields=["status"]),  # For status filtering
+            models.Index(fields=["submitted_at"]),  # For recent activity queries
+            models.Index(fields=["department_id", "status"]),  # For department + status filtering
+            models.Index(fields=["manager_id", "status"]),  # For manager + status filtering
+            models.Index(fields=["period_end", "status"]),  # For overdue calculations
+            models.Index(fields=["submitted_at", "status"]),  # For recent completed evaluations
         ]
 
     def __str__(self) -> str:
