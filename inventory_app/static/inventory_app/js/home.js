@@ -89,6 +89,7 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     animatePlatformStatement();
     addCardHoverEffects();
+    addSVGHoverAnimations();
   }, 1000);
 });
 
@@ -200,13 +201,16 @@ function animateCardsSequentially() {
 // Initialize sequential animations
 animateCardsSequentially();
 
-// Add smooth hover animations for cards
+// Enhanced hover system for service cards with SVG animations
 function addCardHoverEffects() {
   const serviceCards = document.querySelectorAll('.service-card');
   
   serviceCards.forEach(card => {
-    // Mouse enter - smooth lift effect
+    const svgElement = card.querySelector('.svg-hover-animation');
+    
+    // Mouse enter - enhanced lift effect with SVG animation
     card.addEventListener('mouseenter', () => {
+      // Card lift animation
       gsap.to(card, {
         scale: 1.03,
         y: -8,
@@ -216,10 +220,23 @@ function addCardHoverEffects() {
         ease: "power2.out",
         boxShadow: "0 15px 35px rgba(0,0,0,0.2)"
       });
+      
+      // SVG enhanced animation with scale and rotation
+      if (svgElement) {
+        gsap.to(svgElement, {
+          opacity: 1,
+          scale: 1.1,
+          y: 0,
+          rotation: 0,
+          duration: 0.5,
+          ease: "back.out(1.2)"
+        });
+      }
     });
     
-    // Mouse leave - smooth return
+    // Mouse leave - smooth return with SVG fade-out
     card.addEventListener('mouseleave', () => {
+      // Card return animation
       gsap.to(card, {
         scale: 1,
         y: 0,
@@ -229,6 +246,168 @@ function addCardHoverEffects() {
         ease: "power2.out",
         boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
       });
+      
+      // SVG return to default state
+      if (svgElement) {
+        gsap.to(svgElement, {
+          opacity: 0.3,
+          scale: 0.9,
+          y: 5,
+          rotation: 0,
+          duration: 0.3,
+          ease: "power2.in"
+        });
+      }
+    });
+  });
+}
+
+// Enhanced SVG hover animations with specific effects
+function addSVGHoverAnimations() {
+  const svgAnimations = {
+    '.truck-hover-animation': {
+      onHover: () => {
+        gsap.to('.truck-hover-animation', {
+          x: 3,
+          rotation: 1,
+          duration: 0.8,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.inspection-hover-animation': {
+      onHover: () => {
+        gsap.to('.inspection-hover-animation .checkmark-1, .inspection-hover-animation .checkmark-2, .inspection-hover-animation .checkmark-3', {
+          scale: 1.2,
+          duration: 0.5,
+          ease: "back.out(1.2)",
+          stagger: 0.1,
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.station-hover-animation': {
+      onHover: () => {
+        gsap.to('.station-hover-animation .station-light', {
+          scale: 1.3,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.uniform-hover-animation': {
+      onHover: () => {
+        gsap.to('.uniform-hover-animation .uniform-sway', {
+          rotation: 3,
+          y: -2,
+          duration: 1.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.gift-hover-animation': {
+      onHover: () => {
+        gsap.to('.gift-hover-animation .card-float', {
+          y: -4,
+          rotation: 2,
+          duration: 1.2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.3
+        });
+      }
+    },
+    '.onsite-hover-animation': {
+      onHover: () => {
+        gsap.to('.onsite-hover-animation .magnify-pulse', {
+          scale: 1.1,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.packaging-hover-animation': {
+      onHover: () => {
+        gsap.to('.packaging-hover-animation .package-stack', {
+          y: -2,
+          scale: 1.02,
+          duration: 1.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.marketing-hover-animation': {
+      onHover: () => {
+        gsap.to('.marketing-hover-animation .camera-flash', {
+          scale: 1.2,
+          opacity: 0.8,
+          duration: 0.3,
+          ease: "power2.out",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.awards-hover-animation': {
+      onHover: () => {
+        gsap.to('.awards-hover-animation .trophy-shine', {
+          scale: 1.1,
+          rotation: 5,
+          duration: 1.2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.evaluation-hover-animation': {
+      onHover: () => {
+        gsap.to('.evaluation-hover-animation .form-slide', {
+          x: 2,
+          rotation: 1,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.fleet-hover-animation': {
+      onHover: () => {
+        gsap.to('.fleet-hover-animation .fleet-vehicle', {
+          y: -1,
+          duration: 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    }
+  };
+
+  // Apply specific animations to each card type
+  Object.keys(svgAnimations).forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      const card = element.closest('.service-card');
+      if (card) {
+        card.addEventListener('mouseenter', svgAnimations[selector].onHover);
+      }
     });
   });
 }
