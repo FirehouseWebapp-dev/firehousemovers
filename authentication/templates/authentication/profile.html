@@ -1,74 +1,132 @@
 {% extends 'authentication/base_profile.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'authentication/css/profile_enhancements.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'authentication/js/profile.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="flex min-h-screen relative bg-black text-white">
-  <!-- Truck Animation Background -->
-  <div class="absolute top-0 left-0 w-full h-full z-0 overflow-hidden">
-    <img src="{% static 'images/truck-animation.svg' %}" alt="Truck" class="absolute animate-move-truck opacity-10 w-64 md:w-96 -bottom-10 left-1/2 transform -translate-x-1/2">
-  </div>
 
   <!-- Main Content -->
   <main class="flex-1 p-10 space-y-12 relative z-10">
-    <!-- Hero Card -->
-    <div class="relative w-full bg-gradient-to-r from-red-500 via-black to-red-500 p-6 rounded-xl shadow-md mb-10 text-white">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-        
-        <!-- Left: Image and Info -->
-        <div class="flex flex-col md:flex-row items-center gap-6">
-          <!-- Profile Picture -->
-          <div class="relative">
-            {% if profile.profile_picture %}
-              <img src="{{ profile.profile_picture.url }}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow" alt="Profile Picture">
-            {% else %}
-              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-700 flex items-center justify-center text-4xl font-bold shadow">
-                    <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
-              </div>
-            {% endif %}
-          </div>
-
-          <!-- Name and Info -->
-          <div>
-            <h1 class="text-3xl font-extrabold">{{ request.user.first_name|capfirst }} {{ request.user.last_name|capfirst }}</h1>
-            <p class="text-gray-200">
-              Employee ID - {{ profile.id }} 
-              {% if profile.start_date %}
-              | Tenure: {{ profile.start_date|date:"d M Y" }} - Present
-              <span class="text-sm text-gray-300 ml-1">({{ profile.start_date|timesince }} experience)</span>
+    <!-- Enhanced Profile Header Card -->
+    <div class="relative w-full overflow-hidden rounded-2xl shadow-enhanced mb-10">
+      <!-- Background matching website theme -->
+      <div class="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] via-[#262626] to-[#1a1a1a]"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/3"></div>
+      
+      <!-- Decorative elements - more subtle -->
+      <div class="absolute top-0 right-0 w-64 h-64 bg-white/2 rounded-full -translate-y-32 translate-x-32"></div>
+      <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/2 rounded-full translate-y-24 -translate-x-24"></div>
+      
+      <!-- Main content -->
+      <div class="relative z-10 p-8 profile-header-mobile">
+        <!-- Header section with profile info -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+          
+          <!-- Profile Picture with enhanced styling -->
+          <div class="relative group profile-picture-container">
+            <div class="absolute -inset-1 bg-gradient-to-r from-white/10 to-white/5 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
+            <div class="relative">
+              {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" class="w-32 h-32 lg:w-40 lg:h-40 profile-picture-mobile rounded-full object-cover shadow-xl border-2 border-white/10 hover:border-white/20 transition-all duration-300" alt="Profile Picture">
+              {% else %}
+                <div class="w-32 h-32 lg:w-40 lg:h-40 profile-picture-mobile rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center shadow-xl border-2 border-white/10 hover:border-white/20 transition-all duration-300">
+                  <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover rounded-full">
+                </div>
               {% endif %}
-            </p>
+              <!-- Online status indicator - more subtle -->
+              <div class="absolute bottom-2 right-2 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+            </div>
+          </div>
 
-            {% if profile.role %}
-              <div class="inline-block mt-2 px-4 py-1 text-sm rounded-full border border-white text-white bg-black/30">
-                {{ profile.role }}
+          <!-- Profile Information -->
+          <div class="flex-1 space-y-4">
+            <!-- Name and role -->
+            <div class="space-y-2">
+              <h1 class="text-4xl lg:text-5xl font-black text-red-500 tracking-tight">
+                {{ request.user.first_name|capfirst }} {{ request.user.last_name|capfirst }}
+              </h1>
+              
+              <!-- Employee ID and tenure -->
+              <div class="flex flex-wrap items-center gap-4 text-lg">
+                <div class="flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333]">
+                  <i class="fas fa-id-badge text-white/80"></i>
+                  <span class="text-white font-semibold">ID: {{ profile.id }}</span>
+                </div>
+                
+                {% if profile.start_date %}
+                <div class="flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333]">
+                  <i class="fas fa-calendar-alt text-white/80"></i>
+                  <span class="text-white font-semibold">{{ profile.start_date|timesince }} experience</span>
+                </div>
+                {% endif %}
               </div>
-            {% endif %}
+
+              <!-- Role badge with enhanced styling -->
+              {% if profile.role %}
+                <div class="inline-flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333] hover:bg-[#2a2a2a] transition-all duration-300">
+                  <i class="fas fa-user-tie text-white/70"></i>
+                  <span class="text-white font-medium">{{ profile.role|capfirst }}</span>
+                </div>
+              {% endif %}
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Contact Info Icons -->
-      <div class="flex flex-wrap gap-6 mt-6 items-center text-sm text-white">
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-envelope text-white"></i>
+        <!-- Enhanced Contact Information -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 contact-grid-mobile">
+          <!-- Email -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-envelope text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Email</p>
+              <p class="text-white font-normal text-sm truncate">{{ request.user.email }}</p>
+            </div>
           </div>
-          <span>{{ request.user.email }}</span>
+
+          <!-- Phone -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-phone text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Work Phone</p>
+              <p class="text-white font-normal text-sm">{{ profile.phone_number|default:"Not Set" }}</p>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-map-marker-alt text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Location</p>
+              <p class="text-white font-normal text-sm">{{ profile.location|default:"Not Set" }}</p>
+            </div>
+          </div>
         </div>
 
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-phone text-white"></i>
-          </div>
-          <span>{{ profile.phone_number|default:"N/A" }}</span>
-          <span class="text-xs text-gray-300 ml-2">Work</span>
-        </div>
-
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-map-marker-alt text-white"></i>
-          </div>
-          <span>{{ profile.location|default:"Not Set" }}</span>
+        <!-- Quick Actions -->
+        <div class="mt-8 flex flex-wrap gap-4 quick-actions-mobile">
+          <button id="edit-profile-btn" class="flex items-center gap-2 bg-[#262626] hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 border border-[#333333] hover:shadow-lg hover:shadow-red-500/25">
+            <i class="fas fa-edit text-sm"></i>
+            <span class="text-sm">Edit Profile</span>
+          </button>
+          {% if profile.manager %}
+          <a href="{% url 'authentication:view_profile' profile.manager.user.id %}" class="flex items-center gap-2 bg-[#262626] hover:bg-red-500 hover:border-red-500 px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 border border-[#333333] hover:shadow-lg hover:shadow-red-500/25">
+            <i class="fas fa-user-tie text-sm"></i>
+            <span class="text-sm">View Manager</span>
+          </a>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -76,195 +134,347 @@
 
 
 
-    <!-- Profile Section -->
-    <section id="profile" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Profile</h3>
-      <form method="POST" enctype="multipart/form-data" class="space-y-6">
-        {% csrf_token %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-md font-bold">First Name</label>
-            {{ form.first_name }}
-            {% if form.first_name.errors %}<p class="text-red-500 text-xs">{{ form.first_name.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold">Last Name</label>
-            {{ form.last_name }}
-            {% if form.last_name.errors %}<p class="text-red-500 text-xs">{{ form.last_name.errors.0 }}</p>{% endif %}
-          </div>
-          <div class="md:col-span-2">
-            <label class="text-md font-bold">Email</label>
-            {{ form.email }}
-            {% if form.email.errors %}<p class="text-red-500 text-xs">{{ form.email.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold">Phone Number</label>
-            {{ form.phone_number }}
-            {% if form.phone_number.errors %}<p class="text-red-500 text-xs">{{ form.phone_number.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold">Role</label>
-            {{ form.role }}
-            {% if form.role.errors %}<p class="text-red-500 text-xs">{{ form.role.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold">Location</label>
-            {{ form.location }}
-            {% if form.location.errors %}<p class="text-red-500 text-xs">{{ form.location.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold">Start Date</label>
-            {{ form.start_date }}
-            {% if form.start_date.errors %}<p class="text-red-500 text-xs">{{ form.start_date.errors.0 }}</p>{% endif %}
-          </div>
-          <div>
-            <label class="text-md font-bold block mb-1">Profile Picture</label>
-            <input type="file" name="profile_picture" class="text-sm text-white w-full">
-            {% if form.profile_picture.errors %}<p class="text-red-500 text-xs">{{ form.profile_picture.errors.0 }}</p>{% endif %}
-          </div>
-        </div>
-
-        <!-- Personal Section -->
-        <div class="mt-8 border-t border-gray-600 pt-6">
-          <h4 class="text-lg font-semibold text-red-400 mb-4">Personal</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="text-mdfont-bold">Hobbies</label>
-              {{ form.hobbies }}
-              {% if form.hobbies.errors %}<p class="text-red-500 text-xs">{{ form.hobbies.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-              <label class="text-md font-bold">Favourite Quote</label>
-              {{ form.favourite_quote }}
-              {% if form.favourite_quote.errors %}<p class="text-red-500 text-xs">{{ form.favourite_quote.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="mt-6 bg-red-500 hover:bg-red-600 transition px-6 py-2 rounded-lg font-semibold">
-          Save Profile
-        </button>
-      </form>
-    </section>
-
-
-    <!-- Security Section -->
-    <section id="security" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Security</h3>
-      <ul class="space-y-3">
-        <li class="flex items-center justify-between">
-          <div>
-            <p class="font-semibold">Change Password</p>
-            <p class="text-sm text-gray-400">Update your password for account security.</p>
-          </div>
-          <a href="{% url 'authentication:password_change' %}" class="bg-red-500 hover:bg-red-600 px-4 py-1 rounded">Change</a>
-        </li>
-        <li class="flex items-center justify-between">
-          <div>
-            <p class="font-semibold">Email</p>
-            <p class="text-sm text-gray-400">{{ request.user.email }}</p>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <!-- Department Section -->
-    <section id="department" class="bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] p-8 rounded-2xl shadow-2xl border border-gray-600 mt-8 relative overflow-hidden">
+    <!-- Enhanced Profile Section -->
+    <section id="profile" class="bg-[#262626] p-8 rounded-2xl shadow-enhanced border border-[#333333] relative overflow-hidden hover:border-red-500/30 transition-all duration-300">
+      <!-- Background pattern -->
+      <div class="absolute top-0 right-0 w-32 h-32 bg-white/2 rounded-full -translate-y-16 translate-x-16"></div>
+      <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/2 rounded-full translate-y-12 -translate-x-12"></div>
       
       <div class="relative z-10">
-        <div class="mb-6">
-          <h3 class="text-xl font-semibold text-red-400">Department</h3>
+        <!-- Section Header -->
+        <div class="mb-8">
+          <h3 class="text-2xl font-bold text-red-500">Profile Information</h3>
         </div>
-        
-        {% if profile.department or profile.managed_department %}
-          <div class="flex-1">
-              {% if profile.managed_department %}
-                <div class="flex items-start justify-between mb-3 mt-1">
-                  <h4 class="text-xl font-bold text-white">{{ profile.managed_department.title }}</h4>
-                  <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
-                    <i class="fas fa-crown mr-1"></i>Manager
-                  </span>
-                </div>
-                <div class="flex items-center gap-2 text-sm text-gray-400">
-                  <i class="fas fa-user-crown text-red-400"></i>
-                  <span>You are the manager of this department</span>
-                </div>
-              {% else %}
-                <div class="flex items-start justify-between mb-3 mt-1">
-                  <h4 class="text-xl font-bold text-white">{{ profile.department.title }}</h4>
-                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/30">
-                    <i class="fas fa-user mr-1"></i>Member
-                  </span>
-                </div>
-                {% if profile.department.manager %}
-                  <div class="flex items-center gap-2 text-sm text-gray-400">
-                    <i class="fas fa-user-tie text-blue-400"></i>
-                    <span>Manager: {{ profile.department.manager.user.get_full_name|title|default:profile.department.manager.user.username|title }}</span>
-                  </div>
-                {% endif %}
-              {% endif %}
-            </div>
-          </div>
-        {% else %}
-          <div class="flex-1">
-              <h4 class="text-xl font-bold text-white mb-2">No Assigned Department</h4>
-              <p class="text-gray-300 leading-relaxed">You haven't been assigned to any department yet.</p>
-            </div>
-          </div>
-        {% endif %}
-      </div>
-    </section>
 
-    <!-- Team Section -->
-    <section id="team" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Team</h3>
-
-      <!-- Manager Card -->
-      <div class="mb-6">
-        <h4 class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">Manager</h4>
-        {% if profile.manager %}
-        <div class="bg-gray-100 rounded-lg shadow-md w-full max-w-xs">
-          <a href="{% url 'authentication:view_profile' profile.manager.user.id %}">
-            <div class="rounded-lg overflow-hidden hover:shadow-lg transition duration-300 bg-[#2a2a2a]  hover:bg-[#3a3a3a] ">
-              {% if profile.manager.profile_picture and profile.manager.profile_picture.name %}
-                <img src="{{ profile.manager.profile_picture.url }}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
-              {% else %}
-                <img src="{% static 'images/user_icon.jpg' %}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
-              {% endif %}
-              <div class="p-3 text-center">
-                <h3 class="text-lg font-semibold text-red-500">
-                  {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}                
-                </h3>
-                <p class="text-sm text-gray-400">{{ profile.manager.role|default:"No Role" }}</p>
-                <p class="text-sm text-gray-300">ID: {{ profile.manager.user.id }}</p>
+        <form method="POST" enctype="multipart/form-data" class="space-y-8">
+          {% csrf_token %}
+          
+          <!-- Basic Information -->
+          <div class="space-y-6">
+            <h4 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+              <i class="fas fa-id-card text-red-400"></i>
+              Basic Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-user text-white/60 text-xs"></i>
+                  First Name
+                </label>
+                <div class="relative">
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}<p class="text-red-400 text-xs mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-user text-white/60 text-xs"></i>
+                  Last Name
+                </label>
+                <div class="relative">
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}<p class="text-red-400 text-xs mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+              
+              <div class="md:col-span-2 space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-envelope text-white/60 text-xs"></i>
+                  Email Address
+                </label>
+                <div class="relative">
+                  {{ form.email }}
+                  {% if form.email.errors %}<p class="text-red-400 text-xs mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+                </div>
               </div>
             </div>
-          </a>
-        </div>
-        {% else %}
-          <p class="text-red-500">No manager assigned.</p>
-        {% endif %}
+          </div>
+
+          <!-- Contact Information -->
+          <div class="space-y-6">
+            <h4 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+              <i class="fas fa-phone text-red-400"></i>
+              Contact Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-phone text-white/60 text-xs"></i>
+                  Phone Number
+                </label>
+                <div class="relative">
+                  {{ form.phone_number }}
+                  {% if form.phone_number.errors %}<p class="text-red-400 text-xs mt-1">{{ form.phone_number.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-map-marker-alt text-white/60 text-xs"></i>
+                  Location
+                </label>
+                <div class="relative">
+                  {{ form.location }}
+                  {% if form.location.errors %}<p class="text-red-400 text-xs mt-1">{{ form.location.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Information -->
+          <div class="space-y-6">
+            <h4 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+              <i class="fas fa-briefcase text-red-400"></i>
+              Professional Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-user-tie text-white/60 text-xs"></i>
+                  Role
+                </label>
+                <div class="relative">
+                  {{ form.role }}
+                  {% if form.role.errors %}<p class="text-red-400 text-xs mt-1">{{ form.role.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-calendar-alt text-white/60 text-xs"></i>
+                  Start Date
+                </label>
+                <div class="relative">
+                  {{ form.start_date }}
+                  {% if form.start_date.errors %}<p class="text-red-400 text-xs mt-1">{{ form.start_date.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Picture -->
+          <div class="space-y-6">
+            <h4 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+              <i class="fas fa-camera text-red-400"></i>
+              Profile Picture
+            </h4>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fas fa-image text-white/60 text-xs"></i>
+                Upload New Picture
+              </label>
+              <div class="relative">
+                <input type="file" name="profile_picture" class="w-full text-sm text-white bg-[#1a1a1a] border border-[#333333] rounded-lg px-4 py-3 focus:border-white/30 focus:outline-none transition-all duration-300">
+                {% if form.profile_picture.errors %}<p class="text-red-400 text-xs mt-1">{{ form.profile_picture.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Section -->
+          <div class="space-y-6 border-t border-[#333333] pt-8">
+            <h4 class="text-lg font-semibold text-red-400 flex items-center gap-2">
+              <i class="fas fa-heart text-red-400"></i>
+              Personal Information
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-hobby text-white/60 text-xs"></i>
+                  Hobbies
+                </label>
+                <div class="relative">
+                  {{ form.hobbies }}
+                  {% if form.hobbies.errors %}<p class="text-red-400 text-xs mt-1">{{ form.hobbies.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white flex items-center gap-2">
+                  <i class="fas fa-quote-left text-white/60 text-xs"></i>
+                  Favourite Quote
+                </label>
+                <div class="relative">
+                  {{ form.favourite_quote }}
+                  {% if form.favourite_quote.errors %}<p class="text-red-400 text-xs mt-1">{{ form.favourite_quote.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex justify-end pt-6">
+            <button type="submit" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 border border-red-600 hover:border-red-700 shadow-lg hover:shadow-red-500/25">
+              <i class="fas fa-save"></i>
+              <span>Save Profile</span>
+            </button>
+          </div>
+        </form>
       </div>
     </section>
 
-    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Teammates</h3>
+
+    <!-- Enhanced Security Section -->
+    <section id="security" class="bg-[#262626] p-8 rounded-2xl shadow-enhanced border border-[#333333] relative overflow-hidden hover:border-red-500/30 transition-all duration-300">
+      <!-- Background pattern -->
+      <div class="absolute top-0 right-0 w-24 h-24 bg-white/2 rounded-full -translate-y-12 translate-x-12"></div>
+      <div class="absolute bottom-0 left-0 w-20 h-20 bg-white/2 rounded-full translate-y-10 -translate-x-10"></div>
+      
+      <div class="relative z-10">
+        <!-- Section Header -->
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+            <i class="fas fa-shield-alt text-white"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-red-500">Security Settings</h3>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Password Change -->
+          <div class="bg-[#1a1a1a] p-6 rounded-xl border border-[#333333] hover:border-white/20 transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-[#262626] rounded-full flex items-center justify-center">
+                  <i class="fas fa-key text-red-400"></i>
+                </div>
+                <div>
+                  <h4 class="text-lg font-semibold text-white">Change Password</h4>
+                  <p class="text-sm text-white/60">Update your password for enhanced account security</p>
+                </div>
+              </div>
+              <a href="{% url 'authentication:password_change' %}" class="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 border border-red-600 hover:border-red-700 shadow-lg hover:shadow-red-500/25">
+                <i class="fas fa-edit text-sm"></i>
+                <span>Change</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Email Information -->
+          <div class="bg-[#1a1a1a] p-6 rounded-xl border border-[#333333]">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-[#262626] rounded-full flex items-center justify-center">
+                <i class="fas fa-envelope text-red-400"></i>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-lg font-semibold text-white">Email Address</h4>
+                <p class="text-sm text-white/60 mt-1">{{ request.user.email }}</p>
+                <p class="text-xs text-white/40 mt-2">This email is used for account notifications and password recovery</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Department and Team Cards Side by Side -->
+    <div class="flex flex-col lg:flex-row gap-8 mt-8">
+      <!-- Department Section -->
+      <section id="department" class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] relative overflow-hidden flex-1 hover:border-red-500/30 transition-all duration-300">
+        <div class="relative z-10">
+          <!-- Header -->
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-red-500">Department</h3>
+          </div>
+          
+          {% if profile.department or profile.managed_department %}
+            {% if profile.managed_department %}
+              <!-- Manager Department -->
+              <div class="space-y-6">
+                <div class="flex items-start gap-4">
+                  <div class="flex-1">
+                    <h4 class="text-lg font-bold text-white mb-1">{{ profile.managed_department.title }}</h4>
+                    <p class="text-sm text-gray-300">You lead this department</p>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
+                      <i class="fas fa-crown mr-1"></i>Manager
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <!-- Member Department -->
+              <div class="space-y-6">
+                <h4 class="text-lg font-bold text-white mb-3">{{ profile.department.title }}</h4>
+                <div class="flex items-center gap-3">
+                  <span class="px-4 py-2 bg-blue-500 text-white text-sm font-bold rounded-full shadow-lg">
+                    <i class="fas fa-user mr-2"></i>Member
+                  </span>
+                  {% if profile.department.manager %}
+                    <span class="text-sm text-gray-300">
+                      Manager: {{ profile.department.manager.user.get_full_name|title|default:profile.department.manager.user.username|title }}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% else %}
+            <!-- No Department -->
+            <h4 class="text-xl font-bold text-white mb-2">No Department Assigned</h4>
+            <p class="text-gray-400">You haven't been assigned to any department yet.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Team Section -->
+      <section id="team" class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] relative overflow-hidden flex-1 hover:border-red-500/30 transition-all duration-300">
+        <div class="relative z-10">
+          <!-- Header -->
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-red-500">Team</h3>
+          </div>
+          
+          <!-- Manager Card -->
+          {% if profile.manager %}
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 rounded-lg overflow-hidden shadow-lg">
+                <a href="{% url 'authentication:view_profile' profile.manager.user.id %}">
+                  {% if profile.manager.profile_picture and profile.manager.profile_picture.name %}
+                    <img src="{{ profile.manager.profile_picture.url }}" alt="Manager Picture" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                  {% else %}
+                    <img src="{% static 'images/user_icon.jpg' %}" alt="Manager Picture" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                  {% endif %}
+                </a>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-lg font-bold text-white mb-1">
+                  {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}
+                </h4>
+                <p class="text-sm text-gray-300 mb-1">{{ profile.manager.role|default:"No Role" }}</p>
+                <p class="text-xs text-gray-400">ID: {{ profile.manager.user.id }}</p>
+              </div>
+              <div class="flex-shrink-0">
+                <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
+                  <i class="fas fa-crown mr-1"></i>Manager
+                </span>
+              </div>
+            </div>
+          {% else %}
+            <h4 class="text-xl font-bold text-white mb-2">No Manager Assigned</h4>
+            <p class="text-gray-400">You don't have a manager assigned.</p>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <section class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] mt-8 hover:border-red-500/30 transition-all duration-300">
+      <h3 class="text-2xl font-bold text-red-500 mb-8">Teammates</h3>
       <!-- Team Members -->
       <div>
         {% if teammates %}
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {% for teammate in teammates %}
-              <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+              <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex flex-col items-center text-center p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200 w-full">
                 {% if teammate.profile_picture and teammate.profile_picture.name %}
-                  <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                  <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
                 {% else %}
-                  <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                  <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
                 {% endif %}
                 <div>
-                  <p class="text-lg font-semibold text-white">
+                  <p class="text-sm font-semibold text-white truncate">
                     {{ teammate.user.get_full_name|default:teammate.user.username }}
                   </p>
-                  <p class="text-sm text-gray-400">{{ teammate.role|default:"No Role" }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ teammate.role|default:"No Role" }}</p>
                 </div>
               </a>
             {% endfor %}
@@ -276,23 +486,23 @@
     </section>
 
     <!-- Teammates Section -->
-    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Team Members</h3>
+    <section class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] mt-8 hover:border-red-500/30 transition-all duration-300">
+      <h3 class="text-2xl font-bold text-red-500 mb-8">Team Members</h3>
 
       {% if team_members %}
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {% for mate in team_members %}
-            <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+            <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex flex-col items-center text-center p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200 w-full">
               {% if mate.profile_picture and mate.profile_picture.name %}
-                <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
               {% else %}
-                <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
               {% endif %}
               <div>
-                <p class="text-lg font-semibold text-white">
+                <p class="text-sm font-semibold text-white truncate">
                   {{ mate.user.get_full_name|default:mate.user.username }}
                 </p>
-                <p class="text-sm text-gray-400">{{ mate.role|default:"No Role" }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ mate.role|default:"No Role" }}</p>
               </div>
             </a>
           {% endfor %}
@@ -305,13 +515,4 @@
   </main>
 </div>
 
-<style>
-@keyframes move-truck {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-.animate-move-truck {
-  animation: move-truck 40s linear infinite;
-}
-</style>
 {% endblock %}
