@@ -117,18 +117,21 @@ class ProfileUpdateForm(forms.ModelForm):
     first_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "First Name"
         })
     )
     last_name = forms.CharField(
         max_length=30,
         widget=forms.TextInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Last Name"
         })
     )
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Email Address"
         })
     )
 
@@ -136,21 +139,24 @@ class ProfileUpdateForm(forms.ModelForm):
         max_length=15,
         required=False,
         widget=forms.TextInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Phone Number"
         })
     )
 
     role = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Role"
         })
     )
 
     location = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Location"
         })
     )
 
@@ -158,7 +164,8 @@ class ProfileUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.DateInput(attrs={
             "type": "date",
-            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2"
+            "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
+            "placeholder": "Start Date"
         })
     )
 
@@ -166,7 +173,8 @@ class ProfileUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={
             "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
-            "rows": 3
+            "rows": 3,
+            "placeholder": "Hobbies"
         })
     )
 
@@ -174,7 +182,8 @@ class ProfileUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={
             "class": "w-full bg-black border border-gray-600 rounded px-3 py-2 text-white mt-2",
-            "rows": 3
+            "rows": 3,
+            "placeholder": "Favourite Quote"
         })
     )
 

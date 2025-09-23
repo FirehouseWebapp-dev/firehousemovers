@@ -1,81 +1,125 @@
 {% extends 'authentication/base_profile.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'authentication/css/profile_enhancements.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'authentication/js/view_profile.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="flex min-h-screen relative bg-black text-white">
-  <!-- Truck Animation Background -->
-  <div class="absolute top-0 left-0 w-full h-full z-0 overflow-hidden">
-    <img src="{% static 'images/truck-animation.svg' %}" alt="Truck" class="absolute animate-move-truck opacity-10 w-64 md:w-96 -bottom-10 left-1/2 transform -translate-x-1/2">
-  </div>
 
   <!-- Main Content -->
   <main class="flex-1 p-10 space-y-12 relative z-10">
-    <!-- Hero Card -->
-    <div class="relative w-full bg-gradient-to-r from-red-500 via-black to-red-500 p-6 rounded-xl shadow-md mb-10 text-white">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-
-        <!-- Left: Image and Info -->
-        <div class="flex flex-col md:flex-row items-center gap-6">
-          <!-- Profile Picture -->
-          <div class="relative">
-            {% if profile.profile_picture and profile.profile_picture.name %}
-              <img src="{{ profile.profile_picture.url }}" class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow" alt="Profile Picture">
-            {% else %}
-              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-700 flex items-center justify-center text-4xl font-bold shadow">
-                <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover">
-              </div>
-            {% endif %}
-          </div>
-
-          <!-- Name and Info -->
-          <div>
-            <h1 class="text-3xl font-extrabold">{{ profile.first_name|capfirst }} {{ profile.last_name|capfirst }}</h1>
-            <p class="text-gray-200">
-              Employee ID - {{ profile.id }} 
-              {% if profile.start_date %}
-              | Tenure: {{ profile.start_date|date:"d M Y" }} - Present
-              <span class="text-sm text-gray-300 ml-1">({{ profile.start_date|timesince }} experience)</span>
+    <!-- Enhanced Profile Header Card -->
+    <div class="relative w-full overflow-hidden rounded-2xl shadow-enhanced mb-10">
+      <!-- Background matching website theme -->
+      <div class="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] via-[#262626] to-[#1a1a1a]"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/3"></div>
+      
+      <!-- Decorative elements - more subtle -->
+      <div class="absolute top-0 right-0 w-64 h-64 bg-white/2 rounded-full -translate-y-32 translate-x-32"></div>
+      <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/2 rounded-full translate-y-24 -translate-x-24"></div>
+      
+      <!-- Main content -->
+      <div class="relative z-10 p-8 profile-header-mobile">
+        <!-- Header section with profile info -->
+        <div class="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+          
+          <!-- Profile Picture with enhanced styling -->
+          <div class="relative group profile-picture-container">
+            <div class="absolute -inset-1 bg-gradient-to-r from-white/10 to-white/5 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
+            <div class="relative">
+              {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" class="w-32 h-32 lg:w-40 lg:h-40 profile-picture-mobile rounded-full object-cover shadow-xl border-2 border-white/10 hover:border-white/20 transition-all duration-300" alt="Profile Picture">
+              {% else %}
+                <div class="w-32 h-32 lg:w-40 lg:h-40 profile-picture-mobile rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center shadow-xl border-2 border-white/10 hover:border-white/20 transition-all duration-300">
+                  <img src="{% static 'images/user_icon.jpg' %}" alt="Default Profile" class="w-full h-full object-cover rounded-full">
+                </div>
               {% endif %}
-            </p>
+            </div>
+          </div>
 
-            {% if profile.role %}
-              <div class="inline-block mt-2 px-4 py-1 text-sm rounded-full border border-white text-white bg-black/30">
-                {{ profile.role }}
+          <!-- Profile Information -->
+          <div class="flex-1 space-y-4">
+            <!-- Name and role -->
+            <div class="space-y-2">
+              <h1 class="text-4xl lg:text-5xl font-black text-red-500 tracking-tight">
+                {{ profile.user.first_name|capfirst }} {{ profile.user.last_name|capfirst }}
+              </h1>
+              
+              <!-- Employee ID and tenure -->
+              <div class="flex flex-wrap items-center gap-4 text-lg">
+                <div class="flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333]">
+                  <i class="fas fa-id-badge text-white/80"></i>
+                  <span class="text-white font-semibold">ID: {{ profile.id }}</span>
+                </div>
+                
+                {% if profile.start_date %}
+                <div class="flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333]">
+                  <i class="fas fa-calendar-alt text-white/80"></i>
+                  <span class="text-white font-semibold">{{ profile.start_date|timesince }} experience</span>
+                </div>
+                {% endif %}
               </div>
-            {% endif %}
+
+              <!-- Role badge with enhanced styling -->
+              {% if profile.role %}
+                <div class="inline-flex items-center gap-2 bg-[#262626] px-4 py-2 rounded-full border border-[#333333] hover:bg-[#2a2a2a] transition-all duration-300">
+                  <i class="fas fa-user-tie text-white/70"></i>
+                  <span class="text-white font-medium">{{ profile.role|capfirst }}</span>
+                </div>
+              {% endif %}
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Contact Info Icons -->
-      <div class="flex flex-wrap gap-6 mt-6 items-center text-sm text-white">
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-envelope text-white"></i>
+        <!-- Enhanced Contact Information -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 contact-grid-mobile">
+          <!-- Email -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-envelope text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Email</p>
+              <p class="text-white font-normal text-sm truncate">{{ profile.user.email }}</p>
+            </div>
           </div>
-          <span>{{ profile.email }}</span>
-        </div>
 
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-phone text-white"></i>
+          <!-- Phone -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-phone text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Phone</p>
+              <p class="text-white font-normal text-sm truncate">{{ profile.phone_number|default:"Not provided" }}</p>
+            </div>
           </div>
-          <span>{{ profile.phone_number|default:"N/A" }}</span>
-          <span class="text-xs text-gray-300 ml-2">Work</span>
-        </div>
 
-        <div class="flex items-center">
-          <div class="w-9 h-9 flex items-center justify-center">
-            <i class="fas fa-map-marker-alt text-white"></i>
+          <!-- Location -->
+          <div class="flex items-center gap-4 bg-[#262626] p-4 rounded-xl contact-card group hover:bg-[#2a2a2a] transition-all duration-300 border border-[#333333]">
+            <div class="w-10 h-10 bg-[#1a1a1a] rounded-full flex items-center justify-center group-hover:bg-[#1f1f1f] transition-all duration-300">
+              <i class="fas fa-map-marker-alt text-white/70 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-white text-base font-bold">Location</p>
+              <p class="text-white font-normal text-sm truncate">{{ profile.location|default:"Not provided" }}</p>
+            </div>
           </div>
-          <span>{{ profile.location|default:"Not Set" }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Personal Info Section -->
-    <section id="personal-info" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Personal Information</h3>
+    <!-- Personal Information Section -->
+    <section class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] hover:border-red-500/30 transition-all duration-300">
+      <div class="mb-8">
+        <h3 class="text-2xl font-bold text-red-500">Personal Information</h3>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <p class="text-sm text-gray-400 mb-1">Hobbies</p>
@@ -88,102 +132,117 @@
       </div>
     </section>
 
-    <!-- Team Section -->
-    <section id="team" class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Team</h3>
+    <!-- Department and Team Cards Side by Side -->
+    <div class="flex flex-col lg:flex-row gap-8 mt-8">
+      <!-- Department Section -->
+      <section id="department" class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] relative overflow-hidden flex-1 hover:border-red-500/30 transition-all duration-300">
+        <div class="relative z-10">
+          <!-- Header -->
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-red-500">Department</h3>
+          </div>
+          
+          {% if profile.department or profile.managed_department %}
+            {% if profile.managed_department %}
+              <!-- Manager Department -->
+              <div class="space-y-6">
+                <div class="flex items-start gap-4">
+                  <div class="flex-1">
+                    <h4 class="text-lg font-bold text-white mb-1">{{ profile.managed_department.title }}</h4>
+                    <p class="text-sm text-gray-300">{{ profile.user.get_full_name|title|default:profile.user.username|title }} leads this department</p>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
+                      <i class="fas fa-crown mr-1"></i>Manager
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <!-- Member Department -->
+              <div class="space-y-6">
+                <div class="flex items-start gap-4">
+                  <div class="flex-1">
+                    <h4 class="text-lg font-bold text-white mb-1">{{ profile.department.title }}</h4>
+                    {% if profile.department.manager %}
+                      <p class="text-sm text-gray-300">Manager: {{ profile.department.manager.user.get_full_name|title|default:profile.department.manager.user.username|title }}</p>
+                    {% endif %}
+                  </div>
+                  <div class="flex-shrink-0">
+                    <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/30">
+                      <i class="fas fa-user mr-1"></i>Member
+                    </span>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% else %}
+            <!-- No Department -->
+            <h4 class="text-xl font-bold text-white mb-2">No Department Assigned</h4>
+            <p class="text-gray-400">This user hasn't been assigned to any department yet.</p>
+          {% endif %}
+        </div>
+      </section>
 
-      <!-- Manager Card -->
-      <div class="mb-6">
-        <h4 class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">Manager</h4>
-        {% if profile.manager %}
-        <div class="bg-gray-100 rounded-lg shadow-md w-full max-w-xs">
-          <a href="{% url 'authentication:view_profile' profile.manager.user.id %}">
-            <div class="rounded-lg overflow-hidden hover:shadow-lg transition duration-300 bg-[#2a2a2a]  hover:bg-[#3a3a3a] ">
-              {% if profile.manager.profile_picture and profile.manager.profile_picture.name %}
-                <img src="{{ profile.manager.profile_picture.url }}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
-              {% else %}
-                <img src="{% static 'images/user_icon.jpg' %}" alt="Manager Picture" class="w-full h-80 object-cover object-top">
-              {% endif %}
-              <div class="p-3 text-center">
-                <h3 class="text-lg font-semibold text-red-500">
+      <!-- Team Section -->
+      <section id="team" class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] relative overflow-hidden flex-1 hover:border-red-500/30 transition-all duration-300">
+        <div class="relative z-10">
+          <!-- Header -->
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-red-500">Team Manager</h3>
+          </div>
+          
+          <!-- Manager Card -->
+          {% if profile.manager %}
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 rounded-lg overflow-hidden shadow-lg">
+                <a href="{% url 'authentication:view_profile' profile.manager.user.id %}">
+                  {% if profile.manager.profile_picture and profile.manager.profile_picture.name %}
+                    <img src="{{ profile.manager.profile_picture.url }}" alt="Manager Picture" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                  {% else %}
+                    <img src="{% static 'images/user_icon.jpg' %}" alt="Manager Picture" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                  {% endif %}
+                </a>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-lg font-bold text-white mb-1">
                   {{ profile.manager.user.get_full_name|default:profile.manager.user.username }}
-                </h3>
-                <p class="text-sm text-gray-400">{{ profile.manager.role|default:"No Role" }}</p>
-                <p class="text-sm text-gray-300">ID: {{ profile.manager.user.id }}</p>
+                </h4>
+                <p class="text-sm text-gray-300 mb-1">{{ profile.manager.role|default:"No Role" }}</p>
+                <p class="text-xs text-gray-400">ID: {{ profile.manager.user.id }}</p>
+              </div>
+              <div class="flex-shrink-0">
+                <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
+                  <i class="fas fa-crown mr-1"></i>Manager
+                </span>
               </div>
             </div>
-          </a>
+          {% else %}
+            <h4 class="text-xl font-bold text-white mb-2">No Manager Assigned</h4>
+            <p class="text-gray-400">This user doesn't have a manager assigned.</p>
+          {% endif %}
         </div>
-        {% else %}
-          <p class="text-red-500">No manager assigned.</p>
-        {% endif %}
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <!-- Department Section -->
-    <section id="department" class="bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] p-8 rounded-2xl shadow-2xl border border-gray-600 mt-8 relative overflow-hidden">
-      
-      <div class="relative z-10">
-        <div class="mb-6">
-          <h3 class="text-xl font-semibold text-red-400">Department</h3>
-        </div>
-        
-        {% if profile.department or profile.managed_department %}
-          <div class="flex-1">
-              {% if profile.managed_department %}
-                <div class="flex items-start justify-between mb-3 mt-1">
-                  <h4 class="text-xl font-bold text-white">{{ profile.managed_department.title }}</h4>
-                  <span class="px-3 py-1 bg-red-500/20 text-red-300 text-xs font-semibold rounded-full border border-red-500/30">
-                    <i class="fas fa-crown mr-1"></i>Manager
-                  </span>
-                </div>
-                <div class="flex items-center gap-2 text-sm text-gray-400">
-                  <i class="fas fa-user-crown text-red-400"></i>
-                  <span>{{ profile.user.get_full_name|title|default:profile.user.username|title }} is the manager of this department</span>
-                </div>
-              {% else %}
-                <div class="flex items-start justify-between mb-3 mt-1">
-                  <h4 class="text-xl font-bold text-white">{{ profile.department.title }}</h4>
-                  <span class="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-full border border-blue-500/30">
-                    <i class="fas fa-user mr-1"></i>Member
-                  </span>
-                </div>
-                {% if profile.department.manager %}
-                  <div class="flex items-center gap-2 text-sm text-gray-400">
-                    <i class="fas fa-user-tie text-blue-400"></i>
-                    <span>Manager: {{ profile.department.manager.user.get_full_name|title|default:profile.department.manager.user.username|title }}</span>
-                  </div>
-                {% endif %}
-              {% endif %}
-            </div>
-          </div>
-        {% else %}
-          <div class="flex-1">
-              <h4 class="text-xl font-bold text-white mb-2">No Assigned Department</h4>
-              <p class="text-gray-300 leading-relaxed">This user hasn't been assigned to any department yet.</p>
-            </div>
-          </div>
-        {% endif %}
-      </div>
-    </section>
-
-    <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8"> 
-      <h3 class="text-xl font-semibold text-red-400 mb-4">Teammates</h3>
+    <!-- Teammates Section -->
+    <section class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] mt-8 hover:border-red-500/30 transition-all duration-300">
+      <h3 class="text-2xl font-bold text-red-500 mb-8">Teammates</h3>
       <div>
         {% if teammates %}
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {% for teammate in teammates %}
-              <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
+              <a href="{% url 'authentication:view_profile' teammate.user.id %}" class="flex flex-col items-center text-center p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200 w-full">
                 {% if teammate.profile_picture and teammate.profile_picture.name %}
-                  <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                  <img src="{{ teammate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
                 {% else %}
-                  <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
+                  <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
                 {% endif %}
                 <div>
-                  <p class="text-lg font-semibold text-white">
+                  <p class="text-sm font-semibold text-white truncate">
                     {{ teammate.user.get_full_name|default:teammate.user.username }}
                   </p>
-                  <p class="text-sm text-gray-400">{{ teammate.role|default:"No Role" }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ teammate.role|default:"No Role" }}</p>
                 </div>
               </a>
             {% endfor %}
@@ -194,43 +253,34 @@
       </div>
     </section>
 
-  <!-- Teammates Section -->
-  <section class="bg-[#1e1e1e] p-6 rounded-xl shadow-lg border border-gray-700 mt-8">
-    <h3 class="text-xl font-semibold text-red-400 mb-4">Team Members</h3>
+    <!-- Team Members Section -->
+    <section class="bg-[#1a1a1a] p-8 rounded-3xl shadow-2xl border border-[#333333] mt-8 hover:border-red-500/30 transition-all duration-300">
+      <h3 class="text-2xl font-bold text-red-500 mb-8">Team Members</h3>
 
-    {% if team_members %}
-      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {% for mate in team_members %}
-          <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex items-center gap-4 p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200">
-            {% if mate.profile_picture and mate.profile_picture.name %}
-              <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
-            {% else %}
-              <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md">
-            {% endif %}
-            <div>
-              <p class="text-lg font-semibold text-white">
-                {{ mate.user.get_full_name|default:mate.user.username }}
-              </p>
-              <p class="text-sm text-gray-400">{{ mate.role|default:"No Role" }}</p>
-            </div>
-          </a>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="text-gray-400 italic">No teammates reporting to you.</p>
-    {% endif %}
-  </section>
+      {% if team_members %}
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {% for mate in team_members %}
+            <a href="{% url 'authentication:view_profile' mate.user.id %}" class="flex flex-col items-center text-center p-4 bg-[#2a2a2a] rounded-xl hover:bg-[#3a3a3a] transition duration-200 w-full">
+              {% if mate.profile_picture and mate.profile_picture.name %}
+                <img src="{{ mate.profile_picture.url }}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
+              {% else %}
+                <img src="{% static 'images/user_icon.jpg' %}" class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md mb-3">
+              {% endif %}
+              <div>
+                <p class="text-sm font-semibold text-white truncate">
+                  {{ mate.user.get_full_name|default:mate.user.username }}
+                </p>
+                <p class="text-xs text-gray-400 truncate">{{ mate.role|default:"No Role" }}</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-400 italic">No team members reporting to this user.</p>
+      {% endif %}
+    </section>
 
   </main>
 </div>
 
-<style>
-@keyframes move-truck {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-.animate-move-truck {
-  animation: move-truck 40s linear infinite;
-}
-</style>
 {% endblock %}

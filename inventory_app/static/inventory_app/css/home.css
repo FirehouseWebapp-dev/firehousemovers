@@ -1,0 +1,792 @@
+/* Firehouse Movers Home Page Styles */
+
+/* SVG Truck Styles */
+.truck-body { fill: #ef4444; stroke: #1a1a1a; stroke-width:2; }
+.truck-cab { fill: #1a1a1a; }
+.truck-window { fill: rgba(255,255,255,0.15); }
+.wheel { fill:#262626; stroke:#1a1a1a; stroke-width:2; }
+.headlight { fill: #fcd34d; }
+.beam { fill: #fcd34d; opacity: 0.2; }
+.animate-bounce-slow { animation: bounceSlow 1.6s infinite; }
+@keyframes bounceSlow { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(6px);} }
+
+/* Service Card Animations */
+.truck-animation {
+  /* animation: truckMove 25s linear infinite; */
+  overflow: visible;
+  /* transform: translateX(-30vw); */
+}
+
+.truck-animation svg {
+  /* animation: truckMove 25s linear infinite; */
+  will-change: transform;
+  opacity: 1;
+}
+
+@keyframes truckMove {
+  0% { 
+    transform: translateX(-30vw); 
+    opacity: 1;
+  }
+  70% { 
+    transform: translateX(100vw); 
+    opacity: 1;
+  }
+  70.1% { 
+    transform: translateX(100vw); 
+    opacity: 0;
+  }
+  99.9% { 
+    transform: translateX(-30vw); 
+    opacity: 0;
+  }
+  100% { 
+    transform: translateX(-30vw); 
+    opacity: 1;
+  }
+}
+
+.box-float {
+  animation: boxFloat 2s ease-in-out infinite;
+}
+
+@keyframes boxFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(2deg); }
+}
+
+.gear-spin {
+  animation: gearRotate 4s linear infinite;
+}
+
+@keyframes gearRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.checkmark-1 {
+  animation: checkmarkPulse 2s ease-in-out infinite;
+}
+
+.checkmark-2 {
+  animation: checkmarkPulse 2s ease-in-out infinite 0.3s;
+}
+
+.checkmark-3 {
+  animation: checkmarkPulse 2s ease-in-out infinite 0.6s;
+}
+
+@keyframes checkmarkPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.station-light {
+  animation: stationBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes stationBlink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.activity-bar {
+  animation: activityPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes activityPulse {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Additional Service Card Animations */
+.uniform-sway {
+  animation: uniformSway 3s ease-in-out infinite;
+}
+
+@keyframes uniformSway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+.count-pulse {
+  animation: countPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+.counter-text {
+  animation: counterBlink 2s ease-in-out infinite;
+}
+
+@keyframes counterBlink {
+  0%, 90% { opacity: 0.7; }
+  95%, 100% { opacity: 1; }
+}
+
+.card-float {
+  animation: cardFloat 2.5s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-3px) rotate(1deg); }
+  66% { transform: translateY(-1px) rotate(-1deg); }
+}
+
+.sparkle {
+  animation: sparkleEffect 2s ease-in-out infinite;
+}
+
+@keyframes sparkleEffect {
+  0%, 100% { transform: scale(0.8); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+.magnify-pulse {
+  animation: magnifyPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes magnifyPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+.magnify-handle {
+  animation: handleWiggle 3s ease-in-out infinite;
+}
+
+@keyframes handleWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.clipboard-bob {
+  animation: clipboardBob 2s ease-in-out infinite;
+}
+
+@keyframes clipboardBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.scan-line {
+  animation: scanLine 2s linear infinite;
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(12px); opacity: 0.5; }
+  100% { transform: translateY(24px); opacity: 0; }
+}
+
+.package-stack {
+  animation: packageStack 2.5s ease-in-out infinite;
+}
+
+@keyframes packageStack {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.02); }
+}
+
+.tape-roll {
+  animation: tapeRoll 3s linear infinite;
+}
+
+@keyframes tapeRoll {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.bubble-wrap {
+  animation: bubblePop 1.5s ease-in-out infinite;
+}
+
+@keyframes bubblePop {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.3); opacity: 0.8; }
+}
+
+.shield-glow {
+  animation: shieldGlow 2s ease-in-out infinite;
+}
+
+@keyframes shieldGlow {
+  0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 2px currentColor); }
+  50% { opacity: 0.9; filter: drop-shadow(0 0 6px currentColor); }
+}
+
+/* Final Four Service Card Animations */
+.camera-shake {
+  animation: cameraShake 2.5s ease-in-out infinite;
+}
+
+@keyframes cameraShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-1px) rotate(-1deg); }
+  75% { transform: translateX(1px) rotate(1deg); }
+}
+
+.lens-focus {
+  animation: lensFocus 2s ease-in-out infinite;
+}
+
+@keyframes lensFocus {
+  0%, 100% { stroke-dasharray: 0 20; opacity: 0.5; }
+  50% { stroke-dasharray: 10 10; opacity: 1; }
+}
+
+.photo-develop {
+  animation: photoDevelop 3s ease-in-out infinite;
+}
+
+@keyframes photoDevelop {
+  0%, 100% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 0.8; transform: scale(1); }
+}
+
+.camera-flash {
+  animation: cameraFlash 3s ease-in-out infinite;
+}
+
+@keyframes cameraFlash {
+  0%, 90% { opacity: 0.2; transform: scale(1); }
+  95% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0.2; transform: scale(1); }
+}
+
+.trophy-shine {
+  animation: trophyShine 3s ease-in-out infinite;
+}
+
+@keyframes trophyShine {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.trophy-base {
+  animation: trophyBob 2s ease-in-out infinite;
+}
+
+@keyframes trophyBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.medal-spin {
+  animation: medalSpin 4s linear infinite;
+}
+
+@keyframes medalSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.star-twinkle {
+  animation: starTwinkle 2s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+}
+
+.form-slide {
+  animation: formSlide 3s ease-in-out infinite;
+}
+
+@keyframes formSlide {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(2px) rotate(1deg); }
+}
+
+.rating-fill {
+  animation: ratingFill 2s ease-in-out infinite;
+}
+
+@keyframes ratingFill {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+.progress-fill {
+  animation: progressFill 2.5s ease-in-out infinite;
+}
+
+@keyframes progressFill {
+  0% { height: 20%; opacity: 0.4; }
+  50% { height: 100%; opacity: 1; }
+  100% { height: 20%; opacity: 0.4; }
+}
+
+.fuel-pump {
+  animation: fuelPump 2s ease-in-out infinite;
+}
+
+@keyframes fuelPump {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.02); opacity: 0.9; }
+}
+
+.fuel-hose {
+  animation: fuelHose 3s ease-in-out infinite;
+}
+
+@keyframes fuelHose {
+  0%, 100% { stroke-dasharray: 0 20; opacity: 0.6; }
+  50% { stroke-dasharray: 10 10; opacity: 1; }
+}
+
+.fleet-vehicle {
+  animation: fleetIdle 4s ease-in-out infinite;
+}
+
+@keyframes fleetIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+.fuel-gauge {
+  animation: fuelGauge 1.5s ease-in-out infinite;
+}
+
+@keyframes fuelGauge {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.fuel-level {
+  animation: fuelLevel 3s ease-in-out infinite;
+}
+
+@keyframes fuelLevel {
+  0% { height: 30%; }
+  50% { height: 80%; }
+  100% { height: 30%; }
+}
+
+/* Modern Header Styles */
+.modern-gradient-text {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced button hover effects */
+.modern-btn-primary:hover {
+  box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.4), 0 10px 10px -5px rgba(239, 68, 68, 0.04);
+}
+
+/* Subtle text enhancement */
+.modern-text-shadow {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Animated background subtle movement */
+@keyframes backgroundShift {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.02) translate(-1px, -1px); }
+}
+
+.background-image {
+  animation: backgroundShift 20s ease-in-out infinite;
+}
+
+/* Service Cards 3D Effects */
+.service-card {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+  opacity: 0; /* Start hidden for animation */
+  filter: blur(0px); /* Smooth filter transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Enhanced SVG Hover System */
+.service-card .absolute.inset-0 {
+  transition: opacity 0.2s ease-out;
+}
+
+/* Remove hover color effects and replace with SVG animations */
+.service-card:hover {
+  border-color: rgba(107, 114, 128, 0.5) !important; /* Keep subtle border */
+  transform: scale(1.02); /* Quick pop out effect */
+  transition: transform 0.15s ease-out; /* Fast scale animation */
+}
+
+/* Remove this rule that was making images invisible on hover */
+
+/* Images will now properly show the group-hover:opacity-30 from HTML */
+
+/* Add subtle black shade overlay on hover */
+.service-card:hover .hover-image {
+  filter: brightness(0.7) contrast(1.1); /* Darken image and increase contrast */
+}
+
+/* Standardize card text positioning */
+.service-card .relative.z-20 {
+  padding: 1.5rem; /* 24px consistent padding */
+  justify-content: flex-end; /* Move content to bottom */
+}
+
+/* Move text content to bottom with elegant styling */
+.service-card .relative.z-20 > div:last-child {
+  margin-top: auto; /* Push text to bottom */
+  padding: 1.5rem 1.5rem 1.5rem 1.5rem; /* Consistent padding */
+  position: absolute; /* Position at bottom */
+  bottom: 0; /* Position at very bottom */
+  left: 0; /* Full width */
+  right: 0; /* Full width */
+  background: transparent; /* Remove dark overlay */
+  border-radius: 0 0 0.75rem 0.75rem; /* Rounded bottom corners only */
+  z-index: 20; /* Ensure it's below the upper badges */
+}
+
+.service-card h3 {
+  font-size: 1.125rem; /* 18px - balanced size */
+  font-weight: 700; /* Bold weight for headings */
+  line-height: 1.4;
+  margin-bottom: 0.25rem; /* 4px - tighter spacing */
+  min-height: 2.25rem; /* Consistent height */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5); /* Subtle shadow */
+  color: #ffffff; /* Pure white */
+  letter-spacing: 0.025em; /* Slight letter spacing for elegance */
+  transition: all 0.3s ease; /* Smooth transitions */
+  opacity: 0; /* Hidden by default */
+}
+
+.service-card p {
+  font-size: 0.875rem; /* 14px - readable size */
+  line-height: 1.5;
+  min-height: 0; /* Remove min-height to prevent spacing issues */
+  height: 0; /* Collapse when hidden */
+  overflow: hidden;
+  transition: height 0.3s ease, opacity 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4); /* Subtle shadow */
+  color: #f3f4f6; /* Light gray for good contrast */
+  opacity: 0.9; /* Slight transparency for elegance */
+}
+
+.service-card:hover p {
+  height: auto; /* Expand on hover */
+}
+
+/* Enhanced hover effects for better user experience */
+.service-card:hover .relative.z-20 > div:last-child {
+  background: transparent; /* Remove dark overlay on hover */
+  transform: translateY(0); /* Smooth transition */
+}
+
+.service-card:hover h3 {
+  opacity: 1; /* Show on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+  transition: all 0.3s ease;
+}
+
+.service-card:hover p {
+  opacity: 1; /* Full opacity on hover */
+  transform: translateY(-1px); /* Slight lift effect */
+  transition: all 0.3s ease;
+}
+
+/* Fix upper badges and icons positioning - extremely cornered */
+.service-card .flex.items-center.justify-between {
+  position: absolute; /* Position at top */
+  top: 0.0625rem; /* Extremely close to top edge */
+  left: 0.0625rem; /* Extremely close to left edge */
+  right: 0.0625rem; /* Extremely close to right edge */
+  z-index: 30; /* Higher z-index to stay on top */
+  margin-bottom: 0; /* Remove bottom margin */
+  display: flex; /* Ensure flex layout */
+  justify-content: space-between; /* Space between left and right */
+  align-items: flex-start; /* Align to top corners */
+}
+
+/* Style the badge text on the right - hidden by default */
+.service-card .flex.items-center.justify-between > div:last-child {
+  font-weight: 500; /* Lighter weight for smaller appearance */
+  font-size: 0.625rem; /* Smaller text - 10px */
+  letter-spacing: 0.025em; /* Reduced letter spacing */
+  text-transform: uppercase; /* Ensure uppercase */
+  color: #ffffff; /* White text */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8); /* Add shadow for contrast */
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.3s ease; /* Smooth fade in/out */
+  align-self: center; /* Align with badge */
+}
+
+/* Style the icon on the left - no background */
+.service-card .flex.items-center.justify-between > div:first-child {
+  transition: all 0.3s ease; /* Smooth transitions */
+  width: 2rem; /* Smaller width - 32px */
+  height: 2rem; /* Smaller height - 32px */
+  display: flex; /* Ensure proper display */
+  align-items: center; /* Center icon vertically */
+  justify-content: center; /* Center icon horizontally */
+  align-self: center; /* Align with text */
+}
+
+/* Make the SVG icon inside smaller */
+.service-card .flex.items-center.justify-between > div:first-child svg {
+  width: 1rem; /* Smaller icon - 16px */
+  height: 1rem; /* Smaller icon - 16px */
+}
+
+/* Hover effects for upper elements - show badge text */
+.service-card:hover .flex.items-center.justify-between > div:last-child {
+  opacity: 0.9; /* Show badge text on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+}
+
+.service-card:hover .flex.items-center.justify-between > div:first-child {
+  transform: translateY(-2px) scale(1.05); /* Lift and scale effect */
+}
+
+/* SVG Animation Classes for Hover */
+.svg-hover-animation {
+  opacity: 0.8 !important;
+  transform: scale(1) translateY(0);
+  transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 10;
+  pointer-events: none;
+  display: block !important;
+}
+
+.service-card:hover .svg-hover-animation {
+  opacity: 1;
+  transform: scale(1.1) translateY(0);
+}
+
+/* Specific SVG hover animations */
+.truck-hover-animation {
+  animation: truckHoverMove 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes truckHoverMove {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(5px) rotate(1deg); }
+}
+
+.inspection-hover-animation {
+  animation: inspectionHoverPulse 1.5s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes inspectionHoverPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+.station-hover-animation {
+  animation: stationHoverGlow 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes stationHoverGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor); }
+  50% { filter: drop-shadow(0 0 8px currentColor); }
+}
+
+.uniform-hover-animation {
+  animation: uniformHoverSway 2.5s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes uniformHoverSway {
+  0%, 100% { transform: rotate(-1deg) translateY(0); }
+  50% { transform: rotate(1deg) translateY(-2px); }
+}
+
+.gift-hover-animation {
+  animation: giftHoverFloat 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes giftHoverFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(2deg); }
+}
+
+.onsite-hover-animation {
+  animation: onsiteHoverScan 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes onsiteHoverScan {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.packaging-hover-animation {
+  animation: packagingHoverStack 2.5s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes packagingHoverStack {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.02); }
+}
+
+.marketing-hover-animation {
+  animation: marketingHoverFlash 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes marketingHoverFlash {
+  0%, 90% { opacity: 0.5; transform: scale(1); }
+  95% { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0.5; transform: scale(1); }
+}
+
+.awards-hover-animation {
+  animation: awardsHoverShine 2.5s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes awardsHoverShine {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+  50% { transform: scale(1.05) rotate(5deg); opacity: 0.9; }
+}
+
+.evaluation-hover-animation {
+  animation: evaluationHoverSlide 2s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes evaluationHoverSlide {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(2px) rotate(1deg); }
+}
+
+.fleet-hover-animation {
+  animation: fleetHoverIdle 3s ease-in-out infinite;
+  opacity: 0.7 !important;
+}
+
+@keyframes fleetHoverIdle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.01); }
+}
+
+/* Grid compilation animation support */
+#services-grid {
+  perspective: 1500px;
+}
+
+/* Make first 3 cards larger */
+#services-grid .service-card:nth-child(1),
+#services-grid .service-card:nth-child(2),
+#services-grid .service-card:nth-child(3) {
+  height: 20rem; /* 320px - larger height */
+  min-height: 20rem; /* Ensure minimum height */
+}
+
+#services-grid .service-card:nth-child(1) .relative.h-64,
+#services-grid .service-card:nth-child(2) .relative.h-64,
+#services-grid .service-card:nth-child(3) .relative.h-64 {
+  height: 20rem; /* Match the card height */
+}
+
+/* Additional sections perspective */
+section:has(.service-card) {
+  perspective: 1500px;
+}
+
+/* Trust Section Animations */
+.pattern-animation {
+  animation: patternFloat 20s ease-in-out infinite;
+}
+
+@keyframes patternFloat {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  33% { transform: translateX(10px) translateY(-5px); }
+  66% { transform: translateX(-5px) translateY(10px); }
+}
+
+.pattern-rect {
+  animation: patternPulse 4s ease-in-out infinite;
+}
+
+.pattern-circle {
+  animation: patternPulse 4s ease-in-out infinite 0.5s;
+}
+
+@keyframes patternPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+.stat-icon {
+  transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.stat-icon:hover {
+  transform: scale(1.1) rotate(12deg);
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+}
+
+.pulse-number {
+  animation: numberGlow 3s ease-in-out infinite;
+}
+
+@keyframes numberGlow {
+  0%, 100% { text-shadow: 0 0 5px rgba(255,255,255,0.2); }
+  50% { text-shadow: 0 0 20px rgba(255,255,255,0.4), 0 0 30px rgba(255,255,255,0.2); }
+}
+
+.red-gradient-text {
+  background: linear-gradient(45deg, #ef4444, #dc2626, #b91c1c, #ef4444);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: redGradientShift 3s ease-in-out infinite;
+}
+
+@keyframes redGradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+
+/* Smooth inner content transitions */
+.service-card * {
+  transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Enhanced backdrop filter support */
+.service-card:hover .absolute.inset-0 {
+  transition: opacity 0.2s ease-out;
+}
+
+/* 2nd and 3rd row cards text positioning */
+section:nth-of-type(2) .service-card .relative.z-20 > div:last-child,
+section:nth-of-type(3) .service-card .relative.z-20 > div:last-child {
+  padding: 0.75rem 0.5rem 0.75rem 0.25rem !important;
+  text-align: left !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* 2nd and 3rd row cards badge positioning */
+section:nth-of-type(2) .service-card .flex.items-center.justify-between,
+section:nth-of-type(3) .service-card .flex.items-center.justify-between {
+  top: 0.0625rem !important;
+  left: 0.0625rem !important;
+  right: 0.0625rem !important;
+}
+
+/* Footer top margin */
+#footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+}
+

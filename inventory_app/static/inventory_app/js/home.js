@@ -1,0 +1,555 @@
+// Firehouse Movers Home Page JavaScript
+
+// Register ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
+
+const tl = gsap.timeline({ repeat: -1, repeatDelay: 0 });
+
+// truck continuous loop movement
+gsap.fromTo("#truck",
+  { x: "-150px" }, // start off screen left
+  { x: "110vw", duration: 10, ease: "linear", repeat: -1 } // drive fully across
+);
+
+// wheels spin
+gsap.to(["#wheel1", "#wheel2", "#wheel3"], { rotation: 360, transformOrigin: "50% 50%", repeat: -1, ease: "linear", duration: 1 });
+
+// suspension bounce
+gsap.to("#truck", { y: -4, yoyo: true, repeat: -1, duration: 0.8, ease: "sine.inOut" });
+
+// text slides down from top immediately on page load
+gsap.fromTo("#hero-title", 
+  { opacity: 0, y: -50 }, 
+  { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }
+);
+gsap.fromTo("#hero-tagline", 
+  { opacity: 0, y: -30 }, 
+  { opacity: 1, y: 0, duration: 1, delay: 0.3, ease: "power3.out" }
+);
+
+// Hero content fade on scroll
+function handleHeroFade() {
+  const scrollY = window.scrollY;
+  const heroSection = document.querySelector('header');
+  const heroHeight = heroSection.offsetHeight;
+  
+  // Calculate fade progress (0 to 1) - start fade later by using 1.5 instead of 2.0
+  const fadeProgress = Math.min(scrollY / (heroHeight * 1.5), 1);
+  
+  // Fade out hero content as user scrolls (minimum opacity 0.2) - moderate fade
+  const newOpacity = Math.max(1 - (fadeProgress * 0.5), 0.2);
+  
+  gsap.to("#hero-title, #hero-tagline", {
+    opacity: newOpacity,
+    duration: 0.3,
+    ease: "none"
+  });
+}
+
+// Add scroll listener for hero fade
+window.addEventListener('scroll', handleHeroFade);
+
+// Platform statement animations
+function animatePlatformStatement() {
+  const platformTitle = document.getElementById('platform-title');
+  const platformDescription = document.getElementById('platform-description');
+  
+  if (platformTitle && platformDescription) {
+    // Reset elements to initial state
+    gsap.set("#platform-title", { opacity: 0, x: -100, y: 30 });
+    gsap.set("#platform-description", { opacity: 0, x: 100, y: 30 });
+    
+    // Title slides in from left with fade
+    gsap.to("#platform-title", {
+      opacity: 1, x: 0, y: 0, duration: 1.2, delay: 0.3, ease: "power3.out"
+    });
+    
+    // Description slides in from right with fade
+    gsap.to("#platform-description", {
+      opacity: 1, x: 0, y: 0, duration: 1.2, delay: 0.6, ease: "power3.out"
+    });
+  }
+}
+
+// Trigger platform animation when section comes into view (every time)
+const platformSection = document.querySelector('section.py-20.bg-gradient-to-b');
+if (platformSection) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animatePlatformStatement();
+      }
+    });
+  }, { threshold: 0.3 });
+  
+  observer.observe(platformSection);
+}
+
+// Initialize page load animations
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    animatePlatformStatement();
+    addCardHoverEffects();
+    addSVGHoverAnimations();
+  }, 1000);
+});
+
+// Services overview animations
+function animateServicesOverview() {
+  const overviewTitle = document.getElementById('services-overview-title');
+  const overviewDescription = document.getElementById('services-overview-description');
+  const serviceHighlights = document.querySelectorAll('[id^="service-highlight-"]');
+  
+  if (overviewTitle && overviewDescription) {
+    // Reset elements to initial state
+    gsap.set("#services-overview-title", { opacity: 0, y: 30 });
+    gsap.set("#services-overview-description", { opacity: 0, y: 30 });
+    gsap.set(serviceHighlights, { opacity: 0, y: 40 });
+    
+    // Title fades in from below
+    gsap.to("#services-overview-title", {
+      opacity: 1, y: 0, duration: 1, delay: 0.2, ease: "power3.out"
+    });
+    
+    // Description fades in from below
+    gsap.to("#services-overview-description", {
+      opacity: 1, y: 0, duration: 1, delay: 0.4, ease: "power3.out"
+    });
+    
+    // Service highlights stagger in
+    gsap.to(serviceHighlights, {
+      opacity: 1, y: 0, duration: 0.8, delay: 0.6, ease: "power3.out", stagger: 0.2
+    });
+  }
+}
+
+// Trigger services overview animation when section comes into view
+const servicesOverviewSection = document.querySelector('section.py-16.bg-gradient-to-b');
+if (servicesOverviewSection) {
+  const overviewObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateServicesOverview();
+      }
+    });
+  }, { threshold: 0.3 });
+  
+  overviewObserver.observe(servicesOverviewSection);
+}
+
+// Animate service cards sequentially when scrolled into view
+function animateCardsSequentially() {
+  const allCards = gsap.utils.toArray("[data-animate]");
+  
+  // Group cards by their container sections
+  const servicesSection = document.querySelector('#services');
+  const additionalSection = document.querySelector('#services').nextElementSibling;
+  const marketingSection = additionalSection.nextElementSibling;
+  
+  // Animate cards in each section sequentially
+  [servicesSection, additionalSection, marketingSection].forEach((section, sectionIndex) => {
+    if (section) {
+      const sectionCards = section.querySelectorAll("[data-animate]");
+      
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top 90%",
+        end: "bottom 10%",
+        onEnter: () => {
+          // Smooth sequential animation with optimized performance
+          sectionCards.forEach((card, index) => {
+            gsap.fromTo(card,
+              { 
+                opacity: 0, 
+                y: 20, 
+                scale: 0.98
+              },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.6,
+                ease: "power3.out",
+                delay: index * 0.05 // Much faster stagger
+              }
+            );
+          });
+        },
+        onLeaveBack: () => {
+          // Smooth exit animation
+          sectionCards.forEach((card, index) => {
+            gsap.to(card, {
+              opacity: 0,
+              y: 15,
+              scale: 0.99,
+              duration: 0.5,
+              ease: "power2.inOut",
+              delay: (sectionCards.length - index - 1) * 0.05 // Faster reverse
+            });
+          });
+        }
+      });
+    }
+  });
+}
+
+// Initialize sequential animations
+animateCardsSequentially();
+
+// Enhanced hover system for service cards with SVG animations
+function addCardHoverEffects() {
+  const serviceCards = document.querySelectorAll('.service-card');
+  
+  serviceCards.forEach(card => {
+    const svgElement = card.querySelector('.svg-hover-animation');
+    
+    // Mouse enter - enhanced lift effect with SVG animation
+    card.addEventListener('mouseenter', () => {
+      // Card lift animation
+      gsap.to(card, {
+        scale: 1.03,
+        y: -8,
+        rotationY: 2,
+        rotationX: 2,
+        duration: 0.6,
+        ease: "power2.out",
+        boxShadow: "0 15px 35px rgba(0,0,0,0.2)"
+      });
+      
+      // SVG enhanced animation with scale and rotation
+      if (svgElement) {
+        gsap.to(svgElement, {
+          opacity: 1,
+          scale: 1.1,
+          y: 0,
+          rotation: 0,
+          duration: 0.5,
+          ease: "back.out(1.2)"
+        });
+      }
+    });
+    
+    // Mouse leave - smooth return with SVG fade-out
+    card.addEventListener('mouseleave', () => {
+      // Card return animation
+      gsap.to(card, {
+        scale: 1,
+        y: 0,
+        rotationY: 0,
+        rotationX: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+      });
+      
+      // SVG return to default state
+      if (svgElement) {
+        gsap.to(svgElement, {
+          opacity: 0.3,
+          scale: 0.9,
+          y: 5,
+          rotation: 0,
+          duration: 0.3,
+          ease: "power2.in"
+        });
+      }
+    });
+  });
+}
+
+// Enhanced SVG hover animations with specific effects
+function addSVGHoverAnimations() {
+  const svgAnimations = {
+    '.truck-hover-animation': {
+      onHover: () => {
+        gsap.to('.truck-hover-animation', {
+          x: 3,
+          rotation: 1,
+          duration: 0.8,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.inspection-hover-animation': {
+      onHover: () => {
+        gsap.to('.inspection-hover-animation .checkmark-1, .inspection-hover-animation .checkmark-2, .inspection-hover-animation .checkmark-3', {
+          scale: 1.2,
+          duration: 0.5,
+          ease: "back.out(1.2)",
+          stagger: 0.1,
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.station-hover-animation': {
+      onHover: () => {
+        gsap.to('.station-hover-animation .station-light', {
+          scale: 1.3,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.uniform-hover-animation': {
+      onHover: () => {
+        gsap.to('.uniform-hover-animation .uniform-sway', {
+          rotation: 3,
+          y: -2,
+          duration: 1.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.gift-hover-animation': {
+      onHover: () => {
+        gsap.to('.gift-hover-animation .card-float', {
+          y: -4,
+          rotation: 2,
+          duration: 1.2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.3
+        });
+      }
+    },
+    '.onsite-hover-animation': {
+      onHover: () => {
+        gsap.to('.onsite-hover-animation .magnify-pulse', {
+          scale: 1.1,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.packaging-hover-animation': {
+      onHover: () => {
+        gsap.to('.packaging-hover-animation .package-stack', {
+          y: -2,
+          scale: 1.02,
+          duration: 1.5,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.marketing-hover-animation': {
+      onHover: () => {
+        gsap.to('.marketing-hover-animation .camera-flash', {
+          scale: 1.2,
+          opacity: 0.8,
+          duration: 0.3,
+          ease: "power2.out",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.awards-hover-animation': {
+      onHover: () => {
+        gsap.to('.awards-hover-animation .trophy-shine', {
+          scale: 1.1,
+          rotation: 5,
+          duration: 1.2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    },
+    '.evaluation-hover-animation': {
+      onHover: () => {
+        gsap.to('.evaluation-hover-animation .form-slide', {
+          x: 2,
+          rotation: 1,
+          duration: 1,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          stagger: 0.2
+        });
+      }
+    },
+    '.fleet-hover-animation': {
+      onHover: () => {
+        gsap.to('.fleet-hover-animation .fleet-vehicle', {
+          y: -1,
+          duration: 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    }
+  };
+
+  // Apply specific animations to each card type
+  Object.keys(svgAnimations).forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      const card = element.closest('.service-card');
+      if (card) {
+        card.addEventListener('mouseenter', svgAnimations[selector].onHover);
+      }
+    });
+  });
+}
+
+
+// Comprehensive Trust Section Animations
+function animateTrustSection() {
+  const trustSection = document.getElementById('trust-section');
+  if (!trustSection) return;
+
+  // Animate section header
+  gsap.to("#trust-title", {
+    opacity: 1,
+    y: 0,
+    duration: 1,
+    ease: "power3.out",
+    delay: 0.2
+  });
+
+  gsap.to("#trust-subtitle", {
+    opacity: 1,
+    y: 0,
+    duration: 1,
+    ease: "power3.out",
+    delay: 0.4
+  });
+
+  // Animate stats cards with stagger
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    const delay = parseInt(card.dataset.delay) / 1000;
+    
+    gsap.to(card, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "back.out(1.2)",
+      delay: 0.6 + delay,
+      onComplete: () => {
+        // Add floating animation after card appears
+        gsap.to(card, {
+          y: -5,
+          duration: 2,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: Math.random() * 2
+        });
+      }
+    });
+  });
+
+  // Start counter animation
+  setTimeout(() => {
+    animateCounters();
+  }, 1000);
+}
+
+// Enhanced counter animation with easing
+function animateCounters() {
+  const counters = document.querySelectorAll('.counter');
+  
+  counters.forEach((counter, index) => {
+    const target = parseInt(counter.getAttribute('data-target'));
+    
+    // Use GSAP for smooth counter animation
+    gsap.fromTo(counter, 
+      { textContent: 0 },
+      {
+        textContent: target,
+        duration: 2,
+        ease: "power2.out",
+        delay: index * 0.2,
+        snap: { textContent: 1 },
+        onUpdate: function() {
+          counter.textContent = Math.floor(this.targets()[0].textContent).toLocaleString();
+        },
+        onComplete: () => {
+          // Add pulse effect when counter completes
+          gsap.to(counter, {
+            scale: 1.1,
+            duration: 0.2,
+            ease: "power2.out",
+            yoyo: true,
+            repeat: 1
+          });
+        }
+      }
+    );
+  });
+}
+
+// Trigger trust section animations
+const trustSection = document.getElementById('trust-section');
+if (trustSection) {
+  const trustObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateTrustSection();
+      }
+    });
+  }, { threshold: 0.2 });
+  
+  trustObserver.observe(trustSection);
+}
+
+// Footer animation
+function animateFooter() {
+  const footer = document.getElementById('footer');
+  if (footer) {
+    gsap.to("#footer > div", {
+      opacity: 1,
+      duration: 1,
+      ease: "power3.out"
+    });
+  }
+}
+
+// Trigger footer animation when it comes into view
+const footerElement = document.getElementById('footer');
+if (footerElement) {
+  const footerObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateFooter();
+      }
+    });
+  }, { threshold: 0.2 });
+  
+  footerObserver.observe(footerElement);
+}
+
+// headlight pulsing
+gsap.to(".headlight", { fill: "#fef08a", repeat: -1, yoyo: true, duration: 0.6, ease: "sine.inOut" });
+gsap.to(".beam", { opacity: 0.3, repeat: -1, yoyo: true, duration: 0.8 });
+
+// exhaust smoke animation
+function createSmoke() {
+  const svg = document.getElementById("smoke-container");
+  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  const x = 10 + Math.random() * 10;
+  circle.setAttribute("cx", x);
+  circle.setAttribute("cy", 50);
+  circle.setAttribute("r", 4);
+  circle.setAttribute("fill", "rgba(200,200,200,0.5)");
+  svg.appendChild(circle);
+
+  gsap.to(circle, { cy: -10, r: 10, opacity: 0, duration: 2, ease: "power1.out", onComplete: () => circle.remove() });
+}
+setInterval(createSmoke, 1200);

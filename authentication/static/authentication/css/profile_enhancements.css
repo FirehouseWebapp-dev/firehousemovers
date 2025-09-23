@@ -1,0 +1,323 @@
+/* Profile Header Enhancements */
+
+/* Enhanced animations for profile header */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Profile picture hover effects - more subtle */
+.profile-picture-container {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.profile-picture-container:hover {
+  transform: scale(1.02);
+}
+
+.profile-picture-container::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-picture-container:hover::before {
+  opacity: 1;
+}
+
+/* Enhanced contact cards - more subtle */
+.contact-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.contact-card:hover::before {
+  left: 100%;
+}
+
+.contact-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Quick action buttons - more subtle */
+.quick-action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.quick-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.quick-action-btn:hover::before {
+  width: 200px;
+  height: 200px;
+}
+
+.quick-action-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* Online status indicator - subtle */
+.online-indicator {
+  /* Removed flashy animation for more subtle appearance */
+}
+
+/* Responsive design enhancements */
+@media (max-width: 768px) {
+  .profile-header-mobile {
+    padding: 1.5rem;
+  }
+  
+  .profile-picture-mobile {
+    width: 6rem;
+    height: 6rem;
+  }
+  
+  .contact-grid-mobile {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .quick-actions-mobile {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .quick-actions-mobile .quick-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .profile-picture-container,
+  .contact-card,
+  .quick-action-btn {
+    animation: none;
+    transition: none;
+  }
+  
+  .profile-picture-container:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .contact-card {
+    border: 2px solid white;
+  }
+  
+  .quick-action-btn {
+    border: 2px solid white;
+  }
+}
+
+/* Focus states for accessibility */
+.quick-action-btn:focus,
+.contact-card:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.profile-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Enhanced gradient backgrounds - matching website theme */
+.gradient-bg-enhanced {
+  background: linear-gradient(135deg, 
+    #1a1a1a 0%, 
+    #262626 25%, 
+    #1a1a1a 50%, 
+    #262626 75%, 
+    #1a1a1a 100%);
+}
+
+/* Glass morphism effects */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced shadows */
+.shadow-enhanced {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Text gradient effects */
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced form styling */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="file"],
+select,
+textarea {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: white !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease !important;
+  font-size: 0.875rem !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="file"]:focus,
+select:focus,
+textarea:focus {
+  border-color: #ef4444 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="tel"]:hover,
+input[type="date"]:hover,
+input[type="file"]:hover,
+select:hover,
+textarea:hover {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* File input styling */
+input[type="file"] {
+  cursor: pointer !important;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  background-color: #262626 !important;
+  color: white !important;
+  border: 1px solid #333333 !important;
+  border-radius: 0.375rem !important;
+  padding: 0.5rem 1rem !important;
+  margin-right: 0.75rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: #ef4444 !important;
+  border-color: #dc2626 !important;
+  color: white !important;
+}
+
+/* Select dropdown styling */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: right 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.5em 1.5em !important;
+  padding-right: 2.5rem !important;
+}
+
+/* Textarea styling */
+textarea {
+  resize: vertical !important;
+  min-height: 100px !important;
+}
+
+/* Form section animations */
+.form-section {
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  transform: translateY(-1px);
+}
+
+/* Enhanced focus states */
+.form-input:focus {
+  transform: scale(1.02);
+}
+
+/* Loading state for form */
+.form-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.form-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #333333;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

@@ -1,236 +1,578 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'inventory_app/css/home.css' %}">
+{% endblock %}
+
 {% block body %}
 {% include "navbar.html" %}
 {% include "messages.html" %}
 
-<!-- Page load transition -->
-<div class="page-transition opacity-0">
+<!-- Full Page Wrapper -->
+<div class="min-h-screen bg-gradient-to-b from-[#262626] via-[#1a1a1a] to-[#262626] text-gray-100 antialiased relative overflow-x-hidden">
 
-    <div class="text-left text-center">
-        <div class="relative overflow-hidden">
-            <!-- Container for the slider -->
-            <div class="slider w-full h-[80vh] relative">
-                <!-- Each Slide -->
-                <div class="slides flex transition-all duration-1000 ease-in-out">
-                    <!-- Slide 1 -->
-                    <div class="slide w-full flex-shrink-0 relative group">
-                        <img src="{% static 'images/two_trucks.jpg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-40 transition-opacity duration-500 ease-in-out group-hover:opacity-50">
-                        <div class="absolute inset-0 flex justify-left text-white px-4 place-items-start ml-24 mt-12">
-                            <div class="text-white text-left w-96 bg-opacity-90 justify-left">
-                                <h1 class="text-3xl font-bold">WELCOME TO FIREHOUSE MOVERS</h1>
-                                <p class="w-full mt-3 font-bold">Let us take the stress out of moving across the state</p>
+  <!-- HERO — animated trucks with GSAP -->
+  <header class="relative overflow-hidden h-screen">
+    <!-- Background Image -->
+    <div class="absolute inset-0">
+      <img src="{% static 'images/two_trucks.jpg' %}" alt="Firehouse Movers Trucks" class="w-full h-full object-cover object-center background-image opacity-60">
+      <!-- Strong dark overlay for text contrast -->
+      <div class="absolute inset-0 bg-black/50"></div>
+      <!-- Additional gradient overlay -->
+      <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
+    </div>
+
+    <!-- SVG Truck Scene -->
+    <div class="absolute inset-0 flex items-end justify-start overflow-hidden z-10 truck-animation" id="truck-scene">
+      <svg id="truck" class="w-[20rem] h-auto drop-shadow-2xl" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- trailer -->
+        <rect x="10" y="30" rx="8" ry="8" width="190" height="60" class="truck-body" />
+        <!-- Firehouse logo on trailer -->
+        <image href="{% static 'images/fire_house_logo.svg' %}" x="82" y="35" width="45" height="45" opacity="0.7" />
+        <!-- cab -->
+        <rect x="200" y="40" rx="6" ry="6" width="90" height="50" class="truck-cab" />
+        <!-- windows -->
+        <rect x="210" y="48" width="26" height="18" rx="2" class="truck-window" />
+        <rect x="240" y="48" width="30" height="18" rx="2" class="truck-window" />
+        <!-- headlights -->
+        <circle cx="290" cy="72" r="6" class="headlight" />
+        <circle cx="290" cy="90" r="6" class="headlight" />
+        <!-- headlight beams -->
+        <polygon points="296,66 320,58 320,86 296,78" class="beam" />
+        <polygon points="296,84 320,76 320,104 296,96" class="beam" />
+        <!-- wheels -->
+        <circle id="wheel1" cx="60" cy="95" r="14" class="wheel" />
+        <circle id="wheel2" cx="170" cy="95" r="14" class="wheel" />
+        <circle id="wheel3" cx="250" cy="95" r="14" class="wheel" />
+      </svg>
+
+      <!-- exhaust smoke group -->
+      <svg class="absolute left-[185px] bottom-[65px]" id="smoke-container" width="40" height="60"></svg>
+    </div>
+
+    <!-- Hero content -->
+    <div class="relative z-20 h-full flex items-center justify-center px-6">
+      <div class="text-center max-w-4xl mx-auto">
+        <!-- Enhanced text with strong shadows and contrast -->
+        <h1 id="hero-title" class="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-wide drop-shadow-2xl" style="text-shadow: 0 4px 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);">
+          <span class="text-white drop-shadow-2xl">FIREHOUSE</span><br>
+          <span class="text-red-500 drop-shadow-2xl" style="text-shadow: 0 4px 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(239,68,68,0.3);">MOVERS</span>
+        </h1>
+        
+        <p id="hero-tagline" class="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto leading-relaxed font-medium drop-shadow-xl" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.6);">
+          Professional moving services across the state. Fast, secure, and dependable.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="#services" class="px-8 py-4 bg-red-500 text-white font-semibold hover:bg-red-600 transition-all duration-300 rounded-lg shadow-2xl hover:shadow-red-500/25 hover:scale-105 transform">
+            Get Started
+          </a>
                             </div>
                         </div>
                     </div>
-                    <!-- Slide 2 -->
-                    <div class="slide w-full flex-shrink-0 relative">
-                        <img src="{% static 'images/truck.jpeg' %}" alt="Truck" class="w-full h-[80vh] object-cover filter brightness-[0.8] transition-all duration-500 ease-in-out">
-                        <div class="absolute inset-0 flex justify-center items-center bg-black bg-opacity-5 text-white px-4">
-                            <!-- Text or other content for Slide 2 can go here -->
-                        </div>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
+
+  </header>
+
+  <!-- Platform Statement Section - Only show for non-authenticated users -->
+  {% if not user.is_authenticated %}
+  <section class="py-20 bg-gradient-to-b from-[#262626] via-[#1a1a1a] to-[#262626]">
+    <div class="max-w-4xl mx-auto px-6 md:px-12 lg:px-24">
+      <div class="text-left mt-16">
+        <h2 id="platform-title" class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-white mb-8 opacity-0">
+          The moving service we needed,<br>
+          so we built it for you
+        </h2>
+        <p id="platform-description" class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-3xl opacity-0">
+          Built by a dedicated team with years of experience, Firehouse Movers gives you access to trusted moving techniques, reliable crews, and modern tools that make relocating simple. Whether it's across town or across the state, we handle the heavy lifting so you can focus on what matters most.
+        </p>
+      </div>
     </div>
+  </section>
+  {% endif %}
 
-    <!-- Welcome Section -->
-    <section class="text-center mb-5 mt-20">
-
-        <!-- Grid Container for 3 Images -->
-        <div class="flex justify-between gap-2 mt-6 w-full">
-
-            <!-- Truck Availability & Job Logistics -->
-            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
-                <a href="{% url 'availability_logitics' %}">
-                    <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
-                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK AVAILABILITY & JOB LOGISTICS</h3>
-                </a>
-            </div>
-
-            <!-- Truck & Trailer Inspection -->
-            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
-                <a href="{% url 'inspection' %}">
-                    <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Trailer" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
-                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">TRUCK & TRAILER INSPECTION</h3>
-                </a>
-            </div>
-
-            <!-- Firehouse Station -->
-            <div class="bg-white text-center w-[calc(40%-0.5rem)] mx-2 relative overflow-hidden transform transition-transform duration-500 hover:shadow-lg group">
-                <a href="{% url 'station' %}">
-                    <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Warehouse" class="w-full h-[500px] transition-all duration-500 ease-in-out group-hover:scale-105">
-                    <h3 class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100">FIREHOUSE STATION</h3>
-                </a>
-            </div>
+  <!-- Our Services Overview Section - Only show for non-authenticated users -->
+  {% if not user.is_authenticated %}
+  <section class="py-16 bg-gradient-to-b from-[#1a1a1a] to-[#262626]">
+    <div class="max-w-6xl mx-auto px-6 md:px-12 lg:px-24">
+      <div class="text-center mb-12">
+        <h2 id="services-overview-title" class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 opacity-0">
+          Our Services
+        </h2>
+        <p id="services-overview-description" class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-4xl mx-auto opacity-0">
+          Our comprehensive platform provides everything you need to manage your moving operations efficiently. From logistics and inspections to inventory and evaluations - explore our integrated service modules below.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+        <div id="service-highlight-1" class="text-center opacity-0">
+          <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M8 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM15 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+              <path d="M3 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H3zM3 10a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H3z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-3">Operations & Logistics</h3>
+          <p class="text-gray-400">Real-time truck availability, job dispatch, station management, and fleet operations at your fingertips.</p>
         </div>
+        
+        <div id="service-highlight-2" class="text-center opacity-0">
+          <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-3">Safety & Compliance</h3>
+          <p class="text-gray-400">Comprehensive inspection systems, on-site evaluations, and compliance tracking for vehicles and operations.</p>
+        </div>
+        
+        <div id="service-highlight-3" class="text-center opacity-0">
+          <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-3">Team & Resources</h3>
+          <p class="text-gray-400">Employee evaluations, uniform inventory, gift card rewards, and comprehensive resource management tools.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
-    </section>
+  <!-- MAIN: Services and interactive sections -->
+  <main id="main" class="px-6 md:px-12 lg:px-24 -mt-8 relative">
 
-    <!-- Additional Sections -->
-    <section class="text-center mt-10">
-        <div class="flex flex-wrap justify-start w-full gap-x-4">
-            <!-- Uniform Inventory System -->
-            <div class="relative w-[calc(25%-1rem)] ml-2 overflow-hidden group aspect-square">
-                <img
-                    src="{% static 'images/uniform.jpg' %}"
-                    alt="Uniforms"
-                    class="absolute inset-0 w-full h-full object-cover object-cover object-[5%_70%] transition-transform duration-500 group-hover:scale-105 "
-                    loading="lazy" decoding="async"
-                />
+    <!-- Services Section -->
+    <section id="services" class="py-20">
+      <div class="max-w-7xl mx-auto">
+        <h2 class="section-title text-3xl lg:text-4xl font-bold mb-12 text-center opacity-0">Our Core Services</h2>
 
-                <a href="{% url 'inventory' %}" class="absolute inset-0">
-                    <span class="sr-only">Uniform Inventory System</span>
-                </a>
-
-                <div class="absolute inset-0 grid place-content-center bg-black/50 opacity-0 transition-opacity duration-500 group-hover:opacity-100 pointer-events-none">
-                    <p class="text-white">Uniform Inventory System</p>
+        <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Card template (repeat) -->
+          <a href="{% url 'availability_logitics' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-index="0" data-animate="frame-240">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/firehouse_movers.jpeg' %}" alt="Truck Availability & Job Logistics" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM15 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+                      <path d="M3 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H3zM3 10a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H3zM3 16a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H3zM9 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H9zM9 10a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H9zM9 16a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1v-1a1 1 0 00-1-1H9z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">AVAILABILITY</div>
                 </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Truck Availability & Job Logistics</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">See real-time availability and dispatch job logistics efficiently.</p>
+                </div>
+              </div>
             </div>
+          </a>
 
-            <!-- Gift Cards -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'awards:gift_card' %}">
-                    <img src="{% static 'images/gift_cards.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Gift Cards</p>
-                </a>
+          <a href="{% url 'inspection' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-index="1" data-animate="frame-360">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Truck Inspection" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed dark overlay to keep image visible -->
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">INSPECTION</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Truck & Trailer Inspection</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Quick checklists and photo logging for safety compliance.</p>
+                </div>
+              </div>
             </div>
+          </a>
 
-            <!-- On Site Inspection -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'onsite_inspection' %}">
-                    <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">On Site Inspection</p>
-                </a>
+          <a href="{% url 'station' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-index="2" data-animate="frame-480">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/firehouse_station.jpeg' %}" alt="Firehouse Station" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm8 0a2 2 0 114 0 2 2 0 01-4 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">STATION</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Firehouse Station</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Station resources, schedules and hub operations at a glance.</p>
+                </div>
+              </div>
             </div>
-
-            <!-- Packaging & Supplies -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'packaging_supplies:index' %}">
-                    <img src="{% static 'images/packaging.jpeg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Packaging & Supplies</p>
-                </a>
+          </a>
             </div>
         </div>
     </section>
 
-    <!-- Additional Sections -->
-    <section class="text-center mt-10">
-        <div class="flex flex-wrap justify-start w-full gap-x-4">
-            <!-- Marketing Inventory -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] ml-2 relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'marketing:photos' %}">
-                    <img src="{% static 'images/marketing.jpeg' %}" alt="Truck" class="w-full h-full0 transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Marketing Inventory</p>
-                </a>
+    <!-- Additional Services Grid -->
+    <section class="py-12">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <a href="{% url 'inventory' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/uniform.jpg' %}" alt="Uniform Inventory System" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">INVENTORY</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Uniform Inventory System</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Manage uniforms, sizes and allocations.</p>
+                </div>
+              </div>
             </div>
+          </a>
 
-            <!-- Prizes & Acknowledgements -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <a href="{% url 'awards:dashboard' %}">
-                    <img src="{% static 'images/acknowledgments.jpg' %}" alt="Trailer" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                    <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Prizes & Acknowledgements</p>
-                </a>
+          <a href="{% url 'awards:gift_card' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-360">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/gift_cards.jpg' %}" alt="Gift Cards" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">GIFT</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Gift Cards</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Rewards for employees and special promotions.</p>
+                </div>
+              </div>
             </div>
+          </a>
 
-            {# Employee Evaluation tile #}
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
+          <a href="{% url 'onsite_inspection' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-480">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/onsite_inspection.jpg' %}" alt="On Site Inspection" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-teal-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">ONSITE</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">On Site Inspection</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Record site conditions & get approvals quickly.</p>
+                </div>
+              </div>
+            </div>
+          </a>
+
+          <a href="{% url 'packaging_supplies:index' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+            <div class="relative h-64 p-6">
+              <!-- Background image that is always visible -->
+              <img src="{% static 'images/packaging.jpeg' %}" alt="Packaging & Supplies" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+              
+              <!-- Removed animations to prevent interference -->
+              
+              <div class="relative z-20 h-full flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <svg class="w-6 h-6 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">PACKAGING</div>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold mb-2 text-white">Packaging & Supplies</h3>
+                  <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">High-quality packing for fragile goods.</p>
+                </div>
+              </div>
+            </div>
+          </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marketing row + evaluation + fleet -->
+    <section class="py-12">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <a href="{% url 'marketing:photos' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-360">
+          <div class="relative h-64 p-6">
+            <!-- Background image that is always visible -->
+            <img src="{% static 'images/marketing.jpeg' %}" alt="Marketing Inventory" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+            
+            <!-- Removed animations to prevent interference -->
+            
+            <div class="relative z-20 h-full flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <svg class="w-6 h-6 text-pink-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">MARKETING</div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2 text-white">Marketing Inventory</h3>
+                <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Branded assets & photos.</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <a href="{% url 'awards:dashboard' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-480">
+          <div class="relative h-64 p-6">
+            <!-- Background image that is always visible -->
+            <img src="{% static 'images/acknowledgments.jpg' %}" alt="Prizes & Acknowledgements" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+            
+            <!-- Removed animations to prevent interference -->
+            
+            <div class="relative z-20 h-full flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <svg class="w-6 h-6 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                </div>
+                <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">AWARDS</div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2 text-white">Prizes & Acknowledgements</h3>
+                <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Recognize and reward top performers.</p>
+              </div>
+            </div>
+          </div>
+        </a>
+
                 {% with up=request.user.userprofile role=request.user.userprofile.role %}
-                    {% if up.is_senior_management or role in "ceo vp llc/owner" %}
-                    <a href="{% url 'evaluation:regular_reviews' %}">
-                    {% elif role == "manager" or up.is_manager or role == "admin" or request.user.is_superuser %}
-                    <a href="{% url 'evaluation:dashboard' %}">
+                    {% if up.is_senior_management %}
+            <a href="{% url 'evaluation:regular_reviews' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+                    {% elif up.is_manager or up.is_admin or request.user.is_superuser %}
+            <a href="{% url 'evaluation:dashboard' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
                     {% else %}
-                    <a href="{% url 'evaluation:my_evaluations' %}">
+            <a href="{% url 'evaluation:my_evaluations' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
                     {% endif %}
-                {% endwith %}
-                <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Employees Evaluation</p>
-                </a>
+          <div class="relative h-64 p-6">
+            <!-- Background image that is always visible -->
+            <img src="{% static 'images/employees_evaluation.jpg' %}" alt="Employees Evaluation" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+            
+            <!-- Removed animations to prevent interference -->
+            
+            <div class="relative z-20 h-full flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <svg class="w-6 h-6 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">EVALUATION</div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2 text-white">Employees Evaluation</h3>
+                <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Create and manage evaluation forms.</p>
+              </div>
             </div>
+          </div>
+        </a>
+        {% endwith %}
 
-            <!-- Fleet fueling -->
-            <div class="bg-white text-center w-[calc(25%-1rem)] relative overflow-hidden transform transition-transform duration-500 group hover:shadow-lg">
-                <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Warehouse" class="w-full h-auto transition-all duration-500 group-hover:scale-105">
-                <p class="absolute inset-0 bg-black bg-opacity-50 text-white flex justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">Fleet Fueling </p>
+        <a href="#" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-360">
+          <div class="relative h-64 p-6">
+            <!-- Background image that is always visible -->
+            <img src="{% static 'images/fleet_fueling_status.jpg' %}" alt="Fleet Fueling" class="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-30 z-10 hover-image transition-opacity duration-300">
+            
+            <!-- Removed animations to prevent interference -->
+            
+            <div class="relative z-20 h-full flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-slate-500/20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 114 0 2 2 0 01-4 0zm8 0a2 2 0 114 0 2 2 0 01-4 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">FLEET</div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-2 text-white">Fleet Fueling</h3>
+                <p class="text-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Fuel logs and scheduling for your fleet.</p>
+              </div>
             </div>
+          </div>
+        </a>
         </div>
     </section>
 
-    <!-- About Us Section -->
-    <div class="text-left mt-20 text-center">
-        <div class="relative group">
-            <div class="w-full overflow-hidden relative" style="padding: 0;">
-                <img src="{% static 'images/line.jpg' %}" alt="Truck" class="w-full h-[50vh] object-cover transition-all duration-500 group-hover:scale-110 filter brightness-[0.8]">
-                <div class="absolute inset-0 flex justify-left items-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-4">
-                    <div class="text-white text-left text-gray-200 w-96">
-                        <h1 class="text-3xl font-bold">ABOUT US</h1>
-                        <p class="w-full mt-3">Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating. While this may sound impossible, you have nothing to worry about with our trained team of moving experts.</p>
-                    </div>
-                </div>
+
+  </main>
+
+  <!-- Login Prompt (Only visible when not logged in) -->
+  {% if not user.is_authenticated %}
+  <section class="pt-8 pb-8 bg-gradient-to-b from-[#262626] via-[#1a1a1a] to-[#262626]">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+        Ready to <span class="text-red-500">Take Control</span>?
+      </h2>
+      
+      <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+        Join our platform to streamline your moving operations with professional tools and real-time insights.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+        <a href="{% url 'authentication:login' %}" class="group inline-flex items-center gap-3 px-10 py-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+          <span>LogIn</span>
+          <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
+        
+        <a href="{% url 'authentication:signup' %}" class="px-10 py-4 bg-transparent border-2 border-white/20 hover:border-white/40 text-white hover:bg-white/5 font-semibold rounded-lg transition-all duration-300">
+          Create Account
+        </a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- FOOTER -->
+  <footer id="footer" class="bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 md:px-12 lg:px-24 py-4 opacity-0">
+      <!-- Main Footer Content -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-24 mb-12 justify-items-start md:justify-items-center">
+        
+        <!-- Company Info -->
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM15 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+                <path d="M3 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H3z"/>
+              </svg>
             </div>
+            <h3 class="text-xl font-bold text-white">Firehouse Movers</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating.
+          </p>
+          <div class="space-y-1">
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span class="text-gray-400 text-xs">Licensed & Insured</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-gray-400 text-xs">5-Star Rated Service</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <span class="text-gray-400 text-xs">Trained Moving Experts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <div class="space-y-4">
+          <h4 class="text-lg font-semibold text-white">Services</h4>
+          <ul class="space-y-3">
+            <li><a href="#services" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Our Services</a></li>
+            <li><a href="{% url 'availability_logitics' %}" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Logistics</a></li>
+            <li><a href="{% url 'inspection' %}" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Inspections</a></li>
+            <li><a href="{% url 'inventory' %}" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Inventory</a></li>
+            <li><a href="{% url 'station' %}" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Station Management</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="space-y-4 md:justify-self-end">
+          <h4 class="text-lg font-semibold text-white">Contact Info</h4>
+          <div class="space-y-3">
+            <div class="flex items-start space-x-3">
+              <svg class="w-5 h-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="text-gray-400 text-sm">2535-B TEXAS 121 E, STATE #140</p>
+                <p class="text-gray-400 text-sm">LEWISVILLE, TX 75056</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+              </svg>
+              <p class="text-gray-400 text-sm">(972) 412-6033</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+              </svg>
+              <p class="text-gray-400 text-sm">support@firehousemovers.com</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Footer -->
+      <div class="border-t border-gray-800 pt-3">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="text-sm text-gray-400">
+            © {{ now|date:"Y" }} Firehouse Movers Inc. All rights reserved.
+          </div>
+        </div>
         </div>
     </div>
+  </footer>
+
 </div>
 
-<script>
-    let currentIndex = 0;
-    const slides = document.querySelectorAll('.slide');
-    const totalSlides = slides.length;
-    const slideContainer = document.querySelector('.slides');
-
-    function changeSlide() {
-        currentIndex = (currentIndex + 1) % totalSlides;
-        slideContainer.style.transform = `translateX(-${currentIndex * 100}%)`;
-    }
-
-    setInterval(changeSlide, 3000); // Change slide every 3 seconds
-
-    // Page load fade-in transition
-    window.addEventListener('load', () => {
-        document.querySelector('.page-transition').classList.remove('opacity-0');
-        document.querySelector('.page-transition').classList.add('opacity-100');
-        document.querySelector('.page-transition').classList.add('transition-opacity', 'duration-1000');
-    });
+<!-- GSAP Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="{% static 'inventory_app/js/home.js' %}"></script>
 
 
-    // Get the slide container and individual slides
-    const slide = document.querySelectorAll('.slide');
-    let currentindex = 0;
 
-    // Function to move to the next slide
-    function goToNextSlide() {
-        slide[currentindex].classList.remove('active');
-        currentindex = (currentindex + 1) % slide.length;
-        slide[currentindex].classList.add('active');
-        
-        // Animate text for the new slide
-        animateText(currentindex);
-    }
-
-    // Auto slide transition every 3 seconds
-    setInterval(goToNextSlide, 3000);
-
-
-</script>
-
-<style>
-    /* Custom animation for sliding up text */
-    @layer utilities {
-        @keyframes slideUp {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-
-    }
-</style>
 {% endblock %}
