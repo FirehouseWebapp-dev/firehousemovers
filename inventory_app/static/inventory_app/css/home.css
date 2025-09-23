@@ -680,18 +680,54 @@
   perspective: 1500px;
 }
 
-/* Make first 3 cards larger */
-#services-grid .service-card:nth-child(1),
-#services-grid .service-card:nth-child(2),
-#services-grid .service-card:nth-child(3) {
+/* Make all service cards the same larger size and width */
+.service-card {
   height: 20rem; /* 320px - larger height */
   min-height: 20rem; /* Ensure minimum height */
+  width: 100%; /* Ensure full width within grid */
+  max-width: none; /* Remove any max-width constraints */
 }
 
-#services-grid .service-card:nth-child(1) .relative.h-64,
-#services-grid .service-card:nth-child(2) .relative.h-64,
-#services-grid .service-card:nth-child(3) .relative.h-64 {
+.service-card .relative.h-64 {
   height: 20rem; /* Match the card height */
+}
+
+/* Ensure consistent grid alignment for all sections */
+section .grid {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start; /* Align cards to top */
+}
+
+/* First section - 3 cards in 3-column grid (original layout) */
+#services-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Second and third sections - 4 cards per row */
+section:nth-of-type(2) .grid,
+section:nth-of-type(3) .grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1023px) {
+  #services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  section:nth-of-type(2) .grid,
+  section:nth-of-type(3) .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  #services-grid,
+  section:nth-of-type(2) .grid,
+  section:nth-of-type(3) .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Additional sections perspective */
