@@ -3,12 +3,13 @@
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
 
-const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
+const tl = gsap.timeline({ repeat: -1, repeatDelay: 0 });
 
-// truck drive-in, pause, drive-out
-tl.fromTo("#truck", { x: "-40%", y: 0, opacity: 0 }, { x: "20%", opacity: 1, duration: 4, ease: "power2.out" })
-  .to("#truck", { x: "20%", duration: 2 })
-  .to("#truck", { x: "140%", duration: 5, ease: "power2.in", opacity: 0 }, ">-0.5");
+// truck continuous loop movement
+gsap.fromTo("#truck",
+  { x: "-150px" }, // start off screen left
+  { x: "110vw", duration: 10, ease: "linear", repeat: -1 } // drive fully across
+);
 
 // wheels spin
 gsap.to(["#wheel1", "#wheel2", "#wheel3"], { rotation: 360, transformOrigin: "50% 50%", repeat: -1, ease: "linear", duration: 1 });
@@ -32,11 +33,11 @@ function handleHeroFade() {
   const heroSection = document.querySelector('header');
   const heroHeight = heroSection.offsetHeight;
   
-  // Calculate fade progress (0 to 1)
-  const fadeProgress = Math.min(scrollY / (heroHeight * 0.8), 1);
+  // Calculate fade progress (0 to 1) - start fade later by using 1.5 instead of 2.0
+  const fadeProgress = Math.min(scrollY / (heroHeight * 1.5), 1);
   
-  // Fade out hero content as user scrolls (minimum opacity 0.2)
-  const newOpacity = Math.max(1 - (fadeProgress * 0.8), 0.2);
+  // Fade out hero content as user scrolls (minimum opacity 0.2) - moderate fade
+  const newOpacity = Math.max(1 - (fadeProgress * 0.5), 0.2);
   
   gsap.to("#hero-title, #hero-tagline", {
     opacity: newOpacity,
@@ -152,28 +153,24 @@ function animateCardsSequentially() {
       
       ScrollTrigger.create({
         trigger: section,
-        start: "top 80%",
-        end: "bottom 20%",
+        start: "top 90%",
+        end: "bottom 10%",
         onEnter: () => {
-          // Smooth sequential animation with shorter intervals
+          // Smooth sequential animation with optimized performance
           sectionCards.forEach((card, index) => {
             gsap.fromTo(card,
               { 
                 opacity: 0, 
-                y: 30, 
-                scale: 0.95,
-                rotationX: 10,
-                filter: "blur(2px)"
+                y: 20, 
+                scale: 0.98
               },
               {
                 opacity: 1,
                 y: 0,
                 scale: 1,
-                rotationX: 0,
-                filter: "blur(0px)",
-                duration: 1,
-                ease: "power2.out",
-                delay: index * 0.15 // Smoother 0.15 second intervals
+                duration: 0.6,
+                ease: "power3.out",
+                delay: index * 0.05 // Much faster stagger
               }
             );
           });
@@ -183,13 +180,11 @@ function animateCardsSequentially() {
           sectionCards.forEach((card, index) => {
             gsap.to(card, {
               opacity: 0,
-              y: 20,
-              scale: 0.98,
-              rotationX: -5,
-              filter: "blur(1px)",
-              duration: 0.6,
+              y: 15,
+              scale: 0.99,
+              duration: 0.5,
               ease: "power2.inOut",
-              delay: (sectionCards.length - index - 1) * 0.08 // Faster reverse
+              delay: (sectionCards.length - index - 1) * 0.05 // Faster reverse
             });
           });
         }

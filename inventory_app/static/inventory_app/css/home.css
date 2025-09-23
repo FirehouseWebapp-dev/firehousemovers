@@ -12,13 +12,13 @@
 
 /* Service Card Animations */
 .truck-animation {
-  animation: truckMove 25s linear infinite;
+  /* animation: truckMove 25s linear infinite; */
   overflow: visible;
-  transform: translateX(-30vw);
+  /* transform: translateX(-30vw); */
 }
 
 .truck-animation svg {
-  animation: truckMove 25s linear infinite;
+  /* animation: truckMove 25s linear infinite; */
   will-change: transform;
   opacity: 1;
 }
