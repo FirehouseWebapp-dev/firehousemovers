@@ -2,73 +2,89 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
     <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body style="background-image: url({% static 'images/two_trucks.jpg' %})" class="bg-cover">
+    <link rel="stylesheet" href="{% static 'css/awards.css' %}">
+    <link href="{% static 'marketing/css/fonts.css' %}" rel="stylesheet">
 
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  </head>
+    <body class="bg-black text-white">
+    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      
+      <!-- Left: Login Form -->
+      <div class="flex items-center justify-center p-10">
+        <div class="w-full max-w-md p-8 rounded-lg bg-[#1a1a1a] border border-transparent hover:border-red-500/30 transition-all duration-300">
+          <h2 class="text-3xl font-bold text-red-500 mb-5">Welcome Back</h2>
+          <p class="text-gray-300 mb-6 text-sm">Sign in to continue your journey with the team that moves with purpose.</p>
+          {% if form.non_field_errors %}
+          <div class="text-red-500 text-sm mb-4 bg-red-100 p-3 rounded">
+              {% for error in form.non_field_errors %}
+              <p>{{ error }}</p>
+              {% endfor %}
+          </div>
+          {% endif %}
 
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-semibold text-center mb-6">Log In</h2>
+          <form method="post" class="space-y-4 login-form">
+            {% csrf_token %}
 
-            <form method="post" action="{% url 'authentication:login' %}">
-                {% csrf_token %}
-            
-                <!-- Email Field -->
-                <div class="mb-4">
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Email Address</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <p class="text-red-500 text-xs mt-1">
-                            {% for error in form.username.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
-            
-                <!-- Password Field -->
-                <div class="mb-4">
-                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <p class="text-red-500 text-xs mt-1">
-                            {% for error in form.password.errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </p>
-                    {% endif %}
-                </div>
-            
-                <!-- Non-field Errors -->
-                {% if form.non_field_errors %}
-                    <div class="text-red-500 text-xs mt-2 mb-4">
-                        {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            
-                <!-- Submit Button -->
-                <button type="submit" class="w-full py-3 text-white rounded-lg bg-[#262626] hover:bg-red-600 transition-all duration-300">Log In</button>
-            </form>
-            <p class="text-sm text-center mt-3">
-                <a href="{% url 'authentication:password_reset' %}" class="text-red-600 hover:underline">
-                    Forgot your password?
-                </a>
-            </p>
-            <p class="text-sm text-gray-600 mt-4 text-center">
+            <!-- Email -->
+            <div>
+              <p for="username" class="text-sm mb-3">Email</p>
+              {{ form.username }}
+              {% if form.username.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.username.errors.0 }}
+                  </p>
+              {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div>
+              <p for="password" class="text-sm mb-3">Password</p>
+              {{ form.password }}
+              {% if form.password.errors %}
+                  <p class="text-red-500 text-xs mt-1">
+                  {{ form.password.errors.0 }}
+                  </p>
+              {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <div class="flex justify-between items-center pt-4">
+              <p class="text-sm text-gray-400">
                 Don't have an account?
-                <a href="{% url 'authentication:signup' %}" class="text-red-500 hover:underline font-semibold">
-                    Sign up here
-                </a>
-            </p>
+                <a href="{% url 'authentication:signup' %}" class="text-red-500 hover:underline font-semibold">Sign up</a>
+              </p>
+              <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded font-semibold">
+                Log In
+              </button>
+            </div>
+          </form>
+          
+          <p class="text-sm text-center mt-4">
+            <a href="{% url 'authentication:password_reset' %}" class="text-red-500 hover:underline">
+              Forgot your password?
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Image + Text -->
+        <div class="relative hidden lg:block h-screen">
+            <img src="{% static 'marketing/img/IMG_2045.jpg' %}" alt="Movers" class="w-full h-full object-cover opacity-60" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 flex flex-col justify-end p-10">
+                <div class="">
+                    <h2 class="text-4xl font-extrabold text-white mb-2">Move with Confidence</h2>
+                    <p class="text-lg text-gray-200">Trusted by thousands, we deliver with care, precision, and speed. Be part of the force that keeps homes moving.</p>
+                </div>
+            </div>
         </div>
     </div>
-
-</body>
+  </body>
 </html>

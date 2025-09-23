@@ -41,7 +41,7 @@ class SignUpForm(UserCreationForm):
     password1 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
-                "class": "bg-custom-dark rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500",
+                "class": "bg-custom-dark rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
                 "placeholder": "Password",
             }
         ),
@@ -49,7 +49,7 @@ class SignUpForm(UserCreationForm):
     password2 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
-                "class": " bg-custom-dark rounded-md px-2 py-2 focus:outline-none focus:ring-2 focus:ring-red-500",
+                "class": "bg-custom-dark rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
                 "placeholder": "Repeat password",
             }
         ),
@@ -89,7 +89,7 @@ class EmailAuthenticationForm(AuthenticationForm):
         label="Email Address",
         widget=forms.TextInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
+                "class": "bg-custom-dark rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
                 "placeholder": "Email address",
             }
         ),
@@ -99,7 +99,7 @@ class EmailAuthenticationForm(AuthenticationForm):
         label="Password",
         widget=forms.PasswordInput(
             attrs={
-                "class": "border border-gray-300 rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
+                "class": "bg-custom-dark rounded-md px-2 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500",
                 "placeholder": "Password",
             }
         ),
@@ -109,9 +109,10 @@ class EmailAuthenticationForm(AuthenticationForm):
         username = self.cleaned_data.get("username")
         try:
             user = get_user_model().objects.get(email=username)
+            # Return the actual username for authentication
+            return user.username
         except get_user_model().DoesNotExist:
             raise forms.ValidationError("User with this email does not exist.")
-        return user
 
 class ProfileUpdateForm(forms.ModelForm):
     first_name = forms.CharField(

@@ -19,7 +19,7 @@
       
       <!-- Left: Signup Form -->
       <div class="flex items-center justify-center p-10">
-        <div class="w-full max-w-md p-5 border border-gray-600 rounded-lg">
+        <div class="w-full max-w-md p-8 rounded-lg bg-[#1a1a1a] border border-transparent hover:border-red-500/30 transition-all duration-300">
           <h2 class="text-3xl font-bold text-red-500 mb-5">Create Your Account</h2>
           <p class="text-gray-300 mb-6 text-sm">Join the team that moves with purpose. Fast, strong, and trusted.</p>
           {% if form.non_field_errors %}
@@ -30,7 +30,7 @@
           </div>
           {% endif %}
 
-          <form method="post" enctype="multipart/form-data" class="space-y-4">
+          <form method="post" enctype="multipart/form-data" class="space-y-4 login-form">
             {% csrf_token %}
 
             <!-- First & Last Name -->
