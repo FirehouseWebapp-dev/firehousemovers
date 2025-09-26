@@ -7,7 +7,6 @@ import ServicesOverview from './components/ServicesOverview';
 import ServicesGrid from './components/ServicesGrid';
 import LoginPrompt from './components/LoginPrompt';
 import Footer from './components/Footer';
-import CardsStack from './components/CardsStack';
 
 function App() {
   return (
@@ -17,7 +16,6 @@ function App() {
       <PlatformStatement />
       <ServicesOverview />
       <ServicesGrid />
-      <CardsStack />
       <LoginPrompt />
       <Footer />
     </div>
