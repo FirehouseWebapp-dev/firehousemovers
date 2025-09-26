@@ -1,0 +1,64 @@
+/* Platform Statement specific styles */
+.platform-section {
+  padding: 5rem 0;
+  background: linear-gradient(to bottom, #262626, #1a1a1a, #262626);
+}
+
+.platform-container {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .platform-container {
+    padding: 0 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .platform-container {
+    padding: 0 6rem;
+  }
+}
+
+.platform-content {
+  text-align: left;
+  margin-top: 4rem;
+}
+
+.platform-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: white;
+  margin-bottom: 2rem;
+  opacity: 0;
+}
+
+@media (min-width: 768px) {
+  .platform-title {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .platform-title {
+    font-size: 3.75rem;
+  }
+}
+
+.platform-description {
+  font-size: 1.125rem;
+  color: #d1d5db;
+  line-height: 1.75;
+  max-width: 48rem;
+  opacity: 0;
+}
+
+@media (min-width: 768px) {
+  .platform-description {
+    font-size: 1.25rem;
+  }
+}
