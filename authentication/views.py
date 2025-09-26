@@ -189,8 +189,8 @@ class LogoutView(RedirectURLMixin, TemplateView):
     Log out the user and display the 'You are logged out' message.
     """
 
-    http_method_names = ["post", "options"]
-    template_name = "home.html"
+    http_method_names = ["get", "post", "options"]
+    template_name = "react_landing.html"  # Use React landing page template
     extra_context = None
 
     @method_decorator(csrf_protect)
@@ -198,14 +198,25 @@ class LogoutView(RedirectURLMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        """Logout may be done via GET."""
+        auth_logout(request)
+        # Force redirect to home page with cache-busting to show React landing page
+        response = HttpResponseRedirect("/")
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
+
     def post(self, request, *args, **kwargs):
         """Logout may be done via POST."""
         auth_logout(request)
-        redirect_to = self.get_success_url()
-        if redirect_to != request.get_full_path():
-            # Redirect to target page once the session has been cleared.
-            return HttpResponseRedirect(redirect_to)
-        return super().get(request, *args, **kwargs)
+        # Force redirect to home page with cache-busting to show React landing page
+        response = HttpResponseRedirect("/")
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
 
     def get_default_redirect_url(self):
         """Return the default redirect URL."""

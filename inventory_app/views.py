@@ -32,6 +32,10 @@ def uniform_inventory_view(request):
 
 def homeview(request):
     """Render the home page."""
+    # For unauthenticated users, serve the React landing page
+    if not request.user.is_authenticated:
+        return render(request, "react_landing.html")
+    # For authenticated users, serve the original home.html
     return render(request, "home.html")
 
 
