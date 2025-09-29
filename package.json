@@ -2,6 +2,6 @@
   "name": "root-build-scripts",
   "private": true,
   "scripts": {
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm --prefix firehousemovers/react-landing install && npm --prefix firehousemovers/react-landing run build"
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm --prefix react-landing install && npm --prefix react-landing run build"
   }
 }
