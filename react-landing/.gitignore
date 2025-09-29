@@ -10,7 +10,6 @@
 /build
 /dist
 /out
-/public
 
 # Misc
 .env.local
