@@ -1,0 +1,7 @@
+{
+  "name": "root-build-scripts",
+  "private": true,
+  "scripts": {
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm --prefix react-landing ci && npm --prefix react-landing run build"
+  }
+}
