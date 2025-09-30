@@ -1,7 +1,5 @@
 {
-  "name": "root-build-scripts",
+  "name": "firehouse-movers-django",
   "private": true,
-  "scripts": {
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm --prefix react-landing install && npm --prefix react-landing run build"
-  }
+  "description": "Firehouse Movers Django Application"
 }
