@@ -50,6 +50,7 @@ class Question(models.Model):
     max_value = models.IntegerField(null=True, blank=True, default=5)
 
     order = models.PositiveIntegerField(default=0)
+    include_in_trends = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["order", "id"]

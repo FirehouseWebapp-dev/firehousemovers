@@ -45,12 +45,13 @@ class EvalFormForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ["text", "help_text", "qtype", "required", "min_value", "max_value", "order"]
+        fields = ["text", "help_text", "qtype", "required", "include_in_trends", "min_value", "max_value", "order"]
         widgets = {
             "text": forms.TextInput(attrs={"class": "input-field"}),
             "help_text": forms.TextInput(attrs={"class": "input-field"}),
             "qtype": forms.Select(attrs={"class": "input-field"}),
             "required": forms.CheckboxInput(attrs={"class": "h-4 w-4"}),
+            "include_in_trends": forms.CheckboxInput(attrs={"class": "h-4 w-4"}),
             "min_value": forms.NumberInput(attrs={"class": "input-field"}),
             "max_value": forms.NumberInput(attrs={"class": "input-field"}),
             "order": forms.NumberInput(attrs={"class": "input-field", "min": "0"}),
