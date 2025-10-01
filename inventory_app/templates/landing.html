@@ -84,8 +84,8 @@
         <!-- Background decorative elements -->
         <div class="absolute inset-0 opacity-10">
             <div class="absolute top-20 left-10 w-32 h-32 bg-red-500 rounded-full blur-3xl animate-pulse"></div>
-            <div class="absolute bottom-20 right-10 w-40 h-40 bg-red-400 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-            <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-red-600 rounded-full blur-2xl animate-pulse" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-20 right-10 w-40 h-40 bg-red-400 rounded-full blur-3xl animate-pulse animation-delay-1s"></div>
+            <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-red-600 rounded-full blur-2xl animate-pulse animation-delay-2s"></div>
         </div>
         
         <div class="max-w-7xl mx-auto px-6 md:px-12 lg:px-16 relative z-10">
@@ -105,48 +105,48 @@
     </section>
 
     <!-- Services Overview Component - Fixed height and proper z-index management -->
-    <div id="services-overview" class="services-overview-section sticky top-0 h-screen flex flex-col items-center justify-center relative px-6 md:px-12 lg:px-16" style="z-index: 10; background-color: #1a1a1a;">
+    <div id="services-overview" class="services-overview-section sticky top-0 h-screen flex flex-col items-center justify-center relative px-6 md:px-12 lg:px-16">
         <!-- MOVE AS ONE text behind cards -->
-        <div class="absolute inset-0 flex items-center justify-center" style="z-index: 5;">
+        <div class="absolute inset-0 flex items-center justify-center title-layer">
             <h2 id="services-title" class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[12rem] font-bold text-white leading-tight tracking-tight">
                 MOVE AS ONE
             </h2>
         </div>
 
         <!-- Cards container with proper z-index management -->
-        <div class="absolute inset-0 pointer-events-none flex items-center justify-center" style="z-index: 15;">
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center cards-layer">
             <!-- Card 1 - from left -->
-            <div id="card1" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 1;">
+            <div id="card1" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/truckk.jpg' %}" alt="Marketing Inventory" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 2 - from right -->
-            <div id="card2" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 2;">
+            <div id="card2" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Onsite Inspection" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 3 - from top-left -->
-            <div id="card3" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 3;">
+            <div id="card3" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/servies.jpg' %}" alt="Services" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 4 - from bottom-right -->
-            <div id="card4" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 4;">
+            <div id="card4" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/gift_cards.jpg' %}" alt="Gift Cards" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 5 - from top-left diagonal -->
-            <div id="card5" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 5;">
+            <div id="card5" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/supplies.jpg' %}" alt="Supplies" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 6 - from top-right diagonal -->
-            <div id="card6" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 6;">
+            <div id="card6" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/uniform.jpg' %}" alt="Uniform" class="w-full h-full object-cover" />
             </div>
 
             <!-- Card 7 - from bottom-left diagonal -->
-            <div id="card7" class="absolute w-60 h-44 md:w-80 md:h-60 rounded-lg shadow-lg overflow-hidden" style="z-index: 7;">
+            <div id="card7" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
                 <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Truck Inspection" class="w-full h-full object-cover" />
             </div>
         </div>
@@ -158,7 +158,7 @@
             <ul class="space-y-20 md:space-y-24">
               
               <!-- Pack -->
-              <li id="pack-section" class="flex items-center space-x-6">
+              <li id="pack-section" class="flex items-center space-x-6 pack-reduced-spacing">
                 <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white rounded-full flex-shrink-0">
                   <svg class="w-10 h-10 md:w-12 md:h-12 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -216,8 +216,7 @@
                 <div class="flex justify-center">
                     <dotlottie-player 
                         src="https://lottie.host/323e0b6b-9f38-4aeb-bbbe-c2ad20e1b0be/Q5PeNUlqIO.lottie" 
-                        style="width: 500px; height: 500px; background-color: transparent; background: transparent;" 
-                        class="w-full max-w-lg md:max-w-xl"
+                        class="lottie-player-transparent w-full max-w-lg md:max-w-xl"
                         autoplay 
                         loop>
                     </dotlottie-player>
@@ -265,7 +264,7 @@
                     
                     <div class="testimonial-card card-3">
                         <p class="testimonial-text">
-                            "I am forever grateful for Firehouse movers. The team they sent out were top notch!  Great work guys! Thank you!!!"
+                            "I am forever grateful for Firehouse movers. The team they sent out were top notch!  Great work guys! It was beyong anything. The staff was so cooperative and helpful. Thank you!!!"
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar green">
@@ -292,10 +291,10 @@
     </div>
 
     <!-- Color changing background section -->
-    <div id="color-changing-section" class="relative min-h-screen w-full overflow-hidden" style="z-index: 5;">
+    <div id="color-changing-section" class="relative min-h-screen w-full overflow-hidden">
         <!-- FIRST LAYER — red background + dark gray text -->
-        <div class="absolute inset-0 w-full h-full bg-red-500 flex items-center justify-center" style="z-index: 1;">
-            <div class="text-center text-6xl md:text-8xl lg:text-[10rem] font-bold" style="color: #2a2a2a;">
+        <div class="absolute inset-0 w-full h-full bg-red-500 flex items-center justify-center first-layer">
+            <div class="text-center text-6xl md:text-8xl lg:text-[10rem] font-bold dark-text">
                 1 million users,
                 <br />
                 plus you.
@@ -303,7 +302,7 @@
         </div>
 
         <!-- SECOND LAYER — dark background + red text (reveals with clipPath) -->
-        <div id="color-changing-overlay" class="absolute inset-0 w-full h-full flex items-center justify-center" style="background-color: #2A2A2A; z-index: 2;">
+        <div id="color-changing-overlay" class="absolute inset-0 w-full h-full flex items-center justify-center second-layer">
             <div class="text-center text-6xl md:text-8xl lg:text-[10rem] font-bold text-red-500">
                 1 million users,
                 <br />
@@ -317,11 +316,11 @@
         <!-- Modern Background Effects -->
         <div class="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-red-500/5"></div>
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse animation-delay-2s"></div>
         
         <!-- Grid Pattern Overlay -->
         <div class="absolute inset-0 opacity-20">
-            <div class="absolute inset-0" style="background-image: linear-gradient(rgba(220, 38, 38, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(220, 38, 38, 0.1) 1px, transparent 1px); background-size: 50px 50px;"></div>
+            <div class="absolute inset-0 grid-pattern-overlay"></div>
         </div>
         
         <div class="ready-control-container relative max-w-6xl mx-auto px-4 md:px-8 text-center z-10">
@@ -361,11 +360,11 @@
                         <span class="text-sm font-medium">Live Dashboard</span>
                     </div>
                     <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
-                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse" style="animation-delay: 0.5s;"></div>
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse animation-delay-0-5s"></div>
                         <span class="text-sm font-medium">Real-time Updates</span>
                     </div>
                     <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
-                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse animation-delay-1s"></div>
                         <span class="text-sm font-medium">Secure Platform</span>
                     </div>
                 </div>
@@ -377,7 +376,7 @@
     <footer id="footer" class="footer bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f]">
         <div class="footer-container max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
             <!-- Main Footer Content -->
-            <div class="footer-main-content grid grid-cols-1 md:grid-cols-3 mb-12 justify-items-start md:justify-items-center" style="gap: 1rem 0rem;">
+            <div class="footer-main-content grid grid-cols-1 md:grid-cols-3 mb-12 justify-items-start md:justify-items-center footer-grid-gap">
                 
                 <!-- Company Info -->
                 <div class="company-info space-y-2">

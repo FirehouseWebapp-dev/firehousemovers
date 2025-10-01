@@ -201,110 +201,132 @@ function initServicesOverview() {
         ScrollTrigger.create({
             trigger: servicesOverview,
             start: "top center",
-            end: "bottom center",
-            scrub: 1, // Increased from 1 to 2 for slower animation
+            end: "+=700vh", // Extended scroll distance - 5 viewport heights for very slow animation
+            scrub: 6, // Very slow scrub value for extremely controlled animation
             onUpdate: (self) => {
                 const progress = self.progress;
                 
-                // Font size animation - direct property assignment
-                const fontSize = gsap.utils.interpolate(192, 64, progress); // 12rem to 4rem
-                servicesTitle.style.fontSize = fontSize + "px";
-                
-                // Background color animation - direct property assignment
-                const backgroundColor = gsap.utils.interpolate("#1a1a1a", "#2a2a2a", progress);
-                servicesOverview.style.backgroundColor = backgroundColor;
-                
-                // Text color animation - change to red-500 when text starts shrinking
-                if (progress > 0.1) { // Start color change when text starts shrinking
-                    servicesTitle.style.color = "#dc2626"; // red-500
+                // Phase 1: Cards fly in and stack (0% to 60%)
+                if (progress <= 0.6) {
+                    const cardProgress = progress / 0.6; // Normalize to 0-1 for cards
+                    
+                    // Font size animation - shrinks much more when cards appear
+                    const fontSize = gsap.utils.interpolate(192, 48, cardProgress); // 12rem to 3rem (much smaller)
+                    servicesTitle.style.fontSize = fontSize + "px";
+                    
+                    // Text color animation - change to red-500 when cards start coming in
+                    if (cardProgress > 0.1) {
+                        servicesTitle.style.color = "#dc2626"; // red-500
+                    } else {
+                        servicesTitle.style.color = "#ffffff"; // white
+                    }
+                    
+                    // Card animations - cards fly in and stack
+                    animateCards(cardProgress);
+                    
+                    // Background stays dark during card stacking
+                    servicesOverview.style.backgroundColor = "#1a1a1a";
+                    
                 } else {
-                    servicesTitle.style.color = "#ffffff"; // white
+                    // Phase 2: Text shrinks even more and background changes (60% to 100%) - VERY FAST
+                    const textProgress = (progress - 0.6) / 0.4; // Normalize to 0-1 for text shrinking
+                    
+                    // Continue shrinking text to very small - cards fully cover it
+                    const fontSize = gsap.utils.interpolate(48, 32, textProgress); // 3rem to 2rem (very small)
+                    servicesTitle.style.fontSize = fontSize + "px";
+                    
+                    // Background color animation
+                    const backgroundColor = gsap.utils.interpolate("#1a1a1a", "#2a2a2a", textProgress);
+                    servicesOverview.style.backgroundColor = backgroundColor;
+                    
+                    // Keep cards in their stacked position
+                    animateCards(1); // Cards stay at their final stacked position
                 }
-                
-                // Card animations with slower timing
-                animateCards(progress);
             }
         });
     }
 }
 
-// Animate the flying cards
+// Animate the flying cards with staggered timing for better stacking effect
 function animateCards(progress) {
     const cards = [
-        { id: 'card1', startX: -1000, endX: -120, startY: 0, endY: -80, startRotate: -15, endRotate: -12 },
-        { id: 'card2', startX: 1000, endX: 80, startY: 0, endY: -60, startRotate: 15, endRotate: 18 },
-        { id: 'card3', startX: -1000, endX: -40, startY: -1000, endY: 20, startRotate: -8, endRotate: 5 },
-        { id: 'card4', startX: 1000, endX: 60, startY: 1000, endY: 30, startRotate: 8, endRotate: -8 },
-        { id: 'card5', startX: -1000, endX: 90, startY: -1000, endY: -40, startRotate: -20, endRotate: 15 },
-        { id: 'card6', startX: 1000, endX: -90, startY: -1000, endY: 50, startRotate: 20, endRotate: -10 },
-        { id: 'card7', startX: -1000, endX: 40, startY: 1000, endY: -20, startRotate: -20, endRotate: 8 }
+        { id: 'card1', startX: -1000, endX: -120, startY: 0, endY: -80, startRotate: -15, endRotate: -12, delay: 0.0 },
+        { id: 'card2', startX: 1000, endX: 80, startY: 0, endY: -60, startRotate: 15, endRotate: 18, delay: 0.25 },
+        { id: 'card3', startX: -1000, endX: -40, startY: -1000, endY: 20, startRotate: -8, endRotate: 5, delay: 0.5 },
+        { id: 'card4', startX: 1000, endX: 60, startY: 1000, endY: 30, startRotate: 8, endRotate: -8, delay: 0.75 },
+        { id: 'card5', startX: -1000, endX: 90, startY: -1000, endY: -40, startRotate: -20, endRotate: 15, delay: 1.0 },
+        { id: 'card6', startX: 1000, endX: -90, startY: -1000, endY: 50, startRotate: 20, endRotate: -10, delay: 1.25 },
+        { id: 'card7', startX: -1000, endX: 40, startY: 1000, endY: -20, startRotate: -20, endRotate: 8, delay: 1.5 }
     ];
     
     cards.forEach(card => {
         const element = document.getElementById(card.id);
         if (element) {
-            const x = gsap.utils.interpolate(card.startX, card.endX, progress);
-            const y = gsap.utils.interpolate(card.startY, card.endY, progress);
-            const rotate = gsap.utils.interpolate(card.startRotate, card.endRotate, progress);
+            // Calculate delayed progress for staggered animation
+            const delayedProgress = Math.max(0, (progress - card.delay) / (1 - card.delay));
             
-            element.style.transform = `translate(${x}px, ${y}px) rotate(${rotate}deg)`;
-            element.style.opacity = 1;
+            if (delayedProgress > 0) {
+                const x = gsap.utils.interpolate(card.startX, card.endX, delayedProgress);
+                const y = gsap.utils.interpolate(card.startY, card.endY, delayedProgress);
+                const rotate = gsap.utils.interpolate(card.startRotate, card.endRotate, delayedProgress);
+                
+                element.style.transform = `translate(${x}px, ${y}px) rotate(${rotate}deg)`;
+                element.style.opacity = 1;
+            } else {
+                // Keep cards hidden until their delay time
+                element.style.opacity = 0;
+            }
         }
     });
 }
 
-// Pack, Move, Settle Section Animations - Hidden Until Scroll
+// Pack, Move, Settle - Smooth Modern Animations with Logo + Text
 function initPackMoveSettleAnimations() {
-    const sections = ['pack-section', 'move-section', 'settle-section'];
-    
-    sections.forEach((sectionId, index) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            // Set initial state - completely hidden
-            gsap.set(element, { y: 100, opacity: 0 });
-            
-            ScrollTrigger.create({
-                trigger: element,
-                start: "top 90%",
-                end: "top 10%",
-                scrub: true, // Direct scroll response
-                onUpdate: (self) => {
-                    const progress = self.progress;
-                    // Each section appears at different scroll points - faster
-                    const sectionStartProgress = index * 0.15; // Pack at 0%, Move at 15%, Settle at 30%
-                    const sectionProgress = Math.max(0, (progress - sectionStartProgress) / (1 - sectionStartProgress));
-                    
-                    if (sectionProgress > 0) {
-                        // Slide up and fade in together
-                        const currentY = gsap.utils.interpolate(100, 0, sectionProgress);
-                        const currentOpacity = gsap.utils.interpolate(0, 1, sectionProgress);
-                        gsap.set(element, { y: currentY, opacity: currentOpacity });
-                    } else {
-                        // Keep completely hidden
-                        gsap.set(element, { y: 100, opacity: 0 });
-                    }
-                }
-            });
+  const sections = ['pack-section', 'move-section', 'settle-section'];
+
+  sections.forEach((sectionId) => {
+    const element = document.getElementById(sectionId); 
+    // the entire section with logo + text
+
+    if (element) {
+      // initial state: hidden below & transparent
+      gsap.set(element, { y: 80, opacity: 0 });
+
+      // timeline for scroll with scrub
+      gsap.to(element, {
+        y: 0,
+        opacity: 1,
+        duration: 1.2,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: element,
+          start: "top 80%",
+          end: "top 50%",
+          scrub: 1, // animate with scroll position
         }
-    });
+      });
+    }
+  });
 }
 
-// Color Changing Section Animation - Modern & Simple
+// Color Changing Section Animation - Modern & Simple with rotation
 function initColorChangingSection() {
     const colorChangingSection = document.getElementById("color-changing-section");
     const overlay = document.getElementById("color-changing-overlay");
 
     if (colorChangingSection && overlay) {
-        // Start as V-shape with subtle scale
+        // Start as V-shape with subtle scale and 45-degree rotation
         gsap.set(overlay, {
             clipPath: "polygon(50% 100%, 100% 100%, 100% 100%, 0% 100%, 0% 100%)",
             scale: 1.05,
+            rotation: 45, // 45-degree rotation
         });
 
-        // Fast reveal animation
+        // Fast reveal animation with rotation reset
         gsap.to(overlay, {
             clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
             scale: 1,
+            rotation: 0, // Reset rotation as it reveals
             ease: "power3.out",
             scrollTrigger: {
                 trigger: colorChangingSection,
@@ -342,6 +364,8 @@ function initTestimonialCards() {
     });
 
     // Scroll trigger - cards move directly with scroll position
+    const CARD_SPACING = 210; // Equal spacing between all cards
+    
     ScrollTrigger.create({
       trigger: "#testimonial-section",
       start: "top center",
@@ -361,7 +385,9 @@ function initTestimonialCards() {
             if (progress >= cardStartProgress) {
               // Direct scroll alignment - card moves exactly with scroll
               const cardProgress = Math.min(1, (progress - cardStartProgress) / 0.2);
-              const finalY = index * 250; // Reduced spacing between cards
+              // Each card positioned at CARD_SPACING * index ensures equal 200px distance from previous card
+              // Card 0: 0px, Card 1: 200px, Card 2: 400px, Card 3: 600px
+              const finalY = CARD_SPACING * index;
               const currentY = gsap.utils.interpolate(0, finalY, cardProgress);
               gsap.set(card, { y: currentY, opacity: 1 });
             } else {

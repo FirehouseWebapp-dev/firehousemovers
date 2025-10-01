@@ -149,10 +149,13 @@ body {
 #pack-section,
 #move-section, 
 #settle-section {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  list-style: none !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  list-style: none;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+  transition: filter 0.3s ease;
 }
 
 /* Ensure proper spacing for list items */
@@ -162,6 +165,11 @@ ul.space-y-20 > li + li {
 
 ul.space-y-24 > li + li {
   margin-top: 6rem;
+}
+
+/* Reduced top spacing for Pack section */
+.pack-reduced-spacing {
+  margin-top: 2rem !important; /* Reduced from default 5rem */
 }
 
 /* Colors */
@@ -812,37 +820,8 @@ section:nth-of-type(3) .grid {
   color: #9ca3af;
 }
 
-/* CardsStack Component Styles - Enhanced for Stacked Animation */
-.cards-stack-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 64rem;
-  margin: 0 auto;
-  min-height: 120vh;
-  gap: 1rem;
-}
-
-.testimonial-card {
-  width: 100%;
-  background-color: rgba(31, 41, 55, 0.8);
-  backdrop-filter: blur(8px);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  position: relative;
-  max-width: 38rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.testimonial-card.card-1,
-.testimonial-card.card-2,
-.testimonial-card.card-3,
-.testimonial-card.card-4 {
-  position: relative;
-  top: 0;
-  z-index: 1;
-}
+/* CardsStack Component Styles - Removed conflicting duplicate styles */
+/* Correct styles are defined below at line ~1147 */
 
 .testimonial-text {
   font-size: 1.125rem;
@@ -912,8 +891,10 @@ section:nth-of-type(3) .grid {
 @media (max-width: 768px) {
   .testimonial-card {
     padding: 1.25rem;
+    padding-top: 1.25rem; /* Explicit top padding for mobile consistency */
     margin: 0 0.5rem;
     max-width: 24rem;
+    min-height: 160px; /* Fixed minimum height for mobile consistency */
   }
   
   .testimonial-text {
@@ -932,7 +913,6 @@ section:nth-of-type(3) .grid {
   
   .cards-stack-container {
     min-height: 100vh;
-    gap: 0.5rem;
   }
 }
 
@@ -1052,6 +1032,7 @@ section:nth-of-type(3) .grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  list-style: none; /* Remove bullets from services list */
 }
 
 .services-list li a {
@@ -1140,20 +1121,23 @@ section:nth-of-type(3) .grid {
 .testimonial-card {
   position: absolute;
   width: 100%;
+  min-height: 180px; /* Fixed minimum height for consistent spacing */
   background-color: rgba(31, 41, 55, 0.9);
   backdrop-filter: blur(8px);
   border-radius: 0.75rem;
   padding: 1.5rem;
+  padding-top: 1.5rem; /* Explicit top padding to ensure consistency */
   max-width: 38rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   opacity: 0; /* Hidden initially to prevent flash on reload */
+  box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Cards stack container */
 .cards-stack-container {
   position: relative;
-  height: 500px; /* Increased height to show all cards fully */
+  height: 900px; /* Height to show all 4 cards with 200px spacing each */
   width: 100%;
   max-width: 38rem;
   margin: 0 auto;
@@ -1390,11 +1374,7 @@ button:focus {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  z-index: 5;
 }
-
-/* Color changing section - no CSS transitions to avoid conflicts */
-/* JavaScript handles all animations for color-changing-section */
 
 /* Initial state for color changing overlay - handled by JavaScript */
 #color-changing-overlay {
@@ -1500,4 +1480,74 @@ button:focus {
 .mb-12 {
   margin-bottom: 3rem;
   margin-top: 4rem;
+}
+
+/* Animation delay classes */
+.animation-delay-1s {
+  animation-delay: 1s;
+}
+
+.animation-delay-2s {
+  animation-delay: 2s;
+}
+
+.animation-delay-0-5s {
+  animation-delay: 0.5s;
+}
+
+/* Services Overview Section z-index */
+#services-overview {
+  z-index: 10;
+  background-color: #1a1a1a;
+}
+
+#services-overview .title-layer {
+  z-index: 5;
+}
+
+#services-overview .cards-layer {
+  z-index: 15;
+}
+
+/* Individual card z-index */
+#card1 { z-index: 1; }
+#card2 { z-index: 2; }
+#card3 { z-index: 3; }
+#card4 { z-index: 4; }
+#card5 { z-index: 5; }
+#card6 { z-index: 6; }
+#card7 { z-index: 7; }
+
+/* Color changing section layers */
+#color-changing-section .first-layer {
+  z-index: 1;
+}
+
+#color-changing-section .second-layer {
+  z-index: 2;
+  background-color: #2A2A2A;
+}
+
+.dark-text {
+  color: #2a2a2a;
+}
+
+/* Grid pattern overlay */
+.grid-pattern-overlay {
+  background-image: linear-gradient(rgba(220, 38, 38, 0.1) 1px, transparent 1px), 
+                    linear-gradient(90deg, rgba(220, 38, 38, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Footer grid gap */
+.footer-grid-gap {
+  gap: 1rem 0rem;
+}
+
+/* Lottie player styling */
+.lottie-player-transparent {
+  width: 500px;
+  height: 500px;
+  background-color: transparent;
+  background: transparent;
 }
