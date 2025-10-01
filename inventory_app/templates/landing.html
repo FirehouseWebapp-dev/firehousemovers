@@ -1,0 +1,472 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firehouse Movers - Professional Moving Services</title>
+    <link rel="stylesheet" href="{% static 'inventory_app/css/landing.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-[#262626] via-[#1a1a1a] to-[#262626] text-gray-100 antialiased relative overflow-x-hidden">
+    
+    <!-- Header Component - Standard Navbar -->
+    {% include "navbar.html" %}
+
+    <!-- Hero Component -->
+    <section class="hero-section relative overflow-hidden h-screen">
+        <!-- Background Image -->
+        <div class="hero-background absolute inset-0">
+            <img src="{% static 'images/two_trucks.jpg' %}" alt="Firehouse Movers Trucks" class="w-full h-full object-cover object-center background-image opacity-60" />
+            <!-- Strong dark overlay for text contrast -->
+            <div class="absolute inset-0 bg-black/50"></div>
+            <!-- Additional gradient overlay -->
+            <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
+        </div>
+
+        <!-- SVG Truck Scene -->
+        <div class="absolute inset-0 flex items-end justify-start overflow-hidden z-50 truck-animation" id="truck-scene">
+            <svg id="truck" class="w-[10rem] h-auto drop-shadow-2xl" viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- trailer -->
+                <rect x="10" y="30" rx="8" ry="8" width="190" height="60" class="truck-body" />
+                <!-- Firehouse logo on trailer -->
+                <image href="{% static 'images/fire_house_logo.svg' %}" x="82" y="35" width="45" height="45" opacity="0.7" />
+                <!-- cab -->
+                <rect x="200" y="40" rx="6" ry="6" width="90" height="50" class="truck-cab" />
+                <!-- windows -->
+                <rect x="210" y="48" width="26" height="18" rx="2" class="truck-window" />
+                <rect x="240" y="48" width="30" height="18" rx="2" class="truck-window" />
+                <!-- headlights -->
+                <circle cx="290" cy="72" r="6" class="headlight" />
+                <circle cx="290" cy="90" r="6" class="headlight" />
+                <!-- headlight beams -->
+                <polygon points="296,66 320,58 320,86 296,78" class="beam" />
+                <polygon points="296,84 320,76 320,104 296,96" class="beam" />
+                <!-- wheels -->
+                <circle id="wheel1" cx="60" cy="95" r="14" class="wheel" />
+                <circle id="wheel2" cx="170" cy="95" r="14" class="wheel" />
+                <circle id="wheel3" cx="250" cy="95" r="14" class="wheel" />
+            </svg>
+
+            <!-- exhaust smoke group -->
+            <svg class="absolute left-[185px] bottom-[65px]" id="smoke-container" width="40" height="60"></svg>
+        </div>
+
+        <!-- Hero content -->
+        <div class="hero-content relative z-30 h-full flex items-center justify-center px-4 md:px-8">
+            <div class="hero-text text-center max-w-5xl mx-auto">
+                <!-- Enhanced text with strong shadows and contrast -->
+                <h1 id="hero-title" class="hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 md:mb-8 tracking-wide drop-shadow-2xl leading-tight">
+                    <span class="text-white drop-shadow-2xl block">FIREHOUSE</span>
+                    <span class="text-red-500 drop-shadow-2xl modern-text-shadow block">
+                        MOVERS
+                    </span>
+                </h1>
+                
+                <p id="hero-tagline" class="hero-tagline text-lg sm:text-xl md:text-2xl text-white mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed font-medium drop-shadow-xl modern-text-shadow px-4">
+                    Professional moving services across the state. Fast, secure, and dependable.
+                </p>
+
+                <div class="hero-buttons flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="{% url 'authentication:login' %}" class="w-auto px-6 py-3 bg-red-500 text-white font-semibold hover:bg-red-600 transition-all duration-300 rounded-lg shadow-lg hover:shadow-red-500/10 hover:scale-105 transform modern-btn-primary text-center no-underline">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Statement Component -->
+    <section class="platform-statement-section py-24 md:py-32 lg:py-40 bg-gradient-to-b from-[#262626] via-[#1a1a1a] to-[#262626] relative overflow-hidden">
+        <!-- Background decorative elements -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-20 left-10 w-32 h-32 bg-red-500 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute bottom-20 right-10 w-40 h-40 bg-red-400 rounded-full blur-3xl animate-pulse animation-delay-1s"></div>
+            <div class="absolute top-1/2 left-1/4 w-24 h-24 bg-red-600 rounded-full blur-2xl animate-pulse animation-delay-2s"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-6 md:px-12 lg:px-16 relative z-10">
+            <div class="text-center md:text-left">
+                <!-- Enhanced title -->
+                <h2 id="platform-title" class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold leading-tight tracking-tight text-white mb-8 md:mb-12">
+                    The moving service we needed,<br class="hidden sm:block" />
+                    so we built it for you
+                </h2>
+                
+                <!-- Enhanced description -->
+                <div id="platform-description" class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-300 leading-relaxed max-w-5xl mx-auto md:mx-0">
+                    Built by a dedicated team with years of experience, Firehouse Movers gives you access to trusted moving techniques, reliable crews, and modern tools that make relocating simple.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Overview Component - Fixed height and proper z-index management -->
+    <div id="services-overview" class="services-overview-section sticky top-0 h-screen flex flex-col items-center justify-center relative px-6 md:px-12 lg:px-16">
+        <!-- MOVE AS ONE text behind cards -->
+        <div class="absolute inset-0 flex items-center justify-center title-layer">
+            <h2 id="services-title" class="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[12rem] font-bold text-white leading-tight tracking-tight">
+                MOVE AS ONE
+            </h2>
+        </div>
+
+        <!-- Cards container with proper z-index management -->
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center cards-layer">
+            <!-- Card 1 - from left -->
+            <div id="card1" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/truckk.jpg' %}" alt="Marketing Inventory" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 2 - from right -->
+            <div id="card2" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/onsite_inspection.jpg' %}" alt="Onsite Inspection" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 3 - from top-left -->
+            <div id="card3" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/servies.jpg' %}" alt="Services" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 4 - from bottom-right -->
+            <div id="card4" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/gift_cards.jpg' %}" alt="Gift Cards" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 5 - from top-left diagonal -->
+            <div id="card5" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/supplies.jpg' %}" alt="Supplies" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 6 - from top-right diagonal -->
+            <div id="card6" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/uniform.jpg' %}" alt="Uniform" class="w-full h-full object-cover" />
+            </div>
+
+            <!-- Card 7 - from bottom-left diagonal -->
+            <div id="card7" class="absolute w-80 h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 rounded-lg shadow-lg overflow-hidden">
+                <img src="{% static 'images/truck_inspection.jpeg' %}" alt="Truck Inspection" class="w-full h-full object-cover" />
+            </div>
+        </div>
+    </div>
+        
+        <!-- Pack, Move, Settle section -->
+        <div class="relative min-h-screen flex items-center justify-center bg-[#1a1a1a] px-4">
+          <div class="max-w-4xl mx-auto">
+            <ul class="space-y-20 md:space-y-24">
+              
+              <!-- Pack -->
+              <li id="pack-section" class="flex items-center space-x-6 pack-reduced-spacing">
+                <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white rounded-full flex-shrink-0">
+                  <svg class="w-10 h-10 md:w-12 md:h-12 text-gray-800" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white">
+                  Pack
+                </div>
+              </li>
+              
+              <!-- Move -->
+              <li id="move-section" class="flex items-center space-x-6">
+                <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-red-500 rounded-full flex-shrink-0">
+                  <svg class="w-10 h-10 md:w-12 md:h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </div>
+                <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-red-500">
+                  Move
+                </div>
+              </li>
+              
+              <!-- Settle -->
+              <li id="settle-section" class="flex items-center space-x-6">
+                <div class="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-green-500 rounded-full flex-shrink-0">
+                  <svg class="w-10 h-10 md:w-12 md:h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-green-500">
+                  Settle
+                </div>
+              </li>
+              
+            </ul>
+          </div>
+        </div>
+
+        <!-- White background section -->
+        <div class="relative min-h-screen bg-white flex flex-col items-center justify-center py-16 md:py-24">
+            <div class="text-center px-4 md:px-8 lg:px-12 max-w-6xl mx-auto">
+                <div class="space-y-4 md:space-y-6 mb-12 md:mb-16">
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
+                        Fast moves? <span class="text-red-500">Sure.</span>
+                    </h2>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
+                        Safe handling? <span class="text-red-500">Check.</span>
+                    </h2>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 leading-tight">
+                        On-time delivery? <span class="text-red-500">Also check.</span>
+                    </h2>
+                </div>
+                
+                <!-- Lottie Animation -->
+                <div class="flex justify-center">
+                    <dotlottie-player 
+                        src="https://lottie.host/323e0b6b-9f38-4aeb-bbbe-c2ad20e1b0be/Q5PeNUlqIO.lottie" 
+                        class="lottie-player-transparent w-full max-w-lg md:max-w-xl"
+                        autoplay 
+                        loop>
+                    </dotlottie-player>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Photo Background Section -->
+        <div id="testimonial-section" class="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-center pt-16 pb-16 md:pt-20 md:pb-24 team-background">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+            
+            <!-- Content over the background image -->
+            <div class="relative z-10 text-center text-white px-4 md:px-8 w-full max-w-6xl mx-auto">
+                <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-12 md:mb-16">
+                    Hear it from our clients
+                </h2>
+                
+                <!-- Testimonial Cards Stack -->
+                <div class="cards-stack-container max-w-2xl mx-auto">
+                    <div class="testimonial-card card-1">
+                        <p class="testimonial-text">
+                            "The Firehouse team did an AMAZING job! All 3 guys were friendly, helpful, fit, and actively working throughout the job. I am 125% satisfied with today’s service!!"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar pink">
+                                <span class="author-initials pink">JK</span>
+                            </div>
+                            <span class="author-name">Jennifer K</span>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card card-2">
+                        <p class="testimonial-text">
+                            "Amazing!!! Juan’s team is top notch. They were nonstop and total pros.  
+                            These guys are excellent and I HIGHLY recommend them for your move!!!"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar blue">
+                                <span class="author-initials blue">JM</span>
+                            </div>
+                            <span class="author-name">Jose Maestas</span>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card card-3">
+                        <p class="testimonial-text">
+                            "I am forever grateful for Firehouse movers. The team they sent out were top notch!  Great work guys! It was beyong anything. The staff was so cooperative and helpful. Thank you!!!"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar green">
+                                <span class="author-initials green">JL</span>
+                            </div>
+                            <span class="author-name">Jennifer Leiber</span>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card card-4">
+                        <p class="testimonial-text">
+                            "We recently used Firehouse Movers to move my mother into an independent living facility. The team of 3 was amazing! They worked quickly but carefully…very efficient.  Highly recommend!"
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar purple">
+                                <span class="author-initials purple">LG</span>
+                            </div>
+                            <span class="author-name">Leslie Gooding</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color changing background section -->
+    <div id="color-changing-section" class="relative min-h-screen w-full overflow-hidden">
+        <!-- FIRST LAYER — red background + dark gray text -->
+        <div class="absolute inset-0 w-full h-full bg-red-500 flex items-center justify-center first-layer">
+            <div class="text-center text-6xl md:text-8xl lg:text-[10rem] font-bold dark-text">
+                1 million users,
+                <br />
+                plus you.
+            </div>
+        </div>
+
+        <!-- SECOND LAYER — dark background + red text (reveals with clipPath) -->
+        <div id="color-changing-overlay" class="absolute inset-0 w-full h-full flex items-center justify-center second-layer">
+            <div class="text-center text-6xl md:text-8xl lg:text-[10rem] font-bold text-red-500">
+                1 million users,
+                <br />
+                plus you.
+            </div>
+        </div>
+    </div>
+
+    <!-- Ready to Take Control Section -->
+    <section class="ready-control-section relative py-20 md:py-32 bg-gradient-to-br from-[#1a1a1a] via-[#2d2d2d] to-[#0a0a0a] overflow-hidden">
+        <!-- Modern Background Effects -->
+        <div class="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-red-500/5"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse animation-delay-2s"></div>
+        
+        <!-- Grid Pattern Overlay -->
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute inset-0 grid-pattern-overlay"></div>
+        </div>
+        
+        <div class="ready-control-container relative max-w-6xl mx-auto px-4 md:px-8 text-center z-10">
+            <!-- Modern Heading with Glow Effect -->
+            <div class="ready-control-heading mb-12">
+                <h2 class="ready-control-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight">
+                    READY TO 
+                    <span class="ready-control-highlight relative inline-block">
+                        <span class="text-red-500 relative z-10">TAKE CONTROL</span>
+                        <div class="absolute -inset-2 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+                    </span>
+                    ?
+                </h2>
+                
+                <!-- Modern Subtitle -->
+                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
+                    Join thousands of firehouses already transforming their operations
+                </p>
+            </div>
+            
+            <!-- Compact Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="{% url 'authentication:signup' %}" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors duration-300">
+                    SIGN UP
+                </a>
+                
+                <a href="{% url 'authentication:login' %}" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-semibold rounded-lg transition-all duration-300">
+                    LOGIN
+                </a>
+            </div>
+            
+            <!-- Modern Trust Indicators -->
+            <div class="mt-16 pt-8">
+                <div class="flex flex-wrap justify-center items-center gap-8 text-gray-400">
+                    <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium">Live Dashboard</span>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse animation-delay-0-5s"></div>
+                        <span class="text-sm font-medium">Real-time Updates</span>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full backdrop-blur-sm">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse animation-delay-1s"></div>
+                        <span class="text-sm font-medium">Secure Platform</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Component -->
+    <footer id="footer" class="footer bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f]">
+        <div class="footer-container max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12">
+            <!-- Main Footer Content -->
+            <div class="footer-main-content grid grid-cols-1 md:grid-cols-3 mb-12 justify-items-start md:justify-items-center footer-grid-gap">
+                
+                <!-- Company Info -->
+                <div class="company-info space-y-2">
+                    <div class="company-logo flex items-center space-x-2">
+                        <div class="company-logo-icon w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM15 16.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+                                <path d="M3 4a1 1 0 00-1 1v1a1 1 0 001 1h1a1 1 0 001-1V5a1 1 0 00-1-1H3z"/>
+                            </svg>
+                        </div>
+                        <h3 class="company-name text-xl font-bold text-white">Firehouse Movers</h3>
+                    </div>
+                    <p class="company-description text-gray-400 text-sm leading-relaxed">
+                        Firehouse Movers Inc. is a fast-growing franchise moving company offering a full range of moving services to residents and businesses. We are here to relieve the stress associated with relocating.
+                    </p>
+                    <div class="company-features space-y-1">
+                        <div class="company-feature flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-gray-400 text-xs">Licensed & Insured</span>
+                        </div>
+                        <div class="company-feature flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            <span class="text-gray-400 text-xs">5-Star Rated Service</span>
+                        </div>
+                        <div class="company-feature flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-gray-400 text-xs">Trained Moving Experts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="services-section space-y-4">
+                    <h4 class="services-title text-lg font-semibold text-white">Services</h4>
+                    <ul class="services-list space-y-3">
+                        <li><a href="#services" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Services</a></li>
+                        <li><a href="/availability" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Logistics</a></li>
+                        <li><a href="/inspection" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Inspections</a></li>
+                        <li><a href="/inventory" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Inventory</a></li>
+                        <li><a href="/station" class="text-gray-400 hover:text-white transition-colors duration-300 text-sm">Station Management</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="contact-section space-y-4 md:justify-self-end">
+                    <h4 class="contact-title text-lg font-semibold text-white">Contact Info</h4>
+                    <div class="contact-info space-y-3">
+                        <div class="contact-item flex items-start space-x-3">
+                            <svg class="w-5 h-5 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-gray-400 text-sm">2535-B TEXAS 121 E, STATE #140</p>
+                                <p class="text-gray-400 text-sm">LEWISVILLE, TX 75056</p>
+                            </div>
+                        </div>
+                        <div class="contact-item flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                            </svg>
+                            <p class="text-gray-400 text-sm">(972) 412-6033</p>
+                        </div>
+                        <div class="contact-item flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                            </svg>
+                            <p class="text-gray-400 text-sm">support@firehousemovers.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Footer -->
+            <div class="footer-bottom pt-3">
+                <div class="footer-bottom-content flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="copyright text-sm text-gray-400">
+                        © <span id="current-year"></span> Firehouse Movers Inc. All rights reserved.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'inventory_app/js/landing.js' %}"></script>
+</body>
+</html>

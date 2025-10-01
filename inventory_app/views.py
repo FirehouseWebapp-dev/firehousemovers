@@ -32,7 +32,13 @@ def uniform_inventory_view(request):
 
 def homeview(request):
     """Render the home page."""
-    return render(request, "home.html")
+    # Check if user is authenticated
+    if request.user.is_authenticated:
+        # Show the regular home page for authenticated users
+        return render(request, "home.html")
+    else:
+        # Show the landing page for unauthenticated users
+        return render(request, "landing.html")
 
 
 class Add_uniform_view(View):
