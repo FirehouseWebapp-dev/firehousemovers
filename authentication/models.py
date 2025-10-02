@@ -12,6 +12,7 @@ image_storage = FileSystemStorage() if settings.DEBUG else MediaCloudinaryStorag
 # Department model
 class Department(models.Model):
     title = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, null=True, blank=True, help_text="URL-friendly identifier (not editable)")
     description = models.TextField(blank=True, null=True)
 
     # Each department has one manager

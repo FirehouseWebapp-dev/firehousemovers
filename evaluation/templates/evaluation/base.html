@@ -24,7 +24,7 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
-  {% with up=role.user_profile role_name=role.user_profile.role %}
+  {% with up=role.user_profile role_name=role.user_profile.role|default:"Unknown" %}
 
     {# --- Managers --- #}
     {% if role.is_manager %}

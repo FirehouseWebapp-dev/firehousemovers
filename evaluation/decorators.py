@@ -36,7 +36,7 @@ def _can_manage_department(user, department):
         return True
     
     # Department managers can only manage their own department
-    if checker.is_manager() and checker.user_profile.managed_department == department:
+    if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department == department:
         return True
     
     return False

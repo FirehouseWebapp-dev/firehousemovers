@@ -68,7 +68,7 @@ def evalform_list(request):
             forms = forms.filter(department_id=dept)
     else:
         # Department managers can only see their own department's forms
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             forms = EvalForm.objects.filter(
                 department=checker.user_profile.managed_department
             ).select_related("department").order_by("-created_at")
@@ -102,7 +102,7 @@ def evalform_create(request):
     else:
         form = EvalFormForm()
         # Restrict department choices for non-global admins
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
             form.fields['department'].initial = checker.user_profile.managed_department
     
@@ -142,7 +142,7 @@ def evalform_edit(request, pk):
     else:
         form = EvalFormForm(instance=obj)
         # Restrict department choices for non-global admins
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
     
     return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
@@ -1456,18 +1456,23 @@ def employee_dashboard(request):
             department=department,
             status='completed',
             submitted_at__gte=timezone.now() - timedelta(days=90)  # Last 3 months
-        ).select_related('employee__user', 'form')
+        ).select_related('employee__user', 'form').prefetch_related(
+            Prefetch(
+                'answers',
+                queryset=Answer.objects.filter(
+                    question__qtype__in=['stars', 'emoji', 'rating', 'number'],
+                    int_value__isnull=False
+                ).select_related('question'),
+                to_attr='numeric_answers'
+            )
+        )
         
         # Group by employee for department comparison
         employee_scores = {}
         for eval_instance in dept_evaluations:
-            answers = Answer.objects.filter(
-                instance=eval_instance,
-            question__qtype__in=['stars', 'emoji', 'rating', 'number'],
-                int_value__isnull=False
-        ).select_related('question')
+            answers = eval_instance.numeric_answers
         
-            if answers.exists():
+            if answers:
                 total_score = 0
                 count = 0
                 for answer in answers:

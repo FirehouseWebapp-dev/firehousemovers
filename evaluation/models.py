@@ -8,6 +8,7 @@ from .constants import EvaluationStatus
 class EvalForm(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="eval_forms")
     name = models.CharField(max_length=120, default="Weekly Evaluation")
+    slug = models.SlugField(max_length=120, null=True, blank=True, help_text="URL-friendly identifier (not editable)")
     description = models.CharField(max_length=255, blank=True, default="")
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
@@ -23,7 +24,8 @@ class EvalForm(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.department.title} • {self.name}{' (active)' if self.is_active else ''}"
+        dept_name = self.department.title if self.department else "Unknown Department"
+        return f"{dept_name} • {self.name}{' (active)' if self.is_active else ''}"
     
 
 
