@@ -6,6 +6,7 @@ app_name = "evaluation"
 urlpatterns = [
     # Main evaluation routes
     path("dashboard/", views.evaluation_dashboard, name="dashboard"),
+    path("employee-dashboard/", views.employee_dashboard, name="employee_dashboard"),
     path("evaluate/<int:evaluation_id>/", views.evaluate_employee, name="evaluate"),
     path("dynamic-evaluation/<int:evaluation_id>/", views.view_evaluation, name="view_evaluation"),
     path("pending/", views.pending_evaluations, name="pending"),

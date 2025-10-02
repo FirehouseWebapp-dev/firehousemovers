@@ -45,12 +45,13 @@ class EvalFormForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ["text", "help_text", "qtype", "required", "min_value", "max_value", "order"]
+        fields = ["text", "help_text", "qtype", "required", "include_in_trends", "min_value", "max_value", "order"]
         widgets = {
             "text": forms.TextInput(attrs={"class": "input-field"}),
             "help_text": forms.TextInput(attrs={"class": "input-field"}),
             "qtype": forms.Select(attrs={"class": "input-field"}),
             "required": forms.CheckboxInput(attrs={"class": "h-4 w-4"}),
+            "include_in_trends": forms.CheckboxInput(attrs={"class": "h-4 w-4"}),
             "min_value": forms.NumberInput(attrs={"class": "input-field"}),
             "max_value": forms.NumberInput(attrs={"class": "input-field"}),
             "order": forms.NumberInput(attrs={"class": "input-field", "min": "0"}),
@@ -112,6 +113,35 @@ class QuestionForm(forms.ModelForm):
                 raise forms.ValidationError(f'Maximum value must be greater than minimum value for {qtype} questions.')
         
         return max_value
+
+    def clean(self):
+        """Custom validation to ensure required fields are filled."""
+        cleaned_data = super().clean()
+        
+        # Handle disabled fields - set them to None for non-numeric question types
+        qtype = cleaned_data.get('qtype')
+        if qtype and qtype not in NUMERIC_QUESTION_TYPES:
+            cleaned_data['min_value'] = None
+            cleaned_data['max_value'] = None
+        
+        # Auto-detect percentage questions and set max_value=100
+        text = cleaned_data.get('text', '').lower()
+        if (qtype == 'number' and 
+            ('percentage' in text or 'percent' in text) and 
+            cleaned_data.get('max_value') is None):
+            cleaned_data['max_value'] = 100
+            logger.info(f"Auto-set max_value=100 for percentage question: {text[:50]}...")
+        
+        # Ensure STARS and EMOJI questions have explicit min/max values for consistency
+        if qtype in ['stars', 'emoji']:
+            if cleaned_data.get('min_value') is None:
+                cleaned_data['min_value'] = 1
+            if cleaned_data.get('max_value') is None:
+                cleaned_data['max_value'] = 5
+            logger.info(f"Auto-set min_value=1, max_value=5 for {qtype} question: {text[:50]}...")
+        
+        # Model validation will handle max_value constraints
+        return cleaned_data
 
 class QuestionChoiceForm(forms.ModelForm):
     class Meta:

@@ -24,7 +24,7 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#1a1a1a] text-white px-6 py-8 hidden md:block">
       <nav class="space-y-4">
-  {% with up=role.user_profile role_name=role.user_profile.role %}
+  {% with up=role.user_profile role_name=role.user_profile.role|default:"Unknown" %}
 
     {# --- Managers --- #}
     {% if role.is_manager %}
@@ -76,6 +76,11 @@
 
       {# --- Employees (default) --- #}
       {% else %}
+      {% url 'evaluation:employee_dashboard' as emp_dashboard_url %}
+      <a href="{{ emp_dashboard_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == emp_dashboard_url %}bg-red-500{% endif %}">
+        <i class="fas fa-chart-line mr-2"></i> Analytics Dashboard
+      </a>
+      
       {% url 'evaluation:my_evaluations' as my_evals_url %}
       <a href="{{ my_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path|startswith:my_evals_url %}active{% endif %}">
         <i class="fas fa-list mr-2"></i> My Evaluations

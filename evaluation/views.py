@@ -68,7 +68,7 @@ def evalform_list(request):
             forms = forms.filter(department_id=dept)
     else:
         # Department managers can only see their own department's forms
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             forms = EvalForm.objects.filter(
                 department=checker.user_profile.managed_department
             ).select_related("department").order_by("-created_at")
@@ -102,7 +102,7 @@ def evalform_create(request):
     else:
         form = EvalFormForm()
         # Restrict department choices for non-global admins
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
             form.fields['department'].initial = checker.user_profile.managed_department
     
@@ -142,7 +142,7 @@ def evalform_edit(request, pk):
     else:
         form = EvalFormForm(instance=obj)
         # Restrict department choices for non-global admins
-        if checker.is_manager() and checker.user_profile.managed_department:
+        if checker.is_manager() and checker.user_profile and checker.user_profile.managed_department:
             form.fields['department'].queryset = Department.objects.filter(id=checker.user_profile.managed_department.id)
     
     return render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": obj})
@@ -1390,3 +1390,160 @@ def analytics_alerts(request):
         'title': 'Risk Alerts',
         'today': timezone.now().date(),
     })
+
+
+@login_required
+def employee_dashboard(request):
+    """
+    Employee dashboard with personal performance insights and evaluation history.
+    Shows employee-specific data in senior manager dashboard style.
+    """
+    from django.db.models import Avg, Count, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    user_profile = request.user.userprofile
+    today = timezone.now().date()
+    
+    # Get employee's evaluation history
+    employee_evaluations = DynamicEvaluation.objects.filter(
+        employee=user_profile,
+        status='completed'
+    ).select_related('form', 'manager__user', 'department')
+    
+    # Recent evaluations (last 30 days)
+    recent_evaluations = employee_evaluations.filter(
+        submitted_at__gte=timezone.now() - timedelta(days=30)
+    )
+    
+    # Pending evaluations
+    pending_evaluations = DynamicEvaluation.objects.filter(
+        employee=user_profile,
+        status='pending'
+    ).select_related('form', 'manager__user')
+    
+    # Calculate overall stats
+    total_evaluations = employee_evaluations.count()
+    recent_count = recent_evaluations.count()
+    pending_count = pending_evaluations.count()
+    
+    
+    # Team and Department Analytics
+    manager = user_profile.manager  # Direct manager (team manager)
+    department = user_profile.department
+    
+    # Get department manager
+    department_manager = None
+    if department:
+        department_manager = department.manager
+    
+    # Get team members (colleagues under same manager)
+    team_members = []
+    team_size = 0
+    if manager:
+        team_members = UserProfile.objects.filter(manager=manager).exclude(id=user_profile.id)
+        team_size = team_members.count() + 1  # +1 for the employee themselves
+    
+    # Department stats
+    dept_employees_count = 0
+    if department:
+        dept_employees_count = UserProfile.objects.filter(department=department).count()
+    
+    # Get department performance comparison (if department exists)
+    dept_performance_data = []
+    if department:
+        dept_evaluations = DynamicEvaluation.objects.filter(
+            department=department,
+            status='completed',
+            submitted_at__gte=timezone.now() - timedelta(days=90)  # Last 3 months
+        ).select_related('employee__user', 'form').prefetch_related(
+            Prefetch(
+                'answers',
+                queryset=Answer.objects.filter(
+                    question__qtype__in=['stars', 'emoji', 'rating', 'number'],
+                    int_value__isnull=False
+                ).select_related('question'),
+                to_attr='numeric_answers'
+            )
+        )
+        
+        # Group by employee for department comparison
+        employee_scores = {}
+        for eval_instance in dept_evaluations:
+            answers = eval_instance.numeric_answers
+        
+            if answers:
+                total_score = 0
+                count = 0
+                for answer in answers:
+                    if answer.question.qtype in ['stars', 'emoji']:
+                        normalized = (answer.int_value - 1) * 25
+                    elif answer.question.qtype == 'rating':
+                        max_val = answer.question.max_value or 10
+                        normalized = ((answer.int_value - 1) / (max_val - 1)) * 100
+                    else:
+                        normalized = answer.int_value
+                    
+                    total_score += normalized
+                    count += 1
+                
+                if count > 0:
+                    emp_id = eval_instance.employee.id
+                    emp_name = eval_instance.employee.user.get_full_name() or eval_instance.employee.user.username
+                    if emp_id not in employee_scores:
+                        employee_scores[emp_id] = {'name': emp_name, 'scores': []}
+                    employee_scores[emp_id]['scores'].append(total_score / count)
+        
+        # Calculate average for each employee
+        for emp_id, data in employee_scores.items():
+            if data['scores']:
+                avg_score = sum(data['scores']) / len(data['scores'])
+                is_current_user = (emp_id == user_profile.id)
+                dept_performance_data.append({
+                    'name': data['name'],
+                    'score': round(avg_score, 1),
+                    'is_current_user': is_current_user
+                })
+        
+        # Sort by score descending
+        dept_performance_data.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Recent team activity (if manager exists)
+    team_recent_activity = []
+    if manager:
+        team_recent_evals = DynamicEvaluation.objects.filter(
+            manager=manager,
+            status='completed',
+            submitted_at__gte=timezone.now() - timedelta(days=30)
+        ).select_related('employee__user', 'form').order_by('-submitted_at')[:10]
+        
+        for eval_instance in team_recent_evals:
+            team_recent_activity.append({
+                'employee_name': eval_instance.employee.user.get_full_name() or eval_instance.employee.user.username,
+                'form_name': eval_instance.form.name,
+                'date': eval_instance.submitted_at,
+                'is_current_user': eval_instance.employee.id == user_profile.id
+            })
+    
+    context = {
+        'user_profile': user_profile,
+        'today': today,
+        'total_evaluations': total_evaluations,
+        'recent_evaluations_count': recent_count,
+        'pending_evaluations_count': pending_count,
+        'recent_evaluations': recent_evaluations[:5],  # Show last 5
+        'pending_evaluations': pending_evaluations[:5],  # Show first 5 pending
+        'last_viewed_at': timezone.now(),
+        
+        # Team & Department Info
+        'manager': manager,  # Direct manager (team manager)
+        'department': department,
+        'department_manager': department_manager,
+        'team_members': team_members[:5],  # Show first 5 team members
+        'team_size': team_size,
+        'dept_employees_count': dept_employees_count,
+        'dept_performance_data': dept_performance_data[:10],  # Top 10 performers
+        'team_recent_activity': team_recent_activity,
+    }
+    
+    return render(request, "evaluation/employee_dashboard.html", context)

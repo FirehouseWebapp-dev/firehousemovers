@@ -27,25 +27,55 @@
           </div>
         {% endif %}
         
-        {% for field in form %}
-          <div class="fh-row">
-            <label class="fh-label" for="{{ field.id_for_label }}">
-              {{ field.label }}
-              {% if field.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
-            </label>
+        {# Special handling for Required and Include in trends checkboxes on same row #}
+        <div class="fh-row">
+          <div class="checkbox-group">
+            <div class="checkbox-item">
+              <label class="fh-label" for="{{ form.required.id_for_label }}">
+                {{ form.required.label }}
+                {% if form.required.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
+              </label>
+              {{ form.required }}
+              {% if form.required.errors %}
+                <div class="field-error-message">{{ form.required.errors.0 }}</div>
+              {% endif %}
+            </div>
             
-            {% if field.help_text %}
-              <div class="fh-help">{{ field.help_text }}</div>
-            {% endif %}
-            
-            {{ field }}
-            
-            {% if field.errors %}
-              <div class="field-error-message">
-                {{ field.errors.0 }}
-              </div>
-            {% endif %}
+            <div class="checkbox-item">
+              <label class="fh-label" for="{{ form.include_in_trends.id_for_label }}">
+                {{ form.include_in_trends.label }}
+                {% if form.include_in_trends.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
+              </label>
+              {{ form.include_in_trends }}
+              {% if form.include_in_trends.errors %}
+                <div class="field-error-message">{{ form.include_in_trends.errors.0 }}</div>
+              {% endif %}
+            </div>
           </div>
+        </div>
+
+        {# Render all other fields #}
+        {% for field in form %}
+          {% if field.name not in "required,include_in_trends" %}
+            <div class="fh-row">
+              <label class="fh-label" for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color: #ef4444;">*</span>{% endif %}
+              </label>
+              
+              {% if field.help_text %}
+                <div class="fh-help">{{ field.help_text }}</div>
+              {% endif %}
+              
+              {{ field }}
+              
+              {% if field.errors %}
+                <div class="field-error-message">
+                  {{ field.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
         {% endfor %}
       </form>
     </div>

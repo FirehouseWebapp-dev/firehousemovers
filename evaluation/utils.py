@@ -84,7 +84,8 @@ def activate_evalform_safely(form_obj, request, success_message=None):
         tuple: (success: bool, message: str)
     """
     if success_message is None:
-        success_message = f"'{form_obj.name}' is now active for {form_obj.department.title}."
+        dept_name = form_obj.department.title if form_obj.department else "Unknown Department"
+        success_message = f"'{form_obj.name}' is now active for {dept_name}."
     
     try:
         with transaction.atomic():
@@ -113,7 +114,8 @@ def activate_evalform_safely(form_obj, request, success_message=None):
     except IntegrityError as e:
         logger.exception(f"Integrity error while activating evaluation form '{form_obj.name}'")
         if 'uq_evalform_one_active_per_dept_per_type' in str(e):
-            error_msg = f"Cannot activate '{form_obj.name}' - another form of the same type is already active for {form_obj.department.title}."
+            dept_name = form_obj.department.title if form_obj.department else "Unknown Department"
+            error_msg = f"Cannot activate '{form_obj.name}' - another form of the same type is already active for {dept_name}."
             messages.error(request, error_msg)
             return False, error_msg
         else:
@@ -328,7 +330,8 @@ def save_form_with_activation_check(form_obj, request, success_message=None):
                     # Another form was activated concurrently
                     form_obj.is_active = False
                     form_obj.save(update_fields=["is_active"])
-                    error_msg = f"Form saved but not activated - another form of the same type is already active for {form_obj.department.title}."
+                    dept_name = form_obj.department.title if form_obj.department else "Unknown Department"
+                    error_msg = f"Form saved but not activated - another form of the same type is already active for {dept_name}."
                     messages.warning(request, error_msg)
                     return True, error_msg
                 else:
@@ -341,7 +344,8 @@ def save_form_with_activation_check(form_obj, request, success_message=None):
     except IntegrityError as e:
         logger.exception(f"Integrity error while saving evaluation form '{form_obj.name}'")
         if 'uq_evalform_one_active_per_dept_per_type' in str(e):
-            error_msg = f"Cannot activate form - another form of the same type is already active for {form_obj.department.title}."
+            dept_name = form_obj.department.title if form_obj.department else "Unknown Department"
+            error_msg = f"Cannot activate form - another form of the same type is already active for {dept_name}."
             messages.error(request, error_msg)
             return False, error_msg
         else:

@@ -14,7 +14,7 @@ class OverdueEvaluationLockMiddleware:
             return self.get_response(request)
 
         checker = role_checker(request.user)
-        if not checker.is_manager():
+        if not checker.is_manager() or not checker.user_profile:
             return self.get_response(request)
 
         today = now().date()
