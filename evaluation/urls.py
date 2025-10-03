@@ -29,6 +29,14 @@ urlpatterns += [
     path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
 ]
 
+# Reusable Analytics Dashboard
+urlpatterns += [
+    path("dashboard/<str:department_slug>/", views.analytics_dashboard, name="analytics_dashboard"),
+    path("dashboard/<str:department_slug>/<int:employee_id>/", views.analytics_dashboard, name="analytics_dashboard_employee"),
+    path("api/dashboard/<str:department_slug>/", views.analytics_dashboard_api, name="analytics_dashboard_api"),
+    path("api/dashboard/<str:department_slug>/<int:employee_id>/", views.analytics_dashboard_api, name="analytics_dashboard_employee_api"),
+]
+
 # Management UI
 urlpatterns += [
     path("forms/", views.evalform_list, name="evalform_list"),

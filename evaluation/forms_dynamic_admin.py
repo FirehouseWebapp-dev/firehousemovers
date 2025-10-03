@@ -67,6 +67,34 @@ class QuestionForm(forms.ModelForm):
             next_order = 0 if max_order is None else max_order + 1
             self.fields["order"].initial = next_order
             self.fields["order"].widget.attrs["placeholder"] = str(next_order)
+        
+        # Handle include_in_trends based on qtype
+        self._setup_include_in_trends_logic()
+
+    def _setup_include_in_trends_logic(self):
+        """Setup include_in_trends checkbox based on qtype."""
+        # Get current qtype (from form data or instance)
+        qtype = self.data.get('qtype') if self.data else (self.instance.qtype if self.instance else None)
+        
+        # Question types that should be included in trends by default
+        trend_qtypes = ['stars', 'emoji', 'rating', 'number', 'bool']
+        
+        # Question types that should be disabled for trends
+        disabled_trend_qtypes = ['select', 'short', 'long', 'section']
+        
+        if qtype in trend_qtypes:
+            # Auto-check for trend-compatible question types
+            self.fields['include_in_trends'].initial = True
+            self.fields['include_in_trends'].widget.attrs['title'] = 'This question type is suitable for trend analysis'
+        elif qtype in disabled_trend_qtypes:
+            # Disable for non-trend question types
+            self.fields['include_in_trends'].initial = False
+            self.fields['include_in_trends'].widget.attrs['disabled'] = True
+            self.fields['include_in_trends'].widget.attrs['title'] = f'{qtype.title()} questions cannot be included in trends as they are not suitable for chart analysis'
+            self.fields['include_in_trends'].widget.attrs['class'] = 'h-4 w-4 disabled'
+        else:
+            # Default behavior for other types
+            self.fields['include_in_trends'].widget.attrs['title'] = 'Include this question in trend analysis charts'
 
     def clean_text(self):
         """Sanitize question text field."""

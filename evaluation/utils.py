@@ -9,9 +9,34 @@ from django.db.models import Count, Q
 from .models import EvalForm
 from .constants import EvaluationStatus
 from firehousemovers.utils.permissions import role_checker
+from authentication.models import UserProfile
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def get_user_profile_safely(user, request=None):
+    """
+    Safely get user profile with proper error handling.
+    
+    Args:
+        user: Django User instance
+        request: Optional request object for error messages
+        
+    Returns:
+        UserProfile instance or None if not found
+        
+    Raises:
+        UserProfile.DoesNotExist: If profile doesn't exist and request is None
+    """
+    try:
+        return user.userprofile
+    except UserProfile.DoesNotExist:
+        if request:
+            messages.error(request, 'Your user profile is not set up. Please contact an administrator.')
+            return None
+        else:
+            raise UserProfile.DoesNotExist("User profile does not exist")
 
 
 def calculate_eval_stats(queryset, today, date_field):

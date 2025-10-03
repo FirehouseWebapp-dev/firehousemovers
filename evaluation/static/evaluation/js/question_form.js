@@ -29,6 +29,7 @@ class QuestionForm {
         const qtypeSelect = document.querySelector('select[name="qtype"]');
         const minValueInput = document.querySelector('input[name="min_value"]');
         const maxValueInput = document.querySelector('input[name="max_value"]');
+        const includeInTrendsCheckbox = document.querySelector('input[name="include_in_trends"]');
         
         if (!qtypeSelect || !minValueInput || !maxValueInput) {
             console.warn('Question form elements not found');
@@ -38,13 +39,25 @@ class QuestionForm {
         // Define numeric question types that use min/max values
         this.numericTypes = ['stars', 'emoji', 'rating', 'number'];
         
+        // Define question types that should be included in trends by default
+        this.trendQtypes = ['stars', 'emoji', 'rating', 'number', 'bool'];
+        
+        // Define question types that should be disabled for trends
+        this.disabledTrendQtypes = ['select', 'short', 'long', 'section'];
+        
         // Bind the toggle function to the select change event
         qtypeSelect.addEventListener('change', () => {
             this.toggleMinMaxFields(qtypeSelect, minValueInput, maxValueInput);
+            if (includeInTrendsCheckbox) {
+                this.toggleIncludeInTrends(qtypeSelect, includeInTrendsCheckbox);
+            }
         });
         
         // Initialize field states on page load
         this.toggleMinMaxFields(qtypeSelect, minValueInput, maxValueInput);
+        if (includeInTrendsCheckbox) {
+            this.toggleIncludeInTrends(qtypeSelect, includeInTrendsCheckbox);
+        }
     }
 
     /**
@@ -83,6 +96,32 @@ class QuestionForm {
         // Clear values when disabled
         minValueInput.value = '';
         maxValueInput.value = '';
+    }
+
+    /**
+     * Toggle include_in_trends checkbox based on question type
+     */
+    toggleIncludeInTrends(qtypeSelect, includeInTrendsCheckbox) {
+        const qtype = qtypeSelect.value;
+        
+        if (this.trendQtypes.includes(qtype)) {
+            // Auto-check for trend-compatible question types
+            includeInTrendsCheckbox.checked = true;
+            includeInTrendsCheckbox.disabled = false;
+            includeInTrendsCheckbox.classList.remove('disabled');
+            includeInTrendsCheckbox.title = 'This question type is suitable for trend analysis';
+        } else if (this.disabledTrendQtypes.includes(qtype)) {
+            // Disable for non-trend question types
+            includeInTrendsCheckbox.checked = false;
+            includeInTrendsCheckbox.disabled = true;
+            includeInTrendsCheckbox.classList.add('disabled');
+            includeInTrendsCheckbox.title = `${qtype.charAt(0).toUpperCase() + qtype.slice(1)} questions cannot be included in trends as they are not suitable for chart analysis`;
+        } else {
+            // Default behavior for other types
+            includeInTrendsCheckbox.disabled = false;
+            includeInTrendsCheckbox.classList.remove('disabled');
+            includeInTrendsCheckbox.title = 'Include this question in trend analysis charts';
+        }
     }
 }
 
