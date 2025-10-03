@@ -3,9 +3,8 @@ Dashboard views for evaluation analytics.
 Separate views file to keep dashboard functionality organized.
 """
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Avg, Count
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta
@@ -17,6 +16,7 @@ from .dashboard_utils import (
     get_date_range, 
     aggregate_evaluation_data,
     get_emoji_distribution,
+    get_chart_type_for_qtype,
     CHART_TYPES
 )
 
@@ -33,9 +33,22 @@ def analytics_dashboard(request, department_slug, employee_id=None):
     try:
         department = Department.objects.get(slug=department_slug)
     except Department.DoesNotExist:
-        department = Department.objects.filter(title__icontains=department_slug).first()
-        if not department:
-            return render(request, 'evaluation/404.html', {'message': 'Department not found'})
+        # Fallback: try exact case-insensitive match first, then partial match
+        exact_match = Department.objects.filter(title__iexact=department_slug).first()
+        if exact_match:
+            department = exact_match
+        else:
+            # Try partial match as last resort
+            matching_departments = Department.objects.filter(title__icontains=department_slug)
+            if matching_departments.count() == 1:
+                department = matching_departments.first()
+            elif matching_departments.count() > 1:
+                # Multiple matches - return error to avoid ambiguity
+                return render(request, 'evaluation/404.html', {
+                    'message': f'Multiple departments found matching "{department_slug}". Please use exact department name.'
+                })
+            else:
+                return render(request, 'evaluation/404.html', {'message': 'Department not found'})
     
     # Get employee if specified
     employee = None
@@ -49,69 +62,74 @@ def analytics_dashboard(request, department_slug, employee_id=None):
     range_type = request.GET.get('range', 'weekly')
     start_date, end_date, granularity = get_date_range(range_type)
     
-    # Get active evaluation form for this department
-    try:
-        eval_form = EvalForm.objects.get(
-            department=department, 
-            is_active=True
-        )
-    except EvalForm.DoesNotExist:
-        return render(request, 'evaluation/404.html', {
-            'message': f'No active evaluation form found for {department.title}'
-        })
-    
-    # Get questions (Q1-Q5) ordered by position
-    questions = Question.objects.filter(
-        form=eval_form,
-        order__in=[1, 2, 3, 4, 5]
-    ).order_by('order')
-    
-    # Get evaluations in date range
+    # Get completed evaluations that overlap with the date range
+    # Include evaluations that start before end_date and end after start_date
     evaluations = DynamicEvaluation.objects.filter(
-        form=eval_form,
         department=department,
-        week_start__gte=start_date,
-        week_end__lte=end_date,
+        week_start__lte=end_date,      # Evaluation starts before or on end_date
+        week_end__gte=start_date,     # Evaluation ends after or on start_date
         status='completed'
     )
     
+    if not evaluations.exists():
+        return render(request, 'evaluation/404.html', {
+            'message': f'No completed evaluations found for {department.title} in the selected date range'
+        })
+    
+    # Get all forms used in the evaluations to handle form evolution
+    forms_used = evaluations.values_list('form', flat=True).distinct()
+    
+    # Get questions from all forms, prioritizing the most recent form
+    # This ensures we capture data even when forms change over time
+    all_questions = Question.objects.filter(
+        form__in=forms_used,
+        include_in_trends=True
+    ).order_by('order')
+    
+    # Group questions by order to handle form evolution
+    # Questions with the same order across forms are considered equivalent
+    questions_by_order = {}
+    for question in all_questions:
+        if question.order not in questions_by_order:
+            questions_by_order[question.order] = []
+        questions_by_order[question.order].append(question)
+    
+    # Use the most recent form's questions as the primary structure
+    # but include data from all forms for comprehensive analytics
+    eval_form = evaluations.order_by('-week_start').first().form
+    questions = Question.objects.filter(
+        form=eval_form,
+        include_in_trends=True
+    ).order_by('order')
+    
+    # Note: We now include ALL evaluations (not just same form) for comprehensive data
     # Filter by employee if specified
     if employee:
         evaluations = evaluations.filter(employee=employee)
     
-    # Aggregate data for each question
+    # Aggregate data for all questions at once to avoid N+1 queries
     chart_data = {}
     question_labels = get_question_labels(department.slug or department.title.lower())
     
+    # Get all aggregated data in one call instead of looping through questions
+    aggregated_data = aggregate_evaluation_data(
+        evaluations, 
+        questions, 
+        granularity
+    )
+    
+    # Process each question's data
     for question in questions:
         question_key = f"Q{question.order}"
         
-        # Get aggregated data for this question
-        question_evaluations = evaluations.filter(
-            answers__question=question
-        ).distinct()
+        # Use qtype-based chart type selection
+        chart_type = get_chart_type_for_qtype(question.qtype)
         
-        if question.qtype == "emoji":
-            # Special handling for emoji questions (Q3)
-            emoji_data = get_emoji_distribution(question_evaluations, question)
-            chart_data[question_key] = {
-                'type': 'pie',
-                'data': emoji_data,
-                'label': question_labels.get(question_key, question.text)
-            }
-        else:
-            # Numeric aggregation
-            aggregated_data = aggregate_evaluation_data(
-                question_evaluations, 
-                [question], 
-                granularity
-            )
-            
-            chart_data[question_key] = {
-                'type': CHART_TYPES.get(question_key, 'line'),
-                'data': aggregated_data.get(question_key, []),
-                'label': question_labels.get(question_key, question.text)
-            }
+        chart_data[question_key] = {
+            'type': chart_type,
+            'data': aggregated_data.get(question_key, []),
+            'label': question_labels.get(question_key, question.text)
+        }
     
     # Calculate summary statistics
     total_evaluations = evaluations.count()
@@ -155,9 +173,22 @@ def analytics_dashboard_api(request, department_slug, employee_id=None):
     try:
         department = Department.objects.get(slug=department_slug)
     except Department.DoesNotExist:
-        department = Department.objects.filter(title__icontains=department_slug).first()
-        if not department:
-            return JsonResponse({'error': 'Department not found'}, status=404)
+        # Fallback: try exact case-insensitive match first, then partial match
+        exact_match = Department.objects.filter(title__iexact=department_slug).first()
+        if exact_match:
+            department = exact_match
+        else:
+            # Try partial match as last resort
+            matching_departments = Department.objects.filter(title__icontains=department_slug)
+            if matching_departments.count() == 1:
+                department = matching_departments.first()
+            elif matching_departments.count() > 1:
+                # Multiple matches - return error to avoid ambiguity
+                return JsonResponse({
+                    'error': f'Multiple departments found matching "{department_slug}". Please use exact department name.'
+                }, status=400)
+            else:
+                return JsonResponse({'error': 'Department not found'}, status=404)
     
     # Get employee if specified
     employee = None
@@ -171,57 +202,71 @@ def analytics_dashboard_api(request, department_slug, employee_id=None):
     range_type = request.GET.get('range', 'weekly')
     start_date, end_date, granularity = get_date_range(range_type)
     
-    # Get active evaluation form
-    try:
-        eval_form = EvalForm.objects.get(department=department, is_active=True)
-    except EvalForm.DoesNotExist:
-        return JsonResponse({'error': 'No active evaluation form found'}, status=404)
-    
-    # Get questions and evaluations
-    questions = Question.objects.filter(
-        form=eval_form,
-        order__in=[1, 2, 3, 4, 5]
-    ).order_by('order')
-    
+    # Get completed evaluations that overlap with the date range
+    # Include evaluations that start before end_date and end after start_date
     evaluations = DynamicEvaluation.objects.filter(
-        form=eval_form,
         department=department,
-        week_start__gte=start_date,
-        week_end__lte=end_date,
+        week_start__lte=end_date,      # Evaluation starts before or on end_date
+        week_end__gte=start_date,     # Evaluation ends after or on start_date
         status='completed'
     )
     
+    if not evaluations.exists():
+        return JsonResponse({'error': 'No completed evaluations found in the selected date range'}, status=404)
+    
+    # Get all forms used in the evaluations to handle form evolution
+    forms_used = evaluations.values_list('form', flat=True).distinct()
+    
+    # Get questions from all forms, prioritizing the most recent form
+    # This ensures we capture data even when forms change over time
+    all_questions = Question.objects.filter(
+        form__in=forms_used,
+        include_in_trends=True
+    ).order_by('order')
+    
+    # Group questions by order to handle form evolution
+    # Questions with the same order across forms are considered equivalent
+    questions_by_order = {}
+    for question in all_questions:
+        if question.order not in questions_by_order:
+            questions_by_order[question.order] = []
+        questions_by_order[question.order].append(question)
+    
+    # Use the most recent form's questions as the primary structure
+    # but include data from all forms for comprehensive analytics
+    eval_form = evaluations.order_by('-week_start').first().form
+    questions = Question.objects.filter(
+        form=eval_form,
+        include_in_trends=True
+    ).order_by('order')
+    
+    # Note: We now include ALL evaluations (not just same form) for comprehensive data
     if employee:
         evaluations = evaluations.filter(employee=employee)
     
-    # Aggregate data
+    # Aggregate data for all questions at once to avoid N+1 queries
     chart_data = {}
     question_labels = get_question_labels(department.slug or department.title.lower())
     
+    # Get all aggregated data in one call instead of looping through questions
+    aggregated_data = aggregate_evaluation_data(
+        evaluations, 
+        questions, 
+        granularity
+    )
+    
+    # Process each question's data
     for question in questions:
         question_key = f"Q{question.order}"
-        question_evaluations = evaluations.filter(
-            answers__question=question
-        ).distinct()
         
-        if question.qtype == "emoji":
-            emoji_data = get_emoji_distribution(question_evaluations, question)
-            chart_data[question_key] = {
-                'type': 'pie',
-                'data': emoji_data,
-                'label': question_labels.get(question_key, question.text)
-            }
-        else:
-            aggregated_data = aggregate_evaluation_data(
-                question_evaluations, 
-                [question], 
-                granularity
-            )
-            chart_data[question_key] = {
-                'type': CHART_TYPES.get(question_key, 'line'),
-                'data': aggregated_data.get(question_key, []),
-                'label': question_labels.get(question_key, question.text)
-            }
+        # Use qtype-based chart type selection
+        chart_type = get_chart_type_for_qtype(question.qtype)
+        
+        chart_data[question_key] = {
+            'type': chart_type,
+            'data': aggregated_data.get(question_key, []),
+            'label': question_labels.get(question_key, question.text)
+        }
     
     return JsonResponse({
         'chart_data': chart_data,

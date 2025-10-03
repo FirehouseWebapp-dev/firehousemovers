@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Max, Count, Q, Avg , Min
+from django.db.models import Count, Q, Avg
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -44,7 +44,8 @@ from .decorators import (
 from .utils import (
     activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
     check_department_permission, process_form_creation_with_conflicts, 
-    process_form_edit_with_conflicts, calculate_eval_stats, determine_status
+    process_form_edit_with_conflicts, calculate_eval_stats, determine_status,
+    get_user_profile_safely
 )
 from .evaluation_handlers import (
     handle_evaluation_submission, handle_evaluation_view, 
@@ -1409,10 +1410,14 @@ def employee_dashboard(request):
         get_date_range, 
         aggregate_evaluation_data,
         get_emoji_distribution,
+        get_chart_type_for_qtype,
         CHART_TYPES
     )
     
-    user_profile = request.user.userprofile
+    user_profile = get_user_profile_safely(request.user, request)
+    if not user_profile:
+        return redirect('authentication:login')
+    
     today = timezone.now().date()
     
     # Get employee's evaluation history
@@ -1422,9 +1427,12 @@ def employee_dashboard(request):
     ).select_related('form', 'manager__user', 'department')
     
     # Recent evaluations (last 30 days)
+    # Use timezone-aware datetime for consistent filtering
+    # This ensures compatibility with both timezone-aware and naive datetime fields
+    thirty_days_ago = timezone.now() - timedelta(days=30)
     recent_evaluations = employee_evaluations.filter(
-        submitted_at__gte=timezone.now() - timedelta(days=30)
-    )
+        submitted_at__gte=thirty_days_ago
+    ).exclude(submitted_at__isnull=True)  # Exclude null values for cleaner results
     
     # Pending evaluations
     pending_evaluations = DynamicEvaluation.objects.filter(
@@ -1432,10 +1440,15 @@ def employee_dashboard(request):
         status='pending'
     ).select_related('form', 'manager__user')
     
-    # Calculate overall stats
-    total_evaluations = employee_evaluations.count()
-    recent_count = recent_evaluations.count()
-    pending_count = pending_evaluations.count()
+    # Calculate overall stats efficiently - single query approach
+    # Get all evaluation data in one query to avoid multiple DB hits
+    all_evaluations = employee_evaluations.values('status', 'submitted_at')
+    total_evaluations = len(all_evaluations)
+    
+    # Calculate counts from the single queryset
+    recent_count = len([e for e in all_evaluations 
+                       if e['submitted_at'] and e['submitted_at'] >= thirty_days_ago])
+    pending_count = len([e for e in all_evaluations if e['status'] == 'pending'])
     
     # Get performance trends data
     performance_data = {}
@@ -1446,68 +1459,78 @@ def employee_dashboard(request):
         range_type = 'monthly'
         start_date, end_date, granularity = get_date_range(range_type)
         
-        # Get active evaluation form for this department
-        try:
-            eval_form = EvalForm.objects.get(
-                department=user_profile.department, 
-                is_active=True
-            )
+        # Get completed evaluations that overlap with the date range
+        # Include evaluations that start before end_date and end after start_date
+        trend_evaluations = DynamicEvaluation.objects.filter(
+            employee=user_profile,  # Employee being evaluated
+            department=user_profile.department,
+            week_start__lte=end_date,      # Evaluation starts before or on end_date
+            week_end__gte=start_date,     # Evaluation ends after or on start_date
+            status='completed'  # Only completed evaluations
+        ).select_related('manager', 'form')
+        
+        if not trend_evaluations.exists():
+            # No completed evaluations found, skip performance data
+            performance_data = {}
+            question_labels = {}
+        else:
+            # Get all forms used in the evaluations to handle form evolution
+            forms_used = trend_evaluations.values_list('form', flat=True).distinct()
             
-            # Get questions (Q0-Q4) ordered by position
-            questions = Question.objects.filter(
-                form=eval_form,
-                order__in=[0, 1, 2, 3, 4]
+            # Get questions from all forms, prioritizing the most recent form
+            # This ensures we capture data even when forms change over time
+            all_questions = Question.objects.filter(
+                form__in=forms_used,
+                include_in_trends=True
             ).order_by('order')
             
-            # Get evaluations WHERE THIS EMPLOYEE WAS EVALUATED BY MANAGERS
-            # This is the key fix - we need manager evaluations OF the employee, not employee's own evaluations
-            trend_evaluations = DynamicEvaluation.objects.filter(
-                employee=user_profile,  # Employee being evaluated
-                form=eval_form,
-                week_start__gte=start_date,
-                week_end__lte=end_date,
-                status='completed'  # Only completed evaluations
-            ).select_related('manager', 'form')
+            # Group questions by order to handle form evolution
+            # Questions with the same order across forms are considered equivalent
+            questions_by_order = {}
+            for question in all_questions:
+                if question.order not in questions_by_order:
+                    questions_by_order[question.order] = []
+                questions_by_order[question.order].append(question)
             
+            # Use the most recent form's questions as the primary structure
+            # but include data from all forms for comprehensive analytics
+            eval_form = trend_evaluations.order_by('-week_start').first().form
+            questions = Question.objects.filter(
+                form=eval_form,
+                include_in_trends=True
+            ).order_by('order')
+            
+            # Note: We now include ALL evaluations (not just same form) for comprehensive data
             
             # Aggregate data for each question
             chart_data = {}
             question_labels = get_question_labels(user_profile.department.slug or user_profile.department.title.lower())
             
+            # Use consistent aggregation for all questions to avoid N+1 queries
+            # This ensures emoji questions get time-series data like other questions
+            aggregated_data = aggregate_evaluation_data(
+                trend_evaluations, 
+                questions, 
+                granularity
+            )
+            
+            # Process each question's data
             for question in questions:
                 question_key = f"Q{question.order}"
                 
-                # Get aggregated data for this question
-                question_evaluations = trend_evaluations.filter(
-                    answers__question=question
-                ).distinct()
+                # Use qtype-based chart type selection
+                chart_type = get_chart_type_for_qtype(question.qtype)
                 
-                if question.qtype == "emoji":
-                    # Special handling for emoji questions (Q3)
-                    emoji_data = get_emoji_distribution(question_evaluations, question)
+                # For emoji pie charts, use emoji distribution data instead of time-series
+                if question.qtype == "emoji" and chart_type == "pie":
+                    emoji_data = get_emoji_distribution(trend_evaluations, question)
                     chart_data[question_key] = {
-                        'type': 'pie',
+                        'type': chart_type,
                         'data': emoji_data,
                         'label': question_labels.get(question_key, question.text)
                     }
                 else:
-                    # Numeric aggregation
-                    aggregated_data = aggregate_evaluation_data(
-                        question_evaluations, 
-                        [question], 
-                        granularity
-                    )
-                    
-                    # Determine chart type based on question type
-                    if question.qtype == 'number':
-                        chart_type = 'line' if question.order == 0 else 'bar'
-                    elif question.qtype == 'stars':
-                        chart_type = 'radar'
-                    elif question.qtype == 'rating':
-                        chart_type = 'gauge'
-                    else:
-                        chart_type = CHART_TYPES.get(question_key, 'line')
-                    
+                    # Use time-series data for other chart types
                     chart_data[question_key] = {
                         'type': chart_type,
                         'data': aggregated_data.get(question_key, []),
@@ -1523,10 +1546,6 @@ def employee_dashboard(request):
                 'granularity': granularity,
                 'chart_types': CHART_TYPES
             }
-            
-        except EvalForm.DoesNotExist:
-            # No active form for this department
-            performance_data = None
     
     context = {
         'user_profile': user_profile,
