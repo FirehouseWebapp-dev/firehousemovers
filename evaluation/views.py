@@ -2,10 +2,13 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Max, Count, Q, Avg , Min
+from django.db.models import Count, Q, Avg
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+
+# Import dashboard views
+from .dashboard_views import analytics_dashboard, analytics_dashboard_api
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -41,7 +44,8 @@ from .decorators import (
 from .utils import (
     activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
     check_department_permission, process_form_creation_with_conflicts, 
-    process_form_edit_with_conflicts, calculate_eval_stats, determine_status
+    process_form_edit_with_conflicts, calculate_eval_stats, determine_status,
+    get_user_profile_safely
 )
 from .evaluation_handlers import (
     handle_evaluation_submission, handle_evaluation_view, 
@@ -1401,8 +1405,19 @@ def employee_dashboard(request):
     from django.db.models import Avg, Count, Q
     from django.utils import timezone
     from datetime import timedelta
+    from .dashboard_utils import (
+        get_question_labels, 
+        get_date_range, 
+        aggregate_evaluation_data,
+        get_emoji_distribution,
+        get_chart_type_for_qtype,
+        CHART_TYPES
+    )
     
-    user_profile = request.user.userprofile
+    user_profile = get_user_profile_safely(request.user, request)
+    if not user_profile:
+        return redirect('authentication:login')
+    
     today = timezone.now().date()
     
     # Get employee's evaluation history
@@ -1412,9 +1427,12 @@ def employee_dashboard(request):
     ).select_related('form', 'manager__user', 'department')
     
     # Recent evaluations (last 30 days)
+    # Use timezone-aware datetime for consistent filtering
+    # This ensures compatibility with both timezone-aware and naive datetime fields
+    thirty_days_ago = timezone.now() - timedelta(days=30)
     recent_evaluations = employee_evaluations.filter(
-        submitted_at__gte=timezone.now() - timedelta(days=30)
-    )
+        submitted_at__gte=thirty_days_ago
+    ).exclude(submitted_at__isnull=True)  # Exclude null values for cleaner results
     
     # Pending evaluations
     pending_evaluations = DynamicEvaluation.objects.filter(
@@ -1422,108 +1440,118 @@ def employee_dashboard(request):
         status='pending'
     ).select_related('form', 'manager__user')
     
-    # Calculate overall stats
-    total_evaluations = employee_evaluations.count()
-    recent_count = recent_evaluations.count()
-    pending_count = pending_evaluations.count()
+    # Calculate overall stats efficiently - single query approach
+    # Get all evaluation data in one query to avoid multiple DB hits
+    all_evaluations = employee_evaluations.values('status', 'submitted_at')
+    total_evaluations = len(all_evaluations)
     
+    # Calculate counts from the single queryset
+    recent_count = len([e for e in all_evaluations 
+                       if e['submitted_at'] and e['submitted_at'] >= thirty_days_ago])
+    pending_count = len([e for e in all_evaluations if e['status'] == 'pending'])
     
-    # Team and Department Analytics
-    manager = user_profile.manager  # Direct manager (team manager)
-    department = user_profile.department
+    # Get performance trends data
+    performance_data = {}
+    question_labels = {}
     
-    # Get department manager
-    department_manager = None
-    if department:
-        department_manager = department.manager
-    
-    # Get team members (colleagues under same manager)
-    team_members = []
-    team_size = 0
-    if manager:
-        team_members = UserProfile.objects.filter(manager=manager).exclude(id=user_profile.id)
-        team_size = team_members.count() + 1  # +1 for the employee themselves
-    
-    # Department stats
-    dept_employees_count = 0
-    if department:
-        dept_employees_count = UserProfile.objects.filter(department=department).count()
-    
-    # Get department performance comparison (if department exists)
-    dept_performance_data = []
-    if department:
-        dept_evaluations = DynamicEvaluation.objects.filter(
-            department=department,
-            status='completed',
-            submitted_at__gte=timezone.now() - timedelta(days=90)  # Last 3 months
-        ).select_related('employee__user', 'form').prefetch_related(
-            Prefetch(
-                'answers',
-                queryset=Answer.objects.filter(
-                    question__qtype__in=['stars', 'emoji', 'rating', 'number'],
-                    int_value__isnull=False
-                ).select_related('question'),
-                to_attr='numeric_answers'
-            )
-        )
+    if user_profile.department:
+        # Get range filter for performance trends - only monthly available
+        range_type = 'monthly'
+        start_date, end_date, granularity = get_date_range(range_type)
         
-        # Group by employee for department comparison
-        employee_scores = {}
-        for eval_instance in dept_evaluations:
-            answers = eval_instance.numeric_answers
+        # Get completed evaluations that overlap with the date range
+        # Include evaluations that start before end_date and end after start_date
+        trend_evaluations = DynamicEvaluation.objects.filter(
+            employee=user_profile,  # Employee being evaluated
+            department=user_profile.department,
+            week_start__lte=end_date,      # Evaluation starts before or on end_date
+            week_end__gte=start_date,     # Evaluation ends after or on start_date
+            status='completed'  # Only completed evaluations
+        ).select_related('manager__user', 'form', 'department', 'employee__user')
         
-            if answers:
-                total_score = 0
-                count = 0
-                for answer in answers:
-                    if answer.question.qtype in ['stars', 'emoji']:
-                        normalized = (answer.int_value - 1) * 25
-                    elif answer.question.qtype == 'rating':
-                        max_val = answer.question.max_value or 10
-                        normalized = ((answer.int_value - 1) / (max_val - 1)) * 100
-                    else:
-                        normalized = answer.int_value
-                    
-                    total_score += normalized
-                    count += 1
+        if not trend_evaluations.exists():
+            # No completed evaluations found, skip performance data
+            performance_data = {}
+            question_labels = {}
+        else:
+            # Get all forms used in the evaluations to handle form evolution
+            forms_used = trend_evaluations.values_list('form', flat=True).distinct()
+            
+            # Get questions from all forms, prioritizing the most recent form
+            # This ensures we capture data even when forms change over time
+            all_questions = Question.objects.filter(
+                form__in=forms_used,
+                include_in_trends=True
+            ).order_by('order')
+            
+            # Group questions by order to handle form evolution
+            # Questions with the same order across forms are considered equivalent
+            questions_by_order = {}
+            for question in all_questions:
+                if question.order not in questions_by_order:
+                    questions_by_order[question.order] = []
+                questions_by_order[question.order].append(question)
+            
+            # Use the most recent form's questions as the primary structure
+            # but include data from all forms for comprehensive analytics
+            # Get the most recent form from the already-loaded evaluations to avoid N+1
+            most_recent_evaluation = trend_evaluations.order_by('-week_start').first()
+            if not most_recent_evaluation:
+                performance_data = {}
+                question_labels = {}
+            else:
+                eval_form = most_recent_evaluation.form
+                questions = Question.objects.filter(
+                    form=eval_form,
+                    include_in_trends=True
+                ).select_related('form').order_by('order')
                 
-                if count > 0:
-                    emp_id = eval_instance.employee.id
-                    emp_name = eval_instance.employee.user.get_full_name() or eval_instance.employee.user.username
-                    if emp_id not in employee_scores:
-                        employee_scores[emp_id] = {'name': emp_name, 'scores': []}
-                    employee_scores[emp_id]['scores'].append(total_score / count)
-        
-        # Calculate average for each employee
-        for emp_id, data in employee_scores.items():
-            if data['scores']:
-                avg_score = sum(data['scores']) / len(data['scores'])
-                is_current_user = (emp_id == user_profile.id)
-                dept_performance_data.append({
-                    'name': data['name'],
-                    'score': round(avg_score, 1),
-                    'is_current_user': is_current_user
-                })
-        
-        # Sort by score descending
-        dept_performance_data.sort(key=lambda x: x['score'], reverse=True)
-    
-    # Recent team activity (if manager exists)
-    team_recent_activity = []
-    if manager:
-        team_recent_evals = DynamicEvaluation.objects.filter(
-            manager=manager,
-            status='completed',
-            submitted_at__gte=timezone.now() - timedelta(days=30)
-        ).select_related('employee__user', 'form').order_by('-submitted_at')[:10]
-        
-        for eval_instance in team_recent_evals:
-            team_recent_activity.append({
-                'employee_name': eval_instance.employee.user.get_full_name() or eval_instance.employee.user.username,
-                'form_name': eval_instance.form.name,
-                'date': eval_instance.submitted_at,
-                'is_current_user': eval_instance.employee.id == user_profile.id
-            })
+                # Note: We now include ALL evaluations (not just same form) for comprehensive data
+                
+                # Aggregate data for each question
+                chart_data = {}
+                question_labels = get_question_labels(user_profile.department.slug or user_profile.department.title.lower())
+                
+                # Use consistent aggregation for all questions to avoid N+1 queries
+                # This ensures emoji questions get time-series data like other questions
+                aggregated_data = aggregate_evaluation_data(
+                    trend_evaluations, 
+                    questions, 
+                    granularity
+                )
+                
+                # Process each question's data
+                for question in questions:
+                    question_key = f"Q{question.order}"
+                    
+                    # Use qtype-based chart type selection
+                    chart_type = get_chart_type_for_qtype(question.qtype)
+                    
+                    # For emoji pie charts, use emoji distribution data instead of time-series
+                    if question.qtype == "emoji" and chart_type == "pie":
+                        emoji_data = get_emoji_distribution(trend_evaluations, question)
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': emoji_data,
+                            'label': question_labels.get(question_key, question.text)
+                        }
+                    else:
+                        # Use time-series data for other chart types
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': aggregated_data.get(question_key, []),
+                            'label': question_labels.get(question_key, question.text)
+                        }
+                
+                performance_data = {
+                    'chart_data': chart_data,
+                    'question_labels': question_labels,
+                    'range_type': range_type,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'granularity': granularity,
+                    'chart_types': CHART_TYPES
+                }
     
     context = {
         'user_profile': user_profile,
@@ -1534,16 +1562,7 @@ def employee_dashboard(request):
         'recent_evaluations': recent_evaluations[:5],  # Show last 5
         'pending_evaluations': pending_evaluations[:5],  # Show first 5 pending
         'last_viewed_at': timezone.now(),
-        
-        # Team & Department Info
-        'manager': manager,  # Direct manager (team manager)
-        'department': department,
-        'department_manager': department_manager,
-        'team_members': team_members[:5],  # Show first 5 team members
-        'team_size': team_size,
-        'dept_employees_count': dept_employees_count,
-        'dept_performance_data': dept_performance_data[:10],  # Top 10 performers
-        'team_recent_activity': team_recent_activity,
+        'performance_data': performance_data,
     }
     
     return render(request, "evaluation/employee_dashboard.html", context)

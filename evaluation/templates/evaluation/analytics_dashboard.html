@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ department.title }} Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/analytics_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">
+                {{ department.title }} Analytics Dashboard
+                {% if employee %}
+                    - {{ employee.user.get_full_name|default:employee.user.username }}
+                {% endif %}
+            </h1>
+            <div class="text-muted">
+                <small>Last updated: {{ "now"|date:"M d, Y H:i" }}</small>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="range-filter">Time Range:</label>
+                <select id="range-filter">
+                    <option value="weekly" {% if range_type == 'weekly' %}selected{% endif %}>Week</option>
+                    <option value="monthly" {% if range_type == 'monthly' %}selected{% endif %}>Month</option>
+                    <option value="yearly" {% if range_type == 'yearly' %}selected{% endif %}>Year</option>
+                </select>
+            </div>
+            
+            {% if department_employees %}
+            <div class="filter-group">
+                <label for="employee-filter">Employee:</label>
+                <select id="employee-filter">
+                    <option value="">All Employees</option>
+                    {% for emp in department_employees %}
+                    <option value="{{ emp.id }}" {% if employee and employee.id == emp.id %}selected{% endif %}>
+                        {{ emp.user.get_full_name|default:emp.user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div class="filter-group">
+                <button class="btn btn-primary" id="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <h3>{{ total_evaluations }}</h3>
+            <p>Total Evaluations</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ completion_rate }}%</h3>
+            <p>Completion Rate</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ start_date|date:"M d" }} - {{ end_date|date:"M d" }}</h3>
+            <p>Date Range</p>
+        </div>
+    </div>
+    
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        {% for question_key, chart_info in chart_data.items %}
+        <div class="chart-container bg-gradient-to-br {% cycle 'from-gray-800 to-black' 'from-black to-gray-800' 'from-gray-700 to-gray-900' 'from-gray-900 to-black' 'from-black to-gray-700' %}">
+            <div class="chart-title">{{ chart_info.label }}</div>
+            <div class="chart-wrapper">
+                <canvas id="chart-{{ question_key|lower }}"></canvas>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+        <div class="pagination-info" style="margin-bottom: 10px; color: #6c757d;">
+            Showing {{ pagination.per_page }} of {{ pagination.total_count }} evaluations
+            (Page {{ pagination.current_page }} of {{ pagination.total_pages }})
+        </div>
+        
+        <div class="pagination-controls">
+            {% if pagination.has_previous %}
+                <a href="?page={{ pagination.previous_page }}&range={{ range_type }}" 
+                   class="btn btn-outline-primary" style="margin-right: 10px;">
+                    ← Previous
+                </a>
+            {% endif %}
+            
+            <span class="page-numbers" style="margin: 0 10px;">
+                {% for page_num in pagination.total_pages|slice:":5" %}
+                    {% if page_num == pagination.current_page %}
+                        <span class="btn btn-primary" style="margin: 0 2px;">{{ page_num }}</span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&range={{ range_type }}" 
+                           class="btn btn-outline-secondary" style="margin: 0 2px;">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+            </span>
+            
+            {% if pagination.has_next %}
+                <a href="?page={{ pagination.next_page }}&range={{ range_type }}" 
+                   class="btn btn-outline-primary" style="margin-left: 10px;">
+                    Next →
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js Gauge Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0/dist/chartjs-gauge.min.js"></script>
+
+<script>
+// Pass Django context data to JavaScript
+window.dashboardData = {
+    chartData: {{ chart_data|safe }},
+    questionLabels: {{ question_labels|safe }},
+    rangeType: "{{ range_type }}",
+    startDate: "{{ start_date|date:'Y-m-d' }}",
+    endDate: "{{ end_date|date:'Y-m-d' }}",
+    granularity: "{{ granularity }}"
+};
+</script>
+<script src="{% static 'evaluation/js/analytics_dashboard.js' %}"></script>
+{% endblock %}
