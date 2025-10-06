@@ -1467,7 +1467,7 @@ def employee_dashboard(request):
             week_start__lte=end_date,      # Evaluation starts before or on end_date
             week_end__gte=start_date,     # Evaluation ends after or on start_date
             status='completed'  # Only completed evaluations
-        ).select_related('manager', 'form')
+        ).select_related('manager__user', 'form', 'department', 'employee__user')
         
         if not trend_evaluations.exists():
             # No completed evaluations found, skip performance data
@@ -1494,58 +1494,64 @@ def employee_dashboard(request):
             
             # Use the most recent form's questions as the primary structure
             # but include data from all forms for comprehensive analytics
-            eval_form = trend_evaluations.order_by('-week_start').first().form
-            questions = Question.objects.filter(
-                form=eval_form,
-                include_in_trends=True
-            ).order_by('order')
-            
-            # Note: We now include ALL evaluations (not just same form) for comprehensive data
-            
-            # Aggregate data for each question
-            chart_data = {}
-            question_labels = get_question_labels(user_profile.department.slug or user_profile.department.title.lower())
-            
-            # Use consistent aggregation for all questions to avoid N+1 queries
-            # This ensures emoji questions get time-series data like other questions
-            aggregated_data = aggregate_evaluation_data(
-                trend_evaluations, 
-                questions, 
-                granularity
-            )
-            
-            # Process each question's data
-            for question in questions:
-                question_key = f"Q{question.order}"
+            # Get the most recent form from the already-loaded evaluations to avoid N+1
+            most_recent_evaluation = trend_evaluations.order_by('-week_start').first()
+            if not most_recent_evaluation:
+                performance_data = {}
+                question_labels = {}
+            else:
+                eval_form = most_recent_evaluation.form
+                questions = Question.objects.filter(
+                    form=eval_form,
+                    include_in_trends=True
+                ).select_related('form').order_by('order')
                 
-                # Use qtype-based chart type selection
-                chart_type = get_chart_type_for_qtype(question.qtype)
+                # Note: We now include ALL evaluations (not just same form) for comprehensive data
                 
-                # For emoji pie charts, use emoji distribution data instead of time-series
-                if question.qtype == "emoji" and chart_type == "pie":
-                    emoji_data = get_emoji_distribution(trend_evaluations, question)
-                    chart_data[question_key] = {
-                        'type': chart_type,
-                        'data': emoji_data,
-                        'label': question_labels.get(question_key, question.text)
-                    }
-                else:
-                    # Use time-series data for other chart types
-                    chart_data[question_key] = {
-                        'type': chart_type,
-                        'data': aggregated_data.get(question_key, []),
-                        'label': question_labels.get(question_key, question.text)
-                    }
-            
-            performance_data = {
-                'chart_data': chart_data,
-                'question_labels': question_labels,
-                'range_type': range_type,
-                'start_date': start_date,
-                'end_date': end_date,
-                'granularity': granularity,
-                'chart_types': CHART_TYPES
-            }
+                # Aggregate data for each question
+                chart_data = {}
+                question_labels = get_question_labels(user_profile.department.slug or user_profile.department.title.lower())
+                
+                # Use consistent aggregation for all questions to avoid N+1 queries
+                # This ensures emoji questions get time-series data like other questions
+                aggregated_data = aggregate_evaluation_data(
+                    trend_evaluations, 
+                    questions, 
+                    granularity
+                )
+                
+                # Process each question's data
+                for question in questions:
+                    question_key = f"Q{question.order}"
+                    
+                    # Use qtype-based chart type selection
+                    chart_type = get_chart_type_for_qtype(question.qtype)
+                    
+                    # For emoji pie charts, use emoji distribution data instead of time-series
+                    if question.qtype == "emoji" and chart_type == "pie":
+                        emoji_data = get_emoji_distribution(trend_evaluations, question)
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': emoji_data,
+                            'label': question_labels.get(question_key, question.text)
+                        }
+                    else:
+                        # Use time-series data for other chart types
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': aggregated_data.get(question_key, []),
+                            'label': question_labels.get(question_key, question.text)
+                        }
+                
+                performance_data = {
+                    'chart_data': chart_data,
+                    'question_labels': question_labels,
+                    'range_type': range_type,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'granularity': granularity,
+                    'chart_types': CHART_TYPES
+                }
     
     context = {
         'user_profile': user_profile,

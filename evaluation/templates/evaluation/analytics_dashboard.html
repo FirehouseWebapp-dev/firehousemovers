@@ -27,7 +27,7 @@
         <div class="filters-section">
             <div class="filter-group">
                 <label for="range-filter">Time Range:</label>
-                <select id="range-filter" onchange="updateDashboard()">
+                <select id="range-filter">
                     <option value="weekly" {% if range_type == 'weekly' %}selected{% endif %}>Week</option>
                     <option value="monthly" {% if range_type == 'monthly' %}selected{% endif %}>Month</option>
                     <option value="yearly" {% if range_type == 'yearly' %}selected{% endif %}>Year</option>
@@ -37,7 +37,7 @@
             {% if department_employees %}
             <div class="filter-group">
                 <label for="employee-filter">Employee:</label>
-                <select id="employee-filter" onchange="updateDashboard()">
+                <select id="employee-filter">
                     <option value="">All Employees</option>
                     {% for emp in department_employees %}
                     <option value="{{ emp.id }}" {% if employee and employee.id == emp.id %}selected{% endif %}>
@@ -49,7 +49,7 @@
             {% endif %}
             
             <div class="filter-group">
-                <button class="btn btn-primary" onclick="refreshDashboard()">
+                <button class="btn btn-primary" id="refresh-btn">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
             </div>
@@ -83,6 +83,43 @@
         </div>
         {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+        <div class="pagination-info" style="margin-bottom: 10px; color: #6c757d;">
+            Showing {{ pagination.per_page }} of {{ pagination.total_count }} evaluations
+            (Page {{ pagination.current_page }} of {{ pagination.total_pages }})
+        </div>
+        
+        <div class="pagination-controls">
+            {% if pagination.has_previous %}
+                <a href="?page={{ pagination.previous_page }}&range={{ range_type }}" 
+                   class="btn btn-outline-primary" style="margin-right: 10px;">
+                    ← Previous
+                </a>
+            {% endif %}
+            
+            <span class="page-numbers" style="margin: 0 10px;">
+                {% for page_num in pagination.total_pages|slice:":5" %}
+                    {% if page_num == pagination.current_page %}
+                        <span class="btn btn-primary" style="margin: 0 2px;">{{ page_num }}</span>
+                    {% else %}
+                        <a href="?page={{ page_num }}&range={{ range_type }}" 
+                           class="btn btn-outline-secondary" style="margin: 0 2px;">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+            </span>
+            
+            {% if pagination.has_next %}
+                <a href="?page={{ pagination.next_page }}&range={{ range_type }}" 
+                   class="btn btn-outline-primary" style="margin-left: 10px;">
+                    Next →
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 

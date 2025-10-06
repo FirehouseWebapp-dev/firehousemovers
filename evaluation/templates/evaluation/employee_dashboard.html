@@ -20,7 +20,7 @@
                 <p class="text-sm text-gray-400">Last Viewed</p>
                 <p class="text-sm text-white" id="last-viewed-time">{{ last_viewed_at|date:"M d, Y H:i" }}</p>
             </div>
-            <button class="analytics-refresh-btn" onclick="updateLastViewedTime(); location.reload()">
+            <button class="analytics-refresh-btn" id="refresh-btn">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>

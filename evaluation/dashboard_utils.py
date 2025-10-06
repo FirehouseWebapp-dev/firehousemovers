@@ -106,22 +106,28 @@ def get_date_range(range_type="monthly"):
         - end_date: End of the date range (includes 7-day buffer for overlapping evaluations)
         - granularity: "weekly" for UI display granularity (always weekly regardless of range_type)
     """
-    now = timezone.now().date()
-    
-    if range_type == "monthly":
-        # Last 4 weeks (28 days) + buffer for next week
-        start_date = now - timedelta(days=35)  # 5 weeks to ensure we get 4 full weeks
-        end_date = now + timedelta(days=7)     # Include evaluations that end in the next week
-        return start_date, end_date, "weekly"
-    else:
-        # Default to monthly behavior
-        start_date = now - timedelta(days=28)  # 4 weeks exactly
-        end_date = now + timedelta(days=7)     # Include evaluations that end in the next week
-        return start_date, end_date, "weekly"
+    try:
+        now = timezone.now().date()
+        
+        if range_type == "monthly":
+            # Last 4 weeks (28 days) + buffer for next week
+            start_date = now - timedelta(days=35)  # 5 weeks to ensure we get 4 full weeks
+            end_date = now + timedelta(days=7)     # Include evaluations that end in the next week
+            return start_date, end_date, "weekly"
+        else:
+            # Default to monthly behavior
+            start_date = now - timedelta(days=28)  # 4 weeks exactly
+            end_date = now + timedelta(days=7)     # Include evaluations that end in the next week
+            return start_date, end_date, "weekly"
+    except Exception as e:
+        # Return default safe values
+        from datetime import date
+        today = date.today()
+        return today - timedelta(days=28), today + timedelta(days=7), "weekly"
 
 def aggregate_evaluation_data(evaluations, questions, granularity="daily"):
     """
-    Aggregate evaluation data by question and time period.
+    Simple aggregation of evaluation data by question and time period.
     
     Args:
         evaluations: QuerySet of DynamicEvaluation instances
@@ -131,91 +137,118 @@ def aggregate_evaluation_data(evaluations, questions, granularity="daily"):
     Returns:
         dict: Aggregated data for each question
     """
-    from .models import Answer
-    
-    # Get all answers for these evaluations
-    answers = Answer.objects.filter(
-        instance__in=evaluations,
-        question__in=questions
-    ).select_related('question', 'instance')
-    
-    # Group by question and time period
-    data = defaultdict(lambda: defaultdict(list))
-    
-    for answer in answers:
-        question = answer.question
-        evaluation = answer.instance
+    try:
+        from .models import Answer
         
-        # Determine time period based on granularity
-        if granularity == "daily":
-            period = evaluation.week_start
-        elif granularity == "weekly":
-            # Group by week
-            period = evaluation.week_start
-        elif granularity == "monthly":
-            # Group by month
-            period = evaluation.week_start.replace(day=1)
+        if not evaluations or not questions:
+            return {}
         
-        # Extract value based on question type
-        value = None
-        if answer.int_value is not None:
-            value = answer.int_value
-        elif answer.text_value:
-            # For emoji questions, convert to numeric
-            if question.qtype == "emoji":
-                emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
-                value = emoji_map.get(answer.text_value, 3)  # Default to neutral
-            else:
-                value = 0  # Default for text values
+        # Get all answers for these evaluations
+        try:
+            answers = Answer.objects.filter(
+                instance__in=evaluations,
+                question__in=questions
+            ).select_related('question', 'instance')
+        except Exception as e:
+            return {}
         
-        if value is not None:
-            data[question.order][period].append(value)
+        # Group by question and time period
+        data = defaultdict(lambda: defaultdict(list))
+        
+        try:
+            for answer in answers:
+                question = answer.question
+                evaluation = answer.instance
+                
+                # Determine time period based on granularity
+                if granularity == "daily":
+                    period = evaluation.week_start
+                elif granularity == "weekly":
+                    period = evaluation.week_start
+                elif granularity == "monthly":
+                    period = evaluation.week_start.replace(day=1)
+                
+                # Extract value based on question type
+                value = None
+                if answer.int_value is not None:
+                    value = answer.int_value
+                elif answer.text_value:
+                    # For emoji questions, convert to numeric
+                    if question.qtype == "emoji":
+                        emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+                        value = emoji_map.get(answer.text_value, 3)
+                    else:
+                        value = 0
+                
+                if value is not None:
+                    data[question.order][period].append(value)
+        except Exception as e:
+            return {}
+        
+        # Calculate aggregations
+        result = {}
+        try:
+            for question_order, periods in data.items():
+                question_data = []
+                
+                for period, values in sorted(periods.items()):
+                    if values:
+                        avg_value = sum(values) / len(values)
+                        question_data.append({
+                            'period': period.isoformat(),
+                            'value': round(avg_value, 2),
+                            'count': len(values)
+                        })
+                
+                result[f"Q{question_order}"] = question_data
+        except Exception as e:
+            return {}
+        
+        return result
     
-    # Calculate aggregations
-    result = {}
-    for question_order, periods in data.items():
-        question_data = []
-        
-        for period, values in sorted(periods.items()):
-            if values:
-                avg_value = sum(values) / len(values)
-                question_data.append({
-                    'period': period.isoformat(),
-                    'value': round(avg_value, 2),
-                    'count': len(values)
-                })
-        
-        result[f"Q{question_order}"] = question_data
-    
-    return result
+    except Exception as e:
+        return {}
 
 def get_emoji_distribution(evaluations, question):
     """Get emoji distribution for satisfaction questions."""
-    from .models import Answer
+    try:
+        from .models import Answer
+        
+        if not evaluations or not question:
+            return {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}
+        
+        try:
+            answers = Answer.objects.filter(
+                instance__in=evaluations,
+                question=question
+            ).select_related('instance', 'question', 'instance__form', 'instance__employee__user', 'instance__manager__user')
+        except Exception as e:
+            return {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}
+        
+        # 5-emoji scale for customer satisfaction
+        distribution = {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}
+        
+        try:
+            for answer in answers:
+                # Handle both text_value and int_value for emoji questions
+                if answer.text_value and answer.text_value in distribution:
+                    distribution[answer.text_value] += 1
+                elif answer.int_value is not None:
+                    # Convert integer emoji values to emoji (1-5 scale)
+                    emoji_map = {
+                        1: "😞",  # Very dissatisfied
+                        2: "😕",  # Dissatisfied  
+                        3: "😐",  # Neutral
+                        4: "😊",  # Satisfied
+                        5: "😍"   # Very satisfied
+                    }
+                    emoji = emoji_map.get(answer.int_value, "😐")
+                    if emoji in distribution:
+                        distribution[emoji] += 1
+        except Exception as e:
+            return {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}
+        
+        return distribution
     
-    answers = Answer.objects.filter(
-        instance__in=evaluations,
-        question=question
-    )
-    
-    # 5-emoji scale for customer satisfaction
-    distribution = {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}
-    
-    for answer in answers:
-        # Handle both text_value and int_value for emoji questions
-        if answer.text_value and answer.text_value in distribution:
-            distribution[answer.text_value] += 1
-        elif answer.int_value is not None:
-            # Convert integer emoji values to emoji (1-5 scale)
-            emoji_map = {
-                1: "😞",  # Very dissatisfied
-                2: "😕",  # Dissatisfied  
-                3: "😐",  # Neutral
-                4: "😊",  # Satisfied
-                5: "😍"   # Very satisfied
-            }
-            emoji = emoji_map.get(answer.int_value, "😐")
-            if emoji in distribution:
-                distribution[emoji] += 1
-    
-    return distribution
+    except Exception as e:
+        return {"😞": 0, "😕": 0, "😐": 0, "😊": 0, "😍": 0}

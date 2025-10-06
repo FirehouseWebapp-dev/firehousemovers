@@ -11,40 +11,158 @@ function updateLastViewedTime() {
     document.getElementById('last-viewed-time').textContent = formatted;
 }
 
-// Performance trends data from Django context
-const performanceData = window.performanceData || {};
+// Performance trends data from Django context - will be set by inline script in HTML
+let performanceData = {};
 
 // Chart instances for trends
 let trendsCharts = {};
 
-// Initialize performance trends charts
-function initializeTrendsCharts() {
-    // Dynamically initialize charts for all questions with include_in_trends=True
-    for (const [questionKey, chartData] of Object.entries(performanceData.chartData || {})) {
-        const canvasId = `trends-chart-${questionKey.toLowerCase()}`;
+// Lazy loading state for trends charts
+let trendsChartObserver = null;
+let trendsChartsToLoad = new Set();
+
+// Add CSS animation for loading spinner
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize performance trends charts with lazy loading
+function setupTrendsLazyLoading() {
+    try {
+        // Check if IntersectionObserver is supported
+        if (!window.IntersectionObserver) {
+            loadAllTrendsChartsImmediately();
+            return;
+        }
+
+        // Create intersection observer for lazy loading trends charts
+        trendsChartObserver = new IntersectionObserver((entries) => {
+            try {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const canvasId = entry.target.id;
+                        const questionKey = canvasId.replace('trends-chart-', '').toUpperCase();
+                        
+                        // Only load chart if it hasn't been loaded yet
+                        if (!trendsCharts[canvasId] && trendsChartsToLoad.has(questionKey)) {
+                            loadTrendsChart(canvasId, questionKey);
+                            trendsChartObserver.unobserve(entry.target);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error in trends intersection observer callback:', error);
+            }
+        }, {
+            rootMargin: '100px 0px', // Start loading 100px before chart comes into view
+            threshold: 0.1 // Load when 10% of chart is visible
+        });
         
-        if (chartData) {
-            switch (chartData.type) {
-                case 'line':
-                    initializeTrendsLineChart(canvasId, questionKey);
-                    break;
-                case 'bar':
-                    initializeTrendsBarChart(canvasId, questionKey);
-                    break;
-                case 'pie':
-                    initializeTrendsPieChart(canvasId, questionKey);
-                    break;
-                case 'radar':
-                    initializeTrendsRadarChart(canvasId, questionKey);
-                    break;
-                case 'gauge':
-                    initializeTrendsGaugeChart(canvasId, questionKey);
-                    break;
-                default:
-                    console.log(`Unknown chart type: ${chartData.type} for ${questionKey}`);
+        // Set up lazy loading for all trends chart containers
+        const chartData = performanceData.chartData || {};
+        
+        for (const [questionKey, chartInfo] of Object.entries(chartData)) {
+            const canvasId = `trends-chart-${questionKey.toLowerCase()}`;
+            const canvas = document.getElementById(canvasId);
+            
+            if (canvas) {
+                // Add to charts to load set
+                trendsChartsToLoad.add(questionKey);
+                
+                // Check if chart is already visible (above the fold)
+                const rect = canvas.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+                
+                if (isVisible) {
+                    // Load visible charts immediately
+                    loadTrendsChart(canvasId, questionKey);
+                } else {
+                    // Add loading placeholder for hidden charts
+                    addTrendsLoadingPlaceholder(canvas);
+                    // Start observing the chart container for lazy loading
+                    trendsChartObserver.observe(canvas);
+                }
             }
         }
+    } catch (error) {
+        console.error('Error setting up trends lazy loading:', error);
+        loadAllTrendsChartsImmediately();
     }
+}
+
+function loadAllTrendsChartsImmediately() {
+    try {
+        const chartData = performanceData.chartData || {};
+        
+        for (const [questionKey, chartInfo] of Object.entries(chartData)) {
+            const canvasId = `trends-chart-${questionKey.toLowerCase()}`;
+            const canvas = document.getElementById(canvasId);
+            
+            if (canvas && !trendsCharts[canvasId]) {
+                loadTrendsChart(canvasId, questionKey);
+            }
+        }
+    } catch (error) {
+        console.error('Error in fallback trends chart loading:', error);
+        showErrorMessage('Failed to load trends charts. Please refresh the page.');
+    }
+}
+
+function addTrendsLoadingPlaceholder(canvas) {
+    const container = canvas.parentElement;
+    const placeholder = document.createElement('div');
+    placeholder.className = 'chart-loading-placeholder';
+    placeholder.innerHTML = `
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading chart...</div>
+    `;
+    container.classList.add('chart-container');
+    container.appendChild(placeholder);
+}
+
+function loadTrendsChart(canvasId, questionKey) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const container = canvas.parentElement;
+    
+    // Remove loading placeholder
+    const placeholder = container.querySelector('.chart-loading-placeholder');
+    if (placeholder) {
+        placeholder.classList.add('fade-out');
+        setTimeout(() => placeholder.remove(), 300);
+    }
+    
+    // Get chart info and initialize
+    const chartData = performanceData.chartData[questionKey];
+    if (!chartData) return;
+    
+    // Use requestAnimationFrame for smoother loading
+    requestAnimationFrame(() => {
+        switch (chartData.type) {
+            case 'line':
+                initializeTrendsLineChart(canvasId, questionKey);
+                break;
+            case 'bar':
+                initializeTrendsBarChart(canvasId, questionKey);
+                break;
+            case 'pie':
+                initializeTrendsPieChart(canvasId, questionKey);
+                break;
+            case 'radar':
+                initializeTrendsRadarChart(canvasId, questionKey);
+                break;
+            case 'gauge':
+                initializeTrendsGaugeChart(canvasId, questionKey);
+                break;
+            default:
+        }
+    });
 }
 
 function initializeTrendsLineChart(canvasId, questionKey) {
@@ -440,17 +558,70 @@ function initializeTrendsGaugeChart(canvasId, questionKey) {
 }
 
 function showTrendsNoDataMessage(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    const container = canvas.parentElement;
-    container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">No data available</div>';
+    try {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        
+        const container = canvas.parentElement;
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">No data available</div>';
+    } catch (error) {
+        console.error(`Error showing trends no data message for ${canvasId}:`, error);
+    }
+}
+
+function showErrorMessage(message) {
+    try {
+        console.error('Performance Dashboard Error:', message);
+        
+        // Create or update error notification
+        let errorDiv = document.getElementById('trends-dashboard-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'trends-dashboard-error';
+            errorDiv.className = 'dashboard-error';
+            document.body.appendChild(errorDiv);
+        }
+        
+        errorDiv.innerHTML = `
+            <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
+            <strong>Error:</strong> ${message}
+        `;
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv && errorDiv.parentElement) {
+                errorDiv.remove();
+            }
+        }, 5000);
+    } catch (error) {
+        console.error('Error showing error message:', error);
+    }
 }
 
 // Initialize charts when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    if (performanceData && performanceData.chartData) {
-        initializeTrendsCharts();
+    try {
+        // Get performance data from window object set by inline script
+        performanceData = window.performanceData || {};
+        
+        
+        if (performanceData && performanceData.chartData) {
+            setupTrendsLazyLoading();
+        }
+        setupEventListeners();
+    } catch (error) {
+        console.error('Error initializing performance dashboard:', error);
+        showErrorMessage('Failed to initialize performance dashboard. Please refresh the page.');
     }
 });
+
+function setupEventListeners() {
+    // Refresh button event listener
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshDashboard);
+    }
+}
 
 // Update charts when window is resized
 window.addEventListener('resize', function() {
@@ -458,3 +629,41 @@ window.addEventListener('resize', function() {
         if (chart) chart.resize();
     });
 });
+
+// Dashboard refresh function
+function refreshDashboard() {
+    try {
+        updateLastViewedTime();
+        
+        // Clear existing charts and reset lazy loading state
+        try {
+            Object.values(trendsCharts).forEach(chart => {
+                if (chart && typeof chart.destroy === 'function') {
+                    chart.destroy();
+                }
+            });
+        } catch (error) {
+            console.error('Error destroying trends charts:', error);
+        }
+        
+        trendsCharts = {};
+        trendsChartsToLoad.clear();
+        
+        // Disconnect observer if it exists
+        if (trendsChartObserver) {
+            try {
+                trendsChartObserver.disconnect();
+            } catch (error) {
+                console.error('Error disconnecting trends observer:', error);
+            }
+        }
+        
+        // Reload the page with a small delay to ensure cleanup
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 100);
+    } catch (error) {
+        console.error('Error refreshing dashboard:', error);
+        showErrorMessage('Failed to refresh dashboard. Please try again.');
+    }
+}
