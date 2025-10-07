@@ -19,7 +19,13 @@ urlpatterns = [
     path("manager-evaluations/evaluate/<int:evaluation_id>/", views.evaluate_manager, name="evaluate_manager_dynamic"),
     path("manager-evaluations/view/<int:evaluation_id>/", views.view_manager_evaluation, name="view_manager_evaluation"),
     path("manager-evaluations/my/", views.my_manager_evaluations, name="my_manager_evaluations"),
-    path("manager-evaluations/pending/", views.pending_manager_evaluations, name="pending_manager_evaluations"),  
+    path("manager-evaluations/pending/", views.pending_manager_evaluations, name="pending_manager_evaluations"),
+    
+    # Manager Performance Dashboards
+    path("manager-performance/", views.manager_performance_dashboard, name="manager_performance_dashboard"),
+    path("performance-trends/", views.senior_manager_performance_overview, name="performance_trends"),
+    path("employee-performance/", views.employee_performance_dashboard, name="employee_performance_dashboard"),
+    path("manager-employee-dashboard/", views.manager_employee_dashboard, name="manager_employee_dashboard"),  
 ]
 
 # Analytics Dashboard (Senior Management)

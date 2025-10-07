@@ -1,0 +1,1183 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}Employee Performance Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/analytics-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="analytics-header bg-[#1a1a1a] border-b border-gray-700 p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-red-500 mb-2">Team & Department Analytics</h1>
+            <p class="text-gray-400">Team and department performance trends</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <p class="text-sm text-gray-400">Last Viewed</p>
+                <p class="text-sm text-white" id="last-viewed-time">{{ last_viewed_at|date:"M d, Y H:i" }}</p>
+            </div>
+            <button class="analytics-refresh-btn" id="refresh-btn">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div class="analytics-content">
+    <!-- Team Members Section -->
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">
+                <i class="fas fa-users mr-2"></i>
+                Team Performance Trends
+            </h2>
+            <div class="analytics-section-subtitle">
+            Employees under your direct management
+        </div>
+    </div>
+    
+    <!-- Overall Team Performance Chart -->
+    {% if performance_data.monthly_performance %}
+    <div class="mb-8">
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h4 class="analytics-chart-title">Overall Team Performance</h4>
+                <div class="analytics-chart-type-badge">Monthly Trends</div>
+            </div>
+            <div class="analytics-chart-container">
+                <canvas id="team-overall-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    </div>
+    
+    <!-- Team Member Performance Charts -->
+    {% if performance_data.employee_data %}
+    <div class="mt-8">
+        <div class="analytics-section-header mb-6">
+            <h3 class="analytics-section-title">
+                <i class="fas fa-chart-bar mr-2"></i>
+                Team Members
+            </h3>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {% for employee_id, emp_data in performance_data.employee_data.items %}
+            <div class="analytics-chart-card">
+                <div class="analytics-chart-header">
+                        <h4 class="analytics-chart-title">{{ emp_data.employee.name }}</h4>
+                        <div class="analytics-chart-type-badge">Performance</div>
+                </div>
+                <div class="analytics-chart-container">
+                        <canvas id="employee-chart-{{ employee_id }}" class="analytics-chart"></canvas>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <!-- No Performance Data -->
+        <div class="mt-8">
+        <div class="analytics-empty-state">
+            <div class="analytics-empty-icon">
+                    <i class="fas fa-chart-bar"></i>
+            </div>
+            <h3 class="analytics-empty-title">No Team Performance Data Available</h3>
+            <p class="analytics-empty-description">
+                Your team members don't have any completed evaluations yet. Performance trends will appear here once evaluations are completed.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+    </div>
+
+    <!-- Department Performance Section -->
+    {% if user_profile.managed_department %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">
+                <i class="fas fa-building mr-2"></i>
+                Department Performance
+            </h2>
+            <div class="analytics-section-subtitle">
+                Performance data for {{ user_profile.managed_department.title }} department
+            </div>
+        </div>
+
+
+        <!-- Overall Department Performance Chart -->
+        {% if performance_data.department_monthly_performance %}
+        <div class="mb-8">
+            <div class="analytics-chart-card">
+                <div class="analytics-chart-header">
+                    <h4 class="analytics-chart-title">Overall Department Performance</h4>
+                    <div class="analytics-chart-type-badge">Monthly Trends</div>
+                </div>
+                <div class="analytics-chart-container">
+                    <canvas id="department-overall-chart" class="analytics-chart"></canvas>
+                        </div>
+                        </div>
+                        </div>
+                        {% endif %}
+        
+
+        <!-- Individual Department Member Performance Charts -->
+        {% if performance_data.department_employee_data %}
+        <div class="mt-8">
+            <div class="analytics-section-header mb-6">
+                <h3 class="analytics-section-title">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    Department Members
+                </h3>
+                <div class="analytics-section-subtitle">
+                    Individual performance trends for each department member
+                </div>
+            </div>
+            
+            <!-- Department Member Performance Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {% for employee_id, emp_data in performance_data.department_employee_data.items %}
+                <div class="analytics-chart-card">
+                    <div class="analytics-chart-header">
+                        <h4 class="analytics-chart-title">{{ emp_data.employee.name }}</h4>
+                        <div class="analytics-chart-type-badge">Performance</div>
+                        </div>
+                    <div class="analytics-chart-container">
+                        <canvas id="department-employee-chart-{{ employee_id }}" class="analytics-chart"></canvas>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <!-- No Department Performance Data -->
+        <div class="mt-8">
+            <div class="analytics-empty-state">
+                <div class="analytics-empty-icon">
+                    <i class="fas fa-chart-bar"></i>
+    </div>
+                <h3 class="analytics-empty-title">No Department Performance Data Available</h3>
+                <p class="analytics-empty-description">
+                    Department members don't have any completed evaluations yet. Performance trends will appear here once evaluations are completed.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Set performance data for the JavaScript
+window.performanceData = {
+    employeeData: {% if performance_data.employee_data %}{{ performance_data.employee_data|safe }}{% else %}null{% endif %},
+    monthlyPerformance: {% if performance_data.monthly_performance %}{{ performance_data.monthly_performance|safe }}{% else %}null{% endif %},
+    months: {% if performance_data.months %}{{ performance_data.months|safe }}{% else %}null{% endif %},
+    departmentEmployeeData: {% if performance_data.department_employee_data %}{{ performance_data.department_employee_data|safe }}{% else %}null{% endif %},
+    departmentMonthlyPerformance: {% if performance_data.department_monthly_performance %}{{ performance_data.department_monthly_performance|safe }}{% else %}null{% endif %},
+    departmentMonths: {% if performance_data.department_months %}{{ performance_data.department_months|safe }}{% else %}null{% endif %}
+};
+</script>
+<script src="{% static 'evaluation/js/employee_dashboard.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize overall team performance chart
+    if (window.performanceData && window.performanceData.monthlyPerformance) {
+        initializeTeamOverallChart();
+    }
+    
+    // Initialize individual employee charts
+    if (window.performanceData && window.performanceData.employeeData) {
+        initializeEmployeeBarCharts();
+    }
+    
+    // Initialize overall department performance chart
+    if (window.performanceData && window.performanceData.departmentMonthlyPerformance) {
+        initializeDepartmentOverallChart();
+    }
+    
+    // Initialize individual department employee charts
+    if (window.performanceData && window.performanceData.departmentEmployeeData) {
+        initializeDepartmentEmployeeBarCharts();
+    }
+    
+    // Update last viewed time
+    const lastViewedElement = document.getElementById('last-viewed-time');
+    if (lastViewedElement) {
+        lastViewedElement.textContent = new Date().toLocaleString();
+    }
+});
+
+function initializeTeamOverallChart() {
+    const ctx = document.getElementById('team-overall-chart').getContext('2d');
+    const monthlyData = window.performanceData.monthlyPerformance;
+    const months = window.performanceData.months;
+    
+    // Extract star and emoji ratings for each month
+    const starRatings = monthlyData.map(month => month.avg_star_rating || 0);
+    const emojiRatings = monthlyData.map(month => month.avg_emoji_rating || 0);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Overall Star Rating',
+                data: starRatings,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Overall Satisfaction Rating',
+                data: emojiRatings,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            return `${label}: ${value}/5`;
+                        },
+                        afterLabel: function(context) {
+                            const monthData = monthlyData[context.dataIndex];
+                            return `Evaluations: ${monthData.evaluation_count}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeDepartmentOverallChart() {
+    const ctx = document.getElementById('department-overall-chart').getContext('2d');
+    const monthlyData = window.performanceData.departmentMonthlyPerformance;
+    const months = window.performanceData.departmentMonths;
+    
+    // Extract star and emoji ratings for each month
+    const starRatings = monthlyData.map(month => month.avg_star_rating || 0);
+    const emojiRatings = monthlyData.map(month => month.avg_emoji_rating || 0);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Overall Star Rating',
+                data: starRatings,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#8b5cf6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }, {
+                label: 'Overall Satisfaction Rating',
+                data: emojiRatings,
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#f59e0b',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            return `${label}: ${value}/5`;
+                        },
+                        afterLabel: function(context) {
+                            const monthData = monthlyData[context.dataIndex];
+                            return `Evaluations: ${monthData.evaluation_count}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeDepartmentEmployeeBarCharts() {
+    const employeeData = window.performanceData.departmentEmployeeData;
+    
+    for (const [employeeId, empData] of Object.entries(employeeData)) {
+        const canvasId = `department-employee-chart-${employeeId}`;
+        const canvas = document.getElementById(canvasId);
+        
+        if (canvas) {
+            initializeDepartmentEmployeeBarChart(canvasId, empData);
+        }
+    }
+}
+
+function initializeDepartmentEmployeeBarChart(canvasId, empData) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Get weekly data
+    const weeklyData = empData.weekly_data || [];
+    const weeks = empData.weeks || [];
+    
+    // Check if we have any data
+    if (weeklyData.length === 0) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    // Extract star and emoji ratings for each week
+    const starRatings = weeklyData.map(week => week.star_rating || 0);
+    const emojiRatings = weeklyData.map(week => week.emoji_rating || 0);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weeks,
+            datasets: [{
+                label: 'Star Rating',
+                data: starRatings,
+                backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                borderColor: '#8b5cf6',
+                borderWidth: 2,
+                borderRadius: 4,
+                barThickness: 20
+            }, {
+                label: 'Satisfaction Rating',
+                data: emojiRatings,
+                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                borderColor: '#f59e0b',
+                borderWidth: 2,
+                borderRadius: 4,
+                barThickness: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            return `${label}: ${value}/5`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeEmployeeBarCharts() {
+    const employeeData = window.performanceData.employeeData;
+    
+    for (const [employeeId, empData] of Object.entries(employeeData)) {
+        const canvasId = `employee-chart-${employeeId}`;
+        const canvas = document.getElementById(canvasId);
+        
+        if (canvas) {
+            initializeEmployeeBarChart(canvasId, empData);
+        }
+    }
+}
+
+function initializeEmployeeBarChart(canvasId, empData) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Get weekly data
+    const weeklyData = empData.weekly_data || [];
+    const weeks = empData.weeks || [];
+    
+    // Check if we have any data
+    if (weeklyData.length === 0) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    // Extract star and emoji ratings for each week
+    const starRatings = weeklyData.map(week => week.star_rating || 0);
+    const emojiRatings = weeklyData.map(week => week.emoji_rating || 0);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weeks,
+            datasets: [{
+                label: 'Star Rating',
+                data: starRatings,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                borderRadius: 4,
+                barThickness: 20
+            }, {
+                label: 'Satisfaction Rating',
+                data: emojiRatings,
+                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                borderColor: '#10b981',
+                borderWidth: 2,
+                borderRadius: 4,
+                barThickness: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            const value = context.parsed.y;
+                            return `${label}: ${value}/5`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeCombinedBarChart(canvasId, chartInfo) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Get star rating time series data and emoji distribution data
+    const starData = chartInfo.star_data || [];
+    const emojiData = chartInfo.emoji_data || {};
+    
+    if (!starData.length && Object.keys(emojiData).length === 0) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    // Create a combined chart showing both star rating trend and emoji distribution
+    const weeks = starData.map(item => {
+        const date = new Date(item.period);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const starRatings = starData.map(item => item.value);
+    
+    // Calculate average emoji rating for display
+    const emojiValues = Object.values(emojiData);
+    const totalEmojis = emojiValues.reduce((sum, count) => sum + count, 0);
+    const avgEmojiRating = totalEmojis > 0 ? 
+        (emojiData['😞'] * 1 + emojiData['😕'] * 2 + emojiData['😐'] * 3 + emojiData['😊'] * 4 + emojiData['😍'] * 5) / totalEmojis : 0;
+    
+    // Create datasets
+    const datasets = [];
+    
+    // Add star rating dataset if we have data
+    if (starRatings.length > 0) {
+        datasets.push({
+            label: chartInfo.star_label || 'Star Rating',
+            data: starRatings,
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: '#3b82f6',
+            borderWidth: 2,
+            borderRadius: 4,
+            yAxisID: 'y'
+        });
+    }
+    
+    // Add emoji satisfaction dataset (show as average line or bar)
+    if (avgEmojiRating > 0) {
+        datasets.push({
+            label: chartInfo.emoji_label || 'Satisfaction Rating',
+            data: new Array(weeks.length).fill(avgEmojiRating),
+            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+            borderColor: '#10b981',
+            borderWidth: 2,
+            borderRadius: 4,
+            yAxisID: 'y'
+        });
+    }
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weeks.length > 0 ? weeks : ['Overall'],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            if (label.includes('Satisfaction')) {
+                                return `${label}: ${value.toFixed(1)}/5 (${Object.entries(emojiData).map(([emoji, count]) => `${emoji}: ${count}`).join(', ')})`;
+                            }
+                            return `${label}: ${value}/5`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            }
+        }
+    });
+}
+
+function initializeWeeklyBarChart(canvasId, chartInfo) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const data = chartInfo.data || [];
+    
+    if (!data || data.length === 0) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    // Extract data for the chart
+    const weeks = data.map(item => {
+        // Format the week date for display
+        const date = new Date(item.week);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    const starRatings = data.map(item => item.star_rating);
+    const emojiRatings = data.map(item => item.emoji_rating);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weeks,
+            datasets: [
+                {
+                    label: chartInfo.star_label || 'Star Rating',
+                    data: starRatings,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: chartInfo.emoji_label || 'Satisfaction Rating',
+                    data: emojiRatings,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            return `${label}: ${value}/5`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    max: 5,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value + '/5';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            }
+        }
+    });
+}
+
+function initializeCombinedChart(canvasId, chartInfo) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    // Create a combined chart showing both star rating trend and emoji distribution
+    const starData = chartInfo.star_data || [];
+    const emojiData = chartInfo.emoji_data || {};
+    
+    // Calculate average star rating
+    const avgStarRating = starData.length > 0 
+        ? starData.reduce((sum, item) => sum + item.value, 0) / starData.length 
+        : 0;
+    
+    // Calculate emoji distribution percentages
+    const totalEmojis = Object.values(emojiData).reduce((sum, count) => sum + count, 0);
+    const emojiPercentages = {};
+    for (const [emoji, count] of Object.entries(emojiData)) {
+        emojiPercentages[emoji] = totalEmojis > 0 ? (count / totalEmojis) * 100 : 0;
+    }
+    
+    // Create a doughnut chart showing the combined data
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Average Star Rating', 'Satisfaction Distribution'],
+            datasets: [{
+                data: [avgStarRating, 5 - avgStarRating],
+                backgroundColor: [
+                    '#10b981',  // Green for rating
+                    '#374151'   // Gray for remaining
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        padding: 20,
+                        generateLabels: function(chart) {
+                            return [
+                                {
+                                    text: `Star Rating: ${avgStarRating.toFixed(1)}/5`,
+                                    fillStyle: '#10b981',
+                                    strokeStyle: '#10b981',
+                                    lineWidth: 2,
+                                    pointStyle: 'circle',
+                                    hidden: false,
+                                    index: 0
+                                },
+                                {
+                                    text: `Emoji: ${Object.entries(emojiPercentages).map(([emoji, pct]) => `${emoji} ${pct.toFixed(0)}%`).join(', ')}`,
+                                    fillStyle: '#374151',
+                                    strokeStyle: '#374151',
+                                    lineWidth: 2,
+                                    pointStyle: 'circle',
+                                    hidden: false,
+                                    index: 1
+                                }
+                            ];
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            if (context.dataIndex === 0) {
+                                return `Average Star Rating: ${avgStarRating.toFixed(1)}/5`;
+                            } else {
+                                return `Emoji Distribution: ${Object.entries(emojiPercentages).map(([emoji, pct]) => `${emoji} ${pct.toFixed(0)}%`).join(', ')}`;
+                            }
+                        }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+function initializeStandardChart(canvasId, chartInfo) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const data = chartInfo.data;
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    switch (chartInfo.type) {
+        case 'pie':
+            initializePieChart(ctx, data, chartInfo.label);
+            break;
+        case 'line':
+            initializeLineChart(ctx, data, chartInfo.label);
+            break;
+        case 'bar':
+            initializeBarChart(ctx, data, chartInfo.label);
+            break;
+        case 'doughnut':
+            initializeDoughnutChart(ctx, data, chartInfo.label);
+            break;
+        default:
+            initializeLineChart(ctx, data, chartInfo.label);
+    }
+}
+
+function initializePieChart(ctx, data, label) {
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#ef4444', '#f97316', '#f59e0b', '#3b82f6', '#10b981'
+                ],
+                borderWidth: 3,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeLineChart(ctx, data, label) {
+    const labels = data.map(item => item.period);
+    const values = data.map(item => item.value);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: label,
+                data: values,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#9ca3af' }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        }
+    });
+}
+
+function initializeBarChart(ctx, data, label) {
+    const labels = data.map(item => item.period);
+    const values = data.map(item => item.value);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: label,
+                data: values,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#9ca3af' }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        }
+    });
+}
+
+function initializeDoughnutChart(ctx, data, label) {
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#10b981', '#ef4444'
+                ],
+                borderWidth: 4,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { size: 12 },
+                        padding: 20
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+</script>
+{% endblock %}

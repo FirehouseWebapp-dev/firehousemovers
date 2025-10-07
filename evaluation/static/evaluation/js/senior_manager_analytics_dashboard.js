@@ -17,6 +17,11 @@ function updateLastViewedTime() {
     }
 }
 
+// View team trend - shows manager's performance dashboard
+function viewTeamTrend(managerId) {
+    window.location.href = `/evaluation/manager-performance/?manager_id=${managerId}`;
+}
+
 // Update time on page load to show current local time
 document.addEventListener('DOMContentLoaded', function() {
     updateLastViewedTime();

@@ -193,12 +193,33 @@ def handle_my_evaluations(request, config, template_name):
         HttpResponse: Render response
     """
     from .utils import get_role_checker
+    from authentication.models import UserProfile
     
     checker = get_role_checker(request.user)
     today = now().date()
     
-    # Get evaluations where user is the evaluatee
-    evaluatee_field_filter = {config.evaluatee_field: checker.user_profile}
+    # Check if viewing a specific employee's evaluations (manager view)
+    employee_id = request.GET.get('employee_id')
+    
+    if employee_id and checker.is_manager():
+        # Manager viewing a specific employee's evaluations
+        try:
+            target_employee = UserProfile.objects.get(id=employee_id)
+            # Verify the manager has permission to view this employee
+            if target_employee.manager == checker.user_profile or \
+               (checker.user_profile.managed_department and 
+                target_employee.department == checker.user_profile.managed_department):
+                evaluatee_field_filter = {config.evaluatee_field: target_employee}
+            else:
+                # No permission, show own evaluations
+                evaluatee_field_filter = {config.evaluatee_field: checker.user_profile}
+        except UserProfile.DoesNotExist:
+            # Employee not found, show own evaluations
+            evaluatee_field_filter = {config.evaluatee_field: checker.user_profile}
+    else:
+        # Normal case: user viewing their own evaluations
+        evaluatee_field_filter = {config.evaluatee_field: checker.user_profile}
+    
     evaluations = (
         config.model_class.objects
         .filter(**evaluatee_field_filter)

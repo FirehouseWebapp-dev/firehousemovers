@@ -128,6 +128,7 @@
                         <th>Pending</th>
                         <th>Completion Rate</th>
                         <th>Status</th>
+                        <th>Trends</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -175,6 +176,12 @@
                                     <i class="fas fa-times-circle mr-1"></i>Critical
                                 </span>
                             {% endif %}
+                        </td>
+                        <td>
+                            <button class="analytics-action-btn" onclick="viewEmployeeTrend({{ member_data.member.id }})">
+                                <i class="fas fa-chart-line"></i>
+                                View Trends
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -224,4 +231,8 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/analytics_team_detail.js' %}"></script>
 {% endblock %}
