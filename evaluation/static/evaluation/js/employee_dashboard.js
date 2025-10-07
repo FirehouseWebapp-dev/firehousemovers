@@ -154,6 +154,9 @@ function loadTrendsChart(canvasId, questionKey) {
             case 'pie':
                 initializeTrendsPieChart(canvasId, questionKey);
                 break;
+            case 'doughnut':
+                initializeTrendsDoughnutChart(canvasId, questionKey);
+                break;
             case 'radar':
                 initializeTrendsRadarChart(canvasId, questionKey);
                 break;
@@ -271,11 +274,8 @@ function initializeTrendsBarChart(canvasId, questionKey) {
             datasets: [{
                 label: data.label,
                 data: values,
-                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                backgroundColor: '#3b82f6',
                 borderColor: '#3b82f6',
-                borderWidth: 2,
-                borderRadius: 6,
-                borderSkipped: false,
                 barThickness: barWidth,
                 maxBarThickness: maxBarWidth
             }]
@@ -358,10 +358,8 @@ function initializeTrendsPieChart(canvasId, questionKey) {
                     '#3b82f6', // Blue for 😊 (Satisfied)
                     '#10b981'  // Green for 😃 (Very satisfied)
                 ],
-                borderWidth: 3,
-                borderColor: '#ffffff',
-                hoverBorderWidth: 4,
-                hoverBorderColor: '#ffffff'
+                borderWidth: 1,
+                borderColor: '#ffffff'
             }]
         },
         options: {
@@ -415,6 +413,122 @@ function initializeTrendsPieChart(canvasId, questionKey) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = ((value / total) * 100).toFixed(1);
                             return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeTrendsDoughnutChart(canvasId, questionKey) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const data = performanceData.chartData[questionKey];
+    
+    if (!data || !data.data || data.data.length === 0) {
+        showTrendsNoDataMessage(canvasId);
+        return;
+    }
+    
+    // For boolean data, we need to aggregate Yes/No responses
+    let yesCount = 0;
+    let noCount = 0;
+    
+    data.data.forEach(item => {
+        if (item.value === 1 || item.value === true || item.value === 'Yes' || item.value === 'yes') {
+            yesCount++;
+        } else if (item.value === 0 || item.value === false || item.value === 'No' || item.value === 'no') {
+            noCount++;
+        }
+    });
+    
+    // If no boolean data found, show no data message
+    if (yesCount === 0 && noCount === 0) {
+        showTrendsNoDataMessage(canvasId);
+        return;
+    }
+    
+    const total = yesCount + noCount;
+    const yesPercentage = Math.round((yesCount / total) * 100);
+    const noPercentage = Math.round((noCount / total) * 100);
+    
+    trendsCharts[canvasId] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Yes', 'No'],
+            datasets: [{
+                data: [yesCount, noCount],
+                backgroundColor: [
+                    '#10b981',  // Green for Yes
+                    '#ef4444'   // Red for No
+                ],
+                borderWidth: 4,
+                borderColor: '#ffffff',
+                hoverBorderWidth: 6,
+                hoverBorderColor: '#ffffff',
+                hoverOffset: 15,
+                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                shadowBlur: 10,
+                shadowOffsetY: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%', // Makes it a doughnut (hollow center)
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#9ca3af',
+                        font: {
+                            size: 12,
+                            weight: 'normal',
+                            family: "'Inter', sans-serif"
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 12,
+                        boxHeight: 12,
+                        borderWidth: 1,
+                        borderColor: '#ffffff',
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return {
+                                        text: `${label}: ${value} (${percentage}%)`,
+                                        fillStyle: 'transparent',
+                                        strokeStyle: data.datasets[0].backgroundColor[i],
+                                        lineWidth: 2,
+                                        pointStyle: 'circle',
+                                        hidden: false,
+                                        index: i,
+                                        fontColor: '#9ca3af'
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${context.label}: ${value} (${percentage}%)`;
                         }
                     }
                 }

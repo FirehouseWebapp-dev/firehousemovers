@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Q, Avg, Sum
 from .models import Question
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -28,13 +28,14 @@ from reportlab.lib.pagesizes import letter
 logger = logging.getLogger(__name__)
 
 from authentication.models import UserProfile, Department
-from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation
+from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation, ManagerAnswer
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms import PreviewEvalForm, DynamicEvaluationForm
 from .constants import EvaluationStatus
 from django.utils.timezone import now
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
+from collections import defaultdict
 from firehousemovers.utils.permissions import role_checker, require_management, require_admin_or_senior, ajax_require_management
 from .decorators import (
     require_department_management, require_department_management_for_form, 
@@ -47,10 +48,23 @@ from .utils import (
     process_form_edit_with_conflicts, calculate_eval_stats, determine_status,
     get_user_profile_safely
 )
+from .manager_performance_views import manager_personal_performance_data
 from .evaluation_handlers import (
     handle_evaluation_submission, handle_evaluation_view, 
     handle_my_evaluations, handle_pending_evaluations,
     EMPLOYEE_EVALUATION_CONFIG, MANAGER_EVALUATION_CONFIG
+)
+from .dashboard_utils import (
+    get_question_labels, 
+    get_date_range, 
+    aggregate_evaluation_data,
+    get_emoji_distribution,
+    get_chart_type_for_qtype,
+    CHART_TYPES
+)
+from .manager_performance_views import (
+    aggregate_manager_evaluation_data,
+    get_manager_emoji_distribution
 )
 
 # Permission checking functions moved to decorators.py
@@ -731,16 +745,48 @@ def senior_manager_analytics_dashboard(request):
     Senior manager analytics dashboard with comprehensive organizational insights.
     Cached for 30 minutes to improve performance for senior-only view.
     """
-    checker = get_role_checker(request.user)
-    today = now()  # Use timezone-aware datetime for precision
-    today_date = today.date()  # Keep date for display purposes
+    from datetime import datetime
     
-    # Create cache key based on user and date
-    cache_key = f"analytics_dashboard_{request.user.id}_{today_date}"
+    checker = get_role_checker(request.user)
+    today = now()
+    today_date = today.date()
+    
+    logger.info(f"Analytics dashboard accessed by user {request.user.id} ({request.user.username})")
+    
+    # Get and parse date filters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    start_date_obj = None
+    end_date_obj = None
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid start_date format: {start_date}")
+            start_date = None
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid end_date format: {end_date}")
+            end_date = None
+    
+    if start_date_obj or end_date_obj:
+        logger.info(f"Date filters applied: {start_date_obj} to {end_date_obj}")
+    
+    # Create cache key based on user, date, and filters
+    cache_key = f"analytics_dashboard_{request.user.id}_{today_date}_{start_date}_{end_date}"
+    
+    # Skip cache if filters are applied to ensure fresh filtered data
+    has_filters = bool(start_date or end_date)
     
     # Try to get cached data first from analytics cache
     analytics_cache = caches['analytics']
-    cached_data = analytics_cache.get(cache_key)
+    cached_data = None
+    if not has_filters:
+        cached_data = analytics_cache.get(cache_key)
+    
     if cached_data:
         logger.info(f"Analytics dashboard cache hit for user {request.user.id}")
         # Update the last viewed timestamp to current time
@@ -759,39 +805,69 @@ def senior_manager_analytics_dashboard(request):
     
     logger.info(f"Analytics dashboard cache miss for user {request.user.id}, computing data...")
     
-    # Get all departments for senior managers with optimized prefetched evaluations
+    # Helper function to apply date filters (DRY principle)
+    def apply_employee_date_filter(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj, week_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(week_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj)
+        return queryset
     
-    # Prefetch all evaluations for department stats (need total counts)
-    employee_prefetch = Prefetch(
-        'dynamic_evaluations',
-        queryset=DynamicEvaluation.objects.only('id', 'status', 'week_end', 'department_id', 'employee_id')
+    def apply_manager_date_filter(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj, period_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(period_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj)
+        return queryset
+    
+    # Optimized querysets with date filters
+    employee_qs = apply_employee_date_filter(
+        DynamicEvaluation.objects.only('id', 'status', 'week_end', 'week_start', 'department_id', 'employee_id')
     )
-    manager_prefetch = Prefetch(
-        'dynamic_manager_evaluations', 
-        queryset=DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'department_id', 'manager_id')
+    manager_qs = apply_manager_date_filter(
+        DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'period_start', 'department_id', 'manager_id')
     )
+    
+    employee_prefetch = Prefetch('dynamic_evaluations', queryset=employee_qs)
+    manager_prefetch = Prefetch('dynamic_manager_evaluations', queryset=manager_qs)
     
     departments = Department.objects.prefetch_related(
         employee_prefetch,
         manager_prefetch
     ).only('id', 'title').all()
     
-    # Calculate overall organizational metrics - optimize for summary data
-    all_employee_evaluations = DynamicEvaluation.objects.select_related(
+    dept_count = len(departments)
+    logger.info(f"Processing {dept_count} departments for analytics")
+    
+    # Optimized employee evaluations query with select_related to prevent N+1
+    all_employee_evaluations = apply_employee_date_filter(
+        DynamicEvaluation.objects.select_related(
         'employee__user', 'form', 'department'
     ).only(
-        'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'department_id', 
+            'id', 'status', 'week_end', 'week_start', 'submitted_at', 'employee_id', 'department_id', 
         'form_id', 'employee__user__first_name', 'employee__user__last_name',
         'department__title', 'form__name'
-    ).all()
+    )
+    )
     
-    all_manager_evaluations = DynamicManagerEvaluation.objects.select_related(
+    # Optimized manager evaluations query with select_related to prevent N+1
+    all_manager_evaluations = apply_manager_date_filter(
+        DynamicManagerEvaluation.objects.select_related(
         'manager__user', 'form', 'department'
     ).only(
-        'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'department_id',
+            'id', 'status', 'period_end', 'period_start', 'submitted_at', 'manager_id', 'department_id',
         'form_id', 'manager__user__first_name', 'manager__user__last_name',
         'department__title', 'form__name'
-    ).all()
+    )
+    )
+    
+    emp_eval_count = all_employee_evaluations.count()
+    mgr_eval_count = all_manager_evaluations.count()
+    logger.info(f"Loaded {emp_eval_count} employee evaluations and {mgr_eval_count} manager evaluations")
     
     # Overall completion rates
     employee_stats = calculate_eval_stats(all_employee_evaluations, today_date, "week_end")
@@ -851,16 +927,16 @@ def senior_manager_analytics_dashboard(request):
     # Sort departments by employee completion rate
     department_analytics.sort(key=lambda x: x['employee_completion_rate'], reverse=True)
     
-    # Manager effectiveness analytics - optimize with prefetch
-    # Prefetch all evaluations for manager stats (need total counts)
-    mgr_evaluations_prefetch = Prefetch(
-        'dynamic_mgr_evaluations',
-        queryset=DynamicEvaluation.objects.only('id', 'status', 'week_end', 'employee_id', 'manager_id')
+    # Manager effectiveness analytics - optimize with prefetch and reuse filter functions
+    mgr_eval_qs = apply_employee_date_filter(
+        DynamicEvaluation.objects.only('id', 'status', 'week_end', 'week_start', 'employee_id', 'manager_id')
     )
-    manager_reviews_prefetch = Prefetch(
-        'dynamic_manager_reviews',
-        queryset=DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'manager_id', 'senior_manager_id')
+    mgr_reviews_qs = apply_manager_date_filter(
+        DynamicManagerEvaluation.objects.only('id', 'status', 'period_end', 'period_start', 'manager_id', 'senior_manager_id')
     )
+    
+    mgr_evaluations_prefetch = Prefetch('dynamic_mgr_evaluations', queryset=mgr_eval_qs)
+    manager_reviews_prefetch = Prefetch('dynamic_manager_reviews', queryset=mgr_reviews_qs)
     team_members_prefetch = Prefetch(
         'team_members',
         queryset=UserProfile.objects.only('id', 'user__first_name', 'user__last_name', 'role')
@@ -871,6 +947,10 @@ def senior_manager_analytics_dashboard(request):
         manager_reviews_prefetch,
         team_members_prefetch
     ).only('id', 'user__first_name', 'user__last_name', 'role')
+    
+    manager_count = managers.count()
+    logger.info(f"Processing {manager_count} managers for effectiveness analytics")
+    
     manager_effectiveness = []
     
     for manager in managers:
@@ -975,16 +1055,17 @@ def senior_manager_analytics_dashboard(request):
     overall_employee_completion_rate = (employee_stats['completed_employee_evals'] / total_employee_evals * 100) if total_employee_evals > 0 else 0
     overall_manager_completion_rate = (manager_stats['completed_manager_evals'] / total_manager_evals * 100) if total_manager_evals > 0 else 0
     
-    # Recent activity (last 30 days) - use timezone-aware datetime for precision
+    # Recent activity (last 30 days)
     thirty_days_ago = today - timedelta(days=30)
     recent_employee_evals = all_employee_evaluations.filter(submitted_at__gte=thirty_days_ago)
     recent_manager_evals = all_manager_evaluations.filter(submitted_at__gte=thirty_days_ago)
     
+    logger.info(f"Recent activity: {recent_employee_evals.count()} employee evals, {recent_manager_evals.count()} manager evals (last 30 days)")
     
-    # Department comparison data
+    
+    # Department comparison data (reuse already prefetched evaluations to avoid N+1)
     department_comparison = []
     for dept in departments:
-        # Use prefetched evaluations to avoid N+1 queries
         dept_employee_evals = dept.dynamic_evaluations.all()
         dept_manager_evals = dept.dynamic_manager_evaluations.all()
         
@@ -996,10 +1077,9 @@ def senior_manager_analytics_dashboard(request):
         dept_mgr_total = len(dept_manager_evals)
         dept_mgr_completion_rate = (dept_mgr_completed / dept_mgr_total * 100) if dept_mgr_total > 0 else 0
         
-        # Calculate department average rating
+        # Calculate department average rating (only if needed)
         dept_avg_rating = 0
         if dept_emp_completed > 0:
-
             dept_ratings = Answer.objects.filter(
                 instance__in=dept_employee_evals.filter(status=EvaluationStatus.COMPLETED),
                 question__qtype='rating'
@@ -1014,6 +1094,8 @@ def senior_manager_analytics_dashboard(request):
             'total_evaluations': dept_emp_total + dept_mgr_total,
             'completed_evaluations': dept_emp_completed + dept_mgr_completed
         })
+    
+    logger.info(f"Department comparison data compiled for {len(department_comparison)} departments")
     
     # Prepare context data with current time
     current_time = timezone.now()
@@ -1071,17 +1153,23 @@ def senior_manager_analytics_dashboard(request):
         'department_comparison': department_comparison,
         'data_computed_at': current_time.isoformat(),  # Serialize datetime
         'last_viewed_at': current_time.isoformat(),    # Serialize datetime
+        'start_date': start_date,  # Date filter
+        'end_date': end_date,  # Date filter
     }
     
-    # Cache the computed data for 30 minutes (1800 seconds)
-    analytics_cache.set(cache_key, context_data, timeout=1800)
-    logger.info(f"Analytics dashboard data cached for user {request.user.id}")
+    # Cache the computed data for 30 minutes (1800 seconds) - skip caching if filters applied
+    if not has_filters:
+        analytics_cache.set(cache_key, context_data, timeout=1800)
+        logger.info(f"Analytics dashboard data cached for user {request.user.id} (30 min TTL)")
+    else:
+        logger.info(f"Analytics dashboard data NOT cached (filters active) for user {request.user.id}")
     
     # Convert serialized data back to proper objects for template rendering
-    context_data['today'] = today_date  # Use original date object
-    context_data['data_computed_at'] = current_time  # Use original datetime object
-    context_data['last_viewed_at'] = current_time  # Use original datetime object
+    context_data['today'] = today_date
+    context_data['data_computed_at'] = current_time
+    context_data['last_viewed_at'] = current_time
     
+    logger.info(f"Analytics dashboard computed successfully for user {request.user.id}")
     return render(request, "evaluation/senior_manager_analytics_dashboard.html", context_data)
 
 
@@ -1090,13 +1178,18 @@ def senior_manager_analytics_dashboard(request):
 def analytics_department_detail(request, department_id):
     """
     Detailed analytics view for a specific department.
+    Optimized with select_related to prevent N+1 queries.
     """
     department = get_object_or_404(Department, id=department_id)
-    today = now()  # Use timezone-aware datetime for precision
-    today_date = today.date()  # Keep date for display purposes
+    today = now()
+    today_date = today.date()
     
-    # Get department-specific evaluations - optimize for detail page
-    dept_employee_evals = DynamicEvaluation.objects.filter(department=department).select_related(
+    logger.info(f"Department detail analytics accessed for department {department_id} ({department.title}) by user {request.user.id}")
+    
+    # Optimized employee evaluations query with select_related to prevent N+1
+    dept_employee_evals = DynamicEvaluation.objects.filter(
+        department=department
+    ).select_related(
         'employee__user', 'form', 'manager__user'
     ).only(
         'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'manager_id',
@@ -1105,7 +1198,10 @@ def analytics_department_detail(request, department_id):
         'form__name'
     )
     
-    dept_manager_evals = DynamicManagerEvaluation.objects.filter(department=department).select_related(
+    # Optimized manager evaluations query with select_related to prevent N+1
+    dept_manager_evals = DynamicManagerEvaluation.objects.filter(
+        department=department
+    ).select_related(
         'manager__user', 'form', 'senior_manager__user'
     ).only(
         'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'senior_manager_id',
@@ -1114,18 +1210,24 @@ def analytics_department_detail(request, department_id):
         'form__name'
     )
     
+    emp_eval_count = dept_employee_evals.count()
+    mgr_eval_count = dept_manager_evals.count()
+    logger.info(f"Department {department.title}: {emp_eval_count} employee evals, {mgr_eval_count} manager evals")
+    
     # Department statistics
     dept_stats = calculate_eval_stats(dept_employee_evals, today_date, "week_end")
+    dept_completion_rate = (dept_stats['completed'] / dept_stats['total'] * 100) if dept_stats['total'] > 0 else 0
     
-    # Calculate completion rate
-    completion_rate = (dept_stats['completed'] / dept_stats['total'] * 100) if dept_stats['total'] > 0 else 0
+    logger.info(f"Department {department.title} completion rate: {dept_completion_rate:.1f}%")
     
-    # Employee performance in this department - pre-compute all stats to avoid N+1 queries
+    # Optimized employee query with select_related to prevent N+1
     employees = UserProfile.objects.filter(
         dynamic_emp_evaluations__department=department
-    ).distinct().select_related('user')
+    ).distinct().select_related('user').only(
+        'id', 'user__first_name', 'user__last_name'
+    )
     
-    # Group evaluations by employee to avoid N+1 queries
+    # Pre-group evaluations by employee to avoid N+1 queries
     employee_evaluations = {}
     for eval in dept_employee_evals:
         employee_id = eval.employee_id
@@ -1133,40 +1235,46 @@ def analytics_department_detail(request, department_id):
             employee_evaluations[employee_id] = []
         employee_evaluations[employee_id].append(eval)
     
+    # Build employee performance data
     employee_performance = []
     for employee in employees:
         emp_evals = employee_evaluations.get(employee.id, [])
         emp_stats = calculate_eval_stats(emp_evals, today_date, "week_end")
-        
-        completion_rate = (emp_stats['completed'] / emp_stats['total'] * 100) if emp_stats['total'] > 0 else 0
-        
-        # Determine employee status based on pending/overdue logic
+        emp_completion_rate = (emp_stats['completed'] / emp_stats['total'] * 100) if emp_stats['total'] > 0 else 0
         emp_status = determine_status(emp_stats['total'], emp_stats['pending'], emp_stats['overdue'])
         
         employee_performance.append({
             'employee': employee,
             'stats': emp_stats,
-            'completion_rate': round(completion_rate, 1),
+            'completion_rate': round(emp_completion_rate, 1),
             'has_evaluations': emp_stats['total'] > 0,
             'emp_status': emp_status,
         })
     
-    # Sort by completion rate
     employee_performance.sort(key=lambda x: x['completion_rate'], reverse=True)
+    logger.info(f"Processed {len(employee_performance)} employees for department {department.title}")
     
-    # Recent evaluations in this department - use timezone-aware datetime for precision
+    # Recent evaluations in this department (last 30 days)
     thirty_days_ago = today - timedelta(days=30)
-    recent_evals = dept_employee_evals.filter(submitted_at__gte=thirty_days_ago).order_by('-submitted_at')[:10]
+    recent_evals = dept_employee_evals.filter(
+        submitted_at__gte=thirty_days_ago
+    ).order_by('-submitted_at')[:10]
     
-    return render(request, "evaluation/analytics_department_detail.html", {
+    recent_evals_list = list(recent_evals)
+    logger.info(f"Found {len(recent_evals_list)} recent evaluations (last 30 days) for department {department.title}")
+    
+    context = {
         'department': department,
         'dept_stats': dept_stats,
-        'completion_rate': round(completion_rate, 1),
+        'completion_rate': round(dept_completion_rate, 1),
         'employee_performance': employee_performance,
-        'recent_evals': list(recent_evals),  # Convert to list to avoid accidental queries
-        'recent_evals_count': len(recent_evals),  # Pre-computed count
+        'recent_evals': recent_evals_list,
+        'recent_evals_count': len(recent_evals_list),
         'today': today_date,
-    })
+    }
+    
+    logger.info(f"Department detail analytics completed successfully for {department.title}")
+    return render(request, "evaluation/analytics_department_detail.html", context)
 
 
 @login_required
@@ -1174,18 +1282,29 @@ def analytics_department_detail(request, department_id):
 def analytics_team_detail(request, team_leader_id):
     """
     Detailed analytics view for a specific team (managed by a team leader).
+    Optimized with select_related and prefetch to prevent N+1 queries.
     """
     team_leader = get_object_or_404(UserProfile, id=team_leader_id, role='manager')
-    today = now()  # Use timezone-aware datetime for precision
-    today_date = today.date()  # Keep date for display purposes
+    today = now()
+    today_date = today.date()
     
-    # Get team members - optimize for detail page
-    team_members = UserProfile.objects.filter(manager=team_leader).select_related('user').only(
+    team_leader_name = f"{team_leader.user.first_name} {team_leader.user.last_name}"
+    logger.info(f"Team analytics accessed for team leader {team_leader_id} ({team_leader_name}) by user {request.user.id}")
+    
+    # Optimized team members query with select_related
+    team_members = UserProfile.objects.filter(
+        manager=team_leader
+    ).select_related('user').only(
         'id', 'user__first_name', 'user__last_name', 'role'
     )
     
-    # Get team-specific evaluations - optimize for detail page
-    team_employee_evals = DynamicEvaluation.objects.filter(employee__in=team_members).select_related(
+    team_size = team_members.count()
+    logger.info(f"Team {team_leader_name}: {team_size} members")
+    
+    # Optimized employee evaluations with select_related to prevent N+1
+    team_employee_evals = DynamicEvaluation.objects.filter(
+        employee__in=team_members
+    ).select_related(
         'employee__user', 'form', 'manager__user'
     ).only(
         'id', 'status', 'week_end', 'submitted_at', 'employee_id', 'manager_id',
@@ -1194,7 +1313,10 @@ def analytics_team_detail(request, team_leader_id):
         'form__name'
     )
     
-    team_manager_evals = DynamicManagerEvaluation.objects.filter(manager=team_leader).select_related(
+    # Optimized manager evaluations with select_related to prevent N+1
+    team_manager_evals = DynamicManagerEvaluation.objects.filter(
+        manager=team_leader
+    ).select_related(
         'manager__user', 'form', 'senior_manager__user'
     ).only(
         'id', 'status', 'period_end', 'submitted_at', 'manager_id', 'senior_manager_id',
@@ -1203,18 +1325,20 @@ def analytics_team_detail(request, team_leader_id):
         'form__name'
     )
     
-    # Team statistics
-    team_stats = calculate_eval_stats(team_employee_evals, today_date, "week_end")
+    emp_eval_count = team_employee_evals.count()
+    mgr_eval_count = team_manager_evals.count()
+    logger.info(f"Team {team_leader_name}: {emp_eval_count} employee evals, {mgr_eval_count} manager evals")
     
-    # Manager self-evaluation statistics
+    # Calculate team and manager statistics
+    team_stats = calculate_eval_stats(team_employee_evals, today_date, "week_end")
     manager_stats = calculate_eval_stats(team_manager_evals, today_date, "period_end")
     
-    # Calculate completion rates
     team_completion_rate = (team_stats['completed'] / team_stats['total'] * 100) if team_stats['total'] > 0 else 0
     manager_completion_rate = (manager_stats['completed'] / manager_stats['total'] * 100) if manager_stats['total'] > 0 else 0
     
-    # Team member performance - pre-compute all stats to avoid N+1 queries
-    # Group evaluations by team member to avoid N+1 queries
+    logger.info(f"Team {team_leader_name} completion rates - Team: {team_completion_rate:.1f}%, Manager: {manager_completion_rate:.1f}%")
+    
+    # Pre-group evaluations by team member to avoid N+1 queries
     member_evaluations = {}
     for eval in team_employee_evals:
         member_id = eval.employee_id
@@ -1222,178 +1346,51 @@ def analytics_team_detail(request, team_leader_id):
             member_evaluations[member_id] = []
         member_evaluations[member_id].append(eval)
     
+    # Build member performance data
     member_performance = []
     for member in team_members:
         member_evals = member_evaluations.get(member.id, [])
         member_stats = calculate_eval_stats(member_evals, today_date, "week_end")
-        
-        completion_rate = (member_stats['completed'] / member_stats['total'] * 100) if member_stats['total'] > 0 else 0
-        
-        # Determine member status
+        member_completion_rate = (member_stats['completed'] / member_stats['total'] * 100) if member_stats['total'] > 0 else 0
         member_status = determine_status(member_stats['total'], member_stats['pending'], member_stats['overdue'])
         
         member_performance.append({
             'member': member,
             'stats': member_stats,
-            'completion_rate': round(completion_rate, 1),
+            'completion_rate': round(member_completion_rate, 1),
             'has_evaluations': member_stats['total'] > 0,
             'member_status': member_status,
         })
     
-    # Sort by completion rate
     member_performance.sort(key=lambda x: x['completion_rate'], reverse=True)
+    logger.info(f"Processed {len(member_performance)} team members for team {team_leader_name}")
     
-    # Recent evaluations in this team - use timezone-aware datetime for precision
+    # Recent evaluations in this team (last 30 days)
     thirty_days_ago = today - timedelta(days=30)
-    recent_evals = team_employee_evals.filter(submitted_at__gte=thirty_days_ago).order_by('-submitted_at')[:10]
+    recent_evals = team_employee_evals.filter(
+        submitted_at__gte=thirty_days_ago
+    ).order_by('-submitted_at')[:10]
     
-    return render(request, "evaluation/analytics_team_detail.html", {
+    recent_evals_list = list(recent_evals)
+    team_members_list = list(team_members)
+    
+    logger.info(f"Found {len(recent_evals_list)} recent evaluations (last 30 days) for team {team_leader_name}")
+    
+    context = {
         'team_leader': team_leader,
-        'team_members': list(team_members),  # Convert to list to avoid accidental queries
+        'team_members': team_members_list,
         'team_stats': team_stats,
         'manager_stats': manager_stats,
         'team_completion_rate': round(team_completion_rate, 1),
         'manager_completion_rate': round(manager_completion_rate, 1),
         'member_performance': member_performance,
-        'recent_evals': list(recent_evals),  # Convert to list to avoid accidental queries
-        'recent_evals_count': len(recent_evals),  # Pre-computed count
+        'recent_evals': recent_evals_list,
+        'recent_evals_count': len(recent_evals_list),
         'today': today_date,
-    })
-
-
-@login_required
-@require_senior_management_access
-def analytics_export(request):
-    """Export analytics data as PDF or Excel."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    }
     
-    format_type = request.POST.get('format', 'pdf').lower()
-    
-    try:
-        if format_type == 'pdf':
-            return export_analytics_pdf(request)
-        elif format_type == 'excel':
-            return export_analytics_excel(request)
-        else:
-            return JsonResponse({'error': 'Invalid format'}, status=400)
-    except Exception as e:
-        logger.exception("Analytics export failed")
-        return JsonResponse({'error': 'Export failed'}, status=500)
-
-
-def export_analytics_pdf(request):
-    """Generate PDF report of analytics data."""
-    try:
-        # Try to import reportlab for PDF generation
-        
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        
-        # Add content to PDF
-        p.drawString(100, 750, "Analytics Report")
-        p.drawString(100, 730, f"Generated on: {timezone.now().strftime('%Y-%m-%d %H:%M')}")
-        p.drawString(100, 710, "Evaluation Analytics Dashboard Export")
-        
-        # Add basic analytics data (you can expand this)
-        p.drawString(100, 680, "Summary:")
-        p.drawString(120, 660, "• Total Evaluations: [Dynamic data would go here]")
-        p.drawString(120, 640, "• Completion Rate: [Dynamic data would go here]")
-        p.drawString(120, 620, "• Overdue Evaluations: [Dynamic data would go here]")
-        
-        p.save()
-        buffer.seek(0)
-        
-        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="analytics_report_{timezone.now().strftime("%Y%m%d")}.pdf"'
-        return response
-        
-    except ImportError:
-        # Fallback if reportlab is not installed
-        response = HttpResponse("PDF export requires reportlab library", content_type='text/plain')
-        response.status_code = 500
-        return response
-
-
-def export_analytics_excel(request):
-    """Generate Excel report of analytics data."""
-    
-    # Create CSV content (simpler fallback for Excel)
-    output = StringIO()
-    writer = csv.writer(output)
-    
-    # Write headers
-    writer.writerow(['Analytics Report', f'Generated: {timezone.now().strftime("%Y-%m-%d %H:%M")}'])
-    writer.writerow([])  # Empty row
-    writer.writerow(['Metric', 'Value'])
-    
-    # Add sample data (you can expand this with real analytics data)
-    writer.writerow(['Total Evaluations', 'Dynamic data would go here'])
-    writer.writerow(['Completion Rate', 'Dynamic data would go here'])
-    writer.writerow(['Overdue Evaluations', 'Dynamic data would go here'])
-    writer.writerow(['Recent Activity', 'Dynamic data would go here'])
-    
-    output.seek(0)
-    response = HttpResponse(output.getvalue(), content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="analytics_report_{timezone.now().strftime("%Y%m%d")}.csv"'
-    return response
-
-
-@login_required
-@require_senior_management_access
-def analytics_trends(request):
-    """Analytics trends page."""
-    return render(request, "evaluation/analytics_trends.html", {
-        'title': 'Performance Trends',
-        'today': timezone.now().date(),
-    })
-
-
-@login_required
-@require_senior_management_access
-def analytics_alerts(request):
-    """Get analytics alerts data."""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # Return JSON data for AJAX requests
-        alerts_data = {
-            'alerts': [
-                {
-                    'id': 1,
-                    'severity': 'critical',
-                    'icon': 'exclamation-triangle',
-                    'message': 'Department A has 15 overdue evaluations',
-                    'timestamp': '2 hours ago'
-                },
-                {
-                    'id': 2,
-                    'severity': 'warning',
-                    'icon': 'clock',
-                    'message': 'Manager evaluations due in 24 hours',
-                    'timestamp': '4 hours ago'
-                },
-                {
-                    'id': 3,
-                    'severity': 'critical',
-                    'icon': 'user-times',
-                    'message': '5 employees have not started evaluations',
-                    'timestamp': '6 hours ago'
-                },
-                {
-                    'id': 4,
-                    'severity': 'warning',
-                    'icon': 'chart-line',
-                    'message': 'Performance trend declining in Department B',
-                    'timestamp': '1 day ago'
-                }
-            ]
-        }
-        return JsonResponse(alerts_data)
-    
-    # Return HTML page for direct access
-    return render(request, "evaluation/analytics_alerts.html", {
-        'title': 'Risk Alerts',
-        'today': timezone.now().date(),
-    })
+    logger.info(f"Team analytics completed successfully for team {team_leader_name}")
+    return render(request, "evaluation/analytics_team_detail.html", context)
 
 
 @login_required
@@ -1401,119 +1398,123 @@ def employee_dashboard(request):
     """
     Employee dashboard with personal performance insights and evaluation history.
     Shows employee-specific data in senior manager dashboard style.
+    Can be used by managers to view specific employee data via employee_id parameter.
+    Optimized with select_related to prevent N+1 queries.
     """
-    from django.db.models import Avg, Count, Q
-    from django.utils import timezone
-    from datetime import timedelta
-    from .dashboard_utils import (
-        get_question_labels, 
-        get_date_range, 
-        aggregate_evaluation_data,
-        get_emoji_distribution,
-        get_chart_type_for_qtype,
-        CHART_TYPES
-    )
     
-    user_profile = get_user_profile_safely(request.user, request)
-    if not user_profile:
-        return redirect('authentication:login')
+    # Check if manager is viewing specific employee data
+    employee_id = request.GET.get('employee_id')
+    is_manager_view = employee_id is not None
+    
+    if is_manager_view:
+        try:
+            # Optimized: Use select_related to fetch related user in single query
+            target_employee = UserProfile.objects.select_related('user', 'manager', 'department').get(id=employee_id)
+            current_user_profile = get_user_profile_safely(request.user, request)
+            
+            if not current_user_profile:
+                return redirect('authentication:login')
+            
+            checker = get_role_checker(request.user)
+            has_permission = (
+                target_employee.manager == current_user_profile or
+                (hasattr(current_user_profile, 'managed_department') and 
+                 current_user_profile.managed_department and 
+                 target_employee.department == current_user_profile.managed_department) or
+                checker.is_senior_management or
+                checker.is_admin
+            )
+            
+            if not has_permission:
+                messages.error(request, "You don't have permission to view this employee's data.")
+                return redirect('evaluation:manager_employee_dashboard')
+            
+            user_profile = target_employee
+            logger.info(f"Manager {request.user.id} viewing employee dashboard for {employee_id} ({user_profile.user.get_full_name()})")
+        except UserProfile.DoesNotExist:
+            messages.error(request, "Employee not found.")
+            logger.warning(f"Manager {request.user.id} attempted to view non-existent employee {employee_id}")
+            return redirect('evaluation:manager_employee_dashboard')
+    else:
+        user_profile = get_user_profile_safely(request.user, request)
+        if not user_profile:
+            return redirect('authentication:login')
+        logger.info(f"Employee dashboard accessed by user {request.user.id} ({user_profile.user.get_full_name()})")
     
     today = timezone.now().date()
     
-    # Get employee's evaluation history
+    # Optimized: Get completed evaluations with select_related to prevent N+1
     employee_evaluations = DynamicEvaluation.objects.filter(
         employee=user_profile,
         status='completed'
     ).select_related('form', 'manager__user', 'department')
     
-    # Recent evaluations (last 30 days)
-    # Use timezone-aware datetime for consistent filtering
-    # This ensures compatibility with both timezone-aware and naive datetime fields
-    thirty_days_ago = timezone.now() - timedelta(days=30)
-    recent_evaluations = employee_evaluations.filter(
-        submitted_at__gte=thirty_days_ago
-    ).exclude(submitted_at__isnull=True)  # Exclude null values for cleaner results
-    
-    # Pending evaluations
+    # Optimized: Get pending evaluations with select_related to prevent N+1
     pending_evaluations = DynamicEvaluation.objects.filter(
         employee=user_profile,
         status='pending'
     ).select_related('form', 'manager__user')
     
-    # Calculate overall stats efficiently - single query approach
-    # Get all evaluation data in one query to avoid multiple DB hits
-    all_evaluations = employee_evaluations.values('status', 'submitted_at')
-    total_evaluations = len(all_evaluations)
+    # Calculate stats efficiently
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    total_evaluations = employee_evaluations.count()
+    pending_count = pending_evaluations.count()
     
-    # Calculate counts from the single queryset
-    recent_count = len([e for e in all_evaluations 
-                       if e['submitted_at'] and e['submitted_at'] >= thirty_days_ago])
-    pending_count = len([e for e in all_evaluations if e['status'] == 'pending'])
+    # Filter recent evaluations (exclude null submitted_at)
+    recent_evaluations = employee_evaluations.filter(
+        submitted_at__gte=thirty_days_ago
+    ).exclude(submitted_at__isnull=True)
+    recent_count = recent_evaluations.count()
+    
+    logger.info(f"Employee {user_profile.user.get_full_name()}: {total_evaluations} total, {recent_count} recent, {pending_count} pending")
     
     # Get performance trends data
     performance_data = {}
     question_labels = {}
     
     if user_profile.department:
-        # Get range filter for performance trends - only monthly available
         range_type = 'monthly'
         start_date, end_date, granularity = get_date_range(range_type)
         
-        # Get completed evaluations that overlap with the date range
-        # Include evaluations that start before end_date and end after start_date
+        # Optimized: Get trend evaluations with select_related to prevent N+1
         trend_evaluations = DynamicEvaluation.objects.filter(
-            employee=user_profile,  # Employee being evaluated
+            employee=user_profile,
             department=user_profile.department,
-            week_start__lte=end_date,      # Evaluation starts before or on end_date
-            week_end__gte=start_date,     # Evaluation ends after or on start_date
-            status='completed'  # Only completed evaluations
+            week_start__lte=end_date,
+            week_end__gte=start_date,
+            status='completed'
         ).select_related('manager__user', 'form', 'department', 'employee__user')
         
-        if not trend_evaluations.exists():
-            # No completed evaluations found, skip performance data
+        trend_eval_count = trend_evaluations.count()
+        
+        if trend_eval_count == 0:
+            logger.info(f"No trend evaluations found for employee {user_profile.user.get_full_name()}")
             performance_data = {}
             question_labels = {}
         else:
-            # Get all forms used in the evaluations to handle form evolution
-            forms_used = trend_evaluations.values_list('form', flat=True).distinct()
+            logger.info(f"Processing {trend_eval_count} trend evaluations for employee {user_profile.user.get_full_name()}")
             
-            # Get questions from all forms, prioritizing the most recent form
-            # This ensures we capture data even when forms change over time
-            all_questions = Question.objects.filter(
-                form__in=forms_used,
-                include_in_trends=True
-            ).order_by('order')
-            
-            # Group questions by order to handle form evolution
-            # Questions with the same order across forms are considered equivalent
-            questions_by_order = {}
-            for question in all_questions:
-                if question.order not in questions_by_order:
-                    questions_by_order[question.order] = []
-                questions_by_order[question.order].append(question)
-            
-            # Use the most recent form's questions as the primary structure
-            # but include data from all forms for comprehensive analytics
-            # Get the most recent form from the already-loaded evaluations to avoid N+1
+            # Get most recent evaluation to determine current form
             most_recent_evaluation = trend_evaluations.order_by('-week_start').first()
+            
             if not most_recent_evaluation:
                 performance_data = {}
                 question_labels = {}
             else:
                 eval_form = most_recent_evaluation.form
+                
+                # Optimized: Get questions with select_related to prevent N+1
                 questions = Question.objects.filter(
                     form=eval_form,
                     include_in_trends=True
                 ).select_related('form').order_by('order')
                 
-                # Note: We now include ALL evaluations (not just same form) for comprehensive data
-                
-                # Aggregate data for each question
                 chart_data = {}
-                question_labels = get_question_labels(user_profile.department.slug or user_profile.department.title.lower())
+                question_labels = get_question_labels(
+                    user_profile.department.slug or user_profile.department.title.lower()
+                )
                 
-                # Use consistent aggregation for all questions to avoid N+1 queries
-                # This ensures emoji questions get time-series data like other questions
+                # Aggregate data for all questions
                 aggregated_data = aggregate_evaluation_data(
                     trend_evaluations, 
                     questions, 
@@ -1523,11 +1524,9 @@ def employee_dashboard(request):
                 # Process each question's data
                 for question in questions:
                     question_key = f"Q{question.order}"
-                    
-                    # Use qtype-based chart type selection
                     chart_type = get_chart_type_for_qtype(question.qtype)
                     
-                    # For emoji pie charts, use emoji distribution data instead of time-series
+                    # Use emoji distribution for emoji pie charts
                     if question.qtype == "emoji" and chart_type == "pie":
                         emoji_data = get_emoji_distribution(trend_evaluations, question)
                         chart_data[question_key] = {
@@ -1536,7 +1535,6 @@ def employee_dashboard(request):
                             'label': question_labels.get(question_key, question.text)
                         }
                     else:
-                        # Use time-series data for other chart types
                         chart_data[question_key] = {
                             'type': chart_type,
                             'data': aggregated_data.get(question_key, []),
@@ -1553,16 +1551,1353 @@ def employee_dashboard(request):
                     'chart_types': CHART_TYPES
                 }
     
+                logger.info(f"Performance trends compiled for {len(chart_data)} questions")
+    
     context = {
         'user_profile': user_profile,
         'today': today,
         'total_evaluations': total_evaluations,
         'recent_evaluations_count': recent_count,
         'pending_evaluations_count': pending_count,
-        'recent_evaluations': recent_evaluations[:5],  # Show last 5
-        'pending_evaluations': pending_evaluations[:5],  # Show first 5 pending
+        'recent_evaluations': recent_evaluations[:5],
+        'pending_evaluations': pending_evaluations[:5],
         'last_viewed_at': timezone.now(),
         'performance_data': performance_data,
+        'is_manager_view': is_manager_view,
+        'viewing_employee_name': user_profile.user.get_full_name() if is_manager_view else None,
     }
     
+    logger.info(f"Employee dashboard rendered successfully for {user_profile.user.get_full_name()}")
     return render(request, "evaluation/employee_dashboard.html", context)
+
+
+@login_required
+def manager_performance_dashboard(request):
+    """
+    Manager's own performance dashboard showing their evaluation trends.
+    Senior managers can view other managers' performance by providing manager_id query parameter.
+    Optimized with select_related to prevent N+1 queries.
+    """
+    period_type = request.GET.get('period', 'monthly')
+    if period_type not in ['monthly', 'quarterly', 'annually']:
+        period_type = 'monthly'
+    
+    checker = get_role_checker(request.user)
+    
+    # Check permissions
+    if not (checker.is_manager() or checker.is_senior_management or checker.is_admin):
+        logger.warning(f"User {request.user.id} denied access to manager performance dashboard")
+        return redirect("evaluation:dashboard")
+    
+    # Determine target user profile
+    manager_id = request.GET.get('manager_id')
+    is_viewing_other = bool(manager_id and (checker.is_senior_management or checker.is_admin))
+    
+    if is_viewing_other:
+        # Optimized: Use select_related to prevent N+1
+        user_profile = get_object_or_404(
+            UserProfile.objects.select_related('user', 'managed_department'),
+            id=manager_id
+        )
+        logger.info(f"Senior manager {request.user.id} viewing performance dashboard for manager {manager_id} ({user_profile.user.get_full_name()})")
+    else:
+        user_profile = checker.user_profile
+        logger.info(f"Manager {request.user.id} ({user_profile.user.get_full_name()}) accessing own performance dashboard")
+    
+    today = timezone.now().date()
+    
+    # Parse date filters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    start_date_obj = None
+    end_date_obj = None
+    
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid start_date format: {start_date}")
+            start_date = None
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid end_date format: {end_date}")
+            end_date = None
+    
+    if start_date_obj or end_date_obj:
+        logger.info(f"Date filters applied: {start_date_obj} to {end_date_obj}")
+    
+    # Optimized: Get completed evaluations with select_related to prevent N+1
+    completed_evaluations = DynamicEvaluation.objects.filter(
+        manager=user_profile,
+        status='completed'
+    ).select_related('form', 'employee__user', 'department')
+    
+    # Optimized: Get received evaluations with select_related to prevent N+1
+    all_received_evaluations_unfiltered = DynamicManagerEvaluation.objects.filter(
+        manager=user_profile,
+        status='completed'
+    ).select_related('form', 'senior_manager__user', 'department')
+    
+    # Helper function to apply date filters (DRY principle)
+    def apply_date_filter_to_manager_evals(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj, period_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(period_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj)
+        return queryset
+    
+    received_evaluations = apply_date_filter_to_manager_evals(all_received_evaluations_unfiltered)
+    
+    comp_eval_count = completed_evaluations.count()
+    recv_eval_count = received_evaluations.count()
+    logger.info(f"Manager {user_profile.user.get_full_name()}: {comp_eval_count} completed evals, {recv_eval_count} received evals")
+    
+    # Recent evaluations (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_evaluations = received_evaluations.filter(
+        submitted_at__gte=thirty_days_ago
+    ).exclude(submitted_at__isnull=True)
+    
+    # Calculate stats efficiently
+    total_evaluations = received_evaluations.count()
+    recent_count = recent_evaluations.count()
+    
+    logger.info(f"Manager {user_profile.user.get_full_name()}: {total_evaluations} total received, {recent_count} recent (last 30 days)")
+    
+    # Get performance trends data
+    performance_data = {}
+    
+    if hasattr(user_profile, 'managed_department') and user_profile.managed_department:
+        range_type = 'monthly'
+        trend_start_date, trend_end_date, granularity = get_date_range(range_type)
+        
+        # Get trend evaluations
+        trend_evaluations = received_evaluations.filter(
+            period_start__lte=trend_end_date,
+            period_end__gte=trend_start_date
+        )
+        
+        trend_count = trend_evaluations.count()
+        
+        if trend_count > 0:
+            logger.info(f"Processing {trend_count} trend evaluations for manager {user_profile.user.get_full_name()}")
+            
+            # Get most recent evaluation to determine form
+            most_recent_evaluation = trend_evaluations.order_by('-period_start').first()
+            
+            if most_recent_evaluation:
+                eval_form = most_recent_evaluation.form
+                
+                # Optimized: Get questions with select_related to prevent N+1
+                questions = Question.objects.filter(
+                    form=eval_form,
+                    include_in_trends=True
+                ).select_related('form').order_by('order')
+                
+                chart_data = {}
+                
+                # Aggregate data using manager-specific function
+                aggregated_data = aggregate_manager_evaluation_data(
+                    trend_evaluations, 
+                    questions, 
+                    granularity
+                )
+                
+                # Process each question's data
+                for question in questions:
+                    question_key = f"Q{question.order}"
+                    chart_type = get_chart_type_for_qtype(question.qtype)
+                    
+                    # Use emoji distribution for emoji pie charts
+                    if question.qtype == "emoji" and chart_type == "pie":
+                        emoji_data = get_manager_emoji_distribution(trend_evaluations, question)
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': emoji_data,
+                            'label': question.text
+                        }
+                    else:
+                        chart_data[question_key] = {
+                            'type': chart_type,
+                            'data': aggregated_data.get(question_key, []),
+                            'label': question.text
+                        }
+                
+                performance_data = {
+                    'chart_data': chart_data,
+                    'range_type': range_type,
+                    'start_date': trend_start_date,
+                    'end_date': trend_end_date,
+                    'granularity': granularity,
+                    'chart_types': CHART_TYPES
+                }
+                
+                logger.info(f"Performance trends compiled for {len(chart_data)} questions")
+        else:
+            logger.info(f"No trend evaluations found for manager {user_profile.user.get_full_name()}")
+    
+    # Get manager's personal performance data (when they are being evaluated)
+    personal_performance_data = manager_personal_performance_data(
+        request, period_type, start_date_obj, end_date_obj, target_user_profile=user_profile
+    )
+    
+    logger.info(f"Personal performance data retrieved for manager {user_profile.user.get_full_name()}")
+    
+    # Get senior manager from most recent evaluation (use unfiltered data)
+    senior_manager = None
+    if all_received_evaluations_unfiltered.exists():
+        most_recent = all_received_evaluations_unfiltered.order_by('-submitted_at').first()
+        if most_recent and most_recent.senior_manager:
+            senior_manager = most_recent.senior_manager
+            logger.info(f"Senior manager identified: {senior_manager.user.get_full_name()}")
+    
+    context = {
+        'user_profile': user_profile,
+        'today': today,
+        'total_evaluations': total_evaluations,
+        'recent_evaluations_count': recent_count,
+        'recent_evaluations': recent_evaluations[:5],
+        'last_viewed_at': timezone.now(),
+        'performance_data': performance_data,
+        'personal_performance_data': personal_performance_data,
+        'period_type': period_type,
+        'dashboard_type': 'manager_performance',
+        'senior_manager': senior_manager,
+        'start_date': start_date,
+        'end_date': end_date,
+        'manager_id': manager_id,
+        'viewing_other_manager': is_viewing_other,
+    }
+    
+    logger.info(f"Manager performance dashboard rendered successfully for {user_profile.user.get_full_name()}")
+    return render(request, "evaluation/manager_performance_dashboard.html", context)
+
+
+@login_required
+@require_senior_management_access
+def senior_manager_performance_overview(request):
+    """
+    Senior Manager Performance Overview - Shows department metrics and all managers rating trends.
+    Only accessible to senior managers and admins.
+    Optimized with prefetch_related to prevent N+1 queries.
+    """
+    checker = get_role_checker(request.user)
+    
+    logger.info(f"Senior manager performance overview accessed by user {request.user.id} ({request.user.username})")
+    
+    period_type = request.GET.get('period', 'monthly')
+    if period_type not in ['monthly', 'quarterly', 'annually']:
+        period_type = 'monthly'
+    
+    # Parse date filters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    start_date_obj = None
+    end_date_obj = None
+    
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid start_date format: {start_date}")
+            start_date = None
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid end_date format: {end_date}")
+            end_date = None
+    
+    if start_date_obj or end_date_obj:
+        logger.info(f"Date filters applied: {start_date_obj} to {end_date_obj}")
+    
+    # Optimized: Prefetch related data to prevent N+1 queries
+    all_departments = Department.objects.all().prefetch_related(
+        'members', 
+        'eval_forms',
+        'eval_forms__questions'
+    )
+    
+    dept_count = all_departments.count()
+    logger.info(f"Processing department metrics for {dept_count} departments")
+    
+    # Helper function to get default metric label (DRY principle)
+    def get_default_metric_label(dept_title):
+        if not dept_title:
+            return "Performance Metric"
+        
+        dept_lower = dept_title.lower()
+        if "sales" in dept_lower:
+            return "Total Leads"
+        elif any(x in dept_lower for x in ["driver", "field", "mover"]):
+            return "Total Moves"
+        elif "claims" in dept_lower:
+            return "Total Claims Processed"
+        elif "operation" in dept_lower:
+            return "Total Moves Supervised"
+        elif "it" in dept_lower:
+            return "Total Support Requests Resolved"
+        elif "warehouse" in dept_lower:
+            return "Total Move-In/Out Tasks"
+        elif "accounting" in dept_lower:
+            return "Total Invoices Processed"
+        elif "admin" in dept_lower:
+            return "Total Tasks"
+        return "Performance Metric"
+    
+    department_metrics = []
+    for dept in all_departments:
+        dept_employees = dept.members.filter(is_employee=True)
+        employee_count = dept_employees.count()
+        default_label = get_default_metric_label(dept.title)
+        
+        # Get active weekly form
+        active_form = dept.eval_forms.filter(
+            is_active=True,
+            name__icontains='weekly'
+        ).first()
+        
+        if not active_form:
+            department_metrics.append({
+                'department': dept,
+                'employee_count': employee_count,
+                'metric_value': 0,
+                'metric_label': default_label,
+            })
+            continue
+        
+        # Get first question
+        first_question = active_form.questions.order_by('order').first()
+        
+        if not first_question:
+            department_metrics.append({
+                'department': dept,
+                'employee_count': employee_count,
+                'metric_value': 0,
+                'metric_label': default_label,
+            })
+            continue
+        
+        # Helper function to apply date filters (DRY principle - reuse from earlier)
+        def apply_date_filter_to_evals(queryset):
+            if start_date_obj and end_date_obj:
+                return queryset.filter(week_start__lte=end_date_obj, week_end__gte=start_date_obj)
+            elif start_date_obj:
+                return queryset.filter(week_end__gte=start_date_obj)
+            elif end_date_obj:
+                return queryset.filter(week_start__lte=end_date_obj)
+            return queryset
+        
+        # Get completed evaluations with date filters
+        dept_evaluations = apply_date_filter_to_evals(
+            DynamicEvaluation.objects.filter(department=dept, status='completed')
+        )
+        
+        # Sum up the values from the first question across all evaluations
+        if first_question.qtype in ['number', 'rating', 'stars']:
+            total_value = Answer.objects.filter(
+                instance__in=dept_evaluations,
+                question=first_question,
+                int_value__isnull=False
+            ).aggregate(total=Sum('int_value'))['total'] or 0
+        else:
+            total_value = Answer.objects.filter(
+                instance__in=dept_evaluations,
+                question=first_question
+            ).count()
+        
+        # Helper function to customize metric label (DRY principle)
+        def customize_metric_label(dept_title, question_text):
+            if not dept_title:
+                return question_text
+            
+            dept_lower = dept_title.lower()
+            q_lower = question_text.lower()
+            
+            if "sales" in dept_lower:
+                if "lead" in q_lower:
+                    return "Total Leads"
+                elif "sale" in q_lower:
+                    return "Total Sales"
+            elif any(x in dept_lower for x in ["driver", "field", "mover"]):
+                if "move" in q_lower:
+                    return "Total Moves"
+                elif "job" in q_lower:
+                    return "Total Jobs"
+            elif "claims" in dept_lower:
+                if "claim" in q_lower or "process" in q_lower:
+                    return "Total Claims Processed"
+            elif "operation" in dept_lower:
+                if "move" in q_lower or "supervis" in q_lower:
+                    return "Total Moves Supervised"
+            elif "it" in dept_lower:
+                if "support" in q_lower or "request" in q_lower or "ticket" in q_lower:
+                    return "Total Support Requests Resolved"
+            elif "warehouse" in dept_lower:
+                if "move" in q_lower or "task" in q_lower:
+                    return "Total Move-In/Out Tasks"
+            elif "accounting" in dept_lower:
+                if "invoice" in q_lower or "bill" in q_lower:
+                    return "Total Invoices Processed"
+            
+            return question_text
+        
+        metric_label = customize_metric_label(dept.title, first_question.text)
+        
+        department_metrics.append({
+            'department': dept,
+            'employee_count': employee_count,
+            'metric_value': total_value,
+            'metric_label': metric_label,
+        })
+    
+    logger.info(f"Compiled metrics for {len(department_metrics)} departments")
+    
+    # Get all managers' rating trends
+    managers_rating_trends = get_all_managers_rating_trends(period_type, start_date_obj, end_date_obj)
+    managers_rating_trends_json = json.dumps(managers_rating_trends)
+    
+    context = {
+        'department_metrics': department_metrics,
+        'managers_rating_trends': managers_rating_trends,
+        'managers_rating_trends_json': managers_rating_trends_json,
+        'period_type': period_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'last_viewed_at': timezone.now(),
+    }
+    
+    logger.info(f"Senior manager performance overview rendered successfully with period_type={period_type}")
+    return render(request, "evaluation/senior_manager_performance_overview.html", context)
+
+
+def get_all_managers_rating_trends(period_type='monthly', start_date_obj=None, end_date_obj=None):
+    """
+    Get rating trends for all managers based on period type (monthly, quarterly, annually).
+    Returns data formatted for line chart showing manager performance over time.
+    Optimized with select_related to prevent N+1 queries.
+    """
+    # Optimized: Get evaluations with select_related to prevent N+1
+    base_evaluations = DynamicManagerEvaluation.objects.filter(
+        status='completed'
+    ).select_related('manager__user', 'form')
+    
+    total_evals = base_evaluations.count()
+    logger.info(f"get_all_managers_rating_trends - Total completed evaluations: {total_evals}, period={period_type}")
+    
+    # Helper function to apply date filters (DRY principle)
+    def apply_date_filters(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj, period_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(period_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(period_start__lte=end_date_obj)
+        return queryset
+    
+    base_evaluations = apply_date_filters(base_evaluations)
+    filtered_count = base_evaluations.count()
+    logger.info(f"get_all_managers_rating_trends - After date filter: {filtered_count} evaluations")
+    
+    # Helper function to format period (DRY principle)
+    def format_period(period_start, ptype):
+        if ptype == "monthly":
+            return period_start.strftime('%b %Y')
+        elif ptype == "quarterly":
+            quarter = (period_start.month - 1) // 3 + 1
+            return f"Quarter {quarter} {period_start.year}"
+        elif ptype == "annually":
+            return str(period_start.year)
+        return period_start.strftime('%b %Y')
+    
+    # Calculate average ratings per manager per period
+    manager_trends = defaultdict(lambda: defaultdict(list))
+    
+    for evaluation in base_evaluations:
+        # Check if evaluation period falls within date filter
+        if start_date_obj and evaluation.period_start < start_date_obj:
+            continue
+        if end_date_obj and evaluation.period_start > end_date_obj:
+            continue
+        
+        period = format_period(evaluation.period_start, period_type)
+        
+        # Optimized: Get Overall Rating question (already select_related on form)
+        overall_rating_question = Question.objects.filter(
+            form=evaluation.form,
+            text__icontains="Overall Rating"
+        ).first()
+        
+        if overall_rating_question:
+            # Optimized: Get answer with select_related
+            overall_rating_answer = ManagerAnswer.objects.filter(
+                instance=evaluation,
+                question=overall_rating_question,
+                int_value__isnull=False
+            ).select_related('question', 'instance').first()
+            
+            if overall_rating_answer and overall_rating_answer.int_value:
+                manager_name = evaluation.manager.user.get_full_name() or evaluation.manager.user.username
+                manager_trends[manager_name][period].append(overall_rating_answer.int_value)
+            else:
+                logger.debug(f"No overall rating answer for evaluation {evaluation.id}")
+        else:
+            logger.debug(f"No Overall Rating question for form {evaluation.form.name}")
+    
+    # If no data found, return empty structure
+    if not manager_trends:
+        logger.warning(f"get_all_managers_rating_trends - No manager trends data found for period_type: {period_type}")
+        return {
+            'labels': [],
+            'datasets': []
+        }
+    
+    manager_count = len(manager_trends)
+    logger.info(f"get_all_managers_rating_trends - Found trends for {manager_count} managers")
+    
+    # Collect and sort periods
+    periods = set()
+    for manager_data in manager_trends.values():
+        periods.update(manager_data.keys())
+    
+    # Helper function to sort periods (DRY principle)
+    def sort_periods(period_list, ptype):
+        if ptype == "monthly":
+            return sorted(period_list, key=lambda x: datetime.strptime(x, '%b %Y'))
+        elif ptype == "quarterly":
+            return sorted(period_list, key=lambda x: (int(x.split()[2]), int(x.split()[1])))
+        elif ptype == "annually":
+            return sorted(period_list, key=lambda x: int(x))
+        return sorted(period_list)
+    
+    periods = sort_periods(list(periods), period_type)
+    
+    chart_data = {
+        'labels': periods,
+        'datasets': []
+    }
+    
+    # Create dataset for each manager
+    colors = [
+        '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', 
+        '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+    ]
+    
+    for idx, (manager_name, period_data) in enumerate(manager_trends.items()):
+        data_points = []
+        for period in periods:
+            if period in period_data:
+                avg = sum(period_data[period]) / len(period_data[period])
+                data_points.append(round(avg, 2))
+            else:
+                data_points.append(None)
+        
+        chart_data['datasets'].append({
+            'label': manager_name,
+            'data': data_points,
+            'borderColor': colors[idx % len(colors)],
+            'backgroundColor': colors[idx % len(colors)] + '20',
+            'tension': 0.4
+        })
+    
+    dataset_count = len(chart_data['datasets'])
+    period_count = len(chart_data['labels'])
+    logger.info(f"get_all_managers_rating_trends - Returning chart data: {period_count} periods, {dataset_count} datasets")
+    
+    return chart_data
+
+
+def get_weekly_employee_data(evaluations, questions):
+    """
+    Get weekly data for an employee's star rating and emoji satisfaction.
+    Returns data structured for bar charts showing weekly performance.
+    """
+    from .models import Answer
+    from collections import defaultdict
+    
+    if not evaluations or not questions:
+        return []
+    
+    # Get answers for these evaluations and questions
+    answers = Answer.objects.filter(
+        instance__in=evaluations,
+        question__in=questions
+    ).select_related('question', 'instance')
+    
+    # Group by week and question type
+    weekly_data = defaultdict(lambda: {'star_rating': [], 'emoji_rating': []})
+    
+    for answer in answers:
+        evaluation = answer.instance
+        question = answer.question
+        
+        # Use week_start as the week identifier
+        week_key = evaluation.week_start.strftime('%Y-%m-%d')
+        
+        if question.qtype == 'stars' and answer.int_value is not None:
+            weekly_data[week_key]['star_rating'].append(answer.int_value)
+        elif question.qtype == 'emoji':
+            # Convert emoji to numeric value
+            emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+            if answer.text_value and answer.text_value in emoji_map:
+                weekly_data[week_key]['emoji_rating'].append(emoji_map[answer.text_value])
+            elif answer.int_value is not None:
+                weekly_data[week_key]['emoji_rating'].append(answer.int_value)
+    
+    # Convert to list format for charts
+    chart_data = []
+    for week_start, ratings in sorted(weekly_data.items()):
+        week_label = week_start  # You can format this better if needed
+        
+        # Calculate averages
+        avg_star = sum(ratings['star_rating']) / len(ratings['star_rating']) if ratings['star_rating'] else 0
+        avg_emoji = sum(ratings['emoji_rating']) / len(ratings['emoji_rating']) if ratings['emoji_rating'] else 0
+        
+        chart_data.append({
+            'week': week_label,
+            'star_rating': round(avg_star, 1),
+            'emoji_rating': round(avg_emoji, 1)
+        })
+    
+    return chart_data
+
+@login_required
+@require_manager_access
+def employee_performance_dashboard(request):
+    """
+    Manager's view of their employees' performance trends.
+    Shows aggregated performance data for all employees under this manager.
+    Optimized with select_related to prevent N+1 queries.
+    """
+    checker = get_role_checker(request.user)
+    user_profile = checker.user_profile
+    
+    logger.info(f"Employee performance dashboard accessed by manager {request.user.id} ({user_profile.user.get_full_name()})")
+    
+    today = timezone.now().date()
+    
+    # Parse date filters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    start_date_obj = None
+    end_date_obj = None
+    
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid start_date format: {start_date}")
+            start_date = None
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid end_date format: {end_date}")
+            end_date = None
+    
+    if start_date_obj or end_date_obj:
+        logger.info(f"Date filters applied: {start_date_obj} to {end_date_obj}")
+    
+    # Helper function to apply date filters (DRY principle)
+    def apply_eval_date_filter(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj, week_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(week_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj)
+        return queryset
+    
+    # Optimized: Get employees with select_related to prevent N+1
+    managed_employees = UserProfile.objects.filter(
+        manager=user_profile,
+        is_employee=True
+    ).select_related('user', 'department')
+    
+    managed_count = managed_employees.count()
+    logger.info(f"Manager {user_profile.user.get_full_name()} has {managed_count} team members")
+    
+    department_members = UserProfile.objects.none()
+    if hasattr(user_profile, 'managed_department') and user_profile.managed_department:
+        department_members = UserProfile.objects.filter(
+            department=user_profile.managed_department,
+            is_employee=True
+        ).select_related('user', 'department', 'manager__user')
+        dept_count = department_members.count()
+        logger.info(f"Manager's department has {dept_count} employees")
+    
+    # Optimized: Get evaluations with select_related
+    employee_evaluations = apply_eval_date_filter(
+        DynamicEvaluation.objects.filter(
+            employee__in=managed_employees,
+            status='completed'
+        ).select_related('form', 'employee__user', 'manager__user', 'department')
+    )
+    
+    # Get simple employee performance data for bar chart
+    employee_performance_data = {}
+    performance_data = {}
+    
+    if managed_employees.exists():
+        # Optimized: Get all completed evaluations with date filter
+        all_evaluations = apply_eval_date_filter(
+            DynamicEvaluation.objects.filter(
+                employee__in=managed_employees,
+                status='completed'
+            ).select_related('employee__user', 'form', 'department')
+        )
+        
+        eval_count = all_evaluations.count()
+        logger.info(f"Processing {eval_count} evaluations for team performance data")
+        
+        if all_evaluations.exists():
+            # Get questions from the most recent form
+            most_recent_evaluation = all_evaluations.order_by('-week_start').first()
+            if most_recent_evaluation:
+                eval_form = most_recent_evaluation.form
+                questions = Question.objects.filter(
+                    form=eval_form,
+                    include_in_trends=True
+                ).order_by('order')
+                
+                
+                # Find star rating and emoji questions
+                star_questions = questions.filter(qtype='stars')
+                emoji_question = questions.filter(qtype='emoji').first()
+                
+                
+                # Process each employee
+                for employee in managed_employees:
+                    emp_evaluations = all_evaluations.filter(employee=employee).order_by('week_start')
+                    if emp_evaluations.exists():
+                        
+                        # Get questions from this employee's form (not the most recent form overall)
+                        emp_most_recent = emp_evaluations.first()
+                        emp_form = emp_most_recent.form
+                        emp_questions = Question.objects.filter(
+                            form=emp_form,
+                            include_in_trends=True
+                        ).order_by('order')
+                        
+                        # If no questions are marked for trends, use all questions from this employee's form
+                        if not emp_questions.exists():
+                            emp_questions = Question.objects.filter(form=emp_form).order_by('order')
+                        
+                        # Find star rating and emoji questions for this employee
+                        emp_star_questions = emp_questions.filter(qtype='stars')
+                        emp_emoji_question = emp_questions.filter(qtype='emoji').first()
+                        
+                        
+                        # Get weekly data for the last 8 weeks
+                        weekly_data = []
+                        weeks = []
+                        
+                        # Get evaluations from the last 8 weeks
+                        recent_evaluations = emp_evaluations[:8]
+                        
+                        for evaluation in recent_evaluations:
+                            week_label = evaluation.week_start.strftime('%m/%d')
+                            weeks.append(week_label)
+                            
+                            # Get star rating for this week (average of all star questions for this employee)
+                            star_rating = 0
+                            if emp_star_questions.exists():
+                                star_answers = Answer.objects.filter(
+                                    instance=evaluation,
+                                    question__in=emp_star_questions,
+                                    int_value__isnull=False
+                                ).values_list('int_value', flat=True)
+                                
+                                if star_answers:
+                                    star_rating = sum(star_answers) / len(star_answers)
+                            
+                            # Get emoji rating for this week
+                            emoji_rating = 0
+                            if emp_emoji_question:
+                                emoji_answer = Answer.objects.filter(
+                                    instance=evaluation,
+                                    question=emp_emoji_question
+                                ).first()
+                                if emoji_answer:
+                                    if emoji_answer.text_value:
+                                        emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+                                        emoji_rating = emoji_map.get(emoji_answer.text_value, 0)
+                                    elif emoji_answer.int_value is not None:
+                                        emoji_rating = emoji_answer.int_value
+                            
+                            weekly_data.append({
+                                'week': week_label,
+                                'star_rating': star_rating,
+                                'emoji_rating': emoji_rating
+                            })
+                        
+                        # Calculate averages for summary
+                        star_ratings = [week['star_rating'] for week in weekly_data if week['star_rating'] > 0]
+                        emoji_ratings = [week['emoji_rating'] for week in weekly_data if week['emoji_rating'] > 0]
+                        
+                        avg_star_rating = sum(star_ratings) / len(star_ratings) if star_ratings else 0
+                        avg_emoji_rating = sum(emoji_ratings) / len(emoji_ratings) if emoji_ratings else 0
+                        
+                        # Store employee data (serializable format)
+                        employee_performance_data[employee.id] = {
+                            'employee': {
+                                'id': employee.id,
+                                'name': employee.user.get_full_name() or employee.user.username,
+                                'email': employee.user.email,
+                                'department': employee.department.title if employee.department else 'No Department'
+                            },
+                            'avg_star_rating': round(avg_star_rating, 1),
+                            'avg_emoji_rating': round(avg_emoji_rating, 1),
+                            'total_evaluations': emp_evaluations.count(),
+                            'weekly_data': weekly_data,
+                            'weeks': weeks
+                        }
+                        
+                
+                # Calculate overall team performance by month
+                team_monthly_data = {}
+                
+                # Get all evaluations for managed employees, ordered by week_start
+                all_team_evaluations = all_evaluations.order_by('week_start')
+                
+                for evaluation in all_team_evaluations:
+                    # Get month-year key
+                    month_key = evaluation.week_start.strftime('%Y-%m')
+                    
+                    if month_key not in team_monthly_data:
+                        team_monthly_data[month_key] = {
+                            'month_label': evaluation.week_start.strftime('%b %Y'),
+                            'star_ratings': [],
+                            'emoji_ratings': [],
+                            'evaluation_count': 0
+                        }
+                    
+                    # Get star rating for this evaluation (average of all star questions)
+                    star_rating = 0
+                    if star_questions.exists():
+                        star_answers = Answer.objects.filter(
+                            instance=evaluation,
+                            question__in=star_questions,
+                            int_value__isnull=False
+            ).values_list('int_value', flat=True)
+            
+                        if star_answers:
+                            star_rating = sum(star_answers) / len(star_answers)
+                    
+                    # Get emoji rating for this evaluation
+                    emoji_rating = 0
+                    if emoji_question:
+                        emoji_answer = Answer.objects.filter(
+                            instance=evaluation,
+                            question=emoji_question
+                        ).first()
+                        if emoji_answer:
+                            if emoji_answer.text_value:
+                                emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+                                emoji_rating = emoji_map.get(emoji_answer.text_value, 0)
+                            elif emoji_answer.int_value is not None:
+                                emoji_rating = emoji_answer.int_value
+                    
+                    # Add to monthly data
+                    if star_rating > 0:
+                        team_monthly_data[month_key]['star_ratings'].append(star_rating)
+                    if emoji_rating > 0:
+                        team_monthly_data[month_key]['emoji_ratings'].append(emoji_rating)
+                    team_monthly_data[month_key]['evaluation_count'] += 1
+                
+                # Calculate monthly averages
+                monthly_performance = []
+                months = []
+                for month_key in sorted(team_monthly_data.keys()):
+                    month_data = team_monthly_data[month_key]
+                    months.append(month_data['month_label'])
+                    
+                    # Calculate averages
+                    avg_star = sum(month_data['star_ratings']) / len(month_data['star_ratings']) if month_data['star_ratings'] else 0
+                    avg_emoji = sum(month_data['emoji_ratings']) / len(month_data['emoji_ratings']) if month_data['emoji_ratings'] else 0
+                    
+                    monthly_performance.append({
+                        'month': month_data['month_label'],
+                        'avg_star_rating': round(avg_star, 1),
+                        'avg_emoji_rating': round(avg_emoji, 1),
+                        'evaluation_count': month_data['evaluation_count']
+                    })
+                
+                # Process department employee performance data
+                department_performance_data = {}
+                department_monthly_performance = []
+                department_months = []
+                
+                # Get all completed evaluations for department members
+                if department_members.exists():
+                    # Optimized: Use helper function for date filtering
+                    department_evaluations = apply_eval_date_filter(
+                        DynamicEvaluation.objects.filter(
+                            employee__in=department_members,
+                            status='completed'
+                        ).select_related('employee__user', 'form', 'department')
+                    )
+                    
+                    dept_eval_count = department_evaluations.count()
+                    logger.info(f"Processing {dept_eval_count} department evaluations")
+                    
+                    if department_evaluations.exists():
+                        # Process each department employee
+                        for dept_employee in department_members:
+                            dept_emp_evaluations = department_evaluations.filter(employee=dept_employee).order_by('week_start')
+                            if dept_emp_evaluations.exists():
+                                # Get questions from this department employee's form
+                                dept_emp_most_recent = dept_emp_evaluations.first()
+                                dept_emp_form = dept_emp_most_recent.form
+                                dept_emp_questions = Question.objects.filter(
+                                    form=dept_emp_form,
+                                    include_in_trends=True
+                                ).order_by('order')
+                                
+                                # If no questions are marked for trends, use all questions from this employee's form
+                                if not dept_emp_questions.exists():
+                                    dept_emp_questions = Question.objects.filter(form=dept_emp_form).order_by('order')
+                                
+                                # Find star rating and emoji questions for this department employee
+                                dept_emp_star_questions = dept_emp_questions.filter(qtype='stars')
+                                dept_emp_emoji_question = dept_emp_questions.filter(qtype='emoji').first()
+                                
+                                # Get weekly data for the last 8 weeks
+                                dept_weekly_data = []
+                                dept_weeks = []
+                                
+                                # Get evaluations from the last 8 weeks
+                                dept_recent_evaluations = dept_emp_evaluations[:8]
+                                
+                                for dept_evaluation in dept_recent_evaluations:
+                                    dept_week_label = dept_evaluation.week_start.strftime('%m/%d')
+                                    dept_weeks.append(dept_week_label)
+                                    
+                                    # Get star rating for this week (average of all star questions for this department employee)
+                                    dept_star_rating = 0
+                                    if dept_emp_star_questions.exists():
+                                        dept_star_answers = Answer.objects.filter(
+                                            instance=dept_evaluation,
+                                            question__in=dept_emp_star_questions,
+                                            int_value__isnull=False
+                                        ).values_list('int_value', flat=True)
+                                        
+                                        if dept_star_answers:
+                                            dept_star_rating = sum(dept_star_answers) / len(dept_star_answers)
+                                    
+                                    # Get emoji rating for this week
+                                    dept_emoji_rating = 0
+                                    if dept_emp_emoji_question:
+                                        dept_emoji_answer = Answer.objects.filter(
+                                            instance=dept_evaluation,
+                                            question=dept_emp_emoji_question
+                                        ).first()
+                                        if dept_emoji_answer:
+                                            if dept_emoji_answer.text_value:
+                                                dept_emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+                                                dept_emoji_rating = dept_emoji_map.get(dept_emoji_answer.text_value, 0)
+                                            elif dept_emoji_answer.int_value is not None:
+                                                dept_emoji_rating = dept_emoji_answer.int_value
+                                    
+                                    dept_weekly_data.append({
+                                        'week': dept_week_label,
+                                        'star_rating': dept_star_rating,
+                                        'emoji_rating': dept_emoji_rating
+                                    })
+                                
+                                # Calculate averages for summary
+                                dept_star_ratings = [week['star_rating'] for week in dept_weekly_data if week['star_rating'] > 0]
+                                dept_emoji_ratings = [week['emoji_rating'] for week in dept_weekly_data if week['emoji_rating'] > 0]
+                                
+                                dept_avg_star_rating = sum(dept_star_ratings) / len(dept_star_ratings) if dept_star_ratings else 0
+                                dept_avg_emoji_rating = sum(dept_emoji_ratings) / len(dept_emoji_ratings) if dept_emoji_ratings else 0
+                                
+                                # Store department employee data
+                                department_performance_data[dept_employee.id] = {
+                                    'employee': {
+                                        'id': dept_employee.id,
+                                        'name': dept_employee.user.get_full_name() or dept_employee.user.username,
+                                        'email': dept_employee.user.email,
+                                        'department': dept_employee.department.title if dept_employee.department else 'No Department',
+                                        'manager': dept_employee.manager.user.get_full_name() if dept_employee.manager else 'No Manager'
+                                    },
+                                    'avg_star_rating': round(dept_avg_star_rating, 1),
+                                    'avg_emoji_rating': round(dept_avg_emoji_rating, 1),
+                                    'total_evaluations': dept_emp_evaluations.count(),
+                                    'weekly_data': dept_weekly_data,
+                                    'weeks': dept_weeks
+                                }
+                        
+                        # Calculate overall department performance by month
+                        dept_team_monthly_data = {}
+                        
+                        # Get all evaluations for department members, ordered by week_start
+                        all_dept_team_evaluations = department_evaluations.order_by('week_start')
+                        
+                        for dept_evaluation in all_dept_team_evaluations:
+                            # Get month-year key
+                            dept_month_key = dept_evaluation.week_start.strftime('%Y-%m')
+                            
+                            if dept_month_key not in dept_team_monthly_data:
+                                dept_team_monthly_data[dept_month_key] = {
+                                    'month_label': dept_evaluation.week_start.strftime('%b %Y'),
+                                    'star_ratings': [],
+                                    'emoji_ratings': [],
+                                    'evaluation_count': 0
+                                }
+                            
+                            # Get questions from this evaluation's form
+                            dept_eval_form = dept_evaluation.form
+                            dept_eval_questions = Question.objects.filter(
+                                form=dept_eval_form,
+                                include_in_trends=True
+                            ).order_by('order')
+                            
+                            if not dept_eval_questions.exists():
+                                dept_eval_questions = Question.objects.filter(form=dept_eval_form).order_by('order')
+                            
+                            dept_eval_star_questions = dept_eval_questions.filter(qtype='stars')
+                            dept_eval_emoji_question = dept_eval_questions.filter(qtype='emoji').first()
+                            
+                            # Get star rating for this evaluation (average of all star questions)
+                            dept_star_rating = 0
+                            if dept_eval_star_questions.exists():
+                                dept_star_answers = Answer.objects.filter(
+                                    instance=dept_evaluation,
+                                    question__in=dept_eval_star_questions,
+                                    int_value__isnull=False
+                                ).values_list('int_value', flat=True)
+                                
+                                if dept_star_answers:
+                                    dept_star_rating = sum(dept_star_answers) / len(dept_star_answers)
+                            
+                            # Get emoji rating for this evaluation
+                            dept_emoji_rating = 0
+                            if dept_eval_emoji_question:
+                                dept_emoji_answer = Answer.objects.filter(
+                                    instance=dept_evaluation,
+                                    question=dept_eval_emoji_question
+                                ).first()
+                                if dept_emoji_answer:
+                                    if dept_emoji_answer.text_value:
+                                        dept_emoji_map = {"😞": 1, "😕": 2, "😐": 3, "😊": 4, "😍": 5}
+                                        dept_emoji_rating = dept_emoji_map.get(dept_emoji_answer.text_value, 0)
+                                    elif dept_emoji_answer.int_value is not None:
+                                        dept_emoji_rating = dept_emoji_answer.int_value
+                            
+                            # Add to monthly data
+                            if dept_star_rating > 0:
+                                dept_team_monthly_data[dept_month_key]['star_ratings'].append(dept_star_rating)
+                            if dept_emoji_rating > 0:
+                                dept_team_monthly_data[dept_month_key]['emoji_ratings'].append(dept_emoji_rating)
+                            dept_team_monthly_data[dept_month_key]['evaluation_count'] += 1
+                        
+                        # Calculate monthly averages for department
+                        for dept_month_key in sorted(dept_team_monthly_data.keys()):
+                            dept_month_data = dept_team_monthly_data[dept_month_key]
+                            department_months.append(dept_month_data['month_label'])
+                            
+                            # Calculate averages
+                            dept_avg_star = sum(dept_month_data['star_ratings']) / len(dept_month_data['star_ratings']) if dept_month_data['star_ratings'] else 0
+                            dept_avg_emoji = sum(dept_month_data['emoji_ratings']) / len(dept_month_data['emoji_ratings']) if dept_month_data['emoji_ratings'] else 0
+                            
+                            department_monthly_performance.append({
+                                'month': dept_month_data['month_label'],
+                                'avg_star_rating': round(dept_avg_star, 1),
+                                'avg_emoji_rating': round(dept_avg_emoji, 1),
+                                'evaluation_count': dept_month_data['evaluation_count']
+                            })
+
+                performance_data = {
+                    'employee_data': employee_performance_data,
+                    'star_question_text': 'Star Rating (Average)' if star_questions.exists() else 'Star Rating',
+                    'emoji_question_text': emoji_question.text if emoji_question else 'Satisfaction Rating',
+                    'monthly_performance': monthly_performance,
+                    'months': months,
+                    'department_employee_data': department_performance_data,
+                    'department_monthly_performance': department_monthly_performance,
+                    'department_months': department_months
+                }
+                
+                logger.info(f"Performance data compiled for {len(employee_performance_data)} employees")
+    
+    context = {
+        'user_profile': user_profile,
+        'managed_employees': managed_employees,
+        'department_members': department_members,
+        'today': today,
+        'last_viewed_at': timezone.now(),
+        'performance_data': performance_data,
+        'dashboard_type': 'employee_performance',
+        'start_date': start_date,
+        'end_date': end_date
+    }
+    
+    logger.info(f"Employee performance dashboard rendered successfully for manager {user_profile.user.get_full_name()}")
+    return render(request, "evaluation/employee_performance_dashboard.html", context)
+
+
+@login_required
+@require_manager_access
+def manager_employee_dashboard(request):
+    """
+    Employee dashboard for managers showing all their employees team-wise and department-wise,
+    with evaluation statistics and status indicators (similar to senior managers dashboard).
+    Optimized with select_related to prevent N+1 queries.
+    """
+    checker = get_role_checker(request.user)
+    user_profile = checker.user_profile
+    
+    logger.info(f"Manager employee dashboard accessed by {request.user.id} ({user_profile.user.get_full_name()})")
+    
+    today = timezone.now()
+    today_date = today.date()
+    
+    # Parse date filters
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    start_date_obj = None
+    end_date_obj = None
+    
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid start_date format: {start_date}")
+            start_date = None
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            logger.warning(f"Invalid end_date format: {end_date}")
+            end_date = None
+    
+    if start_date_obj or end_date_obj:
+        logger.info(f"Date filters applied: {start_date_obj} to {end_date_obj}")
+    
+    # Helper function to apply date filters (DRY principle)
+    def apply_mgr_eval_date_filter(queryset):
+        if start_date_obj and end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj, week_end__gte=start_date_obj)
+        elif start_date_obj:
+            return queryset.filter(week_end__gte=start_date_obj)
+        elif end_date_obj:
+            return queryset.filter(week_start__lte=end_date_obj)
+        return queryset
+    
+    # Optimized: Get team members with select_related
+    team_members = UserProfile.objects.filter(
+        manager=user_profile
+    ).select_related('user', 'department', 'managed_department')
+    
+    team_count = team_members.count()
+    logger.info(f"Manager has {team_count} team members")
+    
+    department_employees = UserProfile.objects.none()
+    if hasattr(user_profile, 'managed_department') and user_profile.managed_department:
+        department_employees = UserProfile.objects.filter(
+            department=user_profile.managed_department
+        ).exclude(
+            id=user_profile.id
+        ).select_related('user', 'manager', 'managed_department')
+        dept_emp_count = department_employees.count()
+        logger.info(f"Manager's department has {dept_emp_count} employees")
+    
+    # Optimized: Get all evaluations with date filter
+    all_evaluations = apply_mgr_eval_date_filter(
+        DynamicEvaluation.objects.filter(
+            manager=user_profile
+        ).select_related('employee__user', 'form', 'department').order_by('-week_start')
+    )
+    
+    # Calculate evaluation stats efficiently
+    total_evaluations = all_evaluations.count()
+    completed_evaluations = all_evaluations.filter(status=EvaluationStatus.COMPLETED).count()
+    pending_evaluations = all_evaluations.filter(status=EvaluationStatus.PENDING).count()
+    overdue_evaluations = all_evaluations.filter(
+        status=EvaluationStatus.PENDING,
+        week_end__lt=today_date
+    ).count()
+    
+    logger.info(f"Evaluation stats - Total: {total_evaluations}, Completed: {completed_evaluations}, Pending: {pending_evaluations}, Overdue: {overdue_evaluations}")
+    
+    # Recent activity (last 30 days)
+    thirty_days_ago = today - timedelta(days=30)
+    recent_evaluations = all_evaluations.filter(week_start__gte=thirty_days_ago).count()
+    
+    completion_rate = round((completed_evaluations / total_evaluations * 100) if total_evaluations > 0 else 0, 1)
+    logger.info(f"Overall completion rate: {completion_rate}%")
+    
+    # Team member statistics
+    team_data = []
+    for member in team_members:
+        # Get evaluations for this team member
+        member_evals = all_evaluations.filter(employee=member)
+        member_total = member_evals.count()
+        member_completed = member_evals.filter(status=EvaluationStatus.COMPLETED).count()
+        member_pending = member_evals.filter(status=EvaluationStatus.PENDING).count()
+        member_overdue = member_evals.filter(
+            status=EvaluationStatus.PENDING,
+            week_end__lt=today_date
+        ).count()
+        
+        # Calculate completion rate
+        member_completion_rate = round((member_completed / member_total * 100) if member_total > 0 else 0, 1)
+        
+        # Determine status
+        if member_total == 0:
+            member_status = 'awaiting'
+        elif member_overdue > 0:
+            member_status = 'critical'
+        elif member_pending > member_completed:
+            member_status = 'needs_attention'
+        elif member_completion_rate >= 80:
+            member_status = 'on_track'
+        else:
+            member_status = 'needs_attention'
+        
+        team_data.append({
+            'employee': member,
+            'stats': {
+                'total': member_total,
+                'completed': member_completed,
+                'pending': member_pending,
+                'overdue': member_overdue
+            },
+            'completion_rate': member_completion_rate,
+            'status': member_status
+        })
+    
+    # Department employee statistics
+    department_data = []
+    for member in department_employees:
+        # Get evaluations for this department member
+        dept_member_evals = all_evaluations.filter(employee=member)
+        dept_member_total = dept_member_evals.count()
+        dept_member_completed = dept_member_evals.filter(status=EvaluationStatus.COMPLETED).count()
+        dept_member_pending = dept_member_evals.filter(status=EvaluationStatus.PENDING).count()
+        dept_member_overdue = dept_member_evals.filter(
+            status=EvaluationStatus.PENDING,
+            week_end__lt=today_date
+        ).count()
+        
+        # Calculate completion rate
+        dept_member_completion_rate = round((dept_member_completed / dept_member_total * 100) if dept_member_total > 0 else 0, 1)
+        
+        # Determine status
+        if dept_member_total == 0:
+            dept_member_status = 'awaiting'
+        elif dept_member_overdue > 0:
+            dept_member_status = 'critical'
+        elif dept_member_pending > dept_member_completed:
+            dept_member_status = 'needs_attention'
+        elif dept_member_completion_rate >= 80:
+            dept_member_status = 'on_track'
+        else:
+            dept_member_status = 'needs_attention'
+        
+        department_data.append({
+            'employee': member,
+            'stats': {
+                'total': dept_member_total,
+                'completed': dept_member_completed,
+                'pending': dept_member_pending,
+                'overdue': dept_member_overdue
+            },
+            'completion_rate': dept_member_completion_rate,
+            'status': dept_member_status
+        })
+    
+    # Overall team status
+    team_completion_rate = round(
+        sum([td['completion_rate'] for td in team_data]) / len(team_data) if team_data else 0, 
+        1
+    )
+    team_overdue_count = sum([td['stats']['overdue'] for td in team_data])
+    
+    if not team_data:
+        overall_team_status = 'awaiting'
+    elif team_overdue_count > 0:
+        overall_team_status = 'critical'
+    elif team_completion_rate < 60:
+        overall_team_status = 'needs_attention'
+    elif team_completion_rate >= 80:
+        overall_team_status = 'on_track'
+    else:
+        overall_team_status = 'needs_attention'
+    
+    # Department overview statistics
+    department_stats = None
+    if hasattr(user_profile, 'managed_department') and user_profile.managed_department:
+        dept = user_profile.managed_department
+        dept_total_employees = department_employees.count()
+        
+        # Calculate department-level evaluation stats
+        dept_evaluations = all_evaluations.filter(department=dept)
+        dept_total_evals = dept_evaluations.count()
+        dept_completed_evals = dept_evaluations.filter(status=EvaluationStatus.COMPLETED).count()
+        dept_pending_evals = dept_evaluations.filter(status=EvaluationStatus.PENDING).count()
+        dept_overdue_evals = dept_evaluations.filter(
+            status=EvaluationStatus.PENDING,
+            week_end__lt=today_date
+        ).count()
+        
+        # Calculate department completion rate
+        dept_completion_rate = round((dept_completed_evals / dept_total_evals * 100) if dept_total_evals > 0 else 0, 1)
+        
+        # Determine department status
+        if dept_total_evals == 0:
+            dept_status = 'awaiting'
+        elif dept_overdue_evals > 0:
+            dept_status = 'critical'
+        elif dept_completion_rate < 60:
+            dept_status = 'needs_attention'
+        elif dept_completion_rate >= 80:
+            dept_status = 'on_track'
+        else:
+            dept_status = 'needs_attention'
+        
+        department_stats = {
+            'department': dept,
+            'total_employees': dept_total_employees,
+            'total_evaluations': dept_total_evals,
+            'completed': dept_completed_evals,
+            'pending': dept_pending_evals,
+            'overdue': dept_overdue_evals,
+            'completion_rate': dept_completion_rate,
+            'status': dept_status
+        }
+    
+    logger.info(f"Processed {len(team_data)} team members and {len(department_data)} department employees")
+    
+    context = {
+        'user_profile': user_profile,
+        'team_members': team_data,
+        'department_employees': department_data,
+        'today': today_date,
+        'last_viewed_at': today,
+        'stats': {
+            'total': total_evaluations,
+            'completed': completed_evaluations,
+            'pending': pending_evaluations,
+            'overdue': overdue_evaluations,
+            'recent': recent_evaluations,
+            'completion_rate': completion_rate
+        },
+        'team_stats': {
+            'size': len(team_data),
+            'completion_rate': team_completion_rate,
+            'status': overall_team_status
+        },
+        'department_stats': department_stats,
+        'recent_evaluations': all_evaluations[:10],
+        'start_date': start_date,
+        'end_date': end_date
+    }
+    
+    logger.info(f"Manager employee dashboard rendered successfully for {user_profile.user.get_full_name()}")
+    return render(request, "evaluation/manager_employee_dashboard.html", context)

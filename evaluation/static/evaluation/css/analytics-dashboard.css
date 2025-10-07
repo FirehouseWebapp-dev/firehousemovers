@@ -281,7 +281,7 @@
 }
 
 
-/* Action button styling for View Details */
+/* Action button styling - Base styles */
 .analytics-action-btn {
     display: inline-flex;
     align-items: center;
@@ -304,6 +304,15 @@
     background-color: #dc2626;
     color: white;
     transform: translateY(-1px);
+}
+
+/* Blue variant for View Trends button - Higher specificity */
+.analytics-action-btn.btn-blue {
+    background-color: #3b82f6;
+}
+
+.analytics-action-btn.btn-blue:hover {
+    background-color: #2563eb !important;
 }
 
 .analytics-action-btn i {
@@ -610,3 +619,192 @@
 
 .bg-indigo-600 { background-color: #4f46e5; }
 .bg-teal-600 { background-color: #0d9488; }
+
+/* Enhanced Chart Styling */
+.analytics-card canvas {
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    min-height: 350px;
+    width: 100%;
+}
+
+.analytics-card canvas:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+/* Chart Container Enhancements */
+.analytics-card-content {
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* Chart Loading Animation */
+.chart-loading-spinner {
+    border: 3px solid rgba(75, 85, 99, 0.3);
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Chart Error Styling */
+.chart-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #ef4444;
+    font-weight: 500;
+}
+
+/* Enhanced Card Hover Effects */
+.analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.analytics-card:hover .analytics-card-title h3 {
+    color: #3b82f6;
+    transition: color 0.3s ease;
+}
+
+/* Chart Type Badge Enhancement */
+/* Removed overly broad selector that was affecting Last Viewed and other elements */
+/* .text-sm.text-gray-400 {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+} */
+
+/* Analytics Chart Classes - Matching Employee Dashboard */
+.analytics-chart-container {
+    min-height: 400px;
+    position: relative;
+}
+
+.analytics-chart-container canvas {
+    max-height: 400px;
+}
+
+.analytics-chart {
+    opacity: 0;
+    animation: chartFadeIn 0.3s ease-out forwards;
+}
+
+@keyframes chartFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Analytics Chart Card Styling */
+.analytics-chart-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.analytics-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #374151;
+}
+
+.analytics-chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #f9fafb;
+    margin: 0;
+}
+
+/* .analytics-chart-type-badge {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+} */
+
+.analytics-chart-card:hover {
+    background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+    border-color: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Filter Buttons */
+.filter-btn {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    border: 1px solid #6b7280;
+    color: #d1d5db;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.filter-btn:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
+    border-color: #9ca3af;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.filter-btn.active:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+}
+
+/* Chart.js Legend Text Color Override - Match Line Chart Styling */
+.chartjs-render-monitor {
+    color: #9ca3af !important;
+    font-size: 12px !important;
+}
+
+.chartjs-render-monitor text {
+    fill: #9ca3af !important;
+    color: #9ca3af !important;
+    font-size: 12px !important;
+}
+
+/* Ensure Chart.js legend labels match line chart text */
+canvas + div {
+    color: #9ca3af !important;
+    font-size: 12px !important;
+}
+
+canvas + div text {
+    fill: #9ca3af !important;
+    color: #9ca3af !important;
+    font-size: 12px !important;
+}

@@ -11,11 +11,22 @@
 {% block content %}
 <!-- Header -->
 <div class="analytics-header bg-[#1a1a1a] border-b border-gray-700 p-6 mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-red-500 mb-2">Analytics Dashboard</h1>
-                <p class="text-gray-400">Executive overview of organizational performance</p>
+        <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-red-500 mb-2">Analytics Dashboard</h1>
+            <p class="text-gray-400">Executive overview of organizational performance</p>
+            {% if start_date or end_date %}
+            <div class="mt-2 inline-flex items-center bg-blue-900/30 border border-blue-600/50 rounded px-3 py-1.5 text-sm">
+                <i class="fas fa-filter text-blue-400 mr-2"></i>
+                <span class="text-blue-300 font-medium">
+                    Filtered: 
+                    {% if start_date %}{{ start_date }}{% endif %}
+                    {% if start_date and end_date %} to {% endif %}
+                    {% if end_date %}{{ end_date }}{% endif %}
+                </span>
             </div>
+            {% endif %}
+        </div>
             <div class="flex items-center space-x-4">
                 <div class="text-right">
                     <p class="text-sm text-gray-400">Last Viewed</p>
@@ -25,6 +36,28 @@
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
+        </div>
+        
+        <!-- Date Filters -->
+        <div class="flex items-center space-x-4">
+            <form method="GET" action="" class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <label for="start_date" class="text-sm text-gray-400">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date|default:'' }}" 
+                           class="bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label for="end_date" class="text-sm text-gray-400">End Date:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date|default:'' }}" 
+                           class="bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+                </div>
+                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors">
+                    <i class="fas fa-filter mr-1"></i> Apply
+                </button>
+                <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm transition-colors">
+                    <i class="fas fa-times mr-1"></i> Clear
+                </a>
+            </form>
         </div>
     </div>
 
@@ -114,7 +147,7 @@
         </div>
 
         <!-- Department Performance Section -->
-        {% cache 1800 department_performance_section user.id today %}
+        {% cache 1800 department_performance_section user.id today start_date end_date %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Department Performance</h2>
@@ -202,7 +235,7 @@
         {% endcache %}
 
         <!-- Teams Performance Section -->
-        {% cache 1800 teams_performance_section user.id today %}
+        {% cache 1800 teams_performance_section user.id today start_date end_date %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Teams Performance</h2>
@@ -220,6 +253,7 @@
                             <th>Employee Completion</th>
                             <th>Manager Completion</th>
                             <th>Status</th>
+                            <th>Trends</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -282,6 +316,12 @@
                                 {% endif %}
                             </td>
                             <td>
+                                <button class="analytics-action-btn btn-blue" onclick="viewTeamTrend({{ team_data.manager.id }})">
+                                    <i class="fas fa-chart-line"></i>
+                                    View Trends
+                                </button>
+                            </td>
+                            <td>
                                 <a href="{% url 'evaluation:analytics_team_detail' team_data.manager.id %}" 
                                    class="analytics-action-btn">
                                     <i class="fas fa-eye"></i>
@@ -297,7 +337,7 @@
         {% endcache %}
 
         <!-- Manager Effectiveness Section -->
-        {% cache 1800 manager_effectiveness_section user.id today %}
+        {% cache 1800 manager_effectiveness_section user.id today start_date end_date %}
         <div class="analytics-section mb-8">
             <div class="analytics-section-header">
                 <h2 class="analytics-section-title">Manager Effectiveness</h2>
@@ -373,108 +413,6 @@
             </div>
         </div>
         {% endcache %}
-
-        <!-- Additional Analytics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Export Report Card -->
-            <div class="analytics-card">
-                <div class="analytics-card-header">
-                    <div class="analytics-card-icon bg-indigo-600">
-                        <i class="fas fa-download"></i>
-                    </div>
-                    <div class="analytics-card-title">
-                        <h3>Export Report</h3>
-                        <p class="text-gray-400">Generate & Download</p>
-                    </div>
-                </div>
-                <div class="analytics-card-content flex flex-col h-full">
-                    <div class="flex-grow"></div>
-                    <div class="space-y-3">
-                        <button class="analytics-export-btn bg-green-600 hover:bg-green-700" onclick="exportReport('pdf')">
-                            <i class="fas fa-file-pdf mr-2"></i>
-                            Export PDF
-                        </button>
-                        <button class="analytics-export-btn bg-blue-600 hover:bg-blue-700" onclick="exportReport('excel')">
-                            <i class="fas fa-file-excel mr-2"></i>
-                            Export Excel
-                        </button>
-                        <div class="analytics-export-info">
-                            <span class="text-xs text-gray-400">Last export: {{ last_export_date|date:"M d, H:i"|default:"Never" }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Performance Trend Card -->
-            <div class="analytics-card">
-                <div class="analytics-card-header">
-                    <div class="analytics-card-icon bg-teal-600">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="analytics-card-title">
-                        <h3>Performance Trends</h3>
-                    </div>
-                </div>
-                <div class="analytics-card-content flex flex-col h-full">
-                    <div class="performance-trend-preview">
-                        <!-- Mini Trend Chart -->
-                        <div class="mini-chart-container">
-                            <canvas id="performance-mini-chart" width="280" height="100"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="performance-trend-container">
-                        <button class="analytics-export-btn bg-teal-600 hover:bg-teal-700" onclick="viewTrends()">
-                            <i class="fas fa-chart-line mr-2"></i>
-                            View Trends
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Risk Alerts Card -->
-            <div class="analytics-card">
-                <div class="analytics-card-header">
-                    <div class="analytics-card-icon bg-orange-600">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="analytics-card-title">
-                        <h3>Risk Alerts</h3>
-                        <p class="text-gray-400">Active Notifications</p>
-                    </div>
-                </div>
-                <div class="analytics-card-content">
-                    <div class="risk-alerts-container">
-                        <div class="risk-summary">
-                            <div class="risk-count critical">
-                                <span class="risk-number">{{ risk_alerts.critical_count|default:"0" }}</span>
-                                <span class="risk-label">Critical</span>
-                            </div>
-                            <div class="risk-count warning">
-                                <span class="risk-number">{{ risk_alerts.warning_count|default:"0" }}</span>
-                                <span class="risk-label">Warning</span>
-                            </div>
-                        </div>
-                        <div class="risk-alerts-list">
-                            {% for alert in risk_alerts.recent_alerts|slice:":3" %}
-                            <div class="risk-alert-item {{ alert.severity }}">
-                                <i class="fas fa-{{ alert.icon|default:'exclamation-circle' }} mr-2"></i>
-                                <span class="risk-text">{{ alert.message|truncatechars:40 }}</span>
-                            </div>
-                            {% empty %}
-                            <div class="risk-alert-item info">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                <span class="risk-text">No active alerts</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <button class="analytics-view-all-btn" onclick="viewAllAlerts()">
-                            View All Alerts
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
 </div>
 
