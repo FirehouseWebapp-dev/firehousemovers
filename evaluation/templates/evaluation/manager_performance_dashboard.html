@@ -1,0 +1,198 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}My Performance Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/analytics-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="analytics-header bg-[#1a1a1a] border-b border-gray-700 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-red-500 mb-2">
+                {% if viewing_other_manager %}
+                    {{ user_profile.user.get_full_name|title }}'s Performance Dashboard
+                {% else %}
+                    My Performance Dashboard
+                {% endif %}
+            </h1>
+            <p class="text-gray-400">Personal performance insights and evaluation trends</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <p class="text-sm text-gray-400">Last Viewed</p>
+                <p class="text-sm text-white" id="last-viewed-time">{{ last_viewed_at|date:"M d, Y H:i" }}</p>
+            </div>
+            <button class="analytics-refresh-btn" id="refresh-btn">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Date Filters -->
+    <div class="flex items-center space-x-4">
+        <form method="GET" action="" class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <label for="start_date" class="text-sm text-gray-400">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date|default:'' }}" 
+                       class="bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+            </div>
+            <div class="flex items-center space-x-2">
+                <label for="end_date" class="text-sm text-gray-400">End Date:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date|default:'' }}" 
+                       class="bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-red-500">
+            </div>
+            <input type="hidden" name="period" value="{{ period_type }}">
+            {% if manager_id %}<input type="hidden" name="manager_id" value="{{ manager_id }}">{% endif %}
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors">
+                <i class="fas fa-filter mr-1"></i> Apply
+            </button>
+            <a href="?period={{ period_type }}{% if manager_id %}&manager_id={{ manager_id }}{% endif %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm transition-colors">
+                <i class="fas fa-times mr-1"></i> Clear
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div class="analytics-content">
+    <!-- Personal Performance Trends Section -->
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-user-tie mr-2"></i>
+                        My Performance Trends
+                    </h2>
+                    <div class="analytics-section-subtitle">
+                        {% if personal_performance_data.chart_data %}
+                            Your personal performance insights from {{ personal_performance_data.start_date|date:"M d" }} to {{ personal_performance_data.end_date|date:"M d, Y" }}
+                        {% else %}
+                            No {{ period_type }} evaluation data available
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if personal_performance_data.chart_data %}
+
+        <!-- Personal Performance Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for question_key, chart_info in personal_performance_data.chart_data.items %}
+            <div class="analytics-chart-card">
+                <div class="analytics-chart-header">
+                    <h3 class="analytics-chart-title">{{ chart_info.label }}</h3>
+                    <div class="analytics-chart-type-badge">{{ chart_info.type|title }}</div>
+                </div>
+                <div class="analytics-chart-container">
+                    <canvas id="trends-chart-{{ question_key|lower }}" class="analytics-chart"></canvas>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+        {% else %}
+        <!-- No Personal Performance Data for Selected Period -->
+        <div class="analytics-empty-state">
+            <div class="analytics-empty-icon">
+                <i class="fas fa-calendar-{{ period_type|slice:':3' }}"></i>
+            </div>
+            <h3 class="analytics-empty-title">No {{ period_type|title }} Performance Data Available</h3>
+            <p class="analytics-empty-description">
+                No {{ period_type }} evaluations have been completed yet. Data will appear here once {{ period_type }} evaluations are submitted by senior management.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <!-- Recent Evaluations List -->
+    {% if recent_evaluations %}
+    <div class="analytics-section">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">
+                <i class="fas fa-history mr-2"></i>
+                Recent Evaluations
+            </h2>
+            <div class="analytics-section-subtitle">
+                Evaluations you have received recently
+            </div>
+        </div>
+
+        <div class="analytics-table-container">
+            <table class="analytics-table">
+                <thead>
+                    <tr>
+                        <th>Evaluated By</th>
+                        <th>Period</th>
+                        <th>Department</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evaluation in recent_evaluations %}
+                    <tr>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <div class="font-medium">{{ evaluation.senior_manager.user.get_full_name|default:evaluation.senior_manager.user.username }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <div class="font-medium">{{ evaluation.period_start|date:"M d" }} - {{ evaluation.period_end|date:"M d, Y" }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <span class="analytics-badge analytics-badge-blue">{{ evaluation.department.title }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <div class="text-sm text-gray-400">{{ evaluation.submitted_at|date:"M d, Y H:i" }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <span class="analytics-badge analytics-badge-green">Completed</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="analytics-table-cell">
+                                <a href="{% url 'evaluation:view_manager_evaluation' evaluation.id %}" 
+                                   class="text-blue-400 hover:text-blue-300 text-sm">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'evaluation/js/employee_dashboard.js' %}"></script>
+<script>
+// Set up performance data for the dashboard - Manager Performance Dashboard
+window.managerPerformanceData = {
+    chartData: {{ personal_performance_data.chart_data|default:"{}"|safe }}
+};
+console.log('Manager Performance Data:', window.managerPerformanceData);
+console.log('Chart Data Keys:', Object.keys(window.managerPerformanceData.chartData || {}));
+</script>
+<script src="{% static 'evaluation/js/manager_performance_dashboard.js' %}"></script>
+{% endblock %}
