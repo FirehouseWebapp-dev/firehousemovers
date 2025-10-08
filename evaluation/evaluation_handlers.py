@@ -255,6 +255,7 @@ def handle_my_evaluations(request, config, template_name):
 def handle_pending_evaluations(request, config, template_name):
     """
     Generic handler for "pending evaluations" views.
+    Admins and superusers can see all pending evaluations.
     
     Args:
         request: Django request object
@@ -269,19 +270,27 @@ def handle_pending_evaluations(request, config, template_name):
     checker = get_role_checker(request.user)
     today = now().date()
     
-    # Get pending evaluations where user is the evaluator
-    evaluator_field_filter = {config.evaluator_field: checker.user_profile}
-    pending_evaluations = (
-        config.model_class.objects
-        .filter(**evaluator_field_filter, status=EvaluationStatus.PENDING)
-        .select_related(f"{config.evaluatee_field}__user", "form", "department")
-        .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
-    )
-    
-    # Calculate all stats in a single optimized query using aggregation
-    
-    # Get all evaluations for this evaluator to calculate total stats
-    all_evaluations = config.model_class.objects.filter(**evaluator_field_filter)
+    # Admins and superusers see ALL pending evaluations, managers see only theirs
+    if checker.is_admin() or request.user.is_superuser:
+        pending_evaluations = (
+            config.model_class.objects
+            .filter(status=EvaluationStatus.PENDING)
+            .select_related(f"{config.evaluatee_field}__user", f"{config.evaluator_field}__user", "form", "department")
+            .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
+        )
+        # Get all evaluations for stats
+        all_evaluations = config.model_class.objects.all()
+    else:
+        # Get pending evaluations where user is the evaluator
+        evaluator_field_filter = {config.evaluator_field: checker.user_profile}
+        pending_evaluations = (
+            config.model_class.objects
+            .filter(**evaluator_field_filter, status=EvaluationStatus.PENDING)
+            .select_related(f"{config.evaluatee_field}__user", "form", "department")
+            .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
+        )
+        # Get all evaluations for this evaluator to calculate total stats
+        all_evaluations = config.model_class.objects.filter(**evaluator_field_filter)
     
     stats = calculate_eval_stats(all_evaluations, today, config.period_end_field)
     

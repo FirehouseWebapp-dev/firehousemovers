@@ -384,12 +384,12 @@
         </a>
 
                 {% with up=request.user.userprofile role=request.user.userprofile.role %}
-                    {% if up.is_senior_management %}
-                    <a href="{% url 'evaluation:senior_analytics_dashboard' %}">
-                    {% elif up.is_manager or up.is_admin or request.user.is_superuser %}
-                    <a href="{% url 'evaluation:dashboard' %}">
+                    {% if up.is_senior_management or up.is_admin or request.user.is_superuser %}
+                    <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+                    {% elif up.is_manager %}
+                    <a href="{% url 'evaluation:dashboard' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
                     {% else %}
-            <a href="{% url 'evaluation:my_evaluations' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
+                    <a href="{% url 'evaluation:my_evaluations' %}" class="service-card group relative overflow-hidden rounded-xl bg-[#262626] border border-gray-700 transition-all duration-300" data-animate="frame-240">
                     {% endif %}
           <div class="relative h-64 p-6">
             <!-- Background image that is always visible -->

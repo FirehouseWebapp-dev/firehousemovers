@@ -19,6 +19,20 @@
       </div>
 
       <div>
+        <label for="{{ form.slug.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-1">
+          Slug <span class="text-red-400">*</span>
+        </label>
+        <div class="custom-input-wrapper">
+          {{ form.slug|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}
+        </div>
+        <p class="text-xs text-gray-400 mt-1">
+          Use one of: <span class="text-red-400 font-semibold">sales</span>, <span class="text-red-400 font-semibold">accounting</span>, <span class="text-red-400 font-semibold">claims</span>, <span class="text-red-400 font-semibold">it</span>, <span class="text-red-400 font-semibold">operations</span>, <span class="text-red-400 font-semibold">warehouse</span>, <span class="text-red-400 font-semibold">drivers</span>
+        </p>
+        <p class="text-xs text-gray-500 mt-1">This determines which evaluation questions are auto-generated for weekly evaluations.</p>
+        {{ form.slug.errors }}
+      </div>
+
+      <div>
         <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-1">Description</label>
         <div class="custom-input-wrapper">
           {{ form.description|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}

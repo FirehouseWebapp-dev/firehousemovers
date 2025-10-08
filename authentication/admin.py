@@ -4,10 +4,11 @@ from .models import UserProfile, Department
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ("title", "description", "manager")
+    list_display = ("title", "slug", "description", "manager")
     # ✅ REQUIRED for other admins' autocomplete_fields to work
     search_fields = (
         "title",
+        "slug",
         "description",
         "manager__user__first_name",
         "manager__user__last_name",

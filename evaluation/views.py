@@ -440,19 +440,29 @@ def question_delete(request, question_id):
 def evaluation_dashboard(request):
     """
     Dashboard view: Alternative dashboard for managers showing dynamic evaluations.
+    Admins and superusers can see all evaluations.
     """
     checker = get_role_checker(request.user)
     
     today = now()  # Use timezone-aware datetime for precision
     today_date = today.date()  # Keep date for display purposes
     
-    # Get manager's team dynamic evaluations with optimized stats calculation
-    evaluations = (
-        DynamicEvaluation.objects
-        .filter(manager=checker.user_profile)
-        .select_related("employee__user", "form", "department")
-        .order_by("-week_start")
-    )
+    # Admins and superusers see ALL evaluations, managers see only their team's
+    if checker.is_admin() or request.user.is_superuser:
+        evaluations = (
+            DynamicEvaluation.objects
+            .all()
+            .select_related("employee__user", "manager__user", "form", "department")
+            .order_by("-week_start")
+        )
+    else:
+        # Get manager's team dynamic evaluations with optimized stats calculation
+        evaluations = (
+            DynamicEvaluation.objects
+            .filter(manager=checker.user_profile)
+            .select_related("employee__user", "form", "department")
+            .order_by("-week_start")
+        )
     
     # Calculate all counts in a single optimized query using aggregation
     
@@ -2830,23 +2840,26 @@ def manager_employee_dashboard(request):
             'status': dept_member_status
         })
     
-    # Overall team status
+    # Overall team status - calculate based on total completed / total evaluations
+    team_total_count = sum([td['stats']['total'] for td in team_data])
+    team_completed_count = sum([td['stats']['completed'] for td in team_data])
+    team_overdue_count = sum([td['stats']['overdue'] for td in team_data])
+    team_pending_count = sum([td['stats']['pending'] for td in team_data])
+    
     team_completion_rate = round(
-        sum([td['completion_rate'] for td in team_data]) / len(team_data) if team_data else 0, 
+        (team_completed_count / team_total_count * 100) if team_total_count > 0 else 0, 
         1
     )
-    team_overdue_count = sum([td['stats']['overdue'] for td in team_data])
     
-    if not team_data:
+    # Status logic: overdue → critical, pending → needs_attention, all complete → on_track, no evals → awaiting
+    if team_total_count == 0:
         overall_team_status = 'awaiting'
     elif team_overdue_count > 0:
         overall_team_status = 'critical'
-    elif team_completion_rate < 60:
+    elif team_pending_count > 0:
         overall_team_status = 'needs_attention'
-    elif team_completion_rate >= 80:
-        overall_team_status = 'on_track'
     else:
-        overall_team_status = 'needs_attention'
+        overall_team_status = 'on_track'
     
     # Department overview statistics
     department_stats = None
@@ -2867,17 +2880,15 @@ def manager_employee_dashboard(request):
         # Calculate department completion rate
         dept_completion_rate = round((dept_completed_evals / dept_total_evals * 100) if dept_total_evals > 0 else 0, 1)
         
-        # Determine department status
+        # Determine department status: overdue → critical, pending → needs_attention, all complete → on_track, no evals → awaiting
         if dept_total_evals == 0:
             dept_status = 'awaiting'
         elif dept_overdue_evals > 0:
             dept_status = 'critical'
-        elif dept_completion_rate < 60:
+        elif dept_pending_evals > 0:
             dept_status = 'needs_attention'
-        elif dept_completion_rate >= 80:
-            dept_status = 'on_track'
         else:
-            dept_status = 'needs_attention'
+            dept_status = 'on_track'
         
         department_stats = {
             'department': dept,

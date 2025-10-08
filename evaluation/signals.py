@@ -9,6 +9,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Define default questions config centrally using slugs for robustness
+# 
+# IMPORTANT: Department slugs must match these exact values to generate correct questions:
+#   - "sales"        → Sales department questions
+#   - "accounting"   → Accounting department questions  
+#   - "claims"       → Claims department questions
+#   - "it"           → IT department questions
+#   - "operations"   → Operations department questions
+#   - "warehouse"    → Warehouse department questions
+#   - "drivers"      → Drivers department questions
+#
+# When creating/editing departments, use these exact slug values.
 DEFAULT_QUESTIONS = {
     # Manager Evaluations (using form slugs)
     ("monthly-evaluation", None): [
@@ -101,15 +112,6 @@ def invalidate_cache_for_instance(instance, action="updated"):
                 invalidate_user_analytics_cache(obj.user.id)
 
 
-@receiver(post_save, sender=Department)
-def auto_populate_department_slug(sender, instance, created, **kwargs):
-    """
-    Auto-populate department slug from title.
-    """
-    if not instance.slug:
-        from django.utils.text import slugify
-        instance.slug = slugify(instance.title)
-        instance.save(update_fields=['slug'])
 
 
 @receiver(post_save, sender=EvalForm)
