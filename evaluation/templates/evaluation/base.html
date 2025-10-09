@@ -48,6 +48,11 @@
         <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
       </a>
 
+      {% url 'evaluation:archived_evaluations' as archived_url %}
+      <a href="{{ archived_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+        <i class="fas fa-archive mr-2"></i> Archived Evaluations
+      </a>
+
       {% url 'evaluation:my_manager_evaluations' as my_mgr_evals_url %}
       <a href="{{ my_mgr_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path|startswith:my_mgr_evals_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-user-check mr-2"></i> My Evaluations
@@ -62,6 +67,7 @@
       {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:manager_evaluation_dashboard' as mgr_dashboard_url %}
         {% url 'evaluation:pending_manager_evaluations' as mgr_pending_url %}
+        {% url 'evaluation:archived_manager_evaluations' as mgr_archived_url %}
         {% url 'evaluation:senior_analytics_dashboard' as analytics_url %}
         {% url 'evaluation:performance_trends' as perf_trends_url %}
 
@@ -85,7 +91,7 @@
 
         <a href="{{ mgr_dashboard_url }}"
           class="block py-2 px-3 rounded analytics-nav-link border-l-4
-              {% if request.path|startswith:mgr_dashboard_url and not request.path|startswith:mgr_pending_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+              {% if request.path|startswith:mgr_dashboard_url and not request.path|startswith:mgr_pending_url and not request.path == mgr_archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-user-tie mr-2"></i> Manager Evaluations
         </a>
 
@@ -93,6 +99,12 @@
           class="block py-2 px-3 rounded analytics-nav-link border-l-4
               {% if request.path == mgr_pending_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-hourglass-half mr-2"></i> Pending Evaluations
+        </a>
+
+        <a href="{{ mgr_archived_url }}"
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path == mgr_archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+          <i class="fas fa-archive mr-2"></i> Archived Evaluations
         </a>
 
         <a href="{% url 'evaluation:report_generation' %}"

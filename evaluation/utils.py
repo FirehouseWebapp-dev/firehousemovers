@@ -4,8 +4,9 @@ Utility functions for evaluation forms to handle race conditions and concurrent 
 
 from django.db import transaction, IntegrityError
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from .models import EvalForm
 from .constants import EvaluationStatus
 from firehousemovers.utils.permissions import role_checker
@@ -484,3 +485,68 @@ def process_form_edit_with_conflicts(form, form_obj, request):
         logger.exception("Unexpected error while editing evaluation form")
         messages.error(request, "An unexpected error occurred while updating the form. Please try again.")
         return False, render(request, "evaluation/forms/edit.html", {"form": form, "form_obj": form_obj})
+
+
+# ============================================================================
+# Archive/Unarchive Utilities
+# ============================================================================
+
+def toggle_archive_helper(request, evaluation_id, model_class, owner_field, target_field, select_related_fields):
+    """
+    Helper function to toggle archive status for evaluations.
+    
+    Args:
+        request: Django request object
+        evaluation_id: ID of the evaluation to toggle
+        model_class: Model class (DynamicEvaluation or DynamicManagerEvaluation)
+        owner_field: Field name of the owner (e.g., 'manager' or 'senior_manager')
+        target_field: Field name of the target user (e.g., 'employee' or 'manager')
+        select_related_fields: List of fields to select_related
+    
+    Returns:
+        JsonResponse with success status and archive state
+    """
+    checker = get_role_checker(request.user)
+    
+    # Fetch evaluation with optimized query to avoid N+1
+    evaluation = get_object_or_404(
+        model_class.objects.select_related(*select_related_fields),
+        id=evaluation_id
+    )
+    
+    # Verify permissions
+    owner = getattr(evaluation, owner_field)
+    if owner != checker.user_profile:
+        logger.warning(
+            f"Permission denied: User {request.user.id} attempted to archive {model_class.__name__} "
+            f"{evaluation_id} owned by {owner.user.id}"
+        )
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    
+    # Toggle archive status
+    old_status = evaluation.is_archived
+    evaluation.is_archived = not evaluation.is_archived
+    evaluation.save(update_fields=['is_archived'])
+    
+    # Get target user for messaging
+    target = getattr(evaluation, target_field)
+    target_name = target.user.get_full_name()
+    
+    # Log the action
+    action = 'archived' if evaluation.is_archived else 'unarchived'
+    logger.info(
+        f"{model_class.__name__} {evaluation_id} {action} by user {request.user.id} "
+        f"(owner: {owner.user.id}, target: {target_name})"
+    )
+    
+    # Add Django message
+    if evaluation.is_archived:
+        messages.success(request, f'Evaluation for {target_name} has been archived successfully.')
+    else:
+        messages.success(request, f'Evaluation for {target_name} has been unarchived successfully.')
+    
+    return JsonResponse({
+        'success': True,
+        'is_archived': evaluation.is_archived,
+        'message': 'Evaluation archived' if evaluation.is_archived else 'Evaluation unarchived'
+    })

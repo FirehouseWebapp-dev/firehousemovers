@@ -52,7 +52,7 @@ from .utils import (
     activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
     check_department_permission, process_form_creation_with_conflicts, 
     process_form_edit_with_conflicts, calculate_eval_stats, determine_status,
-    get_user_profile_safely
+    get_user_profile_safely, toggle_archive_helper
 )
 from .manager_performance_views import manager_personal_performance_data
 from .evaluation_handlers import (
@@ -447,22 +447,21 @@ def evaluation_dashboard(request):
     today = now()  # Use timezone-aware datetime for precision
     today_date = today.date()  # Keep date for display purposes
     
+    # Check if user wants to show archived evaluations (default: True)
+    show_archived = request.GET.get('show_archived', 'true') == 'true'
+    
     # Admins and superusers see ALL evaluations, managers see only their team's
     if checker.is_admin() or request.user.is_superuser:
-        evaluations = (
-            DynamicEvaluation.objects
-            .all()
-            .select_related("employee__user", "manager__user", "form", "department")
-            .order_by("-week_start")
-        )
+        evaluations = DynamicEvaluation.objects.select_related("employee__user", "manager__user", "form", "department")
+        if not show_archived:
+            evaluations = evaluations.filter(is_archived=False)
+        evaluations = evaluations.order_by("-week_start")
     else:
         # Get manager's team dynamic evaluations with optimized stats calculation
-        evaluations = (
-            DynamicEvaluation.objects
-            .filter(manager=checker.user_profile)
-            .select_related("employee__user", "form", "department")
-            .order_by("-week_start")
-        )
+        evaluations = DynamicEvaluation.objects.filter(manager=checker.user_profile).select_related("employee__user", "form", "department")
+        if not show_archived:
+            evaluations = evaluations.filter(is_archived=False)
+        evaluations = evaluations.order_by("-week_start")
     
     # Calculate all counts in a single optimized query using aggregation
     
@@ -484,6 +483,7 @@ def evaluation_dashboard(request):
         "pending_count": pending_count,
         "completed_count": completed_count,
         "overdue_count": overdue_count,
+        "show_archived": show_archived,
     })
 
 
@@ -547,13 +547,14 @@ def manager_evaluation_dashboard(request):
     today = now()  # Use timezone-aware datetime for precision
     today_date = today.date()  # Keep date for display purposes
     
+    # Check if user wants to show archived evaluations (default: True)
+    show_archived = request.GET.get('show_archived', 'true') == 'true'
+    
     # Get manager evaluations assigned to this senior manager with optimized query
-    evaluations = (
-        DynamicManagerEvaluation.objects
-        .filter(senior_manager=checker.user_profile)
-        .select_related("manager__user", "form", "department")
-        .order_by("-period_start")
-    )
+    evaluations = DynamicManagerEvaluation.objects.filter(senior_manager=checker.user_profile).select_related("manager__user", "form", "department")
+    if not show_archived:
+        evaluations = evaluations.filter(is_archived=False)
+    evaluations = evaluations.order_by("-period_start")
     
     # Group evaluations by type and period
     evaluation_cards = []
@@ -636,6 +637,7 @@ def manager_evaluation_dashboard(request):
         "total_completed": total_completed,
         "total_pending": total_pending,
         "total_overdue": total_overdue,
+        "show_archived": show_archived,
     })
 
 
@@ -665,18 +667,21 @@ def manager_evaluation_cards_detail(request):
     except ValueError:
         return redirect("evaluation:manager_evaluation_dashboard")
     
+    # Check if user wants to show archived evaluations (default: True)
+    show_archived = request.GET.get('show_archived', 'true') == 'true'
+    
     # Get evaluations for this specific period and form with optimized stats calculation
-    evaluations = (
-        DynamicManagerEvaluation.objects
-        .filter(
-            senior_manager=checker.user_profile,
-            form__name=form_name,
-            period_start=period_start_date,
-            period_end=period_end_date
-        )
-        .select_related("manager__user", "form", "department")
-        .order_by("manager__user__first_name", "manager__user__last_name")
+    evaluations = DynamicManagerEvaluation.objects.filter(
+        senior_manager=checker.user_profile,
+        form__name=form_name,
+        period_start=period_start_date,
+        period_end=period_end_date
     )
+    
+    if not show_archived:
+        evaluations = evaluations.filter(is_archived=False)
+    
+    evaluations = evaluations.select_related("manager__user", "form", "department").order_by("manager__user__first_name", "manager__user__last_name")
     
     # Calculate all stats in a single optimized query using aggregation
     
@@ -708,6 +713,7 @@ def manager_evaluation_cards_detail(request):
         "period_start": period_start_date,
         "period_end": period_end_date,
         "today": today,
+        "show_archived": show_archived,
         "total_count": total_count,
         "pending_count": pending_count,
         "completed_count": completed_count,
@@ -3582,5 +3588,97 @@ def generate_trends_report_pdf(request):
     response['Content-Disposition'] = f'attachment; filename="trends_report_{start_date}_{end_date}.pdf"'
     
     return response
+
+
+# Archive/Unarchive functionality
+@login_required
+@require_http_methods(["POST"])
+def toggle_evaluation_archive(request, evaluation_id):
+    """Toggle archive status for employee evaluations (manager only)."""
+    return toggle_archive_helper(
+        request=request,
+        evaluation_id=evaluation_id,
+        model_class=DynamicEvaluation,
+        owner_field='manager',
+        target_field='employee',
+        select_related_fields=['manager__user', 'employee__user']
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_manager_evaluation_archive(request, evaluation_id):
+    """Toggle archive status for manager evaluations (senior manager only)."""
+    return toggle_archive_helper(
+        request=request,
+        evaluation_id=evaluation_id,
+        model_class=DynamicManagerEvaluation,
+        owner_field='senior_manager',
+        target_field='manager',
+        select_related_fields=['senior_manager__user', 'manager__user']
+    )
+
+
+@login_required
+def archived_evaluations(request):
+    """View archived employee evaluations for managers."""
+    checker = get_role_checker(request.user)
+    
+    if not checker.is_manager() and not checker.is_senior_manager():
+        logger.warning(
+            f"Permission denied: User {request.user.id} attempted to view archived evaluations "
+            f"without proper permissions"
+        )
+        messages.error(request, "You don't have permission to view this page.")
+        return redirect('evaluation:dashboard')
+    
+    # Get archived evaluations for this manager with optimized query
+    evaluations = (
+        DynamicEvaluation.objects
+        .filter(manager=checker.user_profile, is_archived=True)
+        .select_related('employee__user', 'manager__user', 'form', 'department')
+        .order_by('-submitted_at', '-week_end')
+    )
+    
+    total_archived = evaluations.count()
+    
+    logger.info(
+        f"User {request.user.id} viewed {total_archived} archived employee evaluations"
+    )
+    
+    context = {
+        'evaluations': evaluations,
+        'total_archived': total_archived
+    }
+    
+    return render(request, 'evaluation/archived_evaluations.html', context)
+
+
+@login_required
+@require_senior_management_access
+def archived_manager_evaluations(request):
+    """View archived manager evaluations for senior managers."""
+    checker = get_role_checker(request.user)
+    
+    # Get archived manager evaluations for this senior manager with optimized query
+    evaluations = (
+        DynamicManagerEvaluation.objects
+        .filter(senior_manager=checker.user_profile, is_archived=True)
+        .select_related('manager__user', 'senior_manager__user', 'form', 'department')
+        .order_by('-submitted_at', '-period_end')
+    )
+    
+    total_archived = evaluations.count()
+    
+    logger.info(
+        f"User {request.user.id} viewed {total_archived} archived manager evaluations"
+    )
+    
+    context = {
+        'evaluations': evaluations,
+        'total_archived': total_archived
+    }
+    
+    return render(request, 'evaluation/archived_manager_evaluations.html', context)
 
 

@@ -66,3 +66,11 @@ urlpatterns += [
     path("forms/questions/<int:question_id>/choices/add/", views.choice_add, name="choice_add"),
     path("forms/<int:pk>/update_order/", views.update_question_order, name="update_question_order"),
 ]
+
+# Archive functionality
+urlpatterns += [
+    path("evaluation/<int:evaluation_id>/toggle-archive/", views.toggle_evaluation_archive, name="toggle_evaluation_archive"),
+    path("manager-evaluation/<int:evaluation_id>/toggle-archive/", views.toggle_manager_evaluation_archive, name="toggle_manager_evaluation_archive"),
+    path("archived/", views.archived_evaluations, name="archived_evaluations"),
+    path("manager-evaluations/archived/", views.archived_manager_evaluations, name="archived_manager_evaluations"),
+]

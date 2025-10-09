@@ -123,6 +123,7 @@ class DynamicEvaluation(models.Model):
 
     status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [("employee", "week_start", "week_end", "form")]
@@ -173,6 +174,7 @@ class DynamicManagerEvaluation(models.Model):
 
     status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [("manager", "senior_manager", "period_start", "period_end", "form")]
