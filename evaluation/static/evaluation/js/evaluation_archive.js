@@ -43,9 +43,14 @@ function closeArchiveModal() {
     const modal = document.getElementById('archiveModal');
     modal.classList.remove('show');
     
-    // Reset modal state
-    const confirmBtn = modal.querySelector('.modal-btn-archive');
-    confirmBtn.disabled = false;
+    // Reset modal state - find button with either class
+    const confirmBtn = modal.querySelector('.modal-btn-archive, .btn-unarchive');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        // Restore default state
+        confirmBtn.classList.remove('btn-unarchive');
+        confirmBtn.classList.add('modal-btn-archive');
+    }
     
     // Clear current references
     currentEvaluationId = null;
@@ -57,7 +62,7 @@ function confirmArchive() {
     
     const csrfToken = getCSRFToken();
     const modal = document.getElementById('archiveModal');
-    const confirmBtn = modal.querySelector('.modal-btn-archive');
+    const confirmBtn = modal.querySelector('.modal-btn-archive, .btn-unarchive');
     const isArchived = currentButton.dataset.isArchived === 'true';
     
     // Disable button while processing
@@ -190,10 +195,17 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelBtn.addEventListener('click', closeArchiveModal);
     }
     
-    // Add event listener to confirm button
-    const confirmBtn = document.querySelector('.modal-btn-archive');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', confirmArchive);
+    // Add event listener to confirm button - use modal footer to find it
+    const modal = document.getElementById('archiveModal');
+    if (modal) {
+        const modalFooter = modal.querySelector('.modal-footer');
+        if (modalFooter) {
+            // Find the archive/confirm button (second button in footer)
+            const buttons = modalFooter.querySelectorAll('button');
+            if (buttons.length > 1) {
+                buttons[1].addEventListener('click', confirmArchive);
+            }
+        }
     }
     
     // Add event listener to show archived toggle
