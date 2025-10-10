@@ -5,7 +5,8 @@ from django.utils.safestring import mark_safe
 from .models import (
     EvalForm, Question, QuestionChoice, 
     DynamicEvaluation, Answer, 
-    DynamicManagerEvaluation, ManagerAnswer
+    DynamicManagerEvaluation, ManagerAnswer,
+    ReportHistory
 )
 
 
@@ -166,6 +167,25 @@ class ManagerAnswerAdmin(admin.ModelAdmin):
             return f"Choice: {obj.choice_value}"
         return "No answer"
     get_answer_display.short_description = "Answer"
+
+
+@admin.register(ReportHistory)
+class ReportHistoryAdmin(admin.ModelAdmin):
+    list_display = ('report_type', 'department', 'date_from', 'date_to', 'generated_by', 'generated_at')
+    list_filter = ('report_type', 'department', 'generated_at')
+    search_fields = ('generated_by__user__first_name', 'generated_by__user__last_name', 'department__title')
+    ordering = ('-generated_at',)
+    readonly_fields = ('generated_at',)
+    
+    fieldsets = (
+        (None, {
+            'fields': ('report_type', 'department', 'date_from', 'date_to', 'generated_by')
+        }),
+        ('Metadata', {
+            'fields': ('generated_at',),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 # Customize admin site header

@@ -129,6 +129,7 @@
                         <th>Pending</th>
                         <th>Completion Rate</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -176,6 +177,13 @@
                                     <i class="fas fa-times-circle mr-1"></i>Critical
                                 </span>
                             {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'evaluation:employee_evaluations_list' emp_data.employee.id %}" 
+                               class="analytics-action-btn">
+                                <i class="fas fa-eye"></i>
+                                View Evaluations
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

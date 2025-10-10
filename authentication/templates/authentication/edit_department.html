@@ -19,6 +19,19 @@
       </div>
 
       <div>
+        <label for="{{ form.slug.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-1">
+          Slug <span class="text-gray-500">(locked)</span> 🔒
+        </label>
+        <div class="custom-input-wrapper">
+          {{ form.slug|add_class:"custom-input w-full px-4 py-2 text-gray-400 bg-gray-900 cursor-not-allowed" }}
+        </div>
+        <p class="text-xs text-yellow-400 mt-1">
+          ⚠️ Slug cannot be changed after creation - it would break dashboard URLs and evaluation questions.
+        </p>
+        {{ form.slug.errors }}
+      </div>
+
+      <div>
         <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-300 mb-1">Description</label>
         <div class="custom-input-wrapper">
           {{ form.description|add_class:"custom-input w-full px-4 py-2 text-white bg-transparent focus:outline-none" }}

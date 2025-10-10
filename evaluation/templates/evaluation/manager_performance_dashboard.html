@@ -76,6 +76,20 @@
                         {% endif %}
                     </div>
                 </div>
+                <div class="flex items-center space-x-2">
+                    <a href="?period=monthly{% if manager_id %}&manager_id={{ manager_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
+                       class="px-4 py-2 rounded text-sm transition-colors {% if period_type == 'monthly' %}bg-red-500 text-white{% else %}bg-gray-600 text-white hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-calendar-alt mr-1"></i> Monthly
+                    </a>
+                    <a href="?period=quarterly{% if manager_id %}&manager_id={{ manager_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
+                       class="px-4 py-2 rounded text-sm transition-colors {% if period_type == 'quarterly' %}bg-red-500 text-white{% else %}bg-gray-600 text-white hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-calendar-week mr-1"></i> Quarterly
+                    </a>
+                    <a href="?period=annually{% if manager_id %}&manager_id={{ manager_id }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
+                       class="px-4 py-2 rounded text-sm transition-colors {% if period_type == 'annually' %}bg-red-500 text-white{% else %}bg-gray-600 text-white hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-calendar mr-1"></i> Annual
+                    </a>
+                </div>
             </div>
         </div>
 

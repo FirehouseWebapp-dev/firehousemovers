@@ -1,0 +1,196 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+{% block title %}Archived Evaluations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/archived_evaluations.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/archived_evaluations.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="pending-evaluations-page">
+  <!-- Page Title -->
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-archive mr-2"></i>
+      Archived Evaluations
+    </h1>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="progress-section slide-in animation-delay-1">
+    <div class="progress-header">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-white font-semibold">Archive Summary</h3>
+        <div class="flex items-center gap-4 text-sm">
+          <span class="text-gray-400" id="archive-count">{{ total_archived }} archived evaluation{{ total_archived|pluralize }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evaluations List -->
+  {% if evaluations %}
+    <div class="evaluation-list">
+      {% for eval in evaluations %}
+        <div class="evaluation-card card-hover slide-in animation-delay-4" data-evaluation-id="{{ eval.id }}">
+          <div class="flex justify-between items-center">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="user-avatar">
+                  <i class="fas fa-user text-white text-sm"></i>
+                </div>
+                <div>
+                  <h3 class="evaluation-name">
+                    {{ eval.employee.user.get_full_name|title }}
+                  </h3>
+                  <div class="flex items-center gap-1 mt-1">
+                    <span class="department-badge">
+                      <i class="fas fa-building mr-1"></i>
+                      {{ eval.department.title }}
+                    </span>
+                    <span class="form-badge">
+                      <i class="fas fa-file-alt mr-1"></i>
+                      {{ eval.form.name }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="evaluation-info flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>{{ eval.week_start }} to {{ eval.week_end }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  {% if eval.status == 'completed' %}
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">Completed</span>
+                  {% else %}
+                    <i class="fas fa-clock"></i>
+                    <span>Pending</span>
+                  {% endif %}
+                </div>
+                {% if eval.submitted_at %}
+                  <div class="flex items-center gap-1">
+                    <i class="fas fa-clock"></i>
+                    <span class="text-gray-400 text-sm">{{ eval.submitted_at|date:"M d, Y" }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="status-badge-modern status-badge-archived">
+                <i class="fas fa-archive mr-1"></i>
+                Archived
+              </span>
+              {% if eval.status == 'completed' %}
+                <a href="{% url 'evaluation:view_evaluation' eval.id %}" class="btn-modern">
+                  <i class="fas fa-eye"></i>
+                  View
+                </a>
+              {% endif %}
+              <button class="btn-modern btn-unarchive"
+                      data-evaluation-id="{{ eval.id }}"
+                      data-employee-name="{{ eval.employee.user.get_full_name|title }}"
+                      data-is-archived="true">
+                <i class="fas fa-box-open"></i>
+                Unarchive
+              </button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="text-gray-400" id="pagination-info">
+          Showing {{ evaluations.start_index }} - {{ evaluations.end_index }} of {{ total_archived }} evaluations
+        </span>
+      </div>
+      <div class="pagination-controls">
+        {% if evaluations.has_previous %}
+          <a href="?page=1" class="pagination-btn" title="First page">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+          <a href="?page={{ evaluations.previous_page_number }}" class="pagination-btn" title="Previous page">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        {% else %}
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-double-left"></i>
+          </span>
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-left"></i>
+          </span>
+        {% endif %}
+
+        <span class="pagination-current">
+          Page {{ evaluations.number }} of {{ evaluations.paginator.num_pages }}
+        </span>
+
+        {% if evaluations.has_next %}
+          <a href="?page={{ evaluations.next_page_number }}" class="pagination-btn" title="Next page">
+            <i class="fas fa-angle-right"></i>
+          </a>
+          <a href="?page={{ evaluations.paginator.num_pages }}" class="pagination-btn" title="Last page">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        {% else %}
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-right"></i>
+          </span>
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-double-right"></i>
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-navigation">
+      <a href="{% url 'evaluation:dashboard' %}" class="btn-modern">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+    </div>
+  {% else %}
+    <div class="empty-state slide-in">
+      <div class="empty-state-icon">
+        <i class="fas fa-archive text-white text-xl"></i>
+      </div>
+      <h2 class="empty-state-title">No Archived Evaluations</h2>
+      <p class="empty-state-description">You haven't archived any evaluations yet.</p>
+      <a href="{% url 'evaluation:dashboard' %}" class="btn-modern">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Archive/Unarchive Modal -->
+<div id="archiveModal" class="archive-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <i class="fas fa-archive"></i>
+      <h3>Archive Evaluation</h3>
+    </div>
+    <div class="modal-body">
+      <p>Archive modal content</p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel">Cancel</button>
+      <button class="modal-btn modal-btn-archive">Archive</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

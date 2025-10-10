@@ -31,7 +31,7 @@
                 <p class="text-sm text-gray-400">Last Viewed</p>
                 <p class="text-sm text-white" id="last-viewed-time">{{ last_viewed_at|date:"M d, Y H:i" }}</p>
             </div>
-            <button class="analytics-refresh-btn" onclick="location.reload()">
+            <button id="refreshButton" class="analytics-refresh-btn">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
@@ -100,6 +100,141 @@
         {% endfor %}
     </div>
 
+    <!-- Q1: Work Volume Comparison -->
+    {% if dept_q1_work_volume.has_data %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Work Volume Across Departments
+                    </h2>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h3 class="analytics-chart-title">Average Work Volume by Department</h3>
+                <div class="analytics-chart-type-badge">Bar Chart</div>
+            </div>
+            <div class="analytics-chart-container" style="height: 400px; padding: 20px;">
+                <canvas id="dept-q1-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Q2: Quality/Timeliness Comparison -->
+    {% if dept_q2_quality.has_data %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-percent mr-2"></i>
+                        Quality & Timeliness Across Departments
+                    </h2>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h3 class="analytics-chart-title">Performance Accuracy/Completion Rates</h3>
+                <div class="analytics-chart-type-badge">Bar Chart</div>
+            </div>
+            <div class="analytics-chart-container" style="height: 400px; padding: 20px;">
+                <canvas id="dept-q2-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Q3: 5-Star Rating Comparison -->
+    {% if dept_q3_rating.has_data %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-star mr-2"></i>
+                        Professional Competence Across Departments
+                    </h2>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h3 class="analytics-chart-title">Average Expertise Rating by Department</h3>
+                <div class="analytics-chart-type-badge">Line Chart</div>
+            </div>
+            <div class="analytics-chart-container" style="height: 400px; padding: 20px;">
+                <canvas id="dept-q3-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Q4: Emoji Satisfaction Comparison -->
+    {% if dept_q4_satisfaction.has_data %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-smile mr-2"></i>
+                        Customer/User Satisfaction Across Departments
+                    </h2>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h3 class="analytics-chart-title">Employee Impact on Satisfaction</h3>
+                <div class="analytics-chart-type-badge">Pie Chart</div>
+            </div>
+            <div class="analytics-chart-container" style="height: 500px; padding: 20px;">
+                <canvas id="dept-q4-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Q5: Confidence Rating Comparison -->
+    {% if dept_q5_confidence.has_data %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="analytics-section-title">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Employee Confidence Across Departments
+                    </h2>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-chart-card">
+            <div class="analytics-chart-header">
+                <h3 class="analytics-chart-title">Long-term Trust in Employee Ability</h3>
+                <div class="analytics-chart-type-badge">Bar Chart</div>
+            </div>
+            <div class="analytics-chart-container" style="height: 400px; padding: 20px;">
+                <canvas id="dept-q5-chart" class="analytics-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- All Managers Rating Trends Section -->
     {% if managers_rating_trends.labels %}
     <div class="analytics-section mb-8">
@@ -150,7 +285,18 @@
 <script>
 // Set up performance data for the dashboard
 window.managersRatingTrends = {{ managers_rating_trends_json|safe }};
+window.deptQ1WorkVolume = {{ dept_q1_work_volume_json|safe }};
+window.deptQ2Quality = {{ dept_q2_quality_json|safe }};
+window.deptQ3Rating = {{ dept_q3_rating_json|safe }};
+window.deptQ4Satisfaction = {{ dept_q4_satisfaction_json|safe }};
+window.deptQ5Confidence = {{ dept_q5_confidence_json|safe }};
+
 console.log('Managers Rating Trends Data:', window.managersRatingTrends);
+console.log('Q1 Work Volume Data:', window.deptQ1WorkVolume);
+console.log('Q2 Quality Data:', window.deptQ2Quality);
+console.log('Q3 Rating Data:', window.deptQ3Rating);
+console.log('Q4 Satisfaction Data:', window.deptQ4Satisfaction);
+console.log('Q5 Confidence Data:', window.deptQ5Confidence);
 </script>
 <script src="{% static 'evaluation/js/senior_performance_overview.js' %}"></script>
 {% endblock %}

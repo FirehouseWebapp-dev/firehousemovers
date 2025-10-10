@@ -1,7 +1,16 @@
 // Pending Manager Evaluations JavaScript
 
-// Add some interactive animations
+// Initialize event listeners when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+  // Set progress bar width from data attribute
+  const progressFill = document.querySelector('.progress-fill');
+  if (progressFill) {
+    const progress = progressFill.getAttribute('data-progress');
+    if (progress) {
+      progressFill.style.width = progress + '%';
+    }
+  }
+  
   // Add hover effects to cards
   const cards = document.querySelectorAll('.card-hover');
   cards.forEach(card => {

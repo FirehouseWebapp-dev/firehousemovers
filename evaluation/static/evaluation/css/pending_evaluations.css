@@ -259,6 +259,81 @@
 .animation-delay-3 { animation-delay: 0.3s; }
 .animation-delay-4 { animation-delay: 0.4s; }
 
+/* Pagination Styles */
+.pagination-container {
+  background: #1a1a1a;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagination-info {
+  color: #9CA3AF;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #374151;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.pagination-btn:hover {
+  background: #ef4444;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pagination-btn-disabled {
+  background: #1f2937;
+  color: #4B5563;
+  cursor: not-allowed;
+}
+
+.pagination-btn-disabled:hover {
+  background: #1f2937;
+  color: #4B5563;
+  transform: none;
+}
+
+.pagination-current {
+  padding: 0 1rem;
+  color: white;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .pagination-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .pagination-info {
+    width: 100%;
+  }
+}
+
 /* Theme Consistent Elements */
 .user-avatar {
   width: 2.5rem;
@@ -323,6 +398,36 @@
   }
   60% {
     transform: translateY(-3px);
+  }
+}
+
+/* Success Notification */
+.success-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  background: #10b981;
+  color: white;
+  animation: slideIn 0.3s ease-out;
+}
+
+.success-notification.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 

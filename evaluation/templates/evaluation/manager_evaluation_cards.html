@@ -8,9 +8,24 @@
 <link rel="stylesheet" href="{% static 'evaluation/css/manager_evaluations.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'evaluation/js/manager_evaluation_cards.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-6xl mx-auto p-6">
-  <h1 class="text-3xl font-bold mb-8 text-red-500">Manager Evaluations (Monthly / Quarterly / Annual)</h1>
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-red-500">Manager Evaluations (Monthly / Quarterly / Annual)</h1>
+    
+    <!-- Show Archived Toggle -->
+    <label class="flex items-center gap-2 text-gray-400 cursor-pointer">
+      <input type="checkbox" 
+             id="showArchivedToggle" 
+             {% if show_archived %}checked{% endif %}
+             class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500">
+      <span>Show archived</span>
+    </label>
+  </div>
   
   {% if evaluation_cards %}
     <!-- Overview Statistics -->
@@ -41,8 +56,8 @@
     </div>
     <div class="space-y-6">
       {% for card in evaluation_cards %}
-        <div class="{% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/50{% else %}bg-[#1a1a1a] border-gray-700{% endif %} rounded-lg p-6 border hover:border-red-500 transition-colors cursor-pointer"
-             onclick="window.location.href='{% url 'evaluation:manager_evaluation_cards_detail' %}?form={{ card.form_name|urlencode }}&period_start={{ card.period_start|date:'Y-m-d' }}&period_end={{ card.period_end|date:'Y-m-d' }}'">
+        <div class="evaluation-card-clickable {% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/50{% else %}bg-[#1a1a1a] border-gray-700{% endif %} rounded-lg p-6 border hover:border-red-500 transition-colors cursor-pointer"
+             data-href="{% url 'evaluation:manager_evaluation_cards_detail' %}?form={{ card.form_name|urlencode }}&period_start={{ card.period_start|date:'Y-m-d' }}&period_end={{ card.period_end|date:'Y-m-d' }}">
           
           <div class="flex justify-between items-start">
             <div class="flex-1">

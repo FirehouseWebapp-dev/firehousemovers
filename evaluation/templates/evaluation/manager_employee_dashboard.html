@@ -226,6 +226,47 @@
             </table>
         </div>
     </div>
+    
+    <!-- Team Overview Card -->
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">Team Overview</h2>
+            <p class="analytics-section-subtitle">Overall team performance summary</p>
+        </div>
+        
+        <div class="bg-[#1a1a1a] rounded-lg p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-blue-400 mb-2">{{ team_stats.size }}</div>
+                    <div class="text-gray-400">Team Members</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-green-400 mb-2">{{ team_stats.completion_rate }}%</div>
+                    <div class="text-gray-400">Avg Completion Rate</div>
+                </div>
+                <div class="text-center">
+                    {% if team_stats.status == 'awaiting' %}
+                        <span class="analytics-status-badge bg-gray-600 text-2xl px-6 py-3">
+                            <i class="fas fa-hourglass-half mr-2"></i>Awaiting
+                        </span>
+                    {% elif team_stats.status == 'on_track' %}
+                        <span class="analytics-status-badge bg-green-600 text-2xl px-6 py-3">
+                            <i class="fas fa-check-circle mr-2"></i>On Track
+                        </span>
+                    {% elif team_stats.status == 'needs_attention' %}
+                        <span class="analytics-status-badge bg-yellow-600 text-2xl px-6 py-3">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Needs Attention
+                        </span>
+                    {% elif team_stats.status == 'critical' %}
+                        <span class="analytics-status-badge analytics-status-badge-critical text-2xl px-6 py-3">
+                            <i class="fas fa-times-circle mr-2"></i>Critical
+                        </span>
+                    {% endif %}
+                    <div class="text-gray-400 mt-2">Team Status</div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Department Employees Section -->
@@ -233,7 +274,7 @@
     <div class="analytics-section mb-8">
         <div class="analytics-section-header">
             <h2 class="analytics-section-title">Department Employees</h2>
-            <p class="analytics-section-subtitle">All employees in {{ user_profile.managed_department.title }}</p>
+            <p class="analytics-section-subtitle">All {{ user_profile.managed_department.title }} employees should report to their direct managers for evaluations</p>
         </div>
         
         <div class="analytics-table-container">
@@ -327,6 +368,49 @@
             </table>
         </div>
     </div>
+    
+    <!-- Department Overview Card -->
+    {% if department_stats %}
+    <div class="analytics-section mb-8">
+        <div class="analytics-section-header">
+            <h2 class="analytics-section-title">Department Overview</h2>
+            <p class="analytics-section-subtitle">{{ department_stats.department.title }} performance summary</p>
+        </div>
+        
+        <div class="bg-[#1a1a1a] rounded-lg p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-purple-400 mb-2">{{ department_stats.total_employees }}</div>
+                    <div class="text-gray-400">Department Employees</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-green-400 mb-2">{{ department_stats.completion_rate }}%</div>
+                    <div class="text-gray-400">Completion Rate</div>
+                </div>
+                <div class="text-center">
+                    {% if department_stats.status == 'awaiting' %}
+                        <span class="analytics-status-badge bg-gray-600 text-2xl px-6 py-3">
+                            <i class="fas fa-hourglass-half mr-2"></i>Awaiting
+                        </span>
+                    {% elif department_stats.status == 'on_track' %}
+                        <span class="analytics-status-badge bg-green-600 text-2xl px-6 py-3">
+                            <i class="fas fa-check-circle mr-2"></i>On Track
+                        </span>
+                    {% elif department_stats.status == 'needs_attention' %}
+                        <span class="analytics-status-badge bg-yellow-600 text-2xl px-6 py-3">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Needs Attention
+                        </span>
+                    {% elif department_stats.status == 'critical' %}
+                        <span class="analytics-status-badge analytics-status-badge-critical text-2xl px-6 py-3">
+                            <i class="fas fa-times-circle mr-2"></i>Critical
+                        </span>
+                    {% endif %}
+                    <div class="text-gray-400 mt-2">Department Status</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     {% endif %}
 
     <!-- Recent Evaluations Section -->
@@ -390,92 +474,6 @@
             {% endif %}
         </div>
     </div>
-
-    <!-- Team Overview Card -->
-    {% if team_members %}
-    <div class="analytics-section mb-8">
-        <div class="analytics-section-header">
-            <h2 class="analytics-section-title">Team Overview</h2>
-            <p class="analytics-section-subtitle">Overall team performance summary</p>
-        </div>
-        
-        <div class="bg-[#1a1a1a] rounded-lg p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-blue-400 mb-2">{{ team_stats.size }}</div>
-                    <div class="text-gray-400">Team Members</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-green-400 mb-2">{{ team_stats.completion_rate }}%</div>
-                    <div class="text-gray-400">Avg Completion Rate</div>
-                </div>
-                <div class="text-center">
-                    {% if team_stats.status == 'awaiting' %}
-                        <span class="analytics-status-badge bg-gray-600 text-2xl px-6 py-3">
-                            <i class="fas fa-hourglass-half mr-2"></i>Awaiting
-                        </span>
-                    {% elif team_stats.status == 'on_track' %}
-                        <span class="analytics-status-badge bg-green-600 text-2xl px-6 py-3">
-                            <i class="fas fa-check-circle mr-2"></i>On Track
-                        </span>
-                    {% elif team_stats.status == 'needs_attention' %}
-                        <span class="analytics-status-badge bg-yellow-600 text-2xl px-6 py-3">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Needs Attention
-                        </span>
-                    {% elif team_stats.status == 'critical' %}
-                        <span class="analytics-status-badge analytics-status-badge-critical text-2xl px-6 py-3">
-                            <i class="fas fa-times-circle mr-2"></i>Critical
-                        </span>
-                    {% endif %}
-                    <div class="text-gray-400 mt-2">Team Status</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Department Overview Card -->
-    {% if department_stats %}
-    <div class="analytics-section mb-8">
-        <div class="analytics-section-header">
-            <h2 class="analytics-section-title">Department Overview</h2>
-            <p class="analytics-section-subtitle">{{ department_stats.department.title }} performance summary</p>
-        </div>
-        
-        <div class="bg-[#1a1a1a] rounded-lg p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-purple-400 mb-2">{{ department_stats.total_employees }}</div>
-                    <div class="text-gray-400">Department Employees</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-green-400 mb-2">{{ department_stats.completion_rate }}%</div>
-                    <div class="text-gray-400">Completion Rate</div>
-                </div>
-                <div class="text-center">
-                    {% if department_stats.status == 'awaiting' %}
-                        <span class="analytics-status-badge bg-gray-600 text-2xl px-6 py-3">
-                            <i class="fas fa-hourglass-half mr-2"></i>Awaiting
-                        </span>
-                    {% elif department_stats.status == 'on_track' %}
-                        <span class="analytics-status-badge bg-green-600 text-2xl px-6 py-3">
-                            <i class="fas fa-check-circle mr-2"></i>On Track
-                        </span>
-                    {% elif department_stats.status == 'needs_attention' %}
-                        <span class="analytics-status-badge bg-yellow-600 text-2xl px-6 py-3">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Needs Attention
-                        </span>
-                    {% elif department_stats.status == 'critical' %}
-                        <span class="analytics-status-badge analytics-status-badge-critical text-2xl px-6 py-3">
-                            <i class="fas fa-times-circle mr-2"></i>Critical
-                        </span>
-                    {% endif %}
-                    <div class="text-gray-400 mt-2">Department Status</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
 </div>
 

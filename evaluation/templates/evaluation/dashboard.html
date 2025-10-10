@@ -1,31 +1,52 @@
 {% extends "evaluation/base.html" %}
+{% load static %}
 {% block title %}Dashboard 2{% endblock %}
 
-{% block content %}
-<h1 class="text-3xl font-bold mb-6 text-red-500">Dynamic Evaluations</h1>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/archived_evaluations.css' %}">
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'evaluation/js/evaluation_archive.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-3xl font-bold text-red-500">Team Evaluations</h1>
+  
+  <!-- Show Archived Toggle -->
+  <div class="flex items-center gap-2">
+    <label class="flex items-center gap-2 text-gray-400 cursor-pointer">
+      <input type="checkbox" 
+             id="showArchivedToggle" 
+             {% if show_archived %}checked{% endif %}
+             class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500">
+      <span>Show archived</span>
+    </label>
+  </div>
+</div>
 
 <div class="bg-[#1a1a1a] rounded-lg p-6 mb-6">
-  <h2 class="text-xl font-semibold mb-4 text-white">Team Dynamic Evaluations Overview</h2>
+  <h2 class="text-xl font-semibold mb-4 text-white">Team Evaluations Overview</h2>
   
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-red-500">{{ evaluations|length }}</div>
+      <div class="text-2xl font-bold text-red-500" id="total-count">{{ page_obj.paginator.count }}</div>
       <div class="text-sm text-gray-400">Total Evaluations</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-green-500">{{ completed_count }}</div>
+      <div class="text-2xl font-bold text-green-500" id="completed-count">{{ completed_count }}</div>
       <div class="text-sm text-gray-400">Completed</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-yellow-500">{{ pending_count }}</div>
+      <div class="text-2xl font-bold text-yellow-500" id="pending-count">{{ pending_count }}</div>
       <div class="text-sm text-gray-400">Pending</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-orange-500">{{ overdue_count }}</div>
+      <div class="text-2xl font-bold text-orange-500" id="overdue-count">{{ overdue_count }}</div>
       <div class="text-sm text-gray-400">Overdue</div>
     </div>
   </div>
@@ -36,8 +57,8 @@
   
   {% if evaluations %}
     <div class="space-y-3">
-      {% for evaluation in evaluations|slice:":15" %}
-        <div class="flex justify-between items-center border-b border-gray-700 py-3">
+      {% for evaluation in evaluations %}
+        <div class="flex justify-between items-center border-b border-gray-700 py-3" data-evaluation-id="{{ evaluation.id }}">
           <div class="flex-1">
             <div class="text-red-500 font-semibold">{{ evaluation.employee.user.get_full_name|title }}</div>
             <div class="text-sm text-gray-400">
@@ -66,6 +87,16 @@
                   Edit
                 </a>
               {% endif %}
+              <button class="archive-btn{% if evaluation.is_archived %} archived{% endif %}" 
+                      data-evaluation-id="{{ evaluation.id }}"
+                      data-employee-name="{{ evaluation.employee.user.get_full_name|title }}"
+                      data-is-archived="{{ evaluation.is_archived|yesno:'true,false' }}">
+                {% if evaluation.is_archived %}
+                  <i class="fas fa-box-open"></i> Unarchive
+                {% else %}
+                  <i class="fas fa-archive"></i> Archive
+                {% endif %}
+              </button>
             {% else %}
               <a href="{% url 'evaluation:evaluate' evaluation.id %}" 
                  class="dashboard-btn dashboard-btn-evaluate">
@@ -76,6 +107,9 @@
         </div>
       {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% include 'evaluation/partials/pagination.html' %}
   {% else %}
     <div class="text-center py-8">
       <i class="fas fa-clipboard-list text-4xl text-gray-600 mb-4"></i>
@@ -83,5 +117,23 @@
       <p class="text-gray-500 text-sm mt-2">Dynamic evaluations will appear here when VP activates weekly evaluations</p>
     </div>
   {% endif %}
+</div>
+
+<!-- Archive Modal -->
+<div id="archiveModal" class="archive-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <i class="fas fa-archive"></i>
+      <h3>Archive Evaluation</h3>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to archive the evaluation for <strong id="employeeName"></strong>?</p>
+      <p class="text-sm mt-2">This evaluation will be hidden from the employee and moved to your archived evaluations.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel">Cancel</button>
+      <button class="modal-btn modal-btn-archive">Archive</button>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -29,82 +29,100 @@
     {# --- Managers --- #}
     {% if role.is_manager %}
       {% url 'evaluation:dashboard' as dash_url %}
-      <a href="{{ dash_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == dash_url %}bg-red-500{% endif %}">
+      <a href="{{ dash_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == dash_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-chart-line mr-2"></i> Dashboard
       </a>
 
       {% url 'evaluation:manager_employee_dashboard' as mgr_emp_dash_url %}
-      <a href="{{ mgr_emp_dash_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == mgr_emp_dash_url %}bg-red-500{% endif %}">
-        <i class="fas fa-users-cog mr-2"></i> Employee Dashboard
-      </a>
-
-      {% url 'evaluation:manager_performance_dashboard' as mgr_perf_url %}
-      <a href="{{ mgr_perf_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == mgr_perf_url %}bg-red-500{% endif %}">
-        <i class="fas fa-user-tie mr-2"></i> My Performance
+      <a href="{{ mgr_emp_dash_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == mgr_emp_dash_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+        <i class="fas fa-users-cog mr-2"></i> Employee Analytics
       </a>
 
       {% url 'evaluation:employee_performance_dashboard' as emp_perf_url %}
-      <a href="{{ emp_perf_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == emp_perf_url %}bg-red-500{% endif %}">
-        <i class="fas fa-users mr-2"></i> Team & Department Analytics
+      <a href="{{ emp_perf_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == emp_perf_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+        <i class="fas fa-users mr-2"></i> Comparisons
       </a>
 
       {% url 'evaluation:pending' as pending_url %}
-      <a href="{{ pending_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == pending_url %}bg-red-500{% endif %}">
+      <a href="{{ pending_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == pending_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-exclamation-triangle mr-2"></i> Pending Evaluations
       </a>
 
+      {% url 'evaluation:archived_evaluations' as archived_url %}
+      <a href="{{ archived_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+        <i class="fas fa-archive mr-2"></i> Archived Evaluations
+      </a>
+
       {% url 'evaluation:my_manager_evaluations' as my_mgr_evals_url %}
-      <a href="{{ my_mgr_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path|startswith:my_mgr_evals_url %}bg-red-500{% endif %}">
+      <a href="{{ my_mgr_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path|startswith:my_mgr_evals_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-user-check mr-2"></i> My Evaluations
+      </a>
+
+      {% url 'evaluation:manager_performance_dashboard' as mgr_perf_url %}
+      <a href="{{ mgr_perf_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == mgr_perf_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+        <i class="fas fa-user-tie mr-2"></i> My Performance
       </a>
 
       {# --- Senior management --- #}
       {% elif role.is_senior_management or role.is_admin %}
         {% url 'evaluation:manager_evaluation_dashboard' as mgr_dashboard_url %}
         {% url 'evaluation:pending_manager_evaluations' as mgr_pending_url %}
+        {% url 'evaluation:archived_manager_evaluations' as mgr_archived_url %}
         {% url 'evaluation:senior_analytics_dashboard' as analytics_url %}
         {% url 'evaluation:performance_trends' as perf_trends_url %}
 
         <a href="{{ analytics_url }}"
-          class="block py-2 px-3 rounded analytics-nav-link
-              {% if request.path|startswith:'/evaluation/analytics/' %}bg-red-500{% endif %}">
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path|startswith:'/evaluation/analytics/' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-chart-bar mr-2"></i> Analytics Dashboard
         </a>
 
         <a href="{{ perf_trends_url }}"
-          class="block py-2 px-3 rounded analytics-nav-link
-              {% if request.path == perf_trends_url %}bg-red-500{% endif %}">
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path == perf_trends_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-chart-line mr-2"></i> Performance Trends
         </a>
 
         <a href="{% url 'evaluation:evalform_list' %}"
-          class="block py-2 px-3 rounded analytics-nav-link
-              {% if request.path|startswith:'/evaluation/forms/' %}bg-red-500{% endif %}">
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path|startswith:'/evaluation/forms/' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-clipboard-list mr-2"></i> Reviewprints
         </a>
 
         <a href="{{ mgr_dashboard_url }}"
-          class="block py-2 px-3 rounded analytics-nav-link
-              {% if request.path|startswith:mgr_dashboard_url and not request.path|startswith:mgr_pending_url %}bg-red-500{% endif %}">
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path|startswith:mgr_dashboard_url and not request.path|startswith:mgr_pending_url and not request.path == mgr_archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-user-tie mr-2"></i> Manager Evaluations
         </a>
 
         <a href="{{ mgr_pending_url }}"
-          class="block py-2 px-3 rounded analytics-nav-link
-              {% if request.path == mgr_pending_url %}bg-red-500{% endif %}">
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path == mgr_pending_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
           <i class="fas fa-hourglass-half mr-2"></i> Pending Evaluations
+        </a>
+
+        <a href="{{ mgr_archived_url }}"
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path == mgr_archived_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+          <i class="fas fa-archive mr-2"></i> Archived Evaluations
+        </a>
+
+        <a href="{% url 'evaluation:report_generation' %}"
+          class="block py-2 px-3 rounded analytics-nav-link border-l-4
+              {% if request.path|startswith:'/evaluation/reports/' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
+          <i class="fas fa-file-alt mr-2"></i> Report Generation
         </a>
 
 
       {# --- Employees (default) --- #}
       {% else %}
       {% url 'evaluation:employee_dashboard' as emp_dashboard_url %}
-      <a href="{{ emp_dashboard_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path == emp_dashboard_url %}bg-red-500{% endif %}">
+      <a href="{{ emp_dashboard_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path == emp_dashboard_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-chart-line mr-2"></i> Analytics Dashboard
       </a>
       
       {% url 'evaluation:my_evaluations' as my_evals_url %}
-      <a href="{{ my_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link {% if request.path|startswith:my_evals_url %}bg-red-500{% endif %}">
+      <a href="{{ my_evals_url }}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.path|startswith:my_evals_url %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
         <i class="fas fa-list mr-2"></i> My Evaluations
       </a>
       

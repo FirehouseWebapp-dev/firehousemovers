@@ -349,11 +349,15 @@ class DepartmentForm(forms.ModelForm):
 
     class Meta:
         model = Department
-        fields = ["title", "description", "manager"]
+        fields = ["title", "slug", "description", "manager"]
         widgets = {
             "title": forms.TextInput(attrs={
                 "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
                 "placeholder": "Enter department title"
+            }),
+            "slug": forms.TextInput(attrs={
+                "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
+                "placeholder": "Use: sales, accounting, claims, it, operations, warehouse, or drivers"
             }),
             "description": forms.Textarea(attrs={
                 "class": "w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white",
@@ -374,6 +378,12 @@ class DepartmentForm(forms.ModelForm):
 
         if self.instance and self.instance.pk:
             self.fields['employees'].initial = UserProfile.objects.filter(department=self.instance)
+            
+            # Make slug read-only when editing existing department
+            self.fields['slug'].disabled = True
+            self.fields['slug'].help_text = "Slug cannot be changed after creation (would break dashboard URLs and evaluation questions)"
+            self.fields['slug'].widget.attrs['readonly'] = True
+            self.fields['slug'].widget.attrs['class'] += ' bg-gray-900 cursor-not-allowed opacity-60'
 
         base_manager_qs = UserProfile.objects.filter(role="manager")
 
@@ -403,4 +413,26 @@ class DepartmentForm(forms.ModelForm):
         if manager and manager in employees:
             raise ValidationError("The selected manager cannot also be listed as an employee of the same department.")
 
+        # Ensure slug is not changed for existing departments (extra safety)
+        if self.instance and self.instance.pk:
+            # Restore original slug if someone tries to change it
+            cleaned['slug'] = self.instance.slug
+
         return cleaned
+    
+    def clean_slug(self):
+        """Validate slug and provide helpful warning if it doesn't have predefined questions."""
+        slug = self.cleaned_data.get('slug')
+        
+        # List of slugs that have predefined evaluation questions
+        KNOWN_SLUGS = ['sales', 'accounting', 'claims', 'it', 'operations', 'warehouse', 'drivers']
+        
+        if slug and slug not in KNOWN_SLUGS:
+            # This is a warning, not an error - still allow custom slugs
+            import warnings
+            from django.contrib import messages
+            # Note: We can't add messages here directly, but we inform via ValidationError with non-blocking message
+            # For now, just allow it - admin can see the help text
+            pass
+        
+        return slug

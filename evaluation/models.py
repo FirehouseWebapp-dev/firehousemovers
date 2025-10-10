@@ -123,6 +123,7 @@ class DynamicEvaluation(models.Model):
 
     status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [("employee", "week_start", "week_end", "form")]
@@ -173,6 +174,7 @@ class DynamicManagerEvaluation(models.Model):
 
     status = models.CharField(max_length=10, choices=STATUS, default=EvaluationStatus.PENDING)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         unique_together = [("manager", "senior_manager", "period_start", "period_end", "form")]
@@ -203,3 +205,27 @@ class ManagerAnswer(models.Model):
 
     class Meta:
         unique_together = [("instance", "question")]
+
+
+class ReportHistory(models.Model):
+    """Track generated reports for senior management."""
+    REPORT_TYPES = (
+        ('employee', 'Employee Evaluation Report'),
+        ('manager', 'Manager Evaluation Report'),
+        ('trends', 'Performance Trends Report'),
+    )
+    
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    generated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='generated_reports')
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    date_from = models.DateField()
+    date_to = models.DateField()
+    generated_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-generated_at']
+        verbose_name_plural = 'Report Histories'
+    
+    def __str__(self):
+        dept_name = self.department.title if self.department else "All Departments"
+        return f"{self.get_report_type_display()} - {dept_name} ({self.generated_at.strftime('%Y-%m-%d %H:%M')})"

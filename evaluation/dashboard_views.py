@@ -30,29 +30,13 @@ def analytics_dashboard(request, department_slug, employee_id=None):
     Query params: ?range=weekly|monthly|yearly
     """
     try:
-        # Get department
+        # Get department by slug
         try:
             department = Department.objects.get(slug=department_slug)
         except Department.DoesNotExist:
-            # Fallback: try exact case-insensitive match first, then partial match
-            try:
-                exact_match = Department.objects.filter(title__iexact=department_slug).first()
-                if exact_match:
-                    department = exact_match
-                else:
-                    # Try partial match as last resort
-                    matching_departments = Department.objects.filter(title__icontains=department_slug)
-                    if matching_departments.count() == 1:
-                        department = matching_departments.first()
-                    elif matching_departments.count() > 1:
-                        # Multiple matches - return error to avoid ambiguity
-                        return render(request, 'evaluation/404.html', {
-                            'message': f'Multiple departments found matching "{department_slug}". Please use exact department name.'
-                        })
-                    else:
-                        return render(request, 'evaluation/404.html', {'message': 'Department not found'})
-            except Exception as e:
-                return render(request, 'evaluation/404.html', {'message': 'Error finding department'})
+            return render(request, 'evaluation/404.html', {
+                'message': f'Department "{department_slug}" not found. Please check the URL or contact your administrator.'
+            })
     
         # Get employee if specified
         employee = None
@@ -281,26 +265,13 @@ def analytics_dashboard_api(request, department_slug, employee_id=None):
     Useful for AJAX updates without page reload.
     """
     
-    # Get department
+    # Get department by slug
     try:
         department = Department.objects.get(slug=department_slug)
     except Department.DoesNotExist:
-        # Fallback: try exact case-insensitive match first, then partial match
-        exact_match = Department.objects.filter(title__iexact=department_slug).first()
-        if exact_match:
-            department = exact_match
-        else:
-            # Try partial match as last resort
-            matching_departments = Department.objects.filter(title__icontains=department_slug)
-            if matching_departments.count() == 1:
-                department = matching_departments.first()
-            elif matching_departments.count() > 1:
-                # Multiple matches - return error to avoid ambiguity
-                return JsonResponse({
-                    'error': f'Multiple departments found matching "{department_slug}". Please use exact department name.'
-                }, status=400)
-            else:
-                return JsonResponse({'error': 'Department not found'}, status=404)
+        return JsonResponse({
+            'error': f'Department "{department_slug}" not found.'
+        }, status=404)
     
     # Get employee if specified
     employee = None

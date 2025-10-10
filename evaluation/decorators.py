@@ -223,17 +223,19 @@ def require_manager_access(view_func):
     """
     Decorator that checks if user has manager access for dynamic evaluations.
     
-    Only allows managers and above.
-    Automatically redirects to main dashboard if permission denied.
+    Allows managers, admins, and superusers.
+    Automatically redirects to my_evaluations if permission denied.
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         checker = role_checker(request.user)
         
-        if not checker.is_manager():
+        # Allow managers, admins, and superusers
+        if not (checker.is_manager() or checker.is_admin() or request.user.is_superuser):
             if _is_ajax_request(request):
                 return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-            return redirect("evaluation:dashboard")
+            # Redirect to employee view instead of dashboard to avoid loop
+            return redirect("evaluation:my_evaluations")
         
         return view_func(request, *args, **kwargs)
     
