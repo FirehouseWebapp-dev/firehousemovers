@@ -1,4 +1,6 @@
-// Archive modal functionality for employee evaluations
+// Employee Evaluations List JavaScript
+// Archive functionality and UI interactions
+
 let currentEvaluationId = null;
 let currentButton = null;
 
@@ -29,7 +31,7 @@ function openArchiveModal(button) {
         // Archive mode
         modalTitle.textContent = 'Archive Evaluation';
         modalBody.innerHTML = `<p>Are you sure you want to archive the evaluation for <strong>${employeeName}</strong>?</p>
-                               <p class="text-sm mt-2">This evaluation will be hidden from the employee and moved to your archived evaluations.</p>`;
+                               <p class="text-sm mt-2">This evaluation will be hidden from the main view but can be restored later.</p>`;
         confirmBtn.textContent = 'Archive';
         confirmBtn.classList.remove('btn-unarchive');
         confirmBtn.classList.add('modal-btn-archive');
@@ -86,35 +88,17 @@ function confirmArchive() {
             // Close modal and clear references
             closeArchiveModal();
             
-            // Get the evaluation row to check if it should be removed
-            const evalRow = document.querySelector(`div[data-evaluation-id="${savedEvaluationId}"]`);
-            const showArchivedToggle = document.getElementById('showArchivedToggle');
-            const showArchived = showArchivedToggle ? showArchivedToggle.checked : true;
-            
-            // If archiving and not showing archived, remove the row
-            if (newIsArchived && !showArchived && evalRow) {
-                evalRow.style.transition = 'opacity 0.3s, transform 0.3s';
-                evalRow.style.opacity = '0';
-                evalRow.style.transform = 'translateX(20px)';
+            // Update button state without page reload
+            const button = document.querySelector(`button[data-evaluation-id="${savedEvaluationId}"]`);
+            if (button) {
+                button.dataset.isArchived = newIsArchived;
                 
-                setTimeout(() => {
-                    evalRow.remove();
-                    // Update counts after removal
-                    updateDashboardCounts();
-                }, 300);
-            } else {
-                // Update button state without page reload
-                const button = document.querySelector(`button[data-evaluation-id="${savedEvaluationId}"]`);
-                if (button) {
-                    button.dataset.isArchived = newIsArchived;
-                    
-                    if (newIsArchived) {
-                        button.innerHTML = '<i class="fas fa-box-open"></i> Unarchive';
-                        button.classList.add('archived');
-                    } else {
-                        button.innerHTML = '<i class="fas fa-archive"></i> Archive';
-                        button.classList.remove('archived');
-                    }
+                if (newIsArchived) {
+                    button.innerHTML = '<i class="fas fa-box-open"></i> Unarchive';
+                    button.classList.add('archived');
+                } else {
+                    button.innerHTML = '<i class="fas fa-archive"></i> Archive';
+                    button.classList.remove('archived');
                 }
             }
             
@@ -134,56 +118,26 @@ function confirmArchive() {
     });
 }
 
-function updateDashboardCounts() {
-    // Update the total count (number of visible evaluation rows)
-    const totalCountEl = document.getElementById('total-count');
-    if (totalCountEl) {
-        const visibleRows = document.querySelectorAll('[data-evaluation-id]').length;
-        totalCountEl.textContent = visibleRows;
-    }
-    
-    // Note: Completed, Pending, and Overdue counts remain the same because
-    // archiving doesn't change the status of an evaluation.
-    // If we need to update these in the future, we'd need to track the archived status per evaluation type
-}
-
 function showSuccessMessage(message) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 bg-green-600 text-white';
-    messageDiv.style.animation = 'slideIn 0.3s ease-out';
+    messageDiv.className = 'success-notification';
     messageDiv.textContent = message;
     
     document.body.appendChild(messageDiv);
     
     setTimeout(() => {
-        messageDiv.style.opacity = '0';
-        messageDiv.style.transition = 'opacity 0.3s';
+        messageDiv.classList.add('fade-out');
         setTimeout(() => messageDiv.remove(), 300);
     }, 3000);
 }
-
-// Close modal when clicking outside
-document.addEventListener('click', function(event) {
-    const modal = document.getElementById('archiveModal');
-    if (modal && event.target === modal) {
-        closeArchiveModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeArchiveModal();
-    }
-});
 
 // Toggle show archived filter
 function toggleShowArchived(checkbox) {
     const url = new URL(window.location.href);
     if (checkbox.checked) {
-        url.searchParams.delete('show_archived'); // Default is true, so remove param
+        url.searchParams.set('show_archived', 'true');
     } else {
-        url.searchParams.set('show_archived', 'false');
+        url.searchParams.delete('show_archived');
     }
     window.location.href = url.toString();
 }
@@ -211,8 +165,52 @@ function getCSRFToken() {
     return cookieValue;
 }
 
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('archiveModal');
+    if (modal && event.target === modal) {
+        closeArchiveModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeArchiveModal();
+    }
+});
+
 // Initialize event listeners when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar width from data attribute
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        const progress = progressFill.getAttribute('data-progress');
+        if (progress) {
+            progressFill.style.width = progress + '%';
+        }
+    }
+    
+    // Back button handler
+    const backButton = document.getElementById('backButton');
+    if (backButton) {
+        backButton.addEventListener('click', function() {
+            history.back();
+        });
+    }
+    
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.card-hover');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#ef4444';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#374151';
+        });
+    });
+    
     // Add event listeners to all archive buttons
     document.querySelectorAll('.archive-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -247,4 +245,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-

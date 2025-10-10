@@ -6,6 +6,10 @@
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
 {% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'evaluation/js/my_evaluations_v2.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="pending-evaluations-page">
   <!-- Page Title -->
@@ -30,7 +34,7 @@
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar">
-          <div class="progress-fill" style="width: {{ percent_complete }}%"></div>
+          <div class="progress-fill" data-progress="{{ percent_complete }}"></div>
         </div>
       </div>
     </div>
@@ -112,6 +116,9 @@
         </div>
       {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% include 'evaluation/partials/pagination.html' %}
   {% else %}
     <div class="empty-state slide-in">
       <div class="empty-state-icon">
@@ -122,21 +129,4 @@
     </div>
   {% endif %}
 </div>
-
-<script>
-// Add some interactive animations
-document.addEventListener('DOMContentLoaded', function() {
-  // Add hover effects to cards
-  const cards = document.querySelectorAll('.card-hover');
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', function() {
-      this.style.borderColor = '#ef4444';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-      this.style.borderColor = '#374151';
-    });
-  });
-});
-</script>
 {% endblock %}

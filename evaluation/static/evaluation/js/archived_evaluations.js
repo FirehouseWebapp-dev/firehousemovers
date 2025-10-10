@@ -103,6 +103,9 @@ function confirmArchive() {
                     // Show success message
                     showSuccessMessage(data.message);
                     
+                    // Update the archive count
+                    updateArchiveCount();
+                    
                     // Check if there are no more evaluations
                     const remainingCards = document.querySelectorAll('.evaluation-card');
                     if (remainingCards.length === 0) {
@@ -144,6 +147,42 @@ function confirmArchive() {
         confirmBtn.disabled = false;
         confirmBtn.textContent = isArchived ? 'Unarchive' : 'Archive';
     });
+}
+
+function updateArchiveCount() {
+    // Update the archive count in the summary
+    const archiveCountEl = document.getElementById('archive-count');
+    if (archiveCountEl) {
+        const text = archiveCountEl.textContent.trim();
+        const match = text.match(/^(\d+)/);
+        if (match) {
+            const currentCount = parseInt(match[1]);
+            const newCount = Math.max(0, currentCount - 1);
+            const pluralText = newCount === 1 ? 'evaluation' : 'evaluations';
+            archiveCountEl.textContent = `${newCount} archived ${pluralText}`;
+        }
+    }
+    
+    // Update the pagination info
+    const paginationInfoEl = document.getElementById('pagination-info');
+    if (paginationInfoEl) {
+        const text = paginationInfoEl.textContent.trim();
+        const match = text.match(/^Showing (\d+) - (\d+) of (\d+)/);
+        if (match) {
+            const startIndex = parseInt(match[1]);
+            let endIndex = parseInt(match[2]);
+            const totalCount = parseInt(match[3]);
+            
+            const newTotal = Math.max(0, totalCount - 1);
+            const newEnd = Math.max(0, endIndex - 1);
+            const pluralText = newTotal === 1 ? 'evaluation' : 'evaluations';
+            
+            // Update the text
+            if (newTotal > 0) {
+                paginationInfoEl.textContent = `Showing ${startIndex} - ${newEnd} of ${newTotal} ${pluralText}`;
+            }
+        }
+    }
 }
 
 function showSuccessMessage(message) {

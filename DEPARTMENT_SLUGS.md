@@ -11,13 +11,13 @@ When creating or editing departments, use these **exact slug values** to get the
 
 | Slug | Department Name | Evaluation Questions |
 |------|----------------|---------------------|
-| `sales` | Sales | Lead generation, conversion rates, customer satisfaction, sales targets, deal closing |
-| `accounting` | Accounting | Invoice processing, error rates, accuracy, task completion, financial deadlines |
-| `claims` | Claims | Claims processed, resolution timeframes, documentation, customer communication, fairness |
-| `it` | IT | Support requests, SLA compliance, system uptime, employee satisfaction, security |
-| `operations` | Operations | Moves supervised, damage-free percentage, teamwork, customer satisfaction, workload handling |
-| `warehouse` | Warehouse | Storage tasks, damage prevention, inventory accuracy, loading efficiency, safety |
-| `drivers` | Drivers | Moves/deliveries completed, on-time percentage, safety compliance, professionalism, complex moves |
+| `sales` | Sales | Lead inquiries, conversion rates, sales records accuracy, customer satisfaction, sales goals |
+| `accounting` | Accounting | Financial tasks completed, error-free percentage, documentation accuracy, timeliness, compliance |
+| `claims` | Claims | Claims processed, resolution timeframe, documentation & communication, customer satisfaction, complex claims |
+| `it` | IT | Support tickets completed, SLA compliance, troubleshooting effectiveness, user satisfaction, system reliability |
+| `operations` | Operations | Operations handled, damage-free percentage, team leadership, customer satisfaction, workload management |
+| `warehouse` | Warehouse | Tasks completed, damage prevention, inventory accuracy, loading efficiency, safety & organization |
+| `drivers` | Drivers | Deliveries completed, on-time & incident-free, safety compliance, professionalism, priority moves |
 
 ## Current Departments
 

@@ -240,8 +240,23 @@ def handle_my_evaluations(request, config, template_name):
     # Calculate percentage
     percent_complete = (completed / total * 100) if total > 0 else 0
     
+    # Pagination - 10 evaluations per page
+    from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+    
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(evaluations, 10)  # 10 items per page
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+    
     template_context = {
-        "evaluations": evaluations,
+        "evaluations": page_obj,
+        "page_obj": page_obj,
+        "is_paginated": paginator.num_pages > 1,
         "total": total,
         "completed": completed,
         "pending": pending,
@@ -302,8 +317,23 @@ def handle_pending_evaluations(request, config, template_name):
     
     percent_complete = (completed / total * 100) if total > 0 else 0
     
+    # Pagination - 10 evaluations per page
+    from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+    
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(pending_evaluations, 10)  # 10 items per page
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+    
     template_context = {
-        "pending_evaluations": pending_evaluations,
+        "pending_evaluations": page_obj,
+        "page_obj": page_obj,
+        "is_paginated": paginator.num_pages > 1,
         "completed": completed,
         "total": total,
         "pending": pending,

@@ -17,17 +17,39 @@
   <div class="page-header">
     <h1 class="page-title">
       <i class="fas fa-archive mr-2"></i>
-      Archived Manager Evaluations
+      Archived Evaluations
     </h1>
   </div>
 
-  <!-- Summary Section -->
+  <!-- Filter Section -->
   <div class="progress-section slide-in animation-delay-1">
+    <div class="progress-header">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white font-semibold">Filter Evaluations</h3>
+        <div class="relative">
+          <select id="evaluationTypeFilter" 
+                  class="appearance-none bg-gradient-to-r from-[#1f2937] to-[#111827] text-white border-2 border-gray-600 rounded-lg px-6 py-3 pr-10 text-sm font-medium focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 cursor-pointer transition-all duration-200 hover:border-gray-500 hover:shadow-lg shadow-md">
+            <option value="manager" {% if eval_type == 'manager' %}selected{% endif %}>Manager Evaluations ({{ manager_count }})</option>
+            <option value="employee" {% if eval_type == 'employee' %}selected{% endif %}>Employee Evaluations ({{ employee_count }})</option>
+          </select>
+          <!-- Custom dropdown arrow -->
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="progress-section slide-in animation-delay-2">
     <div class="progress-header">
       <div class="flex items-center justify-between mb-2">
         <h3 class="text-white font-semibold">Archive Summary</h3>
         <div class="flex items-center gap-4 text-sm">
-          <span class="text-gray-400">{{ total_archived }} archived evaluation{{ total_archived|pluralize }}</span>
+          <span class="text-gray-400" id="archive-count" data-eval-type="{{ eval_type }}">{{ total_archived }} archived {% if eval_type == 'employee' %}employee{% else %}manager{% endif %} evaluation{{ total_archived|pluralize }}</span>
         </div>
       </div>
     </div>
@@ -40,48 +62,59 @@
         <div class="evaluation-card card-hover slide-in animation-delay-4" data-evaluation-id="{{ eval.id }}">
           <div class="flex justify-between items-center">
             <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="user-avatar">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="user-avatar">
+                  {% if eval_type == 'employee' %}
+                    <i class="fas fa-user text-white text-sm"></i>
+                  {% else %}
                     <i class="fas fa-user-tie text-white text-sm"></i>
-                  </div>
-                  <div>
-                    <h3 class="evaluation-name">
-                      {{ eval.manager.user.get_full_name|title }} ({{ eval.manager.get_role_display }})
-                    </h3>
-                    <div class="flex items-center gap-1 mt-1">
-                      <span class="department-badge">
-                        <i class="fas fa-building mr-1"></i>
-                        {{ eval.department.title }}
-                      </span>
-                      <span class="form-badge">
-                        <i class="fas fa-file-alt mr-1"></i>
-                        {{ eval.form.name }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="evaluation-info flex items-center gap-3">
-                  <div class="flex items-center gap-1">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>{{ eval.period_start }} to {{ eval.period_end }}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    {% if eval.status == 'completed' %}
-                      <i class="fas fa-check-circle text-green-500"></i>
-                      <span class="text-green-500">Completed</span>
-                    {% else %}
-                      <i class="fas fa-clock"></i>
-                      <span>Pending</span>
-                    {% endif %}
-                  </div>
-                  {% if eval.submitted_at %}
-                    <div class="flex items-center gap-1">
-                      <i class="fas fa-clock"></i>
-                      <span class="text-gray-400 text-sm">{{ eval.submitted_at|date:"M d, Y" }}</span>
-                    </div>
                   {% endif %}
                 </div>
+                <div>
+                  <h3 class="evaluation-name">
+                    {% if eval_type == 'employee' %}
+                      {{ eval.employee.user.get_full_name|title }}
+                    {% else %}
+                      {{ eval.manager.user.get_full_name|title }}
+                    {% endif %}
+                  </h3>
+                  <div class="flex items-center gap-1 mt-1">
+                    <span class="department-badge">
+                      <i class="fas fa-building mr-1"></i>
+                      {{ eval.department.title }}
+                    </span>
+                    <span class="form-badge">
+                      <i class="fas fa-file-alt mr-1"></i>
+                      {{ eval.form.name }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="evaluation-info flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                  <i class="fas fa-calendar-alt"></i>
+                  {% if eval_type == 'employee' %}
+                    <span>{{ eval.week_start }} to {{ eval.week_end }}</span>
+                  {% else %}
+                    <span>{{ eval.period_start }} to {{ eval.period_end }}</span>
+                  {% endif %}
+                </div>
+                <div class="flex items-center gap-1">
+                  {% if eval.status == 'completed' %}
+                    <i class="fas fa-check-circle text-green-500"></i>
+                    <span class="text-green-500">Completed</span>
+                  {% else %}
+                    <i class="fas fa-clock"></i>
+                    <span>Pending</span>
+                  {% endif %}
+                </div>
+                {% if eval.submitted_at %}
+                  <div class="flex items-center gap-1">
+                    <i class="fas fa-clock"></i>
+                    <span class="text-gray-400 text-sm">{{ eval.submitted_at|date:"M d, Y" }}</span>
+                  </div>
+                {% endif %}
               </div>
             </div>
             
@@ -91,16 +124,24 @@
                 Archived
               </span>
               {% if eval.status == 'completed' %}
-                <a href="{% url 'evaluation:view_manager_evaluation' eval.id %}" class="btn-modern">
-                  <i class="fas fa-eye"></i>
-                  View
-                </a>
+                {% if eval_type == 'employee' %}
+                  <a href="{% url 'evaluation:view_evaluation' eval.id %}" class="btn-modern">
+                    <i class="fas fa-eye"></i>
+                    View
+                  </a>
+                {% else %}
+                  <a href="{% url 'evaluation:view_manager_evaluation' eval.id %}" class="btn-modern">
+                    <i class="fas fa-eye"></i>
+                    View
+                  </a>
+                {% endif %}
               {% endif %}
               <button class="btn-modern btn-unarchive"
                       data-evaluation-id="{{ eval.id }}"
-                      data-manager-name="{{ eval.manager.user.get_full_name|title }}"
+                      data-eval-type="{{ eval_type }}"
+                      data-name="{% if eval_type == 'employee' %}{{ eval.employee.user.get_full_name|title }}{% else %}{{ eval.manager.user.get_full_name|title }}{% endif %}"
                       data-is-archived="true">
-                <i class="fas fa-box-open mr-1"></i>
+                <i class="fas fa-box-open"></i>
                 Unarchive
               </button>
             </div>
@@ -108,24 +149,68 @@
         </div>
       {% endfor %}
     </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span class="text-gray-400" id="pagination-info">
+          Showing {{ evaluations.start_index }} - {{ evaluations.end_index }} of {{ total_archived }} evaluations
+        </span>
+      </div>
+      <div class="pagination-controls">
+        {% if evaluations.has_previous %}
+          <a href="?type={{ eval_type }}&page=1" class="pagination-btn" title="First page">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+          <a href="?type={{ eval_type }}&page={{ evaluations.previous_page_number }}" class="pagination-btn" title="Previous page">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        {% else %}
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-double-left"></i>
+          </span>
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-left"></i>
+          </span>
+        {% endif %}
+
+        <span class="pagination-current">
+          Page {{ evaluations.number }} of {{ evaluations.paginator.num_pages }}
+        </span>
+
+        {% if evaluations.has_next %}
+          <a href="?type={{ eval_type }}&page={{ evaluations.next_page_number }}" class="pagination-btn" title="Next page">
+            <i class="fas fa-angle-right"></i>
+          </a>
+          <a href="?type={{ eval_type }}&page={{ evaluations.paginator.num_pages }}" class="pagination-btn" title="Last page">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        {% else %}
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-right"></i>
+          </span>
+          <span class="pagination-btn pagination-btn-disabled">
+            <i class="fas fa-angle-double-right"></i>
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-navigation">
+      <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="btn-modern">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+      </a>
+    </div>
   {% else %}
     <div class="empty-state slide-in">
       <div class="empty-state-icon">
         <i class="fas fa-archive text-white text-xl"></i>
       </div>
       <h2 class="empty-state-title">No Archived Evaluations</h2>
-      <p class="empty-state-description">You haven't archived any manager evaluations yet.</p>
-      <a href="{% url 'evaluation:manager_evaluation_dashboard' %}" class="btn-modern">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
-    </div>
-  {% endif %}
-
-  <!-- Bottom Navigation -->
-  {% if evaluations %}
-    <div class="bottom-navigation">
-      <a href="{% url 'evaluation:manager_evaluation_dashboard' %}" class="btn-modern">
+      <p class="empty-state-description">No archived {% if eval_type == 'employee' %}employee{% else %}manager{% endif %} evaluations found.</p>
+      <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="btn-modern">
         <i class="fas fa-arrow-left"></i>
         Back to Dashboard
       </a>
@@ -138,7 +223,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <i class="fas fa-archive"></i>
-      <h3>Archive Manager Evaluation</h3>
+      <h3>Archive Evaluation</h3>
     </div>
     <div class="modal-body">
       <p>Archive modal content</p>
@@ -150,4 +235,3 @@
   </div>
 </div>
 {% endblock %}
-

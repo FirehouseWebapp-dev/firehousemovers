@@ -33,6 +33,7 @@ urlpatterns += [
     path("analytics/", views.senior_manager_analytics_dashboard, name="senior_analytics_dashboard"),
     path("analytics/department/<int:department_id>/", views.analytics_department_detail, name="analytics_department_detail"),
     path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
+    path("analytics/employee/<int:employee_id>/evaluations/", views.employee_evaluations_list, name="employee_evaluations_list"),
 ]
 
 # Report Generation (Senior Management)

@@ -31,22 +31,22 @@
   
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-red-500">{{ evaluations|length }}</div>
+      <div class="text-2xl font-bold text-red-500" id="total-count">{{ page_obj.paginator.count }}</div>
       <div class="text-sm text-gray-400">Total Evaluations</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-green-500">{{ completed_count }}</div>
+      <div class="text-2xl font-bold text-green-500" id="completed-count">{{ completed_count }}</div>
       <div class="text-sm text-gray-400">Completed</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-yellow-500">{{ pending_count }}</div>
+      <div class="text-2xl font-bold text-yellow-500" id="pending-count">{{ pending_count }}</div>
       <div class="text-sm text-gray-400">Pending</div>
     </div>
     
     <div class="bg-[#2a2a2a] rounded-lg p-4">
-      <div class="text-2xl font-bold text-orange-500">{{ overdue_count }}</div>
+      <div class="text-2xl font-bold text-orange-500" id="overdue-count">{{ overdue_count }}</div>
       <div class="text-sm text-gray-400">Overdue</div>
     </div>
   </div>
@@ -57,7 +57,7 @@
   
   {% if evaluations %}
     <div class="space-y-3">
-      {% for evaluation in evaluations|slice:":15" %}
+      {% for evaluation in evaluations %}
         <div class="flex justify-between items-center border-b border-gray-700 py-3" data-evaluation-id="{{ evaluation.id }}">
           <div class="flex-1">
             <div class="text-red-500 font-semibold">{{ evaluation.employee.user.get_full_name|title }}</div>
@@ -107,6 +107,9 @@
         </div>
       {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% include 'evaluation/partials/pagination.html' %}
   {% else %}
     <div class="text-center py-8">
       <i class="fas fa-clipboard-list text-4xl text-gray-600 mb-4"></i>

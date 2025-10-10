@@ -516,7 +516,18 @@ def toggle_archive_helper(request, evaluation_id, model_class, owner_field, targ
     
     # Verify permissions
     owner = getattr(evaluation, owner_field)
-    if owner != checker.user_profile:
+    
+    # For managers: only allow archiving evaluations they have actually evaluated (have answers)
+    if checker.is_manager() and owner == checker.user_profile:
+        if not evaluation.answers.exists():
+            logger.warning(
+                f"Permission denied: Manager {request.user.id} attempted to archive {model_class.__name__} "
+                f"{evaluation_id} that they have not evaluated (no answers)"
+            )
+            return JsonResponse({'success': False, 'error': 'You can only archive evaluations you have completed'}, status=403)
+    
+    # Allow the owner (manager) or senior managers/admins to archive
+    if owner != checker.user_profile and not (checker.is_senior_management() or checker.is_admin()):
         logger.warning(
             f"Permission denied: User {request.user.id} attempted to archive {model_class.__name__} "
             f"{evaluation_id} owned by {owner.user.id}"

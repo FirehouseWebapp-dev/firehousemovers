@@ -1,17 +1,19 @@
-// Archive/Unarchive modal functionality for manager evaluations (archived page)
+// Archived Manager and Employee Evaluations JavaScript
+// Handles filtering and unarchive functionality for both manager and employee evaluations
+
 let currentEvaluationId = null;
 let currentButton = null;
-let currentCard = null;
+let currentEvalType = null;
 
 function openArchiveModal(button) {
     const evaluationId = button.dataset.evaluationId;
-    const managerName = button.dataset.managerName;
+    const evalType = button.dataset.evalType;
+    const name = button.dataset.name;
     const isArchived = button.dataset.isArchived === 'true';
     
     currentEvaluationId = evaluationId;
     currentButton = button;
-    // Store card reference immediately
-    currentCard = document.querySelector(`.evaluation-card[data-evaluation-id="${evaluationId}"]`);
+    currentEvalType = evalType;
     
     const modal = document.getElementById('archiveModal');
     const modalTitle = modal.querySelector('.modal-header h3');
@@ -21,18 +23,18 @@ function openArchiveModal(button) {
     
     if (isArchived) {
         // Unarchive mode
-        modalTitle.textContent = 'Unarchive Manager Evaluation';
-        modalBody.innerHTML = `<p>Are you sure you want to unarchive the evaluation for <strong>${managerName}</strong>?</p>
-                               <p class="text-sm mt-2">This evaluation will become visible to the manager again.</p>`;
+        modalTitle.textContent = 'Unarchive Evaluation';
+        modalBody.innerHTML = `<p>Are you sure you want to unarchive the evaluation for <strong>${name}</strong>?</p>
+                               <p class="text-sm mt-2">This evaluation will become visible again.</p>`;
         confirmBtn.textContent = 'Unarchive';
         confirmBtn.classList.add('btn-unarchive');
         confirmBtn.classList.remove('modal-btn-archive');
         icon.className = 'fas fa-box-open';
     } else {
         // Archive mode
-        modalTitle.textContent = 'Archive Manager Evaluation';
-        modalBody.innerHTML = `<p>Are you sure you want to archive the evaluation for <strong>${managerName}</strong>?</p>
-                               <p class="text-sm mt-2">This evaluation will be hidden from the manager and moved to your archived evaluations.</p>`;
+        modalTitle.textContent = 'Archive Evaluation';
+        modalBody.innerHTML = `<p>Are you sure you want to archive the evaluation for <strong>${name}</strong>?</p>
+                               <p class="text-sm mt-2">This evaluation will be hidden from the main view but can be restored later.</p>`;
         confirmBtn.textContent = 'Archive';
         confirmBtn.classList.remove('btn-unarchive');
         confirmBtn.classList.add('modal-btn-archive');
@@ -58,7 +60,7 @@ function closeArchiveModal() {
     // Clear current references
     currentEvaluationId = null;
     currentButton = null;
-    currentCard = null;
+    currentEvalType = null;
 }
 
 function confirmArchive() {
@@ -73,7 +75,15 @@ function confirmArchive() {
     confirmBtn.disabled = true;
     confirmBtn.textContent = isArchived ? 'Unarchiving...' : 'Archiving...';
     
-    fetch(`/evaluation/manager-evaluation/${currentEvaluationId}/toggle-archive/`, {
+    // Determine the correct URL based on evaluation type
+    let url;
+    if (currentEvalType === 'employee') {
+        url = `/evaluation/evaluation/${currentEvaluationId}/toggle-archive/`;
+    } else {
+        url = `/evaluation/manager-evaluation/${currentEvaluationId}/toggle-archive/`;
+    }
+    
+    fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -81,57 +91,81 @@ function confirmArchive() {
         },
         credentials: 'same-origin'
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.success) {
             const newIsArchived = data.is_archived;
+            const savedEvaluationId = currentEvaluationId;
             
-            // If we're on the archived page and just unarchived, remove the card instantly
-            if (isArchived && !newIsArchived) {
-                // Use stored card reference
-                if (currentCard) {
-                    currentCard.remove();
+            // Close modal and clear references
+            closeArchiveModal();
+            
+            // If unarchiving (moving from archived to active), remove the card from the page
+            if (!newIsArchived) {
+                // Find and remove the card
+                const card = document.querySelector(`.evaluation-card[data-evaluation-id="${savedEvaluationId}"]`);
+                if (card) {
+                    // Add fade-out animation
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
                     
-                    // Close modal after removal
-                    closeArchiveModal();
-                    
-                    // Show success message
-                    showSuccessMessage(data.message);
-                    
-                    // Check if there are no more evaluations
-                    const remainingCards = document.querySelectorAll('.evaluation-card');
-                    if (remainingCards.length === 0) {
-                        location.reload();
-                    }
+                    setTimeout(() => {
+                        card.remove();
+                        
+                        // Update the archive count
+                        updateArchiveCount();
+                        
+                        // Update the dropdown filter count
+                        const filterSelect = document.getElementById('evaluationTypeFilter');
+                        if (filterSelect) {
+                            const selectedOption = filterSelect.options[filterSelect.selectedIndex];
+                            const currentCount = parseInt(selectedOption.textContent.match(/\((\d+)\)/)[1]);
+                            const newCount = currentCount - 1;
+                            const evalTypeText = currentEvalType === 'employee' ? 'Employee' : 'Manager';
+                            selectedOption.textContent = `${evalTypeText} Evaluations (${newCount})`;
+                        }
+                        
+                        // Check if there are any cards left
+                        const remainingCards = document.querySelectorAll('.evaluation-card');
+                        if (remainingCards.length === 0) {
+                            // Show empty state
+                            const evalList = document.querySelector('.evaluation-list');
+                            const bottomNav = document.querySelector('.bottom-navigation');
+                            if (evalList) evalList.remove();
+                            if (bottomNav) bottomNav.remove();
+                            
+                            const pageContainer = document.querySelector('.pending-evaluations-page');
+                            const evalTypeText = currentEvalType === 'employee' ? 'employee' : 'manager';
+                            const emptyState = `
+                                <div class="empty-state slide-in">
+                                    <div class="empty-state-icon">
+                                        <i class="fas fa-archive text-white text-xl"></i>
+                                    </div>
+                                    <h2 class="empty-state-title">No Archived Evaluations</h2>
+                                    <p class="empty-state-description">No archived ${evalTypeText} evaluations found.</p>
+                                    <a href="/evaluation/analytics/" class="btn-modern">
+                                        <i class="fas fa-arrow-left"></i>
+                                        Back to Dashboard
+                                    </a>
+                                </div>
+                            `;
+                            pageContainer.insertAdjacentHTML('beforeend', emptyState);
+                        }
+                    }, 300);
                 }
             } else {
-                // Update button state without page reload (for non-archived pages)
-                const buttonToUpdate = currentButton; // Save reference before clearing
-                const savedEvalId = currentEvaluationId;
-                
-                // Close modal first
-                closeArchiveModal();
-                
-                if (buttonToUpdate) {
-                    buttonToUpdate.dataset.isArchived = newIsArchived;
-                    
-                    if (newIsArchived) {
-                        buttonToUpdate.innerHTML = '<i class="fas fa-box-open mr-1"></i>Unarchive';
-                        buttonToUpdate.classList.add('btn-unarchive');
-                    } else {
-                        buttonToUpdate.innerHTML = '<i class="fas fa-archive mr-1"></i>Archive';
-                        buttonToUpdate.classList.remove('btn-unarchive');
-                    }
+                // If archiving, update button state (shouldn't happen on this page, but keep for safety)
+                const button = document.querySelector(`button[data-evaluation-id="${savedEvaluationId}"]`);
+                if (button) {
+                    button.dataset.isArchived = newIsArchived;
+                    button.innerHTML = '<i class="fas fa-box-open mr-1"></i> Unarchive';
+                    button.classList.add('archived');
                 }
-                
-                // Show success message
-                showSuccessMessage(data.message);
             }
+            
+            // Show success message
+            showSuccessMessage(data.message);
         } else {
             alert(data.error || 'Failed to toggle archive status');
             confirmBtn.disabled = false;
@@ -140,10 +174,48 @@ function confirmArchive() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred: ' + error.message);
+        alert('An error occurred. Please try again.');
         confirmBtn.disabled = false;
         confirmBtn.textContent = isArchived ? 'Unarchive' : 'Archive';
     });
+}
+
+function updateArchiveCount() {
+    // Update the archive count in the summary
+    const archiveCountEl = document.getElementById('archive-count');
+    if (archiveCountEl) {
+        const evalType = archiveCountEl.dataset.evalType || 'manager';
+        const text = archiveCountEl.textContent.trim();
+        const match = text.match(/^(\d+)/);
+        if (match) {
+            const currentCount = parseInt(match[1]);
+            const newCount = Math.max(0, currentCount - 1);
+            const evalTypeText = evalType === 'employee' ? 'employee' : 'manager';
+            const pluralText = newCount === 1 ? 'evaluation' : 'evaluations';
+            archiveCountEl.textContent = `${newCount} archived ${evalTypeText} ${pluralText}`;
+        }
+    }
+    
+    // Update the pagination info
+    const paginationInfoEl = document.getElementById('pagination-info');
+    if (paginationInfoEl) {
+        const text = paginationInfoEl.textContent.trim();
+        const match = text.match(/^Showing (\d+) - (\d+) of (\d+)/);
+        if (match) {
+            const startIndex = parseInt(match[1]);
+            let endIndex = parseInt(match[2]);
+            const totalCount = parseInt(match[3]);
+            
+            const newTotal = Math.max(0, totalCount - 1);
+            const newEnd = Math.max(0, endIndex - 1);
+            const pluralText = newTotal === 1 ? 'evaluation' : 'evaluations';
+            
+            // Update the text
+            if (newTotal > 0) {
+                paginationInfoEl.textContent = `Showing ${startIndex} - ${newEnd} of ${newTotal} ${pluralText}`;
+            }
+        }
+    }
 }
 
 function showSuccessMessage(message) {
@@ -161,20 +233,13 @@ function showSuccessMessage(message) {
     }, 3000);
 }
 
-// Close modal when clicking outside
-document.addEventListener('click', function(event) {
-    const modal = document.getElementById('archiveModal');
-    if (modal && event.target === modal) {
-        closeArchiveModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeArchiveModal();
-    }
-});
+// Filter change handler
+function handleFilterChange(selectElement) {
+    const evalType = selectElement.value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('type', evalType);
+    window.location.href = url.toString();
+}
 
 function getCSRFToken() {
     // Try to get from meta tag first
@@ -199,10 +264,26 @@ function getCSRFToken() {
     return cookieValue;
 }
 
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('archiveModal');
+    if (modal && event.target === modal) {
+        closeArchiveModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeArchiveModal();
+    }
+});
+
 // Initialize event listeners when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners to all unarchive buttons
-    document.querySelectorAll('.btn-unarchive').forEach(button => {
+    const unarchiveButtons = document.querySelectorAll('.btn-unarchive');
+    unarchiveButtons.forEach(button => {
         button.addEventListener('click', function() {
             openArchiveModal(this);
         });
@@ -225,5 +306,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 buttons[1].addEventListener('click', confirmArchive);
             }
         }
+    }
+    
+    // Add event listener to filter dropdown
+    const filterSelect = document.getElementById('evaluationTypeFilter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', function(e) {
+            handleFilterChange(this);
+        });
     }
 });

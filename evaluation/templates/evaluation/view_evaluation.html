@@ -135,6 +135,10 @@
             Edit Evaluation
           </a>
         {% endif %}
+      {% elif role.is_senior_management or role.is_admin %}
+        <a href="{% url 'evaluation:senior_analytics_dashboard' %}" class="btn btn-secondary">
+          Back to Analytics Dashboard
+        </a>
       {% else %}
         <a href="{% url 'evaluation:my_evaluations' %}" class="btn btn-secondary">
           Back to My Evaluations

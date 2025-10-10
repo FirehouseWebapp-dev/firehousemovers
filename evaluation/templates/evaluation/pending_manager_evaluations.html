@@ -35,7 +35,7 @@
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar">
-          <div class="progress-fill" style="width: {{ percent_complete }}%"></div>
+          <div class="progress-fill" data-progress="{{ percent_complete }}"></div>
         </div>
       </div>
     </div>
@@ -113,6 +113,9 @@
         </div>
       {% endfor %}
     </div>
+    
+    <!-- Pagination -->
+    {% include 'evaluation/partials/pagination.html' %}
   {% else %}
     <div class="empty-state slide-in">
       <div class="empty-state-icon">
