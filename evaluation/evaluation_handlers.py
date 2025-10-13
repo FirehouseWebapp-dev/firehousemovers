@@ -220,9 +220,10 @@ def handle_my_evaluations(request, config, template_name):
         # Normal case: user viewing their own evaluations
         evaluatee_field_filter = {config.evaluatee_field: checker.user_profile}
     
+    # Filter out archived evaluations - they should not be shown to the person being evaluated
     evaluations = (
         config.model_class.objects
-        .filter(**evaluatee_field_filter)
+        .filter(**evaluatee_field_filter, is_archived=False)
         .select_related(f"{config.evaluator_field}__user", "form", "department")
         .order_by(f"-{config.period_start_field}")
     )
@@ -239,8 +240,23 @@ def handle_my_evaluations(request, config, template_name):
     # Calculate percentage
     percent_complete = (completed / total * 100) if total > 0 else 0
     
+    # Pagination - 10 evaluations per page
+    from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+    
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(evaluations, 10)  # 10 items per page
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+    
     template_context = {
-        "evaluations": evaluations,
+        "evaluations": page_obj,
+        "page_obj": page_obj,
+        "is_paginated": paginator.num_pages > 1,
         "total": total,
         "completed": completed,
         "pending": pending,
@@ -255,6 +271,7 @@ def handle_my_evaluations(request, config, template_name):
 def handle_pending_evaluations(request, config, template_name):
     """
     Generic handler for "pending evaluations" views.
+    Admins and superusers can see all pending evaluations.
     
     Args:
         request: Django request object
@@ -269,19 +286,27 @@ def handle_pending_evaluations(request, config, template_name):
     checker = get_role_checker(request.user)
     today = now().date()
     
-    # Get pending evaluations where user is the evaluator
-    evaluator_field_filter = {config.evaluator_field: checker.user_profile}
-    pending_evaluations = (
-        config.model_class.objects
-        .filter(**evaluator_field_filter, status=EvaluationStatus.PENDING)
-        .select_related(f"{config.evaluatee_field}__user", "form", "department")
-        .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
-    )
-    
-    # Calculate all stats in a single optimized query using aggregation
-    
-    # Get all evaluations for this evaluator to calculate total stats
-    all_evaluations = config.model_class.objects.filter(**evaluator_field_filter)
+    # Admins and superusers see ALL pending evaluations (excluding archived), managers see only theirs
+    if checker.is_admin() or request.user.is_superuser:
+        pending_evaluations = (
+            config.model_class.objects
+            .filter(status=EvaluationStatus.PENDING, is_archived=False)
+            .select_related(f"{config.evaluatee_field}__user", f"{config.evaluator_field}__user", "form", "department")
+            .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
+        )
+        # Get all non-archived evaluations for stats
+        all_evaluations = config.model_class.objects.filter(is_archived=False)
+    else:
+        # Get pending evaluations where user is the evaluator (excluding archived)
+        evaluator_field_filter = {config.evaluator_field: checker.user_profile}
+        pending_evaluations = (
+            config.model_class.objects
+            .filter(**evaluator_field_filter, status=EvaluationStatus.PENDING, is_archived=False)
+            .select_related(f"{config.evaluatee_field}__user", "form", "department")
+            .order_by(f"-{config.period_start_field}", f"{config.evaluatee_field}__user__first_name")
+        )
+        # Get all non-archived evaluations for this evaluator to calculate total stats
+        all_evaluations = config.model_class.objects.filter(**evaluator_field_filter, is_archived=False)
     
     stats = calculate_eval_stats(all_evaluations, today, config.period_end_field)
     
@@ -292,8 +317,23 @@ def handle_pending_evaluations(request, config, template_name):
     
     percent_complete = (completed / total * 100) if total > 0 else 0
     
+    # Pagination - 10 evaluations per page
+    from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+    
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(pending_evaluations, 10)  # 10 items per page
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+    
     template_context = {
-        "pending_evaluations": pending_evaluations,
+        "pending_evaluations": page_obj,
+        "page_obj": page_obj,
+        "is_paginated": paginator.num_pages > 1,
         "completed": completed,
         "total": total,
         "pending": pending,

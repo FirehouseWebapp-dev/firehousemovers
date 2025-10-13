@@ -33,6 +33,15 @@ urlpatterns += [
     path("analytics/", views.senior_manager_analytics_dashboard, name="senior_analytics_dashboard"),
     path("analytics/department/<int:department_id>/", views.analytics_department_detail, name="analytics_department_detail"),
     path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
+    path("analytics/employee/<int:employee_id>/evaluations/", views.employee_evaluations_list, name="employee_evaluations_list"),
+]
+
+# Report Generation (Senior Management)
+urlpatterns += [
+    path("reports/", views.report_generation, name="report_generation"),
+    path("reports/employee-pdf/", views.generate_employee_report_pdf, name="generate_employee_report_pdf"),
+    path("reports/manager-pdf/", views.generate_manager_report_pdf, name="generate_manager_report_pdf"),
+    path("reports/trends-pdf/", views.generate_trends_report_pdf, name="generate_trends_report_pdf"),
 ]
 
 # Reusable Analytics Dashboard
@@ -57,4 +66,12 @@ urlpatterns += [
     path("forms/questions/<int:question_id>/delete/", views.question_delete, name="question_delete"),
     path("forms/questions/<int:question_id>/choices/add/", views.choice_add, name="choice_add"),
     path("forms/<int:pk>/update_order/", views.update_question_order, name="update_question_order"),
+]
+
+# Archive functionality
+urlpatterns += [
+    path("evaluation/<int:evaluation_id>/toggle-archive/", views.toggle_evaluation_archive, name="toggle_evaluation_archive"),
+    path("manager-evaluation/<int:evaluation_id>/toggle-archive/", views.toggle_manager_evaluation_archive, name="toggle_manager_evaluation_archive"),
+    path("archived/", views.archived_evaluations, name="archived_evaluations"),
+    path("manager-evaluations/archived/", views.archived_manager_evaluations, name="archived_manager_evaluations"),
 ]

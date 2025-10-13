@@ -9,6 +9,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Define default questions config centrally using slugs for robustness
+# 
+# IMPORTANT: Department slugs must match these exact values to generate correct questions:
+#   - "sales"        → Sales department questions
+#   - "accounting"   → Accounting department questions  
+#   - "claims"       → Claims department questions
+#   - "it"           → IT department questions
+#   - "operations"   → Operations department questions
+#   - "warehouse"    → Warehouse department questions
+#   - "drivers"      → Drivers department questions
+#
+# When creating/editing departments, use these exact slug values.
 DEFAULT_QUESTIONS = {
     # Manager Evaluations (using form slugs)
     ("monthly-evaluation", None): [
@@ -35,53 +46,53 @@ DEFAULT_QUESTIONS = {
 
     # Department Weekly Evaluations (using department slugs)
     ("weekly-evaluation", "sales"): [
-        {"text": "How many new leads did the employee generate this week?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "How effectively did the employee convert leads into bookings?", "qtype": Question.QType.STARS, "required": True, "order": 1, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How satisfied are customers after interacting with this employee?", "qtype": Question.QType.EMOJI, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How well does the employee meet or exceed sales targets?", "qtype": Question.QType.STARS, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you in this employee's ability to close future deals?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many leads or client inquiries did the employee handle this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these leads were successfully converted into bookings or sales?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How accurately and promptly did the employee maintain sales records and client data?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How satisfied are customers after interacting with this employee?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you in this employee's ability to meet or exceed future sales goals?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "accounting"): [
-        {"text": "How many invoices did the employee process this week?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of the employee's work was error-free?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How accurate and detail-oriented is this employee?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How timely is the employee in completing accounting tasks?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you in this employee's ability to meet financial deadlines?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many financial tasks (invoices, reconciliations, reports) did the employee complete this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of the employee's accounting work was error-free?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How accurately and efficiently did the employee manage financial documentation?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How timely is the employee in completing accounting responsibilities?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you in this employee's ability to meet financial compliance and deadlines?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "claims"): [
-        {"text": "How many claims did the employee process this week?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of the employee's claims were resolved within the standard timeframe?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How well does this employee document and handle claim cases?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How would you rate this employee's communication with customers during claims?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you that this employee handles claims fairly and efficiently?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many claims did the employee process or review this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these claims were resolved within the standard timeframe?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How accurately and thoroughly did the employee handle claim documentation and communication?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How satisfied are customers with the employee's support during the claim process?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you that this employee can handle complex or high-priority claims effectively?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "it"): [
-        {"text": "How many IT support requests did the employee resolve this week?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of issues were resolved within SLA by this employee?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How reliable is the employee in maintaining system uptime and functionality?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How would you rate employee satisfaction with the IT support this person provides?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you in this employee's ability to keep systems secure and efficient?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many IT support tickets or tasks did the employee complete this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these issues were resolved within SLA or target timeframe?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How accurately and effectively did the employee troubleshoot and maintain systems?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How satisfied are internal users with the employee's IT support service?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you in this employee's ability to maintain system reliability and security?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "operations"): [
-        {"text": "How many moves were supervised or completed by this employee?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of moves under this employee's supervision were damage-free?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How efficient is this employee's teamwork and leadership during moves?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How satisfied are customers with this employee's on-site service?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you that this employee can handle future workloads effectively?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many moves, setups, or field operations did the employee handle this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these operations were completed without damage or issues?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How effectively did the employee lead and coordinate teams during operations?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How satisfied are customers with this employee's on-site service quality?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you in this employee's ability to manage future high-volume workloads?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "warehouse"): [
-        {"text": "How many storage/move-in/move-out tasks did the employee handle?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of items handled by this employee were damage-free?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How accurate is this employee in managing inventory records?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How would you rate this employee's efficiency in loading/unloading operations?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How many storage, move-in, or move-out tasks did the employee complete this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these tasks were completed without damage or discrepancies?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How accurately and responsibly did the employee manage inventory and stock records?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How efficient is the employee during loading, unloading, and warehouse operations?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
         {"text": "How confident are you in this employee's ability to maintain warehouse safety and organization?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
     ("weekly-evaluation", "drivers"): [
-        {"text": "How many moves/deliveries did the driver complete this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
-        {"text": "What percentage of this driver's moves were completed on time?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
-        {"text": "How safe and compliant was this driver in following traffic and company regulations?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How would you rate customer satisfaction with this driver's professionalism and behavior?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
-        {"text": "How confident are you in this driver's ability to handle long-distance or complex moves without issues?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
+        {"text": "How many deliveries or moves did the driver complete this week/month?", "qtype": Question.QType.NUMBER, "required": True, "order": 0, "min_value": 0, "include_in_trends": True},
+        {"text": "What percentage of these moves were completed on time and without incident?", "qtype": Question.QType.NUMBER, "required": True, "order": 1, "min_value": 0, "max_value": 100, "include_in_trends": True},
+        {"text": "How safely and responsibly did the driver operate vehicles and follow company regulations?", "qtype": Question.QType.STARS, "required": True, "order": 2, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How satisfied are customers with the driver's professionalism and service quality?", "qtype": Question.QType.EMOJI, "required": True, "order": 3, "min_value": 1, "max_value": 5, "include_in_trends": True},
+        {"text": "How confident are you in this driver's ability to handle long-distance or high-priority moves efficiently?", "qtype": Question.QType.RATING, "required": True, "order": 4, "min_value": 1, "max_value": 10, "include_in_trends": True},
     ],
 }
 
@@ -101,15 +112,6 @@ def invalidate_cache_for_instance(instance, action="updated"):
                 invalidate_user_analytics_cache(obj.user.id)
 
 
-@receiver(post_save, sender=Department)
-def auto_populate_department_slug(sender, instance, created, **kwargs):
-    """
-    Auto-populate department slug from title.
-    """
-    if not instance.slug:
-        from django.utils.text import slugify
-        instance.slug = slugify(instance.title)
-        instance.save(update_fields=['slug'])
 
 
 @receiver(post_save, sender=EvalForm)

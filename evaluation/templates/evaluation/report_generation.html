@@ -1,0 +1,278 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}Report Generation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/analytics-dashboard.css' %}">
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="analytics-header bg-[#1a1a1a] border-b border-gray-700 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-red-500 mb-2">Report Generation</h1>
+            <p class="text-gray-400">Generate comprehensive evaluation reports and analytics</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-400">Last Updated</p>
+            <p class="text-sm text-white">{{ date_ranges.today|date:"M d, Y" }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Report Generation Content -->
+<div class="analytics-content">
+    <!-- Report Type Selection -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Employee Evaluation Reports -->
+        <div class="analytics-card">
+            <div class="analytics-card-header border-b border-gray-700 pb-4 mb-4">
+                <div class="analytics-card-icon bg-blue-600">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Employee Evaluation Reports</h3>
+                    <p class="text-gray-400">Generate reports for employee evaluations</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <form id="employee-report-form" class="space-y-4">
+                    <div>
+                        <label for="emp-department" class="block text-sm font-medium text-gray-300 mb-2">Department</label>
+                        <select id="emp-department" name="department" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="all">All Departments</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="emp-date-range" class="block text-sm font-medium text-gray-300 mb-2">Date range</label>
+                        <select id="emp-date-range" name="date_range" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="180">Last 6 Months</option>
+                            <option value="365">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div id="emp-custom-dates" class="hidden space-y-2">
+                        <div>
+                            <label for="emp-start-date" class="block text-sm font-medium text-gray-300 mb-2">Start date</label>
+                            <input type="date" id="emp-start-date" name="start_date" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                        <div>
+                            <label for="emp-end-date" class="block text-sm font-medium text-gray-300 mb-2">End date</label>
+                            <input type="date" id="emp-end-date" name="end_date" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="emp-format" class="block text-sm font-medium text-gray-300 mb-2">Format</label>
+                        <select id="emp-format" name="format" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="pdf">PDF Report</option>
+                        </select>
+                    </div>
+                    
+                    <button type="button" onclick="generateEmployeeReport()" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded transition-colors font-medium">
+                        <i class="fas fa-file-download mr-2"></i> Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manager Evaluation Reports -->
+        <div class="analytics-card">
+            <div class="analytics-card-header border-b border-gray-700 pb-4 mb-4">
+                <div class="analytics-card-icon bg-green-600">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Manager Evaluation Reports</h3>
+                    <p class="text-gray-400">Generate reports for manager evaluations</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <form id="manager-report-form" class="space-y-4">
+                    <div>
+                        <label for="mgr-department" class="block text-sm font-medium text-gray-300 mb-2">Department</label>
+                        <select id="mgr-department" name="department" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="all">All Departments</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="mgr-date-range" class="block text-sm font-medium text-gray-300 mb-2">Date range</label>
+                        <select id="mgr-date-range" name="date_range" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="180">Last 6 Months</option>
+                            <option value="365">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div id="mgr-custom-dates" class="hidden space-y-2">
+                        <div>
+                            <label for="mgr-start-date" class="block text-sm font-medium text-gray-300 mb-2">Start date</label>
+                            <input type="date" id="mgr-start-date" name="start_date" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                        <div>
+                            <label for="mgr-end-date" class="block text-sm font-medium text-gray-300 mb-2">End date</label>
+                            <input type="date" id="mgr-end-date" name="end_date" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="mgr-format" class="block text-sm font-medium text-gray-300 mb-2">Format</label>
+                        <select id="mgr-format" name="format" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="pdf">PDF Report</option>
+                        </select>
+                    </div>
+                    
+                    <button type="button" onclick="generateManagerReport()" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded transition-colors font-medium">
+                        <i class="fas fa-file-download mr-2"></i> Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Analytics Reports -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Performance Trends Report -->
+        <div class="analytics-card">
+            <div class="analytics-card-header border-b border-gray-700 pb-4 mb-4">
+                <div class="analytics-card-icon bg-purple-600">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="analytics-card-title">
+                    <h3>Performance Trends Report</h3>
+                    <p class="text-gray-400">Analyze performance trends over time</p>
+                </div>
+            </div>
+            <div class="analytics-card-content">
+                <form id="trends-report-form" class="space-y-4">
+                    <div>
+                        <label for="trends-department" class="block text-sm font-medium text-gray-300 mb-2">Department</label>
+                        <select id="trends-department" name="department" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="all">All Departments</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="trends-period" class="block text-sm font-medium text-gray-300 mb-2">Time period</label>
+                        <select id="trends-period" name="period" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="90">Last 90 Days</option>
+                            <option value="180">Last 6 Months</option>
+                            <option value="365">Last Year</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="trends-format" class="block text-sm font-medium text-gray-300 mb-2">Format</label>
+                        <select id="trends-format" name="format" class="w-full bg-[#262626] text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-red-500">
+                            <option value="pdf">PDF Report</option>
+                        </select>
+                    </div>
+                    
+                    <button type="button" onclick="generateTrendsReport()" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded transition-colors font-medium">
+                        <i class="fas fa-file-download mr-2"></i> Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Report History -->
+    <div class="analytics-card">
+        <div class="analytics-card-header border-b border-gray-700 pb-4 mb-4">
+            <div class="analytics-card-icon bg-gray-600">
+                <i class="fas fa-history"></i>
+            </div>
+            <div class="analytics-card-title">
+                <h3>Recent Reports</h3>
+                <p class="text-gray-400">Last 10 generated reports</p>
+            </div>
+        </div>
+        <div class="analytics-card-content">
+            {% if recent_reports %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-3 px-2 text-gray-400 font-medium">Report Type</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-medium">Department</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-medium">Period</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-medium">Generated By</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-medium">Generated At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in recent_reports %}
+                            <tr class="border-b border-gray-800 hover:bg-[#262626] transition-colors">
+                                <td class="py-3 px-2">
+                                    <span class="inline-flex items-center">
+                                        {% if report.report_type == 'employee' %}
+                                            <i class="fas fa-users text-blue-500 mr-2"></i>
+                                        {% elif report.report_type == 'manager' %}
+                                            <i class="fas fa-user-tie text-green-500 mr-2"></i>
+                                        {% elif report.report_type == 'trends' %}
+                                            <i class="fas fa-chart-line text-purple-500 mr-2"></i>
+                                        {% endif %}
+                                        <span class="text-white">{{ report.get_report_type_display }}</span>
+                                    </span>
+                                </td>
+                                <td class="py-3 px-2 text-gray-300">
+                                    {{ report.department.title|default:"All Departments" }}
+                                </td>
+                                <td class="py-3 px-2 text-gray-300">
+                                    {{ report.date_from }} to {{ report.date_to }}
+                                </td>
+                                <td class="py-3 px-2 text-gray-300">
+                                    {{ report.generated_by.user.get_full_name }}
+                                </td>
+                                <td class="py-3 px-2 text-gray-300">
+                                    {{ report.generated_at|date:"M d, Y H:i" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-400 text-center py-8">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    No reports generated yet
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-[#1a1a1a] border border-gray-700 rounded-lg p-8 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-red-500 mx-auto mb-4"></div>
+        <p class="text-white text-lg font-medium">Generating Report...</p>
+        <p class="text-gray-400 text-sm mt-2">This may take a few moments</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/report_generation.js' %}"></script>
+{% endblock %}
+

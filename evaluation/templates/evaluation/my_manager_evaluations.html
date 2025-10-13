@@ -1,6 +1,6 @@
 {% extends "evaluation/base.html" %}
 {% load static %}
-{% block title %}My Manager Evaluations{% endblock %}
+{% block title %}My Evaluations{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
@@ -15,8 +15,8 @@
   <!-- Page Title -->
   <div class="page-header">
     <h1 class="page-title">
-      <i class="fas fa-user-tie mr-2"></i>
-      My Manager Evaluations
+      <i class="fas fa-user-check mr-2"></i>
+      My Evaluations
     </h1>
   </div>
 
@@ -24,7 +24,7 @@
   <div class="progress-section slide-in animation-delay-1">
     <div class="progress-header">
       <div class="flex items-center justify-between mb-2">
-        <h3 class="text-white font-semibold">My Manager Evaluation Summary</h3>
+        <h3 class="text-white font-semibold">My Evaluation Summary</h3>
         <div class="flex items-center gap-4 text-sm">
           <span class="text-gray-400">{{ completed }} of {{ total }} completed</span>
           {% if overdue > 0 %}

@@ -4,6 +4,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/manager_evaluations.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/archived_evaluations.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/manager_evaluation_archive.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -15,10 +20,20 @@
         <h1 class="text-3xl font-bold text-red-500">{{ form_name|title }}</h1>
         <p class="text-gray-400 text-lg">{{ period_start|date:"M d, Y" }} → {{ period_end|date:"M d, Y" }}</p>
       </div>
-      <a href="{% url 'evaluation:manager_evaluation_dashboard' %}" 
-         class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
-        <i class="fas fa-arrow-left mr-2"></i>Back to Cards
-      </a>
+      <div class="flex items-center gap-4">
+        <!-- Show Archived Toggle -->
+        <label class="flex items-center gap-2 text-gray-400 cursor-pointer">
+          <input type="checkbox" 
+                 id="showArchivedToggle" 
+                 {% if show_archived %}checked{% endif %}
+                 class="w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500">
+          <span>Show archived</span>
+        </label>
+        <a href="{% url 'evaluation:manager_evaluation_dashboard' %}" 
+           class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Cards
+        </a>
+      </div>
     </div>
     
     <!-- Status and Stats -->
@@ -87,7 +102,7 @@
     {% if evaluations %}
       <div class="space-y-3">
         {% for evaluation in evaluations %}
-          <div class="flex justify-between items-center border border-gray-700 rounded-lg p-4 hover:border-red-500 transition-colors">
+          <div class="flex justify-between items-center border border-gray-700 rounded-lg p-4 hover:border-red-500 transition-colors" data-evaluation-id="{{ evaluation.id }}">
             <div class="flex-1">
               <div class="text-red-500 font-semibold text-lg">
                 {{ evaluation.manager.user.get_full_name|title }} ({{ evaluation.manager.get_role_display }})
@@ -111,6 +126,16 @@
                       <i class="fas fa-edit mr-1"></i>Edit
                     </a>
                   {% endif %}
+                  <button class="manager-archive-btn bg-gray-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm transition-colors{% if evaluation.is_archived %} archived{% endif %}"
+                          data-evaluation-id="{{ evaluation.id }}"
+                          data-manager-name="{{ evaluation.manager.user.get_full_name|title }}"
+                          data-is-archived="{{ evaluation.is_archived|yesno:'true,false' }}">
+                    {% if evaluation.is_archived %}
+                      <i class="fas fa-box-open mr-1"></i>Unarchive
+                    {% else %}
+                      <i class="fas fa-archive mr-1"></i>Archive
+                    {% endif %}
+                  </button>
                 {% else %}
                   {% if evaluation.period_end < today %}
                     <span class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg text-sm">
@@ -137,6 +162,24 @@
         <p class="text-gray-400 text-lg">No evaluations found for this period</p>
       </div>
     {% endif %}
+  </div>
+</div>
+
+<!-- Archive Modal -->
+<div id="archiveModal" class="archive-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <i class="fas fa-archive"></i>
+      <h3>Archive Manager Evaluation</h3>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to archive the evaluation for <strong id="managerName"></strong>?</p>
+      <p class="text-sm mt-2">This evaluation will be hidden from the manager and moved to your archived evaluations.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel">Cancel</button>
+      <button class="modal-btn modal-btn-archive">Archive</button>
+    </div>
   </div>
 </div>
 {% endblock %}
