@@ -33,6 +33,59 @@ class Department(models.Model):
         return self.title
 
 
+class DepartmentQuiz(models.Model):
+    AUDIENCE_CHOICES = [
+        ('employee', 'Employee'),
+        ('manager', 'Manager'),
+    ]
+    
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='quiz_questions')
+    question_text = models.TextField()
+    option_a = models.CharField(max_length=255)
+    option_b = models.CharField(max_length=255)
+    option_c = models.CharField(max_length=255)
+    option_d = models.CharField(max_length=255)
+    correct_answer = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
+    order = models.IntegerField(default=0, help_text="Question order in the quiz")
+    audience = models.CharField(max_length=10, choices=AUDIENCE_CHOICES, default='employee', help_text="Employee or Manager quiz")
+    
+    class Meta:
+        ordering = ['audience', 'order']
+        verbose_name = "Department Quiz Question"
+        verbose_name_plural = "Department Quiz Questions"
+    
+    def __str__(self):
+        return f"{self.department.title} ({self.audience}) - Q{self.order}: {self.question_text[:50]}"
+
+
+class QuizAttempt(models.Model):
+    AUDIENCE_CHOICES = [
+        ('employee', 'Employee'),
+        ('manager', 'Manager'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    score = models.IntegerField()
+    total_questions = models.IntegerField()
+    quiz_type = models.CharField(max_length=10, choices=AUDIENCE_CHOICES, default='employee')
+    completed_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-completed_at']
+        verbose_name = "Quiz Attempt"
+        verbose_name_plural = "Quiz Attempts"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.department.title} ({self.quiz_type}) - {self.score}/{self.total_questions}"
+    
+    @property
+    def percentage(self):
+        if self.total_questions == 0:
+            return 0
+        return round((self.score / self.total_questions) * 100, 1)
+
+
 class UserProfile(models.Model):
     EMPLOYEE_CHOICES = [
         ("llc/field", "LLC/Field"),

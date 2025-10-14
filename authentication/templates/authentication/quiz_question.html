@@ -1,0 +1,89 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}Quiz - {{ user_department.title }} - Firehouse{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'authentication/css/resources_training.css' %}">
+<link rel="stylesheet" href="{% static 'authentication/css/quiz_question.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Quiz Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-3xl font-bold text-white">{{ user_department.title }} Quiz</h1>
+            <span class="text-gray-400">Question {{ question_number }} of {{ total_questions }}</span>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-700 rounded-full h-3">
+            <div class="progress-bar bg-red-500 h-3 rounded-full" style="width: {% widthratio question_number total_questions 100 %}%"></div>
+        </div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="bg-[#1a1a1a] border border-gray-700 rounded-lg p-8 mb-8">
+        <h2 class="text-xl font-semibold text-white mb-8">{{ question.question_text }}</h2>
+        
+        <form method="post" action="{% url 'authentication:submit_answer' %}" id="quiz-form">
+            {% csrf_token %}
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            
+            <div class="space-y-4">
+                <!-- Option A -->
+                <div class="quiz-option bg-gray-800 border border-gray-600 rounded-lg p-4 flex items-center gap-4">
+                    <input type="radio" name="answer" value="A" id="option-a" required>
+                    <label for="option-a" class="text-white">
+                        <span class="font-bold text-red-500">A.</span> {{ question.option_a }}
+                    </label>
+                </div>
+                
+                <!-- Option B -->
+                <div class="quiz-option bg-gray-800 border border-gray-600 rounded-lg p-4 flex items-center gap-4">
+                    <input type="radio" name="answer" value="B" id="option-b" required>
+                    <label for="option-b" class="text-white">
+                        <span class="font-bold text-red-500">B.</span> {{ question.option_b }}
+                    </label>
+                </div>
+                
+                <!-- Option C -->
+                <div class="quiz-option bg-gray-800 border border-gray-600 rounded-lg p-4 flex items-center gap-4">
+                    <input type="radio" name="answer" value="C" id="option-c" required>
+                    <label for="option-c" class="text-white">
+                        <span class="font-bold text-red-500">C.</span> {{ question.option_c }}
+                    </label>
+                </div>
+                
+                <!-- Option D -->
+                <div class="quiz-option bg-gray-800 border border-gray-600 rounded-lg p-4 flex items-center gap-4">
+                    <input type="radio" name="answer" value="D" id="option-d" required>
+                    <label for="option-d" class="text-white">
+                        <span class="font-bold text-red-500">D.</span> {{ question.option_d }}
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-between items-center">
+                <a href="{% url 'authentication:resources_training' %}" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times mr-2"></i>Exit Quiz
+                </a>
+                <button type="submit" class="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    {% if question_number == total_questions %}
+                        Submit Quiz <i class="fas fa-check ml-2"></i>
+                    {% else %}
+                        Next Question <i class="fas fa-arrow-right ml-2"></i>
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Question Counter -->
+    <div class="text-center text-gray-500 text-sm">
+        <i class="fas fa-info-circle mr-2"></i>Select your answer and click next to continue
+    </div>
+</div>
+{% endblock %}
+

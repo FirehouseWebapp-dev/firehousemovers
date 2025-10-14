@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.views import View
 from authentication.forms import EmailAuthenticationForm, SignUpForm, AddTeamMemberForm, DepartmentForm
 from django.db.models import Q
-from .models import UserProfile, User, Department
+from .models import UserProfile, User, Department, DepartmentQuiz, QuizAttempt
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth import login as auth_login
@@ -15,7 +15,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseForbidden
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.views.decorators.debug import sensitive_post_parameters
@@ -26,6 +26,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.db import transaction
+import logging
+from django.templatetags.static import static
 
 # Helper function for permission
 def is_manager_or_admin(user):
@@ -492,3 +494,275 @@ def view_profile(request, user_id):
         "team_members": team_members,
         "teammates": teammates,
     })
+
+
+@login_required
+def resources_training_view(request):
+    """View for Resources and Training page"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get user profile with department in single query
+        user_profile = request.user.userprofile
+        user_department = user_profile.department
+        
+        # Determine if user is a manager
+        is_manager = user_profile.is_manager or user_profile.is_senior_management
+        quiz_type = 'manager' if is_manager else 'employee'
+        
+        logger.info(f"Resources training accessed by {request.user.username} (role: {quiz_type}, department: {user_department})")
+        
+        # Training course links - All courses available at LightSpeed VT Training Center
+        training_courses = [
+            {"title": "Welcome Training", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Introduction to company culture and policies"},
+            {"title": "Driver Safety", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Essential safety guidelines for drivers"},
+            {"title": "Growth and Profit Hacks You Can Master in 35 Mins or Less", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Quick strategies for business growth and profitability"},
+            {"title": "Mover Training", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Comprehensive training for moving professionals"},
+            {"title": "Compliance, Legal and Claims 101", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Understanding legal compliance and claims processes"},
+            {"title": "Marketing", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Marketing strategies and best practices"},
+            {"title": "Leadership", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Develop essential leadership skills"},
+            {"title": "Door to Door Sales: Moving Playbook by Lenny Gray", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Master door-to-door sales techniques for the moving industry"},
+            {"title": "Sales Training", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Comprehensive sales training and techniques"},
+            {"title": "Fitness", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Physical fitness and wellness for moving professionals"},
+            {"title": "Live Coaching Skills", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Develop effective coaching abilities"},
+            {"title": "Speaker Presentations", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Master the art of public speaking and presentations"},
+            {"title": "Webinars and Podcasts", "url": "https://vt.lightspeedvt.com/trainingCenter/", "description": "Access to company webinars and podcast series"},
+        ]
+        
+        # Company manuals
+        company_manuals = [
+            {"title": "Employee Handbook", "url": static('authentication/documents/Employee_Handbook.pdf'), "description": "Complete guide to company policies"},
+        ]
+        
+        # Check if department has quiz questions for the user's role
+        has_quiz = False
+        quiz_count = 0
+        if user_department:
+            quiz_count = user_department.quiz_questions.filter(audience=quiz_type).count()
+            has_quiz = quiz_count > 0
+            logger.info(f"Quiz availability for {user_department.title}: {quiz_count} {quiz_type} questions")
+        else:
+            logger.info(f"No department assigned for {request.user.username}")
+        
+        context = {
+            "training_courses": training_courses,
+            "company_manuals": company_manuals,
+            "user_department": user_department,
+            "has_quiz": has_quiz,
+            "quiz_count": quiz_count,
+            "is_manager": is_manager,
+            "quiz_type": quiz_type,
+        }
+        
+        return render(request, "authentication/resources_training.html", context)
+        
+    except Exception as e:
+        logger.error(f"Error in resources_training_view for {request.user.username}: {str(e)}")
+        messages.error(request, "An error occurred while loading resources. Please try again.")
+        return redirect('authentication:profile')
+
+
+@login_required
+def start_quiz(request):
+    """Start the quiz for user's department"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        user_profile = request.user.userprofile
+        user_department = user_profile.department
+        
+        if not user_department:
+            logger.warning(f"Quiz start attempted by {request.user.username} without department assignment")
+            messages.error(request, "You are not assigned to a department.")
+            return redirect('authentication:resources_training')
+        
+        # Determine quiz type based on user role
+        is_manager = user_profile.is_manager or user_profile.is_senior_management
+        quiz_type = 'manager' if is_manager else 'employee'
+        
+        # Get quiz questions for the department and user role in single query
+        questions = list(user_department.quiz_questions.filter(audience=quiz_type).order_by('order'))
+        
+        if not questions:
+            logger.warning(f"No {quiz_type} questions found for {user_department.title} department")
+            messages.error(request, f"No quiz questions available for {quiz_type}s in your department.")
+            return redirect('authentication:resources_training')
+        
+        # Store quiz session data
+        request.session['quiz_questions'] = [q.id for q in questions]
+        request.session['current_question'] = 0
+        request.session['quiz_answers'] = {}
+        request.session['quiz_type'] = quiz_type
+        
+        logger.info(f"Quiz started for {request.user.username} - {user_department.title} ({quiz_type}, {len(questions)} questions)")
+        
+        return redirect('authentication:quiz_question')
+        
+    except Exception as e:
+        logger.error(f"Error starting quiz for {request.user.username}: {str(e)}")
+        messages.error(request, "An error occurred while starting the quiz. Please try again.")
+        return redirect('authentication:resources_training')
+
+
+@login_required
+def quiz_question(request):
+    """Display current quiz question"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        user_profile = request.user.userprofile
+        user_department = user_profile.department
+        
+        if not user_department or 'quiz_questions' not in request.session:
+            logger.warning(f"Invalid quiz access by {request.user.username} - missing department or session")
+            return redirect('authentication:resources_training')
+        
+        question_ids = request.session.get('quiz_questions', [])
+        current_index = request.session.get('current_question', 0)
+        
+        if current_index >= len(question_ids):
+            logger.info(f"Quiz completed for {request.user.username} - redirecting to results")
+            return redirect('authentication:quiz_results')
+        
+        # Get question in single query
+        question = DepartmentQuiz.objects.get(id=question_ids[current_index])
+        total_questions = len(question_ids)
+        
+        logger.debug(f"Quiz question {current_index + 1}/{total_questions} displayed for {request.user.username}")
+        
+        context = {
+            'question': question,
+            'current_index': current_index,
+            'question_number': current_index + 1,
+            'total_questions': total_questions,
+            'user_department': user_department,
+        }
+        
+        return render(request, 'authentication/quiz_question.html', context)
+        
+    except DepartmentQuiz.DoesNotExist:
+        logger.error(f"Quiz question not found for {request.user.username} at index {current_index}")
+        messages.error(request, "Quiz question not found. Please restart the quiz.")
+        return redirect('authentication:resources_training')
+    except Exception as e:
+        logger.error(f"Error displaying quiz question for {request.user.username}: {str(e)}")
+        messages.error(request, "An error occurred while loading the question. Please try again.")
+        return redirect('authentication:resources_training')
+
+
+@login_required
+def submit_answer(request):
+    """Submit answer and move to next question"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        if request.method != 'POST':
+            logger.warning(f"Invalid submit_answer request method from {request.user.username}")
+            return redirect('authentication:resources_training')
+        
+        question_id = request.POST.get('question_id')
+        answer = request.POST.get('answer')
+        
+        if not question_id or not answer:
+            logger.warning(f"Missing question_id or answer from {request.user.username}")
+            messages.error(request, "Please select an answer before proceeding.")
+            return redirect('authentication:quiz_question')
+        
+        # Store answer in session
+        quiz_answers = request.session.get('quiz_answers', {})
+        quiz_answers[question_id] = answer
+        request.session['quiz_answers'] = quiz_answers
+        
+        # Move to next question
+        current_index = request.session.get('current_question', 0)
+        request.session['current_question'] = current_index + 1
+        
+        logger.debug(f"Answer submitted by {request.user.username} for question {question_id}: {answer}")
+        
+        return redirect('authentication:quiz_question')
+        
+    except Exception as e:
+        logger.error(f"Error in submit_answer for {request.user.username}: {str(e)}")
+        messages.error(request, "An error occurred while submitting your answer. Please try again.")
+        return redirect('authentication:quiz_question')
+
+
+@login_required
+def quiz_results(request):
+    """Display quiz results"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        user_profile = request.user.userprofile
+        user_department = user_profile.department
+        
+        if not user_department or 'quiz_questions' not in request.session:
+            logger.warning(f"Invalid quiz results access by {request.user.username}")
+            return redirect('authentication:resources_training')
+        
+        question_ids = request.session.get('quiz_questions', [])
+        quiz_answers = request.session.get('quiz_answers', {})
+        quiz_type = request.session.get('quiz_type', 'employee')
+        
+        # Get all questions in single query to avoid N+1
+        questions = DepartmentQuiz.objects.filter(id__in=question_ids)
+        question_dict = {q.id: q for q in questions}
+        
+        # Calculate score
+        score = 0
+        results = []
+        
+        for question_id in question_ids:
+            question = question_dict.get(question_id)
+            if not question:
+                logger.error(f"Question {question_id} not found for {request.user.username}")
+                continue
+                
+            user_answer = quiz_answers.get(str(question_id), '')
+            is_correct = user_answer == question.correct_answer
+            
+            if is_correct:
+                score += 1
+            
+            results.append({
+                'question': question,
+                'user_answer': user_answer,
+                'is_correct': is_correct,
+            })
+        
+        total_questions = len(question_ids)
+        percentage = round((score / total_questions) * 100, 1) if total_questions > 0 else 0
+        
+        # Save quiz attempt
+        QuizAttempt.objects.create(
+            user=request.user,
+            department=user_department,
+            score=score,
+            total_questions=total_questions,
+            quiz_type=quiz_type
+        )
+        
+        # Clear quiz session
+        request.session.pop('quiz_questions', None)
+        request.session.pop('current_question', None)
+        request.session.pop('quiz_answers', None)
+        
+        incorrect_count = total_questions - score
+        
+        logger.info(f"Quiz completed by {request.user.username} - Score: {score}/{total_questions} ({percentage}%)")
+        
+        context = {
+            'score': score,
+            'incorrect_count': incorrect_count,
+            'total_questions': total_questions,
+            'percentage': percentage,
+            'results': results,
+            'user_department': user_department,
+        }
+        
+        return render(request, 'authentication/quiz_results.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in quiz_results for {request.user.username}: {str(e)}")
+        messages.error(request, "An error occurred while calculating your results. Please try again.")
+        return redirect('authentication:resources_training')
