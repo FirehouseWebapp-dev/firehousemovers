@@ -53,6 +53,10 @@
           <img src="{% static 'goals/img/goal_logo.svg' %}" alt="My Goals" class="goals-logo goals-logo-invert" /> My Goals
         </a>
         {% endif %}
+        
+        <a href="{% url 'authentication:resources_training' %}" class="block py-2 px-3 rounded hover:bg-red-500 {% if request.path == '/resources-training/' %}bg-red-500{% endif %}">
+          <i class="fas fa-graduation-cap mr-2"></i> Resources & Training
+        </a>
       </nav>
     </aside>
 

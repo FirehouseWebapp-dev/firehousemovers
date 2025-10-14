@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import UserProfile, Department
+from .models import UserProfile, Department, DepartmentQuiz, QuizAttempt
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
@@ -104,3 +104,37 @@ class UserProfileAdmin(admin.ModelAdmin):
             return format_html('<a href="/admin/authentication/userprofile/{}/change/">{}</a>', obj.manager.id, name)
         return "—"
     manager_display.short_description = "Manager"
+
+
+@admin.register(DepartmentQuiz)
+class DepartmentQuizAdmin(admin.ModelAdmin):
+    list_display = ("department", "audience", "order", "question_preview", "correct_answer")
+    list_filter = ("department", "audience")
+    search_fields = ("question_text", "department__title")
+    ordering = ("department", "audience", "order")
+    list_editable = ("order",)
+    
+    fieldsets = (
+        ("Question Info", {
+            "fields": ("department", "audience", "question_text", "order")
+        }),
+        ("Answer Options", {
+            "fields": ("option_a", "option_b", "option_c", "option_d", "correct_answer")
+        }),
+    )
+    
+    def question_preview(self, obj):
+        return obj.question_text[:60] + "..." if len(obj.question_text) > 60 else obj.question_text
+    question_preview.short_description = "Question"
+
+
+@admin.register(QuizAttempt)
+class QuizAttemptAdmin(admin.ModelAdmin):
+    list_display = ("user", "department", "quiz_type", "score", "total_questions", "percentage", "completed_at")
+    list_filter = ("department", "quiz_type", "completed_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "department__title")
+    readonly_fields = ("user", "department", "quiz_type", "score", "total_questions", "completed_at", "percentage")
+    ordering = ("-completed_at",)
+    
+    def has_add_permission(self, request):
+        return False

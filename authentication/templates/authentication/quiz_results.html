@@ -1,0 +1,158 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}Quiz Results - {{ user_department.title }} - Firehouse{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'authentication/css/resources_training.css' %}">
+<link rel="stylesheet" href="{% static 'authentication/css/quiz_results.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8 animate-in">
+        <h1 class="text-5xl font-bold text-white mb-2">Quiz Complete!</h1>
+        <p class="text-xl text-gray-400">{{ user_department.title }} Department</p>
+    </div>
+
+    <!-- Score Display -->
+    <div class="score-section rounded-2xl p-8 mb-8 animate-in" style="animation-delay: 0.1s;">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+            <!-- Main Score -->
+            <div class="flex-1 text-center md:text-left">
+                <div class="score-display inline-block px-12 py-8 rounded-2xl">
+                    <div class="text-7xl font-black text-white mb-2">{{ percentage }}%</div>
+                    <div class="text-2xl text-white opacity-90">{{ score }} out of {{ total_questions }}</div>
+                </div>
+            </div>
+            
+            <!-- Performance Message -->
+            <div class="flex-1 text-center md:text-right">
+                {% if percentage >= 80 %}
+                    <div class="inline-block">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h2 class="text-3xl font-bold text-green-400 mb-3">Excellent Work!</h2>
+                        <p class="text-gray-300 text-lg">You have mastered {{ user_department.title }} operations!</p>
+                    </div>
+                {% elif percentage >= 60 %}
+                    <div class="inline-block">
+                        <div class="text-6xl mb-4">⭐</div>
+                        <h2 class="text-3xl font-bold text-yellow-400 mb-3">Good Job!</h2>
+                        <p class="text-gray-300 text-lg">You're on the right track. Keep improving!</p>
+                    </div>
+                {% else %}
+                    <div class="inline-block">
+                        <div class="text-6xl mb-4">📚</div>
+                        <h2 class="text-3xl font-bold text-red-400 mb-3">Keep Learning!</h2>
+                        <p class="text-gray-300 text-lg">Review the materials and try again!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <div class="stat-card rounded-xl p-6 text-center">
+                <div class="text-green-400 text-3xl font-bold">{{ score }}</div>
+                <div class="text-gray-400 mt-1">Correct Answers</div>
+            </div>
+            <div class="stat-card rounded-xl p-6 text-center">
+                <div class="text-red-400 text-3xl font-bold">{{ incorrect_count }}</div>
+                <div class="text-gray-400 mt-1">Incorrect Answers</div>
+            </div>
+            <div class="stat-card rounded-xl p-6 text-center">
+                <div class="text-blue-400 text-3xl font-bold">{{ total_questions }}</div>
+                <div class="text-gray-400 mt-1">Total Questions</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answer Review -->
+    <div class="mb-8 animate-in" style="animation-delay: 0.2s;">
+        <h3 class="text-3xl font-bold text-white mb-6 flex items-center">
+            <span class="w-1 h-8 bg-red-500 mr-4"></span>
+            Answer Review
+        </h3>
+        
+        <div class="space-y-3">
+            {% for result in results %}
+            <div class="result-item {% if result.is_correct %}correct{% else %}incorrect{% endif %} bg-[#1a1a1a] rounded-xl p-6 hover:shadow-xl transition-all">
+                <div class="flex items-start gap-6">
+                    <!-- Status Icon -->
+                    <div class="flex-shrink-0 pt-1">
+                        {% if result.is_correct %}
+                            <div class="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-400 text-lg"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-times text-red-400 text-lg"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Question Content -->
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-lg font-semibold text-white mb-4">{{ result.question.question_text }}</h4>
+                        
+                        <div class="space-y-3">
+                            <!-- Your Answer -->
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 w-24 text-sm font-semibold {% if result.is_correct %}text-green-400{% else %}text-red-400{% endif %}">
+                                    Your answer:
+                                </div>
+                                <div class="flex-1 {% if result.is_correct %}text-green-300{% else %}text-red-300{% endif %}">
+                                    <span class="font-bold">{{ result.user_answer }}.</span>
+                                    {% if result.user_answer == 'A' %}{{ result.question.option_a }}
+                                    {% elif result.user_answer == 'B' %}{{ result.question.option_b }}
+                                    {% elif result.user_answer == 'C' %}{{ result.question.option_c }}
+                                    {% elif result.user_answer == 'D' %}{{ result.question.option_d }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Correct Answer (if wrong) -->
+                            {% if not result.is_correct %}
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 w-24 text-sm font-semibold text-green-400">
+                                    Correct:
+                                </div>
+                                <div class="flex-1 text-green-300">
+                                    <span class="font-bold">{{ result.question.correct_answer }}.</span>
+                                    {% if result.question.correct_answer == 'A' %}{{ result.question.option_a }}
+                                    {% elif result.question.correct_answer == 'B' %}{{ result.question.option_b }}
+                                    {% elif result.question.correct_answer == 'C' %}{{ result.question.option_c }}
+                                    {% elif result.question.correct_answer == 'D' %}{{ result.question.option_d }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center animate-in" style="animation-delay: 0.3s;">
+        <a href="{% url 'authentication:start_quiz' %}" class="action-btn relative px-8 py-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all transform hover:scale-105 font-semibold text-center shadow-lg hover:shadow-xl">
+            <span class="relative z-10">
+                <i class="fas fa-redo mr-2"></i>Retake Quiz
+            </span>
+        </a>
+        <a href="{% url 'authentication:resources_training' %}" class="action-btn relative px-8 py-4 bg-gray-700 text-white rounded-xl hover:bg-gray-600 transition-all transform hover:scale-105 font-semibold text-center shadow-lg hover:shadow-xl">
+            <span class="relative z-10">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Resources
+            </span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'authentication/js/quiz_results.js' %}"></script>
+{% endblock %}
+

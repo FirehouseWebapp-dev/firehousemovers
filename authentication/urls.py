@@ -14,6 +14,11 @@ from .views import (
   edit_department,
   remove_department,
   get_department_employees, # Renamed view
+  resources_training_view,
+  start_quiz,
+  quiz_question,
+  submit_answer,
+  quiz_results,
 )
 
 app_name = "authentication"
@@ -66,4 +71,9 @@ urlpatterns = [
     path("department/edit/<int:pk>/", edit_department, name="edit_department"),
     path("department/remove/<int:pk>/", remove_department, name="remove_department"),
     path("department/<int:department_id>/employees/", get_department_employees, name="get_department_employees"),
+    path("resources-training/", resources_training_view, name="resources_training"),
+    path("quiz/start/", start_quiz, name="start_quiz"),
+    path("quiz/question/", quiz_question, name="quiz_question"),
+    path("quiz/submit/", submit_answer, name="submit_answer"),
+    path("quiz/results/", quiz_results, name="quiz_results"),
 ]
