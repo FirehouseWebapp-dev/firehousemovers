@@ -1,0 +1,169 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}
+{% if request.user.userprofile.is_senior_management or request.user.userprofile.is_admin %}
+Manager Logs
+{% else %}
+Employee Logs
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'communication/css/communication.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white mb-2">
+      {% if request.user.userprofile.is_senior_management and not request.user.userprofile.is_manager %}
+      <i class="fas fa-user-tie mr-3"></i>Manager Logs
+      {% else %}
+      <i class="fas fa-list mr-3"></i>Employee Logs
+      {% endif %}
+    </h1>
+    <p class="text-gray-400">View and manage logs you've created</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-semibold text-white mb-2">Employee</label>
+        <select name="employee" class="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
+          <option value="">All Employees</option>
+          {% for emp in employees %}
+          <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+            {{ emp.user.get_full_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-white mb-2">Log Type</label>
+        <select name="log_type" class="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
+          <option value="">All Types</option>
+          {% for log_type in log_types %}
+          <option value="{{ log_type.id }}" {% if request.GET.log_type == log_type.id|stringformat:"s" %}selected{% endif %}>
+            {{ log_type.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-white mb-2">Status</label>
+        <select name="status" class="w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
+          <option value="">All Status</option>
+          <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="acknowledged" {% if request.GET.status == 'acknowledged' %}selected{% endif %}>Acknowledged</option>
+        </select>
+      </div>
+
+      <div class="flex items-end">
+        <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+          <i class="fas fa-filter mr-2"></i>Filter
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Logs List -->
+  {% if page_obj %}
+    <div class="space-y-4">
+      {% for log in page_obj %}
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-3">
+              {% if log.log_type %}
+              <span class="px-3 py-1 bg-{{ log.log_type.color }}-500 bg-opacity-20 text-{{ log.log_type.color }}-500 rounded text-sm">
+                <i class="fas {{ log.log_type.icon }} mr-1"></i>{{ log.log_type.name }}
+              </span>
+              {% endif %}
+              
+              <span class="text-gray-400 text-sm">
+                <i class="fas fa-user mr-1"></i>{{ log.employee.user.get_full_name }}
+              </span>
+              
+              {% if log.visibility == 'private' %}
+              <span class="px-3 py-1 bg-purple-500 bg-opacity-20 text-purple-500 rounded text-sm">
+                <i class="fas fa-lock mr-1"></i>Private
+              </span>
+              {% endif %}
+              
+              {% if log.is_acknowledged %}
+              <span class="px-3 py-1 bg-green-500 bg-opacity-20 text-green-500 rounded text-sm">
+                <i class="fas fa-check-circle mr-1"></i>Acknowledged
+              </span>
+              {% else %}
+              <span class="px-3 py-1 bg-orange-500 bg-opacity-20 text-orange-500 rounded text-sm">
+                <i class="fas fa-clock mr-1"></i>Pending
+              </span>
+              {% endif %}
+              
+              {% if log.responses.count > 0 %}
+              <span class="px-3 py-1 bg-blue-500 bg-opacity-20 text-blue-500 rounded text-sm">
+                <i class="fas fa-comment mr-1"></i>{{ log.responses.count }} note{{ log.responses.count|pluralize }}
+              </span>
+              {% endif %}
+            </div>
+
+            <h3 class="text-white font-semibold text-lg mb-2">{{ log.subject }}</h3>
+            <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+              <span>
+                <i class="fas fa-calendar mr-1"></i>{{ log.created_at|date:"F d, Y" }}
+              </span>
+              {% if log.week_start %}
+              <span>
+                <i class="fas fa-calendar-week mr-1"></i>Week: {{ log.week_start|date:"M d" }} - {{ log.week_end|date:"M d" }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <a href="{% url 'communication:log_detail' log.id %}" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+            <i class="fas fa-eye mr-2"></i>View
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+      <nav class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        <span class="px-4 py-2 text-gray-400">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="bg-[#1a1a1a] rounded-lg p-12 border border-gray-800 text-center">
+      <i class="fas fa-comments text-6xl text-gray-600 mb-4"></i>
+      <h3 class="text-xl font-semibold text-white mb-2">No Communication Logs Yet</h3>
+      <p class="text-gray-400">You haven't created any communication logs</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

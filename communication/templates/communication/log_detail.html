@@ -1,0 +1,183 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}{{ log.subject }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'communication/css/communication.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <!-- Header -->
+  <div class="mb-6">
+    <a href="{% url 'communication:log_list' %}" class="text-red-500 hover:text-red-400 mb-4 inline-block">
+      <i class="fas fa-arrow-left mr-2"></i>Back to List
+    </a>
+    <h1 class="text-3xl font-bold text-white">{{ log.subject }}</h1>
+  </div>
+
+  <!-- Main Log Card -->
+  <div class="bg-[#1a1a1a] rounded-lg p-8 border border-gray-800 mb-6">
+    <!-- Metadata -->
+    <div class="flex flex-wrap items-center gap-3 mb-6 pb-6 border-b border-gray-700">
+      {% if log.log_type %}
+      <span class="px-3 py-1 bg-{{ log.log_type.color }}-500 bg-opacity-20 text-{{ log.log_type.color }}-500 rounded">
+        <i class="fas {{ log.log_type.icon }} mr-1"></i>{{ log.log_type.name }}
+      </span>
+      {% endif %}
+
+      {% if log.visibility == 'private' %}
+      <span class="px-3 py-1 bg-purple-500 bg-opacity-20 text-purple-500 rounded">
+        <i class="fas fa-lock mr-1"></i>Private
+      </span>
+      {% endif %}
+
+      {% if log.is_acknowledged %}
+      <span class="px-3 py-1 bg-green-500 bg-opacity-20 text-green-500 rounded">
+        <i class="fas fa-check-circle mr-1"></i>Acknowledged
+      </span>
+      {% else %}
+      <span class="px-3 py-1 bg-orange-500 bg-opacity-20 text-orange-500 rounded">
+        <i class="fas fa-clock mr-1"></i>Pending
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Participants -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <p class="text-gray-400 text-sm mb-2">Created By</p>
+        <div class="flex items-center gap-3">
+          <div class="bg-blue-500 bg-opacity-20 rounded-full p-3">
+            <i class="fas fa-user-tie text-blue-500"></i>
+          </div>
+          <div>
+            <p class="text-white font-semibold">{{ log.created_by.user.get_full_name }}</p>
+            <p class="text-gray-400 text-sm">{{ log.created_by.role|title }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-gray-400 text-sm mb-2">Employee</p>
+        <div class="flex items-center gap-3">
+          <div class="bg-green-500 bg-opacity-20 rounded-full p-3">
+            <i class="fas fa-user text-green-500"></i>
+          </div>
+          <div>
+            <p class="text-white font-semibold">{{ log.employee.user.get_full_name }}</p>
+            <p class="text-gray-400 text-sm">{{ log.employee.role|title }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-[#2a2a2a] rounded">
+      <div>
+        <p class="text-gray-400 text-sm mb-1">Created</p>
+        <p class="text-white">
+          <i class="fas fa-calendar mr-2"></i>{{ log.created_at|date:"F d, Y" }}
+        </p>
+      </div>
+      {% if log.week_start %}
+      <div>
+        <p class="text-gray-400 text-sm mb-1">Week Start</p>
+        <p class="text-white">
+          <i class="fas fa-calendar-week mr-2"></i>{{ log.week_start|date:"F d, Y" }}
+        </p>
+      </div>
+      <div>
+        <p class="text-gray-400 text-sm mb-1">Week End</p>
+        <p class="text-white">
+          <i class="fas fa-calendar-check mr-2"></i>{{ log.week_end|date:"F d, Y" }}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Content -->
+    <div class="mb-6">
+      <h3 class="text-white font-semibold mb-3">Notes</h3>
+      <div class="bg-[#2a2a2a] rounded p-4 text-gray-300 whitespace-pre-wrap">{{ log.content }}</div>
+    </div>
+
+    <!-- Acknowledge Button (for employees) -->
+    {% if can_respond and not log.is_acknowledged %}
+    <div class="border-t border-gray-700 pt-6">
+      <button id="acknowledge-btn" data-log-id="{{ log.id }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+        <i class="fas fa-check-circle mr-2"></i>Acknowledge This Communication
+      </button>
+      <p class="text-sm text-gray-400 mt-2">Click to confirm you have read and acknowledged this communication</p>
+    </div>
+    {% elif log.is_acknowledged and log.acknowledged_at %}
+    <div class="border-t border-gray-700 pt-6">
+      <p class="text-green-500">
+        <i class="fas fa-check-circle mr-2"></i>
+        Acknowledged on {{ log.acknowledged_at|date:"F d, Y at h:i A" }}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Responses/Notes Section -->
+  <div class="bg-[#1a1a1a] rounded-lg p-8 border border-gray-800">
+    <h2 class="text-xl font-semibold text-white mb-6">
+      <i class="fas fa-comments mr-2"></i>
+      {% if can_respond %}Employee Notes & Responses{% else %}Employee Notes{% endif %}
+    </h2>
+
+    <!-- Existing Responses -->
+    {% if responses %}
+    <div class="space-y-4 mb-6">
+      {% for response in responses %}
+      <div class="bg-[#2a2a2a] rounded-lg p-4">
+        <div class="flex items-start gap-3">
+          <div class="bg-blue-500 bg-opacity-20 rounded-full p-2">
+            <i class="fas fa-user text-blue-500"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <p class="text-white font-semibold">{{ response.responder.user.get_full_name }}</p>
+              <p class="text-gray-400 text-sm">{{ response.created_at|date:"F d, Y at h:i A" }}</p>
+            </div>
+            <p class="text-gray-300">{{ response.response_text }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-400 mb-6">No notes or responses yet.</p>
+    {% endif %}
+
+    <!-- Add Response Form (only for employees) -->
+    {% if can_respond %}
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="{{ response_form.response_text.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
+          Add Your Note/Response
+        </label>
+        {{ response_form.response_text }}
+        {% if response_form.response_text.errors %}
+          <p class="mt-1 text-sm text-red-500">{{ response_form.response_text.errors.0 }}</p>
+        {% endif %}
+      </div>
+      
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition">
+        <i class="fas fa-paper-plane mr-2"></i>Submit Note
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if can_respond and not log.is_acknowledged %}
+<script src="{% static 'communication/js/log_detail.js' %}"></script>
+{% endif %}
+{% endblock %}
+

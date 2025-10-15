@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "evaluation",
     "goals",
+    "communication",
     # third-party
 ]
 
