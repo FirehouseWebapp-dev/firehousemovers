@@ -75,3 +75,15 @@ urlpatterns += [
     path("archived/", views.archived_evaluations, name="archived_evaluations"),
     path("manager-evaluations/archived/", views.archived_manager_evaluations, name="archived_manager_evaluations"),
 ]
+
+# Employee Response functionality
+urlpatterns += [
+    path("evaluation/<int:evaluation_id>/respond/", views.submit_employee_response, name="submit_employee_response"),
+    path("evaluation/<int:evaluation_id>/acknowledge-response/", views.acknowledge_employee_response, name="acknowledge_employee_response"),
+]
+
+# Manager Response functionality
+urlpatterns += [
+    path("manager-evaluation/<int:evaluation_id>/respond/", views.submit_manager_response, name="submit_manager_response"),
+    path("manager-evaluation/<int:evaluation_id>/acknowledge-response/", views.acknowledge_manager_response, name="acknowledge_manager_response"),
+]

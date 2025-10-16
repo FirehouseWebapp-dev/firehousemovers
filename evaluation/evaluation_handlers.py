@@ -225,8 +225,15 @@ def handle_my_evaluations(request, config, template_name):
         config.model_class.objects
         .filter(**evaluatee_field_filter, is_archived=False)
         .select_related(f"{config.evaluator_field}__user", "form", "department")
-        .order_by(f"-{config.period_start_field}")
     )
+    
+    # Prefetch responses based on evaluation type
+    if config == EMPLOYEE_EVALUATION_CONFIG:
+        evaluations = evaluations.prefetch_related("employee_response")
+    elif config == MANAGER_EVALUATION_CONFIG:
+        evaluations = evaluations.prefetch_related("manager_response")
+    
+    evaluations = evaluations.order_by(f"-{config.period_start_field}")
     
     # Calculate all counts in a single optimized query using aggregation
     

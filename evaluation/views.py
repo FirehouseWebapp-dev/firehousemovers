@@ -35,9 +35,9 @@ from reportlab.lib import colors as pdf_colors
 logger = logging.getLogger(__name__)
 
 from authentication.models import UserProfile, Department
-from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation, ManagerAnswer, ReportHistory
+from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation, ManagerAnswer, ReportHistory, EmployeeResponse, ManagerResponse
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
-from .forms import PreviewEvalForm, DynamicEvaluationForm
+from .forms import PreviewEvalForm, DynamicEvaluationForm, EmployeeResponseForm, ManagerResponseForm
 from .constants import EvaluationStatus
 from django.utils.timezone import now
 from datetime import timedelta
@@ -47,7 +47,8 @@ from firehousemovers.utils.permissions import role_checker, require_management, 
 from .decorators import (
     require_department_management, require_department_management_for_form, 
     ajax_require_department_management, 
-    require_manager_access, require_senior_management_access, require_evaluation_access
+    require_manager_access, require_senior_management_access, require_evaluation_access,
+    _can_manage
 )
 from .utils import (
     activate_evalform_safely, deactivate_evalform_safely, get_role_checker,
@@ -96,7 +97,6 @@ def evalform_list(request):
     checker = get_role_checker(request.user)
     
     # Get forms based on user permissions
-    from .decorators import _can_manage
     if _can_manage(request.user):
         # Global admins can see all forms
         forms = EvalForm.objects.select_related("department").order_by("-created_at")
@@ -453,13 +453,13 @@ def evaluation_dashboard(request):
     
     # Senior management and superusers see ALL evaluations, managers see only their team's
     if checker.is_senior_management() or request.user.is_superuser:
-        evaluations = DynamicEvaluation.objects.select_related("employee__user", "manager__user", "form", "department")
+        evaluations = DynamicEvaluation.objects.select_related("employee__user", "manager__user", "form", "department").prefetch_related("employee_response")
         if not show_archived:
             evaluations = evaluations.filter(is_archived=False)
         evaluations = evaluations.order_by("-week_start")
     else:
         # Get manager's team dynamic evaluations with optimized stats calculation
-        evaluations = DynamicEvaluation.objects.filter(manager=checker.user_profile).select_related("employee__user", "form", "department")
+        evaluations = DynamicEvaluation.objects.filter(manager=checker.user_profile).select_related("employee__user", "form", "department").prefetch_related("employee_response")
         if not show_archived:
             evaluations = evaluations.filter(is_archived=False)
         evaluations = evaluations.order_by("-week_start")
@@ -520,13 +520,39 @@ def evaluate_employee(request, evaluation_id):
 @login_required
 @require_evaluation_access
 def view_evaluation(request, evaluation_id):
-    """
-    View completed dynamic evaluation (read-only).
-    """
+    """View completed dynamic evaluation (read-only)."""
+    logger.info(f"Viewing evaluation {evaluation_id} by user {request.user.id}")
+    
     template_context = handle_evaluation_view(request, evaluation_id, EMPLOYEE_EVALUATION_CONFIG)
     
     # Rename 'evaluatee' to 'employee' for template compatibility
     template_context['employee'] = template_context['evaluatee']
+    
+    # Get role checker once
+    checker = get_role_checker(request.user)
+    evaluation = template_context['evaluation']
+    
+    # Get employee response if it exists (already optimized in handle_evaluation_view)
+    try:
+        employee_response = EmployeeResponse.objects.get(evaluation_id=evaluation_id)
+        template_context['employee_response'] = employee_response
+        
+        # Mark as viewed by manager if user is the manager
+        if (checker.user_profile and 
+            evaluation.manager_id == checker.user_profile.id and 
+            not employee_response.viewed_by_manager):
+            employee_response.viewed_by_manager = True
+            employee_response.save(update_fields=['viewed_by_manager'])
+            logger.info(f"Employee response {employee_response.id} marked as viewed by manager {checker.user_profile.id}")
+    except EmployeeResponse.DoesNotExist:
+        template_context['employee_response'] = None
+    
+    # Check if current user is the employee to show response form
+    template_context['can_respond'] = (
+        checker.user_profile and 
+        evaluation.employee_id == checker.user_profile.id and
+        evaluation.status == EvaluationStatus.COMPLETED
+    )
     
     return render(request, "evaluation/view_evaluation.html", template_context)
 
@@ -565,7 +591,9 @@ def manager_evaluation_dashboard(request):
     show_archived = request.GET.get('show_archived', 'true') == 'true'
     
     # Get manager evaluations assigned to this senior manager with optimized query
-    evaluations = DynamicManagerEvaluation.objects.filter(senior_manager=checker.user_profile).select_related("manager__user", "form", "department")
+    evaluations = DynamicManagerEvaluation.objects.filter(
+        senior_manager=checker.user_profile
+    ).select_related("manager__user", "form", "department").prefetch_related("manager_response")
     if not show_archived:
         evaluations = evaluations.filter(is_archived=False)
     evaluations = evaluations.order_by("-period_start")
@@ -620,6 +648,15 @@ def manager_evaluation_dashboard(request):
             period_end=period_end
         )
         
+        # Check if any evaluation in this period has a new unviewed manager response
+        has_new_response = any(
+            hasattr(eval, 'manager_response') and 
+            eval.manager_response and 
+            eval.manager_response.status == 'submitted' and 
+            not eval.manager_response.viewed_by_senior
+            for eval in period_evaluations
+        )
+        
         # Create card data
         card = {
             'form_name': form_name,
@@ -631,6 +668,7 @@ def manager_evaluation_dashboard(request):
             'completed_count': completed_count,
             'overdue_count': overdue_count,
             'evaluations': period_evaluations,
+            'has_new_response': has_new_response,
         }
         
         evaluation_cards.append(card)
@@ -695,7 +733,7 @@ def manager_evaluation_cards_detail(request):
     if not show_archived:
         evaluations = evaluations.filter(is_archived=False)
     
-    evaluations = evaluations.select_related("manager__user", "form", "department").order_by("manager__user__first_name", "manager__user__last_name")
+    evaluations = evaluations.select_related("manager__user", "form", "department").prefetch_related("manager_response").order_by("manager__user__first_name", "manager__user__last_name")
     
     # Calculate all stats in a single optimized query using aggregation
     
@@ -758,13 +796,39 @@ def evaluate_manager(request, evaluation_id):
 @login_required
 @require_evaluation_access
 def view_manager_evaluation(request, evaluation_id):
-    """
-    View completed manager evaluation (read-only).
-    """
+    """View completed manager evaluation (read-only)."""
+    logger.info(f"Viewing manager evaluation {evaluation_id} by user {request.user.id}")
+    
     template_context = handle_evaluation_view(request, evaluation_id, MANAGER_EVALUATION_CONFIG)
     
     # Rename 'evaluatee' to 'manager' for template compatibility
     template_context['manager'] = template_context['evaluatee']
+    
+    # Get role checker once
+    checker = get_role_checker(request.user)
+    evaluation = template_context['evaluation']
+    
+    # Get manager response if it exists
+    try:
+        manager_response = ManagerResponse.objects.get(evaluation_id=evaluation_id)
+        template_context['manager_response'] = manager_response
+        
+        # Mark as viewed by senior manager if user is the senior manager
+        if (checker.user_profile and 
+            evaluation.senior_manager_id == checker.user_profile.id and 
+            not manager_response.viewed_by_senior):
+            manager_response.viewed_by_senior = True
+            manager_response.save(update_fields=['viewed_by_senior'])
+            logger.info(f"Manager response {manager_response.id} marked as viewed by senior manager {checker.user_profile.id}")
+    except ManagerResponse.DoesNotExist:
+        template_context['manager_response'] = None
+    
+    # Check if current user is the manager to show response form
+    template_context['can_respond'] = (
+        checker.user_profile and 
+        evaluation.manager_id == checker.user_profile.id and
+        evaluation.status == EvaluationStatus.COMPLETED
+    )
     
     return render(request, "evaluation/view_manager_evaluation.html", template_context)
 
@@ -2752,9 +2816,6 @@ def get_weekly_employee_data(evaluations, questions):
     Get weekly data for an employee's star rating and emoji satisfaction.
     Returns data structured for bar charts showing weekly performance.
     """
-    from .models import Answer
-    from collections import defaultdict
-    
     if not evaluations or not questions:
         return []
     
@@ -4361,4 +4422,333 @@ def archived_manager_evaluations(request):
     
     return render(request, 'evaluation/archived_manager_evaluations.html', context)
 
+
+# Generic Response Handler
+def _handle_response_submission(request, evaluation_id, config):
+    """
+    Generic handler for response submission (both employee and manager responses).
+    
+    Args:
+        request: Django request object
+        evaluation_id: ID of the evaluation
+        config: Dictionary with model classes and redirect URLs
+    
+    Returns:
+        HttpResponse
+    """
+    logger.info(f"Response submission started for {config['type']} evaluation {evaluation_id} by user {request.user.id}")
+    
+    # Optimized query with select_related to prevent N+1
+    evaluation = get_object_or_404(
+        config['evaluation_model'].objects.select_related(
+            f"{config['respondent_field']}__user",
+            f"{config['reviewer_field']}__user",
+            'form',
+            'department'
+        ),
+        pk=evaluation_id
+    )
+    
+    checker = get_role_checker(request.user)
+    
+    # Check permissions
+    if not checker.user_profile or getattr(evaluation, config['respondent_field'] + '_id') != checker.user_profile.id:
+        logger.warning(f"Unauthorized response attempt by user {request.user.id} for evaluation {evaluation_id}")
+        messages.error(request, f"You do not have permission to respond to this evaluation.")
+        return redirect(config['list_url'])
+    
+    # Check if evaluation is completed
+    if evaluation.status != EvaluationStatus.COMPLETED:
+        logger.warning(f"Response attempt on non-completed evaluation {evaluation_id}")
+        messages.error(request, "You can only respond to completed evaluations.")
+        return redirect(config['list_url'])
+    
+    # Get or create response
+    try:
+        response = config['response_model'].objects.get(evaluation=evaluation)
+        if response.status == 'acknowledged':
+            logger.info(f"Edit blocked - response {response.id} already acknowledged")
+            messages.error(request, f"You cannot edit a response that has been acknowledged by your {config['reviewer_role']}.")
+            return redirect(config['view_url'], evaluation_id=evaluation.id)
+    except config['response_model'].DoesNotExist:
+        response = None
+        logger.info(f"Creating new response for evaluation {evaluation_id}")
+    
+    if request.method == 'POST':
+        form = config['form_class'](request.POST, instance=response)
+        if form.is_valid():
+            with transaction.atomic():
+                response = form.save(commit=False)
+                response.evaluation = evaluation
+                setattr(response, config['respondent_field'], checker.user_profile)
+                
+                action = request.POST.get('action', 'save')
+                if action == 'submit':
+                    response.status = 'submitted'
+                    response.submitted_at = now()
+                    success_msg = "Your response has been submitted successfully."
+                    
+                    # Send email notification
+                    try:
+                        config['email_function'](evaluation, response)
+                        logger.info(f"Email notification sent for response {response.id}")
+                    except Exception as e:
+                        logger.error(f"Failed to send notification email for response: {e}", exc_info=True)
+                else:
+                    response.status = 'draft'
+                    success_msg = "Your response has been saved as a draft."
+                
+                response.save()
+                logger.info(f"Response {response.id} saved with status: {response.status}")
+                messages.success(request, success_msg)
+            
+            return redirect(config['view_url'], evaluation_id=evaluation.id)
+        else:
+            logger.warning(f"Form validation failed for response submission: {form.errors}")
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = config['form_class'](instance=response)
+    
+    return render(request, config['template'], {
+        'evaluation': evaluation,
+        'form': form,
+        'response': response,
+    })
+
+
+def _handle_response_acknowledgment(request, evaluation_id, config):
+    """
+    Generic handler for response acknowledgment.
+    
+    Args:
+        request: Django request object
+        evaluation_id: ID of the evaluation
+        config: Dictionary with model classes and redirect URLs
+    
+    Returns:
+        HttpResponse
+    """
+    logger.info(f"Response acknowledgment started for evaluation {evaluation_id} by user {request.user.id}")
+    
+    # Optimized query with select_related
+    evaluation = get_object_or_404(
+        config['evaluation_model'].objects.select_related(
+            f"{config['respondent_field']}__user",
+            f"{config['reviewer_field']}__user"
+        ),
+        pk=evaluation_id
+    )
+    
+    checker = get_role_checker(request.user)
+    
+    # Check permissions
+    if not (checker.user_profile and 
+            (getattr(evaluation, config['reviewer_field'] + '_id') == checker.user_profile.id or 
+             checker.is_senior_management())):
+        logger.warning(f"Unauthorized acknowledgment attempt by user {request.user.id}")
+        messages.error(request, "You do not have permission to acknowledge this response.")
+        return redirect(config['dashboard_url'])
+    
+    # Get the response
+    try:
+        response = config['response_model'].objects.get(evaluation=evaluation)
+    except config['response_model'].DoesNotExist:
+        logger.warning(f"No response found for evaluation {evaluation_id}")
+        messages.error(request, "No response found for this evaluation.")
+        return redirect(config['view_url'], evaluation_id=evaluation.id)
+    
+    # Acknowledge the response
+    if response.status == 'submitted':
+        response.status = 'acknowledged'
+        response.acknowledged_at = now()
+        response.acknowledged_by = checker.user_profile
+        response.save()
+        logger.info(f"Response {response.id} acknowledged by user {checker.user_profile.id}")
+        messages.success(request, "Response acknowledged successfully.")
+    else:
+        logger.info(f"Response {response.id} already acknowledged or in draft status")
+    
+    return redirect(config['view_url'], evaluation_id=evaluation.id)
+
+
+# Employee Response Views
+@login_required
+def submit_employee_response(request, evaluation_id):
+    """Allow employee to submit a response to their completed evaluation."""
+    config = {
+        'type': 'employee',
+        'evaluation_model': DynamicEvaluation,
+        'response_model': EmployeeResponse,
+        'form_class': EmployeeResponseForm,
+        'respondent_field': 'employee',
+        'reviewer_field': 'manager',
+        'reviewer_role': 'manager',
+        'list_url': 'evaluation:my_evaluations',
+        'view_url': 'evaluation:view_evaluation',
+        'template': 'evaluation/submit_response.html',
+        'email_function': send_response_notification_email,
+    }
+    return _handle_response_submission(request, evaluation_id, config)
+
+
+@login_required
+@require_manager_access
+def acknowledge_employee_response(request, evaluation_id):
+    """Allow manager to acknowledge an employee's response."""
+    config = {
+        'evaluation_model': DynamicEvaluation,
+        'response_model': EmployeeResponse,
+        'respondent_field': 'employee',
+        'reviewer_field': 'manager',
+        'dashboard_url': 'evaluation:dashboard',
+        'view_url': 'evaluation:view_evaluation',
+    }
+    return _handle_response_acknowledgment(request, evaluation_id, config)
+
+
+def _send_response_notification_email_generic(evaluation, response, config):
+    """
+    Generic email notification sender for responses.
+    
+    Args:
+        evaluation: Evaluation object
+        response: Response object
+        config: Dictionary with email-specific configuration
+    """
+    from datetime import datetime
+    
+    logger.info(f"Sending {config['type']} response notification for evaluation {evaluation.id}")
+    
+    respondent = getattr(evaluation, config['respondent_field'])
+    reviewer = getattr(evaluation, config['reviewer_field'])
+    period_start = getattr(evaluation, config['period_start_field'])
+    period_end = getattr(evaluation, config['period_end_field'])
+    
+    subject = f"{config['subject_prefix']}: {respondent.user.get_full_name()}"
+    
+    # Get full URL
+    view_path = reverse(config['view_url_name'], args=[evaluation.id])
+    view_url = f"{settings.SITE_URL.rstrip('/')}{view_path}" if hasattr(settings, 'SITE_URL') else f"http://127.0.0.1:8000{view_path}"
+    
+    context = {
+        'reviewer_name': reviewer.user.get_full_name(),
+        'respondent_name': respondent.user.get_full_name(),
+        'evaluation_period': f"{period_start.strftime('%b %d, %Y')} to {period_end.strftime('%b %d, %Y')}",
+        'form_name': evaluation.form.name,
+        'response_text': response.response_text[:200] + ('...' if len(response.response_text) > 200 else ''),
+        'view_url': view_url,
+        'current_year': datetime.now().year,
+    }
+    
+    # Update context keys for template compatibility
+    context[config['reviewer_key']] = context['reviewer_name']
+    context[config['respondent_key']] = context['respondent_name']
+    
+    # Plain text version
+    text_message = f"""
+Hello {reviewer.user.get_full_name()},
+
+{respondent.user.get_full_name()} has responded to their evaluation for {period_start.strftime('%b %d, %Y')} to {period_end.strftime('%b %d, %Y')}.
+
+Form: {evaluation.form.name}
+
+Response Preview:
+{context['response_text']}
+
+View the full response here: {view_url}
+
+Best regards,
+Firehouse Movers Evaluation System
+"""
+    
+    # HTML version if template exists
+    html_message = None
+    if config.get('html_template'):
+        try:
+            html_message = render_to_string(config['html_template'], context)
+        except Exception as e:
+            logger.warning(f"Failed to render HTML email template: {e}")
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[reviewer.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info(f"Email sent successfully to {reviewer.user.email}")
+    except Exception as e:
+        logger.error(f"Failed to send email notification: {e}", exc_info=True)
+        raise
+
+
+def send_response_notification_email(evaluation, response):
+    """Send email notification to manager when employee submits a response."""
+    config = {
+        'type': 'employee',
+        'respondent_field': 'employee',
+        'reviewer_field': 'manager',
+        'period_start_field': 'week_start',
+        'period_end_field': 'week_end',
+        'subject_prefix': 'Employee Response',
+        'view_url_name': 'evaluation:view_evaluation',
+        'reviewer_key': 'manager_name',
+        'respondent_key': 'employee_name',
+        'html_template': 'evaluation/emails/response_notification.html',
+    }
+    _send_response_notification_email_generic(evaluation, response, config)
+
+
+def send_manager_response_notification_email(evaluation, response):
+    """Send email notification to senior manager when manager submits a response."""
+    config = {
+        'type': 'manager',
+        'respondent_field': 'manager',
+        'reviewer_field': 'senior_manager',
+        'period_start_field': 'period_start',
+        'period_end_field': 'period_end',
+        'subject_prefix': 'Manager Response',
+        'view_url_name': 'evaluation:view_manager_evaluation',
+        'reviewer_key': 'senior_manager_name',
+        'respondent_key': 'manager_name',
+        'html_template': 'evaluation/emails/manager_response_notification.html',
+    }
+    _send_response_notification_email_generic(evaluation, response, config)
+
+
+# Manager Response Views
+@login_required
+def submit_manager_response(request, evaluation_id):
+    """Allow manager to submit a response to their completed evaluation."""
+    config = {
+        'type': 'manager',
+        'evaluation_model': DynamicManagerEvaluation,
+        'response_model': ManagerResponse,
+        'form_class': ManagerResponseForm,
+        'respondent_field': 'manager',
+        'reviewer_field': 'senior_manager',
+        'reviewer_role': 'senior manager',
+        'list_url': 'evaluation:my_manager_evaluations',
+        'view_url': 'evaluation:view_manager_evaluation',
+        'template': 'evaluation/submit_manager_response.html',
+        'email_function': send_manager_response_notification_email,
+    }
+    return _handle_response_submission(request, evaluation_id, config)
+
+
+@login_required
+@require_senior_management_access
+def acknowledge_manager_response(request, evaluation_id):
+    """Allow senior manager to acknowledge a manager's response."""
+    config = {
+        'evaluation_model': DynamicManagerEvaluation,
+        'response_model': ManagerResponse,
+        'respondent_field': 'manager',
+        'reviewer_field': 'senior_manager',
+        'dashboard_url': 'evaluation:manager_evaluation_dashboard',
+        'view_url': 'evaluation:view_manager_evaluation',
+    }
+    return _handle_response_acknowledgment(request, evaluation_id, config)
 

@@ -128,44 +128,6 @@
       
     {% endif %}
 
-    {# --- Communication Logs (All Users) --- #}
-    <div class="mt-4 pt-4 border-t border-gray-700">
-      <a href="{% url 'communication:dashboard' %}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'dashboard' and 'communication' in request.path %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-        <i class="fas fa-chart-line mr-2"></i> Log Dashboard
-      </a>
-      
-      {% with up=role.user_profile %}
-      {% if up.is_senior_management and not up.is_manager %}
-        <!-- Senior Management (not also a manager) -->
-        <a href="{% url 'communication:log_list' %}?view=created" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'log_list' and request.GET.view != 'received' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-user-tie mr-2"></i> Manager Logs
-        </a>
-        
-        <a href="{% url 'communication:create_log' %}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'create_log' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-plus-circle mr-2"></i> Create Log
-        </a>
-      {% elif up.is_manager %}
-        <!-- Managers -->
-        <a href="{% url 'communication:log_list' %}?view=created" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'log_list' and request.GET.view != 'received' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-list mr-2"></i> Employee Logs
-        </a>
-        
-        <a href="{% url 'communication:log_list' %}?view=received" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'log_list' and request.GET.view == 'received' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-inbox mr-2"></i> My Logs
-        </a>
-        
-        <a href="{% url 'communication:create_log' %}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'create_log' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-plus-circle mr-2"></i> Create Log
-        </a>
-      {% else %}
-        <!-- Employees -->
-        <a href="{% url 'communication:log_list' %}" class="block py-2 px-3 rounded analytics-nav-link border-l-4 {% if request.resolver_match.url_name == 'log_list' %}bg-red-500 border-red-500 text-white font-semibold{% else %}border-transparent hover:bg-gray-800{% endif %}">
-          <i class="fas fa-inbox mr-2"></i> My Logs
-        </a>
-      {% endif %}
-      {% endwith %}
-    </div>
-
   {% endwith %}
 </nav>
 

@@ -1,0 +1,91 @@
+{% extends "evaluation/base.html" %}
+{% load static %}
+
+{% block title %}Respond to Evaluation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/employee_response.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="fh-wrap">
+  <div class="fh-sheet">
+    <div class="fh-head">
+      <div>
+        <h2 class="fh-title">Respond to Evaluation</h2>
+        <div class="fh-sub">
+          <strong>Evaluation:</strong> {{ evaluation.form.name }}<br>
+          <strong>Period:</strong> {{ evaluation.week_start }} to {{ evaluation.week_end }}<br>
+          <strong>Manager:</strong> {{ evaluation.manager.user.get_full_name }}<br>
+          <strong>Department:</strong> {{ evaluation.department.title }}
+        </div>
+      </div>
+    </div>
+
+    <div class="fh-body">
+      <div class="fh-row">
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <p><strong>About Your Response</strong></p>
+            <p>Use this space to share your thoughts, address any concerns, provide context, or acknowledge the feedback from your evaluation. Your response will be visible to your manager and senior management.</p>
+          </div>
+        </div>
+      </div>
+
+      <form method="post" id="responseForm">
+        {% csrf_token %}
+        
+        <div class="fh-row">
+          <h3 class="fh-label">
+            Your Response <span style="color: #ef4444;">*</span>
+          </h3>
+          
+          {% if form.response_text.help_text %}
+            <div class="fh-help">{{ form.response_text.help_text }}</div>
+          {% endif %}
+          
+          {{ form.response_text }}
+          
+          {% if form.response_text.errors %}
+            <div class="error-message">
+              {{ form.response_text.errors }}
+            </div>
+          {% endif %}
+          
+          <div class="char-counter">
+            <span id="charCount">0</span> / 5000 characters
+          </div>
+        </div>
+
+        {% if response and response.status == 'draft' %}
+          <div class="fh-row">
+            <div class="draft-notice">
+              <i class="fas fa-save"></i>
+              Draft saved - Last updated {{ response.updated_at|date:"M j, Y, P" }}
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="fh-foot" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <a href="{% url 'evaluation:view_evaluation' evaluation.id %}" class="btn btn-secondary">
+            Cancel
+          </a>
+          <button type="submit" name="action" value="save" class="btn btn-outline">
+            Save Draft
+          </button>
+          <button type="submit" name="action" value="submit" class="btn btn-primary">
+            Submit Response
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'evaluation/js/employee_response.js' %}"></script>
+{% endblock %}
+

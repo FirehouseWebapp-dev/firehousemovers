@@ -1,0 +1,17 @@
+Hello {{ manager_name }},
+
+{{ employee_name }} has responded to their evaluation.
+
+Evaluation Details:
+- Form: {{ form_name }}
+- Period: {{ evaluation_period }}
+
+Response Preview:
+{{ response_text }}
+
+To view the full response and evaluation, please visit:
+{{ view_url }}
+
+---
+This is an automated notification from Firehouse Movers Evaluation System.
+

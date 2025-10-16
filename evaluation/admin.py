@@ -4,8 +4,8 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import (
     EvalForm, Question, QuestionChoice, 
-    DynamicEvaluation, Answer, 
-    DynamicManagerEvaluation, ManagerAnswer,
+    DynamicEvaluation, Answer, EmployeeResponse,
+    DynamicManagerEvaluation, ManagerAnswer, ManagerResponse,
     ReportHistory
 )
 
@@ -167,6 +167,46 @@ class ManagerAnswerAdmin(admin.ModelAdmin):
             return f"Choice: {obj.choice_value}"
         return "No answer"
     get_answer_display.short_description = "Answer"
+
+
+@admin.register(EmployeeResponse)
+class EmployeeResponseAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'evaluation', 'status', 'submitted_at', 'acknowledged_at')
+    list_filter = ('status', 'submitted_at', 'acknowledged_at')
+    search_fields = ('employee__user__first_name', 'employee__user__last_name',
+                    'evaluation__form__name', 'response_text')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at', 'submitted_at', 'acknowledged_at')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('evaluation', 'employee', 'response_text', 'status')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at', 'submitted_at', 'acknowledged_at', 'acknowledged_by'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ManagerResponse)
+class ManagerResponseAdmin(admin.ModelAdmin):
+    list_display = ('manager', 'evaluation', 'status', 'submitted_at', 'acknowledged_at')
+    list_filter = ('status', 'submitted_at', 'acknowledged_at')
+    search_fields = ('manager__user__first_name', 'manager__user__last_name',
+                    'evaluation__form__name', 'response_text')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'updated_at', 'submitted_at', 'acknowledged_at')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('evaluation', 'manager', 'response_text', 'status')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at', 'submitted_at', 'acknowledged_at', 'acknowledged_by'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(ReportHistory)
