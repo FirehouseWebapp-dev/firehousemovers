@@ -64,25 +64,48 @@
         {% endif %}
       </div>
 
-      <!-- Week Range -->
+      <!-- Event Date -->
+      <div>
+        <label for="{{ form.event_date.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
+          {{ form.event_date.label }}
+        </label>
+        {{ form.event_date }}
+        <p class="mt-2 text-sm text-gray-400">
+          <i class="fas fa-info-circle mr-1"></i>
+          Date of record
+        </p>
+        {% if form.event_date.errors %}
+          <p class="mt-1 text-sm text-red-500">{{ form.event_date.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Acknowledgment Settings -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label for="{{ form.week_start.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
-            {{ form.week_start.label }}
+          <label class="flex items-center gap-2 text-white mb-2">
+            {{ form.requires_acknowledgment }}
+            <span class="text-sm font-semibold">{{ form.requires_acknowledgment.label }}</span>
           </label>
-          {{ form.week_start }}
-          {% if form.week_start.errors %}
-            <p class="mt-1 text-sm text-red-500">{{ form.week_start.errors.0 }}</p>
+          <p class="text-sm text-gray-400">
+            <i class="fas fa-info-circle mr-1"></i>
+            If checked, employee must acknowledge this log
+          </p>
+          {% if form.requires_acknowledgment.errors %}
+            <p class="mt-1 text-sm text-red-500">{{ form.requires_acknowledgment.errors.0 }}</p>
           {% endif %}
         </div>
 
-        <div>
-          <label for="{{ form.week_end.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
-            {{ form.week_end.label }}
+        <div id="deadline-container">
+          <label for="{{ form.acknowledgment_deadline.id_for_label }}" class="block text-sm font-semibold text-white mb-2">
+            {{ form.acknowledgment_deadline.label }}
           </label>
-          {{ form.week_end }}
-          {% if form.week_end.errors %}
-            <p class="mt-1 text-sm text-red-500">{{ form.week_end.errors.0 }}</p>
+          {{ form.acknowledgment_deadline }}
+          <p class="mt-2 text-sm text-gray-400">
+            <i class="fas fa-clock mr-1"></i>
+            Employee must acknowledge by this date
+          </p>
+          {% if form.acknowledgment_deadline.errors %}
+            <p class="mt-1 text-sm text-red-500">{{ form.acknowledgment_deadline.errors.0 }}</p>
           {% endif %}
         </div>
       </div>
@@ -114,5 +137,9 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'communication/js/create_log.js' %}"></script>
 {% endblock %}
 

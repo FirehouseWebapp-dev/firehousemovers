@@ -162,7 +162,7 @@
     {% if recent_logs %}
       <div class="space-y-3">
         {% for log in recent_logs %}
-        <a href="{% url 'communication:log_detail' log.id %}" class="block bg-[#2a2a2a] rounded-lg p-4 hover:bg-[#333333] transition">
+        <a href="{% url 'communication:log_detail' log.id %}" class="block bg-[#2a2a2a] rounded-lg p-4 hover:bg-[#333333] transition {% if log.id in logs_with_unviewed_responses %}has-new-response{% endif %}">
           <div class="flex items-center justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
@@ -189,13 +189,29 @@
               </div>
               
               <h3 class="text-white font-semibold mb-1">{{ log.subject }}</h3>
-              <p class="text-gray-400 text-sm">{{ log.created_at|date:"F d, Y" }}</p>
+              <div class="flex items-center gap-4 text-sm text-gray-400">
+                <span>
+                  <i class="fas fa-clock mr-1"></i>{{ log.created_at|date:"F d, Y" }}
+                </span>
+                {% if log.acknowledgment_deadline and log.requires_acknowledgment %}
+                <span class="{% if not log.is_acknowledged and log.acknowledgment_deadline < today %}text-red-500 font-semibold{% endif %}">
+                  <i class="fas fa-calendar-check mr-1"></i>Deadline: {{ log.acknowledgment_deadline|date:"M d, Y" }}
+                  {% if not log.is_acknowledged and log.acknowledgment_deadline < today %}⚠️{% endif %}
+                </span>
+                {% endif %}
+              </div>
             </div>
             
             <div class="flex items-center gap-2">
               {% if view_type != 'employee_logs' and not log.is_acknowledged %}
               <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded text-sm">
                 <i class="fas fa-exclamation-circle mr-1"></i>Unread
+              </span>
+              {% endif %}
+              
+              {% if log.id in logs_with_unviewed_responses %}
+              <span class="new-response-badge">
+                <i class="fas fa-exclamation-circle mr-1"></i>New Response
               </span>
               {% endif %}
               

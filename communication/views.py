@@ -87,6 +87,7 @@ def check_log_view_permission(log, user_profile):
 def log_list(request):
     """List all communication logs based on user role"""
     user_profile = get_user_profile(request.user)
+    today = timezone.now().date()
     
     if not user_profile:
         logger.error(f"User {request.user.id} attempted to access log_list without profile")
@@ -103,6 +104,13 @@ def log_list(request):
             base_logs = get_shared_employee_logs_base(user_profile)
             logs = base_logs
             
+            # Apply status filter for received logs
+            status_filter = request.GET.get('status')
+            if status_filter == 'acknowledged':
+                logs = logs.filter(is_acknowledged=True)
+            elif status_filter == 'unread':
+                logs = logs.filter(is_acknowledged=False)
+            
             stats = calculate_log_stats(base_logs, is_shared_filter=False)
             context = {
                 'logs': logs,
@@ -110,6 +118,7 @@ def log_list(request):
                 'view_type': 'received',
                 'unread_count': stats['unacknowledged'],
                 'acknowledged_count': stats['acknowledged'],
+                'today': today,
             }
             template = 'communication/employee_log_list.html'
         else:
@@ -139,12 +148,25 @@ def log_list(request):
                 department_members = user_profile.department.members.exclude(id=user_profile.id)
             employees = (team_members | department_members).distinct()
             
+            # Check for logs with unviewed responses (for senior managers and managers)
+            logs_with_unviewed_responses = set()
+            if user_profile.is_senior_management:
+                logs_with_unviewed_responses = set(
+                    logs.filter(responses__viewed_by_senior=False).values_list('id', flat=True)
+                )
+            elif user_profile.is_manager and not user_profile.is_senior_management:
+                logs_with_unviewed_responses = set(
+                    logs.filter(responses__viewed_by_manager=False).values_list('id', flat=True)
+                )
+            
             context = {
                 'logs': logs,
                 'is_manager': True,
                 'view_type': 'created',
                 'employees': employees,
                 'log_types': LogType.objects.filter(is_active=True),
+                'today': today,
+                'logs_with_unviewed_responses': logs_with_unviewed_responses,
             }
             template = 'communication/manager_log_list.html'
     
@@ -164,11 +186,20 @@ def log_list(request):
         # Calculate counts from base queryset (before filtering)
         stats = calculate_log_stats(base_logs, is_shared_filter=False)
         
+        # Check for logs with unviewed responses (for managers viewing employee logs)
+        logs_with_unviewed_responses = set()
+        if user_profile.is_manager and not user_profile.is_senior_management:
+            logs_with_unviewed_responses = set(
+                logs.filter(responses__viewed_by_manager=False).values_list('id', flat=True)
+            )
+        
         context = {
             'logs': logs,
             'is_manager': False,
             'unread_count': stats['unacknowledged'],
             'acknowledged_count': stats['acknowledged'],
+            'today': today,
+            'logs_with_unviewed_responses': logs_with_unviewed_responses,
         }
         template = 'communication/employee_log_list.html'
     
@@ -177,6 +208,7 @@ def log_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context['page_obj'] = page_obj
+    context['today'] = today
     
     logger.info(f"User {user_profile.user.username} accessed log_list, {logs.count()} logs returned")
     return render(request, template, context)
@@ -262,6 +294,18 @@ def log_detail(request, pk):
     can_respond = log.employee == user_profile and log.visibility == 'shared'
     is_creator = log.created_by == user_profile
     
+    # Mark responses as viewed by senior manager if they're viewing the log
+    if is_creator and user_profile.is_senior_management:
+        # Mark all unviewed responses as viewed
+        log.responses.filter(viewed_by_senior=False).update(viewed_by_senior=True)
+        logger.info(f"Senior manager {user_profile.user.username} viewed responses for log {pk}")
+    
+    # Mark responses as viewed by manager if they're viewing the log
+    if is_creator and user_profile.is_manager and not user_profile.is_senior_management:
+        # Mark all unviewed responses as viewed
+        log.responses.filter(viewed_by_manager=False).update(viewed_by_manager=True)
+        logger.info(f"Manager {user_profile.user.username} viewed responses for log {pk}")
+    
     # Handle response form
     response_form = None
     if can_respond:
@@ -290,6 +334,7 @@ def log_detail(request, pk):
         'responses': log.responses.all(),  # Already prefetched with select_related
         'can_respond': can_respond,
         'is_creator': is_creator,
+        'today': timezone.now().date(),
     }
     return render(request, 'communication/log_detail.html', context)
 
@@ -326,6 +371,7 @@ def acknowledge_log(request, pk):
 def dashboard(request):
     """Communication dashboard"""
     user_profile = get_user_profile(request.user)
+    today = timezone.now().date()
     
     if is_manager_or_admin(user_profile):
         # Manager/Senior dashboard with view filter
@@ -339,6 +385,18 @@ def dashboard(request):
             # Stats for logs created by manager (for employees)
             base_queryset = get_created_logs_base(user_profile)
             stats = calculate_log_stats(base_queryset, is_shared_filter=True)
+            
+            # Check for logs with unviewed responses (for senior managers and managers)
+            logs_with_unviewed_responses = set()
+            if user_profile.is_senior_management:
+                logs_with_unviewed_responses = set(
+                    base_queryset.filter(responses__viewed_by_senior=False).values_list('id', flat=True)
+                )
+            elif user_profile.is_manager and not user_profile.is_senior_management:
+                logs_with_unviewed_responses = set(
+                    base_queryset.filter(responses__viewed_by_manager=False).values_list('id', flat=True)
+                )
+            
             recent_logs = base_queryset[:5]
             
             # Stats by log type
@@ -349,6 +407,10 @@ def dashboard(request):
             # Default: Stats for logs received by manager (my logs)
             base_queryset = get_shared_employee_logs_base(user_profile)
             stats = calculate_log_stats(base_queryset, is_shared_filter=False)
+            
+            # No highlighting for received logs - managers don't need to see highlighting for logs they received
+            logs_with_unviewed_responses = set()
+            
             recent_logs = base_queryset[:5]
             
             # Stats by log type
@@ -364,6 +426,8 @@ def dashboard(request):
             'acknowledged': stats['acknowledged'],
             'recent_logs': recent_logs,
             'log_type_stats': log_type_stats,
+            'today': today,
+            'logs_with_unviewed_responses': logs_with_unviewed_responses,
         }
     else:
         # Employee dashboard
@@ -378,6 +442,7 @@ def dashboard(request):
             'unread_logs': stats['unacknowledged'],
             'acknowledged_logs': stats['acknowledged'],
             'recent_logs': recent_logs,
+            'today': today,
         }
     
     logger.info(f"User {user_profile.user.username} accessed dashboard")

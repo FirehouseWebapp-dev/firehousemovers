@@ -63,9 +63,22 @@ class CommunicationLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Weekly tracking
-    week_start = models.DateField(null=True, blank=True, help_text='Week this log applies to')
-    week_end = models.DateField(null=True, blank=True)
+    # Event tracking
+    event_date = models.DateField(
+        default=timezone.now,
+        help_text='Date when the event/incident occurred'
+    )
+    
+    # Acknowledgment tracking
+    requires_acknowledgment = models.BooleanField(
+        default=True,
+        help_text='Whether employee needs to acknowledge this log'
+    )
+    acknowledgment_deadline = models.DateField(
+        null=True, 
+        blank=True,
+        help_text='Deadline for employee to acknowledge this log'
+    )
     
     class Meta:
         ordering = ['-created_at']
@@ -98,6 +111,14 @@ class LogResponse(models.Model):
         related_name='log_responses'
     )
     response_text = models.TextField()
+    viewed_by_senior = models.BooleanField(
+        default=False,
+        help_text="Whether senior manager has viewed this response"
+    )
+    viewed_by_manager = models.BooleanField(
+        default=False,
+        help_text="Whether manager has viewed this response"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -9,7 +9,7 @@ class CommunicationLogForm(forms.ModelForm):
     
     class Meta:
         model = CommunicationLog
-        fields = ['employee', 'log_type', 'subject', 'content', 'visibility', 'week_start', 'week_end']
+        fields = ['employee', 'log_type', 'subject', 'content', 'visibility', 'event_date', 'requires_acknowledgment', 'acknowledgment_deadline']
         widgets = {
             'employee': forms.Select(attrs={
                 'class': 'form-input w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none',
@@ -29,11 +29,14 @@ class CommunicationLogForm(forms.ModelForm):
             'visibility': forms.Select(attrs={
                 'class': 'form-input w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none',
             }),
-            'week_start': forms.DateInput(attrs={
+            'event_date': forms.DateInput(attrs={
                 'class': 'form-input w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none',
                 'type': 'date',
             }),
-            'week_end': forms.DateInput(attrs={
+            'requires_acknowledgment': forms.CheckboxInput(attrs={
+                'class': 'w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500',
+            }),
+            'acknowledgment_deadline': forms.DateInput(attrs={
                 'class': 'form-input w-full bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none',
                 'type': 'date',
             }),
@@ -44,8 +47,9 @@ class CommunicationLogForm(forms.ModelForm):
             'subject': 'Subject',
             'content': 'Notes',
             'visibility': 'Visibility',
-            'week_start': 'Week start',
-            'week_end': 'Week end',
+            'event_date': 'Event date',
+            'requires_acknowledgment': 'Requires acknowledgment',
+            'acknowledgment_deadline': 'Acknowledgment deadline',
         }
 
     def __init__(self, *args, **kwargs):
@@ -101,14 +105,13 @@ class CommunicationLogForm(forms.ModelForm):
             
             self.fields['employee'].choices = [('', '---------')] + choices
         
-        # Set default dates to current week
+        # Set default event date to today
         today = date.today()
-        week_start = today - timedelta(days=today.weekday())  # Monday
-        week_end = week_start + timedelta(days=6)  # Sunday
         
         if not self.instance.pk:
-            self.initial['week_start'] = week_start
-            self.initial['week_end'] = week_end
+            self.initial['event_date'] = today
+            # Default deadline: 3 days from today
+            self.initial['acknowledgment_deadline'] = today + timedelta(days=3)
 
 
 class LogResponseForm(forms.ModelForm):

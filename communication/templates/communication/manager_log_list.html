@@ -74,7 +74,7 @@ Employee Logs
   {% if page_obj %}
     <div class="space-y-4">
       {% for log in page_obj %}
-      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition">
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition {% if log.id in logs_with_unviewed_responses %}has-new-response{% endif %}">
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-3">
@@ -109,18 +109,30 @@ Employee Logs
                 <i class="fas fa-comment mr-1"></i>{{ log.responses.count }} note{{ log.responses.count|pluralize }}
               </span>
               {% endif %}
+              
+              {% if log.id in logs_with_unviewed_responses %}
+              <span class="new-response-badge">
+                <i class="fas fa-exclamation-circle mr-1"></i>New Response
+              </span>
+              {% endif %}
             </div>
 
             <h3 class="text-white font-semibold text-lg mb-2">{{ log.subject }}</h3>
-            <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+            <div class="log-content">
+              <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+            </div>
 
             <div class="flex items-center gap-4 text-sm text-gray-500">
               <span>
-                <i class="fas fa-calendar mr-1"></i>{{ log.created_at|date:"F d, Y" }}
+                <i class="fas fa-calendar mr-1"></i>Event: {{ log.event_date|date:"F d, Y" }}
               </span>
-              {% if log.week_start %}
               <span>
-                <i class="fas fa-calendar-week mr-1"></i>Week: {{ log.week_start|date:"M d" }} - {{ log.week_end|date:"M d" }}
+                <i class="fas fa-clock mr-1"></i>Created: {{ log.created_at|date:"M d, Y" }}
+              </span>
+              {% if log.acknowledgment_deadline and not log.is_acknowledged %}
+              <span class="{% if log.acknowledgment_deadline < today %}text-red-500 font-semibold{% endif %}">
+                <i class="fas fa-calendar-check mr-1"></i>Deadline: {{ log.acknowledgment_deadline|date:"M d, Y" }}
+                {% if log.acknowledgment_deadline < today %}⚠️{% endif %}
               </span>
               {% endif %}
             </div>

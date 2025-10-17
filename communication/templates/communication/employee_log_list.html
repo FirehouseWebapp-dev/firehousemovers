@@ -64,6 +64,9 @@
   <!-- Filter -->
   <div class="bg-[#1a1a1a] rounded-lg p-4 border border-gray-800 mb-6">
     <form method="get" class="flex items-center gap-4">
+      {% if request.GET.view %}
+      <input type="hidden" name="view" value="{{ request.GET.view }}">
+      {% endif %}
       <label class="text-white font-semibold">Status:</label>
       <select name="status" onchange="this.form.submit()" class="bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
         <option value="">All Communications</option>
@@ -77,14 +80,20 @@
   {% if page_obj %}
     <div class="space-y-4">
       {% for log in page_obj %}
-      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition {% if not log.is_acknowledged %}border-l-4 border-l-red-500{% endif %}">
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition {% if not log.is_acknowledged and log.requires_acknowledgment %}border-l-4 {% if log.acknowledgment_deadline and log.acknowledgment_deadline < today %}border-l-red-600 bg-red-900 bg-opacity-10{% else %}border-l-red-500{% endif %}{% endif %} {% if log.id in logs_with_unviewed_responses %}has-new-response{% endif %}">
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-3">
-              {% if not log.is_acknowledged %}
-              <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded text-sm font-semibold">
-                <i class="fas fa-exclamation-circle mr-1"></i>Unread
-              </span>
+              {% if not log.is_acknowledged and log.requires_acknowledgment %}
+                {% if log.acknowledgment_deadline and log.acknowledgment_deadline < today %}
+                <span class="px-3 py-1 bg-red-600 bg-opacity-30 text-red-400 rounded text-sm font-semibold">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                </span>
+                {% else %}
+                <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded text-sm font-semibold">
+                  <i class="fas fa-exclamation-circle mr-1"></i>Pending
+                </span>
+                {% endif %}
               {% endif %}
               
               {% if log.log_type %}
@@ -96,18 +105,27 @@
               <span class="text-gray-400 text-sm">
                 <i class="fas fa-user-tie mr-1"></i>From: {{ log.created_by.user.get_full_name }}
               </span>
+              
+              {% if log.id in logs_with_unviewed_responses %}
+              <span class="new-response-badge">
+                <i class="fas fa-exclamation-circle mr-1"></i>New Response
+              </span>
+              {% endif %}
             </div>
 
             <h3 class="text-white font-semibold text-lg mb-2">{{ log.subject }}</h3>
-            <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+            <div class="log-content">
+              <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+            </div>
 
             <div class="flex items-center gap-4 text-sm text-gray-500">
               <span>
-                <i class="fas fa-calendar mr-1"></i>{{ log.created_at|date:"F d, Y at h:i A" }}
+                <i class="fas fa-calendar mr-1"></i>Event: {{ log.event_date|date:"F d, Y" }}
               </span>
-              {% if log.week_start %}
-              <span>
-                <i class="fas fa-calendar-week mr-1"></i>Week: {{ log.week_start|date:"M d" }} - {{ log.week_end|date:"M d" }}
+              {% if log.acknowledgment_deadline and log.requires_acknowledgment %}
+              <span class="{% if not log.is_acknowledged and log.acknowledgment_deadline < today %}text-red-500 font-semibold{% endif %}">
+                <i class="fas fa-calendar-check mr-1"></i>Deadline: {{ log.acknowledgment_deadline|date:"M d, Y" }}
+                {% if not log.is_acknowledged and log.acknowledgment_deadline < today %} ⚠️ Overdue{% endif %}
               </span>
               {% endif %}
               {% if log.is_acknowledged %}
@@ -131,7 +149,7 @@
     <div class="mt-8 flex justify-center">
       <nav class="flex items-center gap-2">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
           <i class="fas fa-chevron-left"></i>
         </a>
         {% endif %}
@@ -141,7 +159,7 @@
         </span>
 
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
           <i class="fas fa-chevron-right"></i>
         </a>
         {% endif %}
