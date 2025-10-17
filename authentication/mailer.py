@@ -706,3 +706,142 @@ def send_order_status_update_email(email, order, status):
     msg = EmailMultiAlternatives(subject, text_content, settings.EMAIL_FROM, [email])
     msg.attach_alternative(html_content, "text/html")
     msg.send(fail_silently=False)
+
+
+def send_communication_log_email(email, employee_name, manager_name, subject, content, log_type, log_id):
+    """Send email notification when a communication log is created"""
+    email_subject = _("New Communication Log from Your Manager")
+
+    # Text content (fallback in case HTML is not supported)
+    text_content = _(
+        f"Hi {employee_name},\n\n"
+        f"Your manager {manager_name} has created a new communication log.\n\n"
+        f"Type: {log_type}\n"
+        f"Subject: {subject}\n"
+        f"Content: {content}\n\n"
+        "Please log in to view the full details and acknowledge this communication.\n\n"
+        "Best regards,\n"
+        "The Firehouse Movers Team"
+    )
+
+    # HTML content
+    html_content = _(
+        """
+        <html>
+        <head>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+
+                body {{
+                    font-family: 'Montserrat', Arial, sans-serif;
+                    background-color: #f8f8f8;
+                    padding: 0;
+                    margin: 0;
+                }}
+
+                table {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-collapse: collapse;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                }}
+
+                .header {{
+                    background-color: #1a1a1a;
+                    padding: 20px;
+                    text-align: center;
+                    color: #ffffff;
+                    border-bottom: 3px solid #e74c3c;
+                }}
+
+                .content {{
+                    padding: 30px;
+                    color: #333333;
+                    font-size: 16px;
+                    line-height: 1.6;
+                }}
+
+                .content strong {{
+                    color: #e74c3c;
+                }}
+
+                .log-box {{
+                    background-color: #f9f9f9;
+                    border-left: 4px solid #e74c3c;
+                    padding: 15px;
+                    margin: 20px 0;
+                }}
+
+                .log-box p {{
+                    margin: 8px 0;
+                }}
+
+                .cta-button {{
+                    display: inline-block;
+                    background-color: #e74c3c;
+                    color: #ffffff !important;
+                    padding: 12px 30px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: 600;
+                    margin: 20px 0;
+                }}
+
+                .footer {{
+                    background-color: #1a1a1a;
+                    color: #ffffff;
+                    text-align: center;
+                    padding: 15px;
+                    font-size: 14px;
+                }}
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr class="header">
+                    <td>
+                        <h2>New Communication Log</h2>
+                    </td>
+                </tr>
+                <tr class="content">
+                    <td>
+                        <p>Hi <strong>{employee_name}</strong>,</p>
+                        <p>Your manager <strong>{manager_name}</strong> has created a new communication log for you.</p>
+                        
+                        <div class="log-box">
+                            <p><strong>Type:</strong> {log_type}</p>
+                            <p><strong>Subject:</strong> {subject}</p>
+                            <p><strong>Notes:</strong></p>
+                            <p>{content}</p>
+                        </div>
+
+                        <p>Please log in to your account to view the full details and acknowledge this communication.</p>
+                        
+                        <center>
+                            <a href="{base_url}/communication/logs/{log_id}/" class="cta-button">View Communication Log</a>
+                        </center>
+                    </td>
+                </tr>
+                <tr class="footer">
+                    <td>
+                        <p>Best regards,<br>The Firehouse Movers Team</p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+    ).format(
+        employee_name=employee_name,
+        manager_name=manager_name,
+        log_type=log_type,
+        subject=subject,
+        content=content,
+        log_id=log_id,
+        base_url=settings.BASE_URL
+    )
+
+    msg = EmailMultiAlternatives(email_subject, text_content, settings.DEFAULT_FROM_EMAIL, [email])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send(fail_silently=False)

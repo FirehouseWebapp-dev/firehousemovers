@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/manager_evaluations.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/employee_response.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -56,13 +57,18 @@
     </div>
     <div class="space-y-6">
       {% for card in evaluation_cards %}
-        <div class="evaluation-card-clickable {% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/50{% else %}bg-[#1a1a1a] border-gray-700{% endif %} rounded-lg p-6 border hover:border-red-500 transition-colors cursor-pointer"
+        <div class="evaluation-card-clickable {% if card.status == 'Overdue' %}bg-gradient-to-r from-orange-900/20 to-red-900/20 border-orange-500/50{% else %}bg-[#1a1a1a] border-gray-700{% endif %} {% if card.has_new_response %}has-new-response{% endif %} rounded-lg p-6 border hover:border-red-500 transition-colors cursor-pointer"
              data-href="{% url 'evaluation:manager_evaluation_cards_detail' %}?form={{ card.form_name|urlencode }}&period_start={{ card.period_start|date:'Y-m-d' }}&period_end={{ card.period_end|date:'Y-m-d' }}">
           
           <div class="flex justify-between items-start">
             <div class="flex-1">
               <div class="text-white text-lg font-semibold mb-2">
                 {{ card.form_name|title }} - {{ card.period_start|date:"M d, Y" }} → {{ card.period_end|date:"M d, Y" }}
+                {% if card.has_new_response %}
+                  <span class="new-response-badge">
+                    <i class="fas fa-bell"></i> New Response
+                  </span>
+                {% endif %}
               </div>
               <div class="text-gray-400 text-sm">
                 {% if card.status == "Overdue" %}

@@ -1,0 +1,236 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}Communication Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'communication/css/communication.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white mb-2">
+      <i class="fas fa-chart-line mr-3"></i>Communication Dashboard
+    </h1>
+    <p class="text-gray-400">Overview of your communication logs</p>
+  </div>
+
+  {% if is_manager %}
+    <!-- Manager Dashboard -->
+    
+    <!-- View Type Filter -->
+    {% if request.user.userprofile.is_manager %}
+    <div class="mb-6">
+      <form method="get" class="flex items-center gap-4">
+        <label class="text-white font-semibold">View:</label>
+        <select name="view" onchange="this.form.submit()" class="bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
+          <option value="my_logs" {% if view_type == 'my_logs' %}selected{% endif %}>My Logs (Received from Senior Management)</option>
+          <option value="employee_logs" {% if view_type == 'employee_logs' %}selected{% endif %}>Employee Logs (Created by Me)</option>
+        </select>
+      </form>
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Total Logs -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">
+              {% if view_type == 'employee_logs' %}
+              Total Logs Created
+              {% else %}
+              Total Logs Received
+              {% endif %}
+            </p>
+            <p class="text-3xl font-bold text-white">{{ total_logs }}</p>
+          </div>
+          <div class="bg-blue-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-comments text-blue-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unacknowledged -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">
+              {% if view_type == 'employee_logs' %}
+              Pending Acknowledgment
+              {% else %}
+              Unread
+              {% endif %}
+            </p>
+            <p class="text-3xl font-bold text-orange-500">{{ unacknowledged }}</p>
+          </div>
+          <div class="bg-orange-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-clock text-orange-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acknowledged -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Acknowledged</p>
+            <p class="text-3xl font-bold text-green-500">{{ acknowledged }}</p>
+          </div>
+          <div class="bg-green-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Type Stats -->
+    {% if log_type_stats %}
+    <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 mb-8">
+      <h2 class="text-xl font-semibold text-white mb-4">
+        <i class="fas fa-chart-bar mr-2"></i>Logs by Type
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% for stat in log_type_stats %}
+        <div class="bg-[#2a2a2a] rounded p-4">
+          <p class="text-gray-400 text-sm">{{ stat.log_type__name|default:"Uncategorized" }}</p>
+          <p class="text-2xl font-bold text-white">{{ stat.count }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Employee Dashboard -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Total Communications -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Total Communications</p>
+            <p class="text-3xl font-bold text-white">{{ total_logs }}</p>
+          </div>
+          <div class="bg-blue-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-inbox text-blue-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unread -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Unread Logs</p>
+            <p class="text-3xl font-bold text-red-500">{{ unread_logs }}</p>
+          </div>
+          <div class="bg-red-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-envelope text-red-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acknowledged -->
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-400 text-sm mb-1">Acknowledged</p>
+            <p class="text-3xl font-bold text-green-500">{{ acknowledged_logs }}</p>
+          </div>
+          <div class="bg-green-500 bg-opacity-20 rounded-full p-4">
+            <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Recent Logs -->
+  <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+    <h2 class="text-xl font-semibold text-white mb-4">
+      <i class="fas fa-history mr-2"></i>
+      {% if is_manager and view_type == 'employee_logs' %}
+      Recent Employee Logs
+      {% elif is_manager and view_type == 'my_logs' %}
+      Recent Logs Received
+      {% else %}
+      Recent Communications
+      {% endif %}
+    </h2>
+
+    {% if recent_logs %}
+      <div class="space-y-3">
+        {% for log in recent_logs %}
+        <a href="{% url 'communication:log_detail' log.id %}" class="block bg-[#2a2a2a] rounded-lg p-4 hover:bg-[#333333] transition {% if log.id in logs_with_unviewed_responses %}has-new-response{% endif %}">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                {% if log.log_type %}
+                <span class="px-3 py-1 bg-{{ log.log_type.color }}-500 bg-opacity-20 text-{{ log.log_type.color }}-500 rounded text-sm">
+                  <i class="fas {{ log.log_type.icon }} mr-1"></i>{{ log.log_type.name }}
+                </span>
+                {% endif %}
+                
+                {% if is_manager and view_type == 'employee_logs' %}
+                <span class="text-gray-400 text-sm">
+                  <i class="fas fa-user mr-1"></i>{{ log.employee.user.get_full_name }}
+                </span>
+                {% if log.responses.count > 0 %}
+                <span class="px-3 py-1 bg-blue-500 bg-opacity-20 text-blue-500 rounded text-sm">
+                  <i class="fas fa-comment mr-1"></i>{{ log.responses.count }}
+                </span>
+                {% endif %}
+                {% else %}
+                <span class="text-gray-400 text-sm">
+                  <i class="fas fa-user-tie mr-1"></i>{{ log.created_by.user.get_full_name }}
+                </span>
+                {% endif %}
+              </div>
+              
+              <h3 class="text-white font-semibold mb-1">{{ log.subject }}</h3>
+              <div class="flex items-center gap-4 text-sm text-gray-400">
+                <span>
+                  <i class="fas fa-clock mr-1"></i>{{ log.created_at|date:"F d, Y" }}
+                </span>
+                {% if log.acknowledgment_deadline and log.requires_acknowledgment %}
+                <span class="{% if not log.is_acknowledged and log.acknowledgment_deadline < today %}text-red-500 font-semibold{% endif %}">
+                  <i class="fas fa-calendar-check mr-1"></i>Deadline: {{ log.acknowledgment_deadline|date:"M d, Y" }}
+                  {% if not log.is_acknowledged and log.acknowledgment_deadline < today %}⚠️{% endif %}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              {% if view_type != 'employee_logs' and not log.is_acknowledged %}
+              <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded text-sm">
+                <i class="fas fa-exclamation-circle mr-1"></i>Unread
+              </span>
+              {% endif %}
+              
+              {% if log.id in logs_with_unviewed_responses %}
+              <span class="new-response-badge">
+                <i class="fas fa-exclamation-circle mr-1"></i>New Response
+              </span>
+              {% endif %}
+              
+              <i class="fas fa-chevron-right text-gray-500"></i>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+
+      <div class="mt-4 text-center">
+        <a href="{% url 'communication:log_list' %}" class="text-red-500 hover:text-red-400 font-semibold">
+          View All <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+      </div>
+    {% else %}
+      <p class="text-gray-400 text-center py-8">No communications yet</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

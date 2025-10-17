@@ -34,6 +34,7 @@ urlpatterns = [
     path("awards/", include("gift.urls", namespace="awards")),
     path('evaluation/', include('evaluation.urls')),
     path("goals/", include("goals.urls", namespace="goals")), # Include goals routes
+    path("communication/", include("communication.urls", namespace="communication")), # Include communication routes
 ]
 
 # Error handlers

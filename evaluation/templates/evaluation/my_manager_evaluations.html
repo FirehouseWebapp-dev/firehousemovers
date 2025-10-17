@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/pending_evaluations.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/employee_response.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -44,7 +45,7 @@
   {% if evaluations %}
     <div class="evaluation-list">
       {% for eval in evaluations %}
-        <div class="evaluation-card card-hover slide-in animation-delay-4 {% if eval.period_end < today and eval.status == 'pending' %}overdue-card{% endif %}">
+        <div class="evaluation-card card-hover slide-in animation-delay-4 {% if eval.period_end < today and eval.status == 'pending' %}overdue-card{% endif %} {% if eval.manager_response and eval.manager_response.status == 'submitted' and not eval.manager_response.viewed_by_senior %}has-new-response{% endif %}">
           <div class="flex justify-between items-center">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
@@ -54,6 +55,11 @@
                 <div>
                   <h3 class="evaluation-name">
                     {{ eval.senior_manager.user.get_full_name|title }} ({{ eval.senior_manager.get_role_display }})
+                    {% if eval.manager_response and eval.manager_response.status == 'submitted' and not eval.manager_response.viewed_by_senior %}
+                      <span class="new-response-badge">
+                        <i class="fas fa-bell"></i> New Response
+                      </span>
+                    {% endif %}
                   </h3>
                   <div class="flex items-center gap-1 mt-1">
                     <span class="department-badge">
@@ -94,6 +100,18 @@
                   <i class="fas fa-check mr-1"></i>
                   Completed
                 </span>
+                {% if eval.manager_response %}
+                  <span class="response-badge">
+                    <i class="fas fa-comment"></i>
+                    {% if eval.manager_response.status == 'acknowledged' %}
+                      Ack'd
+                    {% elif eval.manager_response.status == 'submitted' %}
+                      {% if eval.manager_response.viewed_by_senior %}Viewed{% else %}New{% endif %}
+                    {% else %}
+                      Draft
+                    {% endif %}
+                  </span>
+                {% endif %}
                 <a href="{% url 'evaluation:view_manager_evaluation' eval.id %}" class="btn-modern">
                   <i class="fas fa-eye"></i>
                   View

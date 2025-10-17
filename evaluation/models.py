@@ -155,6 +155,69 @@ class Answer(models.Model):
         unique_together = [("instance", "question")]
 
 
+class EmployeeResponse(models.Model):
+    """Employee responses/comments on completed evaluations."""
+    STATUS = (
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('acknowledged', 'Acknowledged by Manager'),
+    )
+    
+    evaluation = models.OneToOneField(
+        DynamicEvaluation, 
+        on_delete=models.CASCADE, 
+        related_name="employee_response"
+    )
+    employee = models.ForeignKey(
+        UserProfile, 
+        on_delete=models.PROTECT, 
+        related_name="evaluation_responses"
+    )
+    response_text = models.TextField(
+        help_text="Employee's response or comments on the evaluation"
+    )
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    viewed_by_manager = models.BooleanField(
+        default=False,
+        help_text="Whether manager has viewed this response"
+    )
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="acknowledged_responses"
+    )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=["evaluation_id"]),
+            models.Index(fields=["employee_id", "status"]),
+            models.Index(fields=["status", "submitted_at"]),
+        ]
+        ordering = ["-created_at"]
+    
+    def __str__(self) -> str:
+        return f"Response by {self.employee} on {self.evaluation}"
+    
+    def clean(self):
+        """Validate that employee matches evaluation employee."""
+        super().clean()
+        # Only validate if both evaluation and employee are set
+        # evaluation_id is used to avoid accessing the relation before save
+        if hasattr(self, 'evaluation_id') and self.evaluation_id and self.employee_id:
+            # Use _id fields to avoid triggering relation access
+            if self.evaluation.employee_id != self.employee_id:
+                raise ValidationError({
+                    'employee': 'Employee must match the evaluation employee.'
+                })
+
+
 # Manager Evaluation Models - Using same structure as employee evaluations
 class DynamicManagerEvaluation(models.Model):
     """Dynamic evaluations for managers, evaluated by senior managers."""
@@ -205,6 +268,66 @@ class ManagerAnswer(models.Model):
 
     class Meta:
         unique_together = [("instance", "question")]
+
+
+class ManagerResponse(models.Model):
+    """Manager responses/comments on completed evaluations from senior managers."""
+    STATUS = (
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('acknowledged', 'Acknowledged by Senior Manager'),
+    )
+    
+    evaluation = models.OneToOneField(
+        DynamicManagerEvaluation, 
+        on_delete=models.CASCADE, 
+        related_name="manager_response"
+    )
+    manager = models.ForeignKey(
+        UserProfile, 
+        on_delete=models.PROTECT, 
+        related_name="manager_evaluation_responses"
+    )
+    response_text = models.TextField(
+        help_text="Manager's response or comments on the evaluation"
+    )
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    viewed_by_senior = models.BooleanField(
+        default=False,
+        help_text="Whether senior manager has viewed this response"
+    )
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="acknowledged_manager_responses"
+    )
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=["evaluation_id"]),
+            models.Index(fields=["manager_id", "status"]),
+            models.Index(fields=["status", "submitted_at"]),
+        ]
+        ordering = ["-created_at"]
+    
+    def __str__(self) -> str:
+        return f"Response by {self.manager} on {self.evaluation}"
+    
+    def clean(self):
+        """Validate that manager matches evaluation manager."""
+        super().clean()
+        if hasattr(self, 'evaluation_id') and self.evaluation_id and self.manager_id:
+            if self.evaluation.manager_id != self.manager_id:
+                raise ValidationError({
+                    'manager': 'Manager must match the evaluation manager.'
+                })
 
 
 class ReportHistory(models.Model):

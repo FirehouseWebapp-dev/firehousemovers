@@ -13,6 +13,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/form_detail.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/employee_response.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -124,6 +125,79 @@
         {% endif %}
       {% endfor %}
     </div>
+
+    {# Employee Response Section #}
+    {% if employee_response or can_respond %}
+    <div class="employee-response-section">
+      <h3 class="section-header">
+        Employee Response
+      </h3>
+
+      {% if employee_response %}
+        <div class="response-container">
+          <div class="response-header">
+            <div class="response-meta">
+              <strong>{{ employee_response.employee.user.get_full_name }}</strong>
+              <span class="response-status status-{{ employee_response.status }}">
+                {% if employee_response.status == 'draft' %}
+                  Draft
+                {% elif employee_response.status == 'submitted' %}
+                  Submitted
+                {% elif employee_response.status == 'acknowledged' %}
+                  Acknowledged
+                {% endif %}
+              </span>
+            </div>
+            <div class="response-timestamp">
+              {% if employee_response.submitted_at %}
+                {{ employee_response.submitted_at|date:"M j, Y, P" }}
+              {% else %}
+                {{ employee_response.updated_at|date:"M j, Y, P" }}
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="response-text">
+            {{ employee_response.response_text|linebreaks }}
+          </div>
+          
+          {# Show acknowledgment info if acknowledged #}
+          {% if employee_response.status == 'acknowledged' and employee_response.acknowledged_by %}
+            <div class="response-acknowledgment">
+              <i class="fas fa-check-circle"></i>
+              Acknowledged by {{ employee_response.acknowledged_by.user.get_full_name }} on {{ employee_response.acknowledged_at|date:"M j, Y, P" }}
+            </div>
+          {% endif %}
+          
+          {# Show buttons based on user role #}
+          {% if can_respond and employee_response.status != 'acknowledged' %}
+            <div class="response-actions">
+              <a href="{% url 'evaluation:submit_employee_response' evaluation.id %}" class="btn btn-primary">
+                Edit Response
+              </a>
+            </div>
+          {% elif role.user_profile == evaluation.manager and employee_response.status == 'submitted' %}
+            <div class="response-actions">
+              <form method="post" action="{% url 'evaluation:acknowledge_employee_response' evaluation.id %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-accent">
+                  Acknowledge Response
+                </button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      {% elif can_respond %}
+        <div class="response-empty">
+          <i class="fas fa-comment"></i>
+          <p>You haven't responded to this evaluation yet.</p>
+          <a href="{% url 'evaluation:submit_employee_response' evaluation.id %}" class="btn btn-primary">
+            Add Your Response
+          </a>
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
 
     <div class="fh-foot">
       {% if role.user_profile == evaluation.manager %}

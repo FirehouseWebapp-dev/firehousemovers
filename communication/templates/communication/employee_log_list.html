@@ -1,0 +1,179 @@
+{% extends "authentication/base_profile.html" %}
+{% load static %}
+
+{% block title %}My Logs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'communication/css/communication.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white mb-2">
+      <i class="fas fa-inbox mr-3"></i>My Logs
+    </h1>
+    <p class="text-gray-400">
+      {% if request.user.userprofile.is_manager %}
+      Communications from senior management
+      {% else %}
+      Communications from your manager
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-500 bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-inbox text-blue-500 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-gray-400 text-sm">Total Communications</p>
+          <p class="text-2xl font-bold text-white">{{ page_obj.paginator.count|default:0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="bg-red-500 bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-envelope text-red-500 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-gray-400 text-sm">Unread</p>
+          <p class="text-2xl font-bold text-red-500">{{ unread_count|default:0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="bg-green-500 bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-check-circle text-green-500 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-gray-400 text-sm">Acknowledged</p>
+          <p class="text-2xl font-bold text-green-500">{{ acknowledged_count|default:0 }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="bg-[#1a1a1a] rounded-lg p-4 border border-gray-800 mb-6">
+    <form method="get" class="flex items-center gap-4">
+      {% if request.GET.view %}
+      <input type="hidden" name="view" value="{{ request.GET.view }}">
+      {% endif %}
+      <label class="text-white font-semibold">Status:</label>
+      <select name="status" onchange="this.form.submit()" class="bg-[#2a2a2a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none">
+        <option value="">All Communications</option>
+        <option value="unread" {% if request.GET.status == 'unread' %}selected{% endif %}>Unread</option>
+        <option value="acknowledged" {% if request.GET.status == 'acknowledged' %}selected{% endif %}>Acknowledged</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Communications List -->
+  {% if page_obj %}
+    <div class="space-y-4">
+      {% for log in page_obj %}
+      <div class="bg-[#1a1a1a] rounded-lg p-6 border border-gray-800 hover:border-gray-700 transition {% if not log.is_acknowledged and log.requires_acknowledgment %}border-l-4 {% if log.acknowledgment_deadline and log.acknowledgment_deadline < today %}border-l-red-600 bg-red-900 bg-opacity-10{% else %}border-l-red-500{% endif %}{% endif %} {% if log.id in logs_with_unviewed_responses %}has-new-response{% endif %}">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-3">
+              {% if not log.is_acknowledged and log.requires_acknowledgment %}
+                {% if log.acknowledgment_deadline and log.acknowledgment_deadline < today %}
+                <span class="px-3 py-1 bg-red-600 bg-opacity-30 text-red-400 rounded text-sm font-semibold">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                </span>
+                {% else %}
+                <span class="px-3 py-1 bg-red-500 bg-opacity-20 text-red-500 rounded text-sm font-semibold">
+                  <i class="fas fa-exclamation-circle mr-1"></i>Pending
+                </span>
+                {% endif %}
+              {% endif %}
+              
+              {% if log.log_type %}
+              <span class="px-3 py-1 bg-{{ log.log_type.color }}-500 bg-opacity-20 text-{{ log.log_type.color }}-500 rounded text-sm">
+                <i class="fas {{ log.log_type.icon }} mr-1"></i>{{ log.log_type.name }}
+              </span>
+              {% endif %}
+              
+              <span class="text-gray-400 text-sm">
+                <i class="fas fa-user-tie mr-1"></i>From: {{ log.created_by.user.get_full_name }}
+              </span>
+              
+              {% if log.id in logs_with_unviewed_responses %}
+              <span class="new-response-badge">
+                <i class="fas fa-exclamation-circle mr-1"></i>New Response
+              </span>
+              {% endif %}
+            </div>
+
+            <h3 class="text-white font-semibold text-lg mb-2">{{ log.subject }}</h3>
+            <div class="log-content">
+              <p class="text-gray-400 mb-3 line-clamp-2">{{ log.content|truncatewords:30 }}</p>
+            </div>
+
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+              <span>
+                <i class="fas fa-calendar mr-1"></i>Event: {{ log.event_date|date:"F d, Y" }}
+              </span>
+              {% if log.acknowledgment_deadline and log.requires_acknowledgment %}
+              <span class="{% if not log.is_acknowledged and log.acknowledgment_deadline < today %}text-red-500 font-semibold{% endif %}">
+                <i class="fas fa-calendar-check mr-1"></i>Deadline: {{ log.acknowledgment_deadline|date:"M d, Y" }}
+                {% if not log.is_acknowledged and log.acknowledgment_deadline < today %} ⚠️ Overdue{% endif %}
+              </span>
+              {% endif %}
+              {% if log.is_acknowledged %}
+              <span class="text-green-500">
+                <i class="fas fa-check-circle mr-1"></i>Acknowledged {{ log.acknowledged_at|date:"M d" }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <a href="{% url 'communication:log_detail' log.id %}" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+            <i class="fas fa-eye mr-2"></i>View
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+      <nav class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        <span class="px-4 py-2 text-gray-400">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg hover:bg-[#2a2a2a] transition">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="bg-[#1a1a1a] rounded-lg p-12 border border-gray-800 text-center">
+      <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
+      <h3 class="text-xl font-semibold text-white mb-2">No Communications Yet</h3>
+      <p class="text-gray-400">You have no communications from your manager</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

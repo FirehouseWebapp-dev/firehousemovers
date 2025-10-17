@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'evaluation/css/archived_evaluations.css' %}">
+<link rel="stylesheet" href="{% static 'evaluation/css/employee_response.css' %}">
 {% endblock %}
 
 {% block extra_js %}
@@ -58,9 +59,16 @@
   {% if evaluations %}
     <div class="space-y-3">
       {% for evaluation in evaluations %}
-        <div class="flex justify-between items-center border-b border-gray-700 py-3" data-evaluation-id="{{ evaluation.id }}">
+        <div class="flex justify-between items-center border-b border-gray-700 py-3 {% if evaluation.employee_response and evaluation.employee_response.status == 'submitted' and not evaluation.employee_response.viewed_by_manager %}has-new-response{% endif %}" data-evaluation-id="{{ evaluation.id }}">
           <div class="flex-1">
-            <div class="text-red-500 font-semibold">{{ evaluation.employee.user.get_full_name|title }}</div>
+            <div class="text-red-500 font-semibold">
+              {{ evaluation.employee.user.get_full_name|title }}
+              {% if evaluation.employee_response and evaluation.employee_response.status == 'submitted' and not evaluation.employee_response.viewed_by_manager %}
+                <span class="new-response-badge">
+                  <i class="fas fa-bell"></i> New Response
+                </span>
+              {% endif %}
+            </div>
             <div class="text-sm text-gray-400">
               {{ evaluation.form.name }} - {{ evaluation.department.title }}
             </div>
@@ -72,6 +80,18 @@
           <div class="dashboard-button-group">
             {% if evaluation.status == "completed" %}
               <span class="dashboard-status-badge dashboard-status-completed">Completed</span>
+              {% if evaluation.employee_response %}
+                <span class="response-badge" title="Employee has responded">
+                  <i class="fas fa-comment"></i>
+                  {% if evaluation.employee_response.status == 'acknowledged' %}
+                    Ack'd
+                  {% elif evaluation.employee_response.status == 'submitted' %}
+                    {% if evaluation.employee_response.viewed_by_manager %}Viewed{% else %}New{% endif %}
+                  {% else %}
+                    Draft
+                  {% endif %}
+                </span>
+              {% endif %}
             {% else %}
               <span class="dashboard-status-badge dashboard-status-pending">Pending</span>
             {% endif %}

@@ -1,6 +1,6 @@
 # evaluation/forms.py
 from django import forms
-from .models import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm
+from .models import DynamicEvaluation, DynamicManagerEvaluation, Answer, ManagerAnswer, Question, QuestionChoice, EvalForm, EmployeeResponse, ManagerResponse
 from authentication.models import Department
 from django.utils.html import strip_tags
 import logging
@@ -380,3 +380,81 @@ class BoolRadioSelect(forms.RadioSelect):
     template_name = "evaluation/widgets/bool_radio.html"
     option_template_name = "evaluation/widgets/bool_option.html"
 # -------------------------------------
+
+
+class EmployeeResponseForm(forms.ModelForm):
+    """Form for employees to respond to their evaluations."""
+    
+    class Meta:
+        model = EmployeeResponse
+        fields = ['response_text']
+        widgets = {
+            'response_text': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-[#1e1e1e] border border-gray-700 text-white focus:outline-none focus:border-red-500 resize-vertical',
+                'rows': 6,
+                'placeholder': 'Share your thoughts, address concerns, or provide context regarding this evaluation...',
+                'maxlength': '5000'
+            })
+        }
+        labels = {
+            'response_text': 'Your response'
+        }
+        help_texts = {
+            'response_text': 'Maximum 5000 characters'
+        }
+    
+    def clean_response_text(self):
+        """Sanitize and validate response text."""
+        response_text = self.cleaned_data.get('response_text', '')
+        
+        # Strip HTML tags
+        sanitized_text = strip_tags(response_text).strip()
+        
+        # Check if empty after sanitization
+        if not sanitized_text:
+            raise forms.ValidationError("Response cannot be empty.")
+        
+        # Validate length
+        if len(sanitized_text) > 5000:
+            raise forms.ValidationError("Response cannot exceed 5000 characters.")
+        
+        return sanitized_text
+
+
+class ManagerResponseForm(forms.ModelForm):
+    """Form for managers to respond to their evaluations from senior managers."""
+    
+    class Meta:
+        model = ManagerResponse
+        fields = ['response_text']
+        widgets = {
+            'response_text': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg bg-[#1e1e1e] border border-gray-700 text-white focus:outline-none focus:border-red-500 resize-vertical',
+                'rows': 6,
+                'placeholder': 'Share your thoughts, address concerns, or provide context regarding this evaluation...',
+                'maxlength': '5000'
+            })
+        }
+        labels = {
+            'response_text': 'Your response'
+        }
+        help_texts = {
+            'response_text': 'Maximum 5000 characters'
+        }
+    
+    def clean_response_text(self):
+        """Sanitize and validate response text."""
+        response_text = self.cleaned_data.get('response_text', '')
+        
+        # Strip HTML tags
+        sanitized_text = strip_tags(response_text).strip()
+        
+        # Check if empty after sanitization
+        if not sanitized_text:
+            raise forms.ValidationError("Response cannot be empty.")
+        
+        # Validate length
+        if len(sanitized_text) > 5000:
+            raise forms.ValidationError("Response cannot exceed 5000 characters.")
+        
+        return sanitized_text
