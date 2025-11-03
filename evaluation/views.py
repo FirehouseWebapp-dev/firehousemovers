@@ -24,11 +24,17 @@ from django.http import HttpResponse
 from io import BytesIO, StringIO
 import csv
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib import colors as pdf_colors
+
 logger = logging.getLogger(__name__)
 
 from authentication.models import UserProfile, Department
-from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation, ManagerAnswer
+from .models import EvalForm, Question, DynamicEvaluation, DynamicManagerEvaluation, ManagerAnswer, ReportHistory
 from .forms_dynamic_admin import EvalFormForm, QuestionForm, QuestionChoiceForm
 from .forms import PreviewEvalForm, DynamicEvaluationForm
 from .constants import EvaluationStatus
@@ -65,6 +71,18 @@ from .dashboard_utils import (
 from .manager_performance_views import (
     aggregate_manager_evaluation_data,
     get_manager_emoji_distribution
+)
+from .report_utils import (
+    get_pdf_styles,
+    parse_date_range,
+    get_department_info,
+    create_summary_table,
+    create_detail_table,
+    create_chart_metrics_table,
+    create_person_header,
+    create_individual_question_table,
+    save_report_history,
+    create_question_paragraph
 )
 
 # Permission checking functions moved to decorators.py
@@ -2901,3 +2919,657 @@ def manager_employee_dashboard(request):
     
     logger.info(f"Manager employee dashboard rendered successfully for {user_profile.user.get_full_name()}")
     return render(request, "evaluation/manager_employee_dashboard.html", context)
+
+
+@login_required
+@require_senior_management_access
+def report_generation(request):
+    """Report generation page for senior managers."""
+    user_profile = get_user_profile_safely(request.user)
+    
+    # Get all departments for filtering
+    departments = Department.objects.all().order_by('title')
+    
+    # Get date range options
+    today = timezone.now().date()
+    last_30_days = today - timedelta(days=30)
+    last_90_days = today - timedelta(days=90)
+    last_6_months = today - relativedelta(months=6)
+    last_year = today - relativedelta(years=1)
+    
+    # Get recent reports
+    recent_reports = ReportHistory.objects.select_related('generated_by', 'department')[:10]
+    
+    context = {
+        'user_profile': user_profile,
+        'departments': departments,
+        'date_ranges': {
+            'last_30_days': last_30_days,
+            'last_90_days': last_90_days,
+            'last_6_months': last_6_months,
+            'last_year': last_year,
+            'today': today,
+        },
+        'recent_reports': recent_reports,
+    }
+    
+    return render(request, "evaluation/report_generation.html", context)
+
+
+@login_required
+@require_senior_management_access
+def generate_employee_report_pdf(request):
+    """Generate PDF report for employee evaluations."""
+    user_profile = get_user_profile_safely(request.user)
+    
+    # Get parameters
+    department_id = request.GET.get('department', 'all')
+    date_range = request.GET.get('date_range', '30')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    
+    # Parse date range
+    start_date, end_date = parse_date_range(date_range, start_date_str, end_date_str)
+    
+    # Get department name and object (avoid duplicate query)
+    dept_name, dept_obj = get_department_info(department_id)
+    
+    logger.info(f"Generating employee report: dept={dept_name}, dates={start_date} to {end_date}, user={user_profile.user.get_full_name()}")
+    
+    # Build query with optimized select_related (avoid N+1 queries)
+    evaluations = DynamicEvaluation.objects.filter(
+        submitted_at__gte=start_date,
+        submitted_at__lte=end_date
+    ).select_related('employee__user', 'manager__user', 'department', 'form')
+    
+    if department_id != 'all':
+        evaluations = evaluations.filter(department_id=department_id)
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    elements = []
+    styles, title_style, heading_style = get_pdf_styles()
+    
+    elements.append(Paragraph("Employee Evaluation Report", title_style))
+    elements.append(Paragraph(f"Department: {dept_name}", styles['Normal']))
+    elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles['Normal']))
+    elements.append(Paragraph(f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Summary Statistics
+    total_evals = evaluations.count()
+    completed_evals = evaluations.filter(status=EvaluationStatus.COMPLETED).count()
+    pending_evals = evaluations.filter(status=EvaluationStatus.PENDING).count()
+    
+    elements.append(Paragraph("Executive Summary", heading_style))
+    
+    summary_data = [
+        ['Metric', 'Count'],
+        ['Total Evaluations', str(total_evals)],
+        ['Completed Evaluations', str(completed_evals)],
+        ['Pending Evaluations', str(pending_evals)],
+        ['Completion Rate', f'{(completed_evals/total_evals*100):.1f}%' if total_evals > 0 else 'N/A'],
+    ]
+    
+    summary_table = create_summary_table(summary_data, [3*inch, 2*inch])
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # Detailed Evaluations
+    if total_evals > 0:
+        elements.append(Paragraph("Evaluation Details", heading_style))
+        
+        # Add department column header when showing all departments
+        if department_id == 'all':
+            eval_data = [['Employee', 'Department', 'Manager', 'Week', 'Status', 'Submitted']]
+        else:
+            eval_data = [['Employee', 'Manager', 'Week', 'Status', 'Submitted']]
+        
+        for eval in evaluations[:100]:  # Increased to 100 for better coverage
+            if department_id == 'all':
+                eval_data.append([
+                    eval.employee.user.get_full_name(),
+                    eval.department.title,
+                    eval.manager.user.get_full_name(),
+                    f"{eval.week_start} to {eval.week_end}",
+                    eval.status,
+                    eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+                ])
+            else:
+                eval_data.append([
+                    eval.employee.user.get_full_name(),
+                    eval.manager.user.get_full_name(),
+                    f"{eval.week_start} to {eval.week_end}",
+                    eval.status,
+                    eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+                ])
+        
+        # Adjust column widths based on whether department is shown
+        if department_id == 'all':
+            eval_table = Table(eval_data, colWidths=[1.3*inch, 1.2*inch, 1.3*inch, 1.3*inch, 0.8*inch, 0.8*inch])
+        else:
+            eval_table = Table(eval_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1*inch, 1*inch])
+        
+        eval_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), pdf_colors.HexColor('#DC2626')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), pdf_colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), pdf_colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, pdf_colors.HexColor('#D1D5DB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [pdf_colors.white, pdf_colors.HexColor('#F3F4F6')])
+        ]))
+        
+        elements.append(eval_table)
+        
+        if total_evals > 100:
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"Note: Showing first 100 of {total_evals} evaluations", styles['Italic']))
+    else:
+        elements.append(Paragraph("No evaluations found for the selected period.", styles['Normal']))
+    
+    # Build PDF
+    doc.build(elements)
+    
+    # Save report history
+    save_report_history('employee', user_profile, dept_obj, start_date, end_date)
+    
+    # Return response
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="employee_report_{start_date}_{end_date}.pdf"'
+    
+    return response
+
+
+@login_required
+@require_senior_management_access
+def generate_manager_report_pdf(request):
+    """Generate PDF report for manager evaluations."""
+    user_profile = get_user_profile_safely(request.user)
+    
+    # Get parameters
+    department_id = request.GET.get('department', 'all')
+    date_range = request.GET.get('date_range', '30')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    
+    # Parse date range
+    start_date, end_date = parse_date_range(date_range, start_date_str, end_date_str)
+    
+    # Get department name and object
+    dept_name, dept_obj = get_department_info(department_id)
+    
+    logger.info(f"Generating manager report: dept={dept_name}, dates={start_date} to {end_date}, user={user_profile.user.get_full_name()}")
+    
+    # Build query with optimized select_related (avoid N+1 queries)
+    evaluations = DynamicManagerEvaluation.objects.filter(
+        submitted_at__gte=start_date,
+        submitted_at__lte=end_date
+    ).select_related('manager__user', 'senior_manager__user', 'department', 'form')
+    
+    if department_id != 'all':
+        evaluations = evaluations.filter(department_id=department_id)
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    elements = []
+    styles, title_style, heading_style = get_pdf_styles()
+    
+    elements.append(Paragraph("Manager Evaluation Report", title_style))
+    elements.append(Paragraph(f"Department: {dept_name}", styles['Normal']))
+    elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles['Normal']))
+    elements.append(Paragraph(f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Summary Statistics
+    total_evals = evaluations.count()
+    completed_evals = evaluations.filter(status=EvaluationStatus.COMPLETED).count()
+    pending_evals = evaluations.filter(status=EvaluationStatus.PENDING).count()
+    
+    elements.append(Paragraph("Executive Summary", heading_style))
+    
+    summary_data = [
+        ['Metric', 'Count'],
+        ['Total Evaluations', str(total_evals)],
+        ['Completed Evaluations', str(completed_evals)],
+        ['Pending Evaluations', str(pending_evals)],
+        ['Completion Rate', f'{(completed_evals/total_evals*100):.1f}%' if total_evals > 0 else 'N/A'],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), pdf_colors.HexColor('#DC2626')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), pdf_colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), pdf_colors.HexColor('#F3F4F6')),
+        ('GRID', (0, 0), (-1, -1), 1, pdf_colors.HexColor('#D1D5DB'))
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # Detailed Evaluations
+    if total_evals > 0:
+        elements.append(Paragraph("Evaluation Details", heading_style))
+        
+        # Add department column header when showing all departments
+        if department_id == 'all':
+            eval_data = [['Manager', 'Department', 'Evaluator', 'Period', 'Status', 'Submitted']]
+        else:
+            eval_data = [['Manager', 'Evaluator', 'Period', 'Status', 'Submitted']]
+        
+        for eval in evaluations[:100]:  # Increased to 100 for better coverage
+            if department_id == 'all':
+                eval_data.append([
+                    eval.manager.user.get_full_name(),
+                    eval.department.title,
+                    eval.senior_manager.user.get_full_name(),
+                    f"{eval.period_start} to {eval.period_end}",
+                    eval.status,
+                    eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+                ])
+            else:
+                eval_data.append([
+                    eval.manager.user.get_full_name(),
+                    eval.senior_manager.user.get_full_name(),
+                    f"{eval.period_start} to {eval.period_end}",
+                    eval.status,
+                    eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+                ])
+        
+        # Adjust column widths based on whether department is shown
+        if department_id == 'all':
+            eval_table = Table(eval_data, colWidths=[1.3*inch, 1.2*inch, 1.3*inch, 1.3*inch, 0.8*inch, 0.8*inch])
+        else:
+            eval_table = Table(eval_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1*inch, 1*inch])
+        
+        eval_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), pdf_colors.HexColor('#DC2626')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), pdf_colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), pdf_colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.5, pdf_colors.HexColor('#D1D5DB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [pdf_colors.white, pdf_colors.HexColor('#F3F4F6')])
+        ]))
+        
+        elements.append(eval_table)
+        
+        if total_evals > 100:
+            elements.append(Spacer(1, 10))
+            elements.append(Paragraph(f"Note: Showing first 100 of {total_evals} evaluations", styles['Italic']))
+    else:
+        elements.append(Paragraph("No evaluations found for the selected period.", styles['Normal']))
+    
+    doc.build(elements)
+    
+    # Save report history
+    save_report_history('manager', user_profile, dept_obj, start_date, end_date)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="manager_report_{start_date}_{end_date}.pdf"'
+    
+    return response
+
+
+@login_required
+@require_senior_management_access
+def generate_trends_report_pdf(request):
+    """Generate PDF report for performance trends."""
+    user_profile = get_user_profile_safely(request.user)
+    
+    # Get parameters
+    department_id = request.GET.get('department', 'all')
+    period = int(request.GET.get('period', '90'))
+    
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=period)
+    
+    # Get department name and object
+    dept_name, dept_obj = get_department_info(department_id)
+    
+    logger.info(f"Generating trends report: dept={dept_name}, period={period} days, user={user_profile.user.get_full_name()}")
+    
+    # Get EMPLOYEE evaluations with answers (optimized to avoid N+1 queries)
+    employee_evaluations = DynamicEvaluation.objects.filter(
+        status=EvaluationStatus.COMPLETED,
+        submitted_at__gte=start_date,
+        submitted_at__lte=end_date
+    ).select_related('employee__user', 'department', 'manager__user').prefetch_related(
+        'answers__question__form'  # Prefetch question.form to avoid N+1 when accessing answer.question.form.name
+    )
+    
+    # Get MANAGER evaluations with answers (optimized to avoid N+1 queries)
+    manager_evaluations = DynamicManagerEvaluation.objects.filter(
+        status=EvaluationStatus.COMPLETED,
+        submitted_at__gte=start_date,
+        submitted_at__lte=end_date
+    ).select_related('manager__user', 'department', 'senior_manager__user').prefetch_related(
+        'answers__question__form'  # Prefetch question.form to avoid N+1 when accessing answer.question.form.name
+    )
+    
+    if department_id != 'all':
+        employee_evaluations = employee_evaluations.filter(department_id=department_id)
+        manager_evaluations = manager_evaluations.filter(department_id=department_id)
+    
+    logger.info(f"Fetched {employee_evaluations.count()} employee evals, {manager_evaluations.count()} manager evals")
+    
+    # Get questions marked for trends (include_in_trends=True)
+    trend_questions = Question.objects.filter(include_in_trends=True).select_related('form')
+    
+    # Calculate performance by question for EMPLOYEES
+    employee_question_performance = {}
+    for question in trend_questions:
+        question_key = f"{question.form.name} - {question.text}"
+        employee_question_performance[question_key] = {
+            'question': question,
+            'responses': [],
+            'response_count': 0
+        }
+    
+    for eval in employee_evaluations:
+        for answer in eval.answers.all():
+            if answer.question.include_in_trends:
+                question_key = f"{answer.question.form.name} - {answer.question.text}"
+                if question_key in employee_question_performance:
+                    if answer.int_value is not None:
+                        employee_question_performance[question_key]['responses'].append(answer.int_value)
+                        employee_question_performance[question_key]['response_count'] += 1
+    
+    # Calculate performance by question for MANAGERS
+    manager_question_performance = {}
+    for question in trend_questions:
+        question_key = f"{question.form.name} - {question.text}"
+        manager_question_performance[question_key] = {
+            'question': question,
+            'responses': [],
+            'response_count': 0
+        }
+    
+    for eval in manager_evaluations:
+        for answer in eval.answers.all():
+            if answer.question.include_in_trends:
+                question_key = f"{answer.question.form.name} - {answer.question.text}"
+                if question_key in manager_question_performance:
+                    if answer.int_value is not None:
+                        manager_question_performance[question_key]['responses'].append(answer.int_value)
+                        manager_question_performance[question_key]['response_count'] += 1
+    
+    # Create PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    elements = []
+    styles, title_style, heading_style = get_pdf_styles()
+    
+    elements.append(Paragraph("Performance Trends Report", title_style))
+    elements.append(Paragraph(f"Department: {dept_name}", styles['Normal']))
+    elements.append(Paragraph(f"Period: Last {period} days ({start_date} to {end_date})", styles['Normal']))
+    elements.append(Paragraph(f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+    
+    # Overall Summary Statistics
+    elements.append(Paragraph("Evaluation Summary", heading_style))
+    
+    summary_data = [
+        ['Metric', 'Employee', 'Manager'],
+        ['Completed Evaluations', str(employee_evaluations.count()), str(manager_evaluations.count())],
+        ['Questions Tracked for Trends', str(len([q for q in employee_question_performance.values() if q['response_count'] > 0])), 
+         str(len([q for q in manager_question_performance.values() if q['response_count'] > 0]))],
+        ['Total Employees/Managers', str(employee_evaluations.values('employee').distinct().count()), 
+         str(manager_evaluations.values('manager').distinct().count())],
+    ]
+    
+    summary_table = create_summary_table(summary_data, [2.5*inch, 1.5*inch, 1.5*inch])
+    # Override center alignment for columns 1 and 2
+    summary_table.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # Employee Question Performance (Chart Questions)
+    if employee_question_performance:
+        elements.append(Paragraph("Employee Performance by Question (Chart Metrics)", heading_style))
+        
+        emp_q_data = [['Question', 'Responses', 'Avg', '5⭐', '4⭐', '3⭐', '2⭐', '1⭐']]
+        
+        # Filter and process questions that have responses
+        for question_key, data in sorted(employee_question_performance.items()):
+            if data['response_count'] > 0:
+                responses = data['responses']
+                avg = sum(responses) / len(responses) if responses else 0
+                
+                # Count each star rating
+                counts = {i: responses.count(i) for i in range(1, 6)}
+                
+                # Use helper for question paragraph
+                question_para = create_question_paragraph(question_key)
+                
+                emp_q_data.append([
+                    question_para,
+                    str(data['response_count']),
+                    f'{avg:.2f}',
+                    str(counts.get(5, 0)),
+                    str(counts.get(4, 0)),
+                    str(counts.get(3, 0)),
+                    str(counts.get(2, 0)),
+                    str(counts.get(1, 0))
+                ])
+        
+        if len(emp_q_data) > 1:  # Has data beyond header
+            emp_q_table = create_chart_metrics_table(
+                emp_q_data, 
+                [3*inch, 0.7*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch]
+            )
+            elements.append(emp_q_table)
+            elements.append(Spacer(1, 20))
+        else:
+            elements.append(Paragraph("No employee questions marked for charts in this period.", styles['Normal']))
+            elements.append(Spacer(1, 20))
+    
+    # Manager Question Performance (Chart Questions)
+    if manager_question_performance:
+        elements.append(Paragraph("Manager Performance by Question (Chart Metrics)", heading_style))
+        
+        mgr_q_data = [['Question', 'Responses', 'Avg', '5', '4', '3', '2', '1']]
+        
+        # Filter and process questions that have responses
+        for question_key, data in sorted(manager_question_performance.items()):
+            if data['response_count'] > 0:
+                responses = data['responses']
+                avg = sum(responses) / len(responses) if responses else 0
+                
+                # Count each star rating
+                counts = {i: responses.count(i) for i in range(1, 6)}
+                
+                # Use helper for question paragraph
+                question_para = create_question_paragraph(question_key)
+                
+                mgr_q_data.append([
+                    question_para,
+                    str(data['response_count']),
+                    f'{avg:.2f}',
+                    str(counts.get(5, 0)),
+                    str(counts.get(4, 0)),
+                    str(counts.get(3, 0)),
+                    str(counts.get(2, 0)),
+                    str(counts.get(1, 0))
+                ])
+        
+        if len(mgr_q_data) > 1:  # Has data beyond header
+            mgr_q_table = create_chart_metrics_table(
+                mgr_q_data,
+                [3*inch, 0.7*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch, 0.45*inch]
+            )
+            elements.append(mgr_q_table)
+            elements.append(Spacer(1, 20))
+        else:
+            elements.append(Paragraph("No manager questions marked for charts in this period.", styles['Normal']))
+            elements.append(Spacer(1, 20))
+    
+    # Individual Employee Performance - Detailed by Person
+    if employee_evaluations.exists():
+        elements.append(Paragraph("Individual Employee Performance Details", heading_style))
+        elements.append(Spacer(1, 10))
+        
+        # Collect individual employee data with question details including dates
+        employee_individual_data = {}
+        for eval in employee_evaluations:
+            emp_name = eval.employee.user.get_full_name()
+            if emp_name not in employee_individual_data:
+                employee_individual_data[emp_name] = {
+                    'department': eval.department.title,
+                    'questions': {}
+                }
+            
+            eval_date = eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+            
+            # Get responses for tracked questions only
+            for answer in eval.answers.all():
+                if answer.question.include_in_trends and answer.int_value is not None:
+                    question_text = answer.question.text
+                    question_type = answer.question.get_qtype_display()
+                    
+                    if question_text not in employee_individual_data[emp_name]['questions']:
+                        employee_individual_data[emp_name]['questions'][question_text] = {
+                            'type': question_type,
+                            'responses': []
+                        }
+                    
+                    employee_individual_data[emp_name]['questions'][question_text]['responses'].append({
+                        'score': answer.int_value,
+                        'date': eval_date
+                    })
+        
+        # Create table for each employee
+        for emp_name in sorted(employee_individual_data.keys()):
+            data = employee_individual_data[emp_name]
+            
+            if data['questions']:  # Only show if they have tracked question responses
+                # Employee header with red background
+                emp_header = create_person_header(emp_name, data['department'])
+                elements.append(emp_header)
+                elements.append(Spacer(1, 8))
+                
+                # Questions table with dates
+                emp_q_table_data = [['Question', 'Type', 'Score', 'Date']]
+                
+                for question_text, q_data in sorted(data['questions'].items()):
+                    # Add each response as a separate row
+                    for i, response in enumerate(q_data['responses']):
+                        # Only show question text on first row for this question
+                        question_display = create_question_paragraph(question_text) if i == 0 else ''
+                        
+                        emp_q_table_data.append([
+                            question_display,
+                            q_data['type'] if i == 0 else '',
+                            str(response['score']),
+                            response['date']
+                        ])
+                
+                emp_q_table = create_individual_question_table(
+                    emp_q_table_data, 
+                    [2.6*inch, 1.4*inch, 0.7*inch, 1.1*inch]
+                )
+                elements.append(emp_q_table)
+                elements.append(Spacer(1, 20))
+    
+    # Individual Manager Performance - Detailed by Person
+    if manager_evaluations.exists():
+        elements.append(Paragraph("Individual Manager Performance Details", heading_style))
+        elements.append(Spacer(1, 10))
+        
+        # Collect individual manager data with question details including dates
+        manager_individual_data = {}
+        for eval in manager_evaluations:
+            mgr_name = eval.manager.user.get_full_name()
+            if mgr_name not in manager_individual_data:
+                manager_individual_data[mgr_name] = {
+                    'department': eval.department.title,
+                    'questions': {}
+                }
+            
+            eval_date = eval.submitted_at.strftime('%Y-%m-%d') if eval.submitted_at else 'N/A'
+            
+            # Get responses for tracked questions only
+            for answer in eval.answers.all():
+                if answer.question.include_in_trends and answer.int_value is not None:
+                    question_text = answer.question.text
+                    question_type = answer.question.get_qtype_display()
+                    
+                    if question_text not in manager_individual_data[mgr_name]['questions']:
+                        manager_individual_data[mgr_name]['questions'][question_text] = {
+                            'type': question_type,
+                            'responses': []
+                        }
+                    
+                    manager_individual_data[mgr_name]['questions'][question_text]['responses'].append({
+                        'score': answer.int_value,
+                        'date': eval_date
+                    })
+        
+        # Create table for each manager
+        for mgr_name in sorted(manager_individual_data.keys()):
+            data = manager_individual_data[mgr_name]
+            
+            if data['questions']:  # Only show if they have tracked question responses
+                # Manager header with red background
+                mgr_header = create_person_header(mgr_name, data['department'])
+                elements.append(mgr_header)
+                elements.append(Spacer(1, 8))
+                
+                # Questions table with dates
+                mgr_q_table_data = [['Question', 'Type', 'Score', 'Date']]
+                
+                for question_text, q_data in sorted(data['questions'].items()):
+                    # Add each response as a separate row
+                    for i, response in enumerate(q_data['responses']):
+                        # Only show question text on first row for this question
+                        question_display = create_question_paragraph(question_text) if i == 0 else ''
+                        
+                        mgr_q_table_data.append([
+                            question_display,
+                            q_data['type'] if i == 0 else '',
+                            str(response['score']),
+                            response['date']
+                        ])
+                
+                mgr_q_table = create_individual_question_table(
+                    mgr_q_table_data,
+                    [2.6*inch, 1.4*inch, 0.7*inch, 1.1*inch]
+                )
+                elements.append(mgr_q_table)
+                elements.append(Spacer(1, 20))
+    
+    doc.build(elements)
+    
+    # Save report history
+    save_report_history('trends', user_profile, dept_obj, start_date, end_date)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="trends_report_{start_date}_{end_date}.pdf"'
+    
+    return response
+
+

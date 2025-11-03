@@ -95,6 +95,12 @@
           <i class="fas fa-hourglass-half mr-2"></i> Pending Evaluations
         </a>
 
+        <a href="{% url 'evaluation:report_generation' %}"
+          class="block py-2 px-3 rounded analytics-nav-link
+              {% if request.path|startswith:'/evaluation/reports/' %}bg-red-500{% endif %}">
+          <i class="fas fa-file-alt mr-2"></i> Report Generation
+        </a>
+
 
       {# --- Employees (default) --- #}
       {% else %}

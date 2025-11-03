@@ -35,6 +35,14 @@ urlpatterns += [
     path("analytics/team/<int:team_leader_id>/", views.analytics_team_detail, name="analytics_team_detail"),
 ]
 
+# Report Generation (Senior Management)
+urlpatterns += [
+    path("reports/", views.report_generation, name="report_generation"),
+    path("reports/employee-pdf/", views.generate_employee_report_pdf, name="generate_employee_report_pdf"),
+    path("reports/manager-pdf/", views.generate_manager_report_pdf, name="generate_manager_report_pdf"),
+    path("reports/trends-pdf/", views.generate_trends_report_pdf, name="generate_trends_report_pdf"),
+]
+
 # Reusable Analytics Dashboard
 urlpatterns += [
     path("dashboard/<str:department_slug>/", views.analytics_dashboard, name="analytics_dashboard"),
